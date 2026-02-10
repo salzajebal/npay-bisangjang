@@ -3,9 +3,9 @@ import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, ArrowUpRight, ArrowDownRight, BarChart3, Users, Shield } from "lucide-react";
-import samsungBuildingImg from "@assets/telegram-cloud-photo-size-4-5789658066277043972-y_1770731405987.jpg";
+import { TrendingUp, ArrowUpRight, ArrowDownRight, BarChart3, Users, Shield, Building2, Factory } from "lucide-react";
 import samsungInfoImg from "@assets/telegram-cloud-photo-size-4-5789658066277043973-y_1770731402444.jpg";
+import samsungChartImg from "@assets/telegram-cloud-photo-size-4-5789658066277043974-y_1770731398499.jpg";
 
 function generateOrderBook() {
   const basePrice = 83700;
@@ -194,18 +194,18 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden" style={{ minHeight: "480px" }}>
         <div className="absolute inset-0">
           <img
-            src={samsungBuildingImg}
-            alt="Samsung"
+            src="/images/samsung-building-hero.png"
+            alt="Samsung Electronics Headquarters"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/75" />
         </div>
-        <div className="relative max-w-7xl mx-auto px-4 py-16 md:py-24">
+        <div className="relative max-w-7xl mx-auto px-4 py-20 md:py-28">
           <div className="text-center mb-10">
-            <Badge variant="outline" className="mb-4 text-white/80 border-white/30 bg-white/10 backdrop-blur">
+            <Badge variant="outline" className="mb-4 text-white/90 border-white/30 bg-white/10 backdrop-blur">
               SAMSUNG 삼성전자
             </Badge>
             <h1 className="text-3xl md:text-5xl font-bold text-white mb-3 tracking-tight">
@@ -316,13 +316,63 @@ export default function LandingPage() {
 
           <Card className="p-0 overflow-hidden">
             <img
-              src={samsungInfoImg}
-              alt="Samsung Info"
+              src={samsungChartImg}
+              alt="Samsung Stock Info"
               className="w-full h-full object-cover object-top"
               style={{ maxHeight: "320px" }}
             />
           </Card>
         </div>
+      </section>
+
+      <section className="relative overflow-hidden my-6" style={{ minHeight: "300px" }}>
+        <div className="absolute inset-0">
+          <img
+            src="/images/samsung-factory.png"
+            alt="Samsung Factory"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/70" />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                진화된 기술, 새로운 아이덴티티
+              </h2>
+              <p className="text-white/70 text-sm md:text-base leading-relaxed mb-4">
+                삼성전자는 세계 최초의 64M DRAM, 디지털 TV, MP3 플레이어 등 전 세계에 많은 것을 최초로 소개했습니다. 
+                글로벌 고객에게 특별한 인상을 남기기 위해 브랜드 이미지를 완전히 새롭게 바꾸었습니다.
+              </p>
+              <p className="text-white/60 text-sm">
+                2023년 3분기말 기준 삼성전자 총발행주식수는 6,792,669,250주입니다.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/10 backdrop-blur rounded-md p-4 text-center border border-white/10">
+                <p className="text-xs text-white/60 mb-1">보통주</p>
+                <p className="text-lg font-bold text-white">87.9%</p>
+                <p className="text-xs text-white/50">5,969,782,550주</p>
+              </div>
+              <div className="bg-white/10 backdrop-blur rounded-md p-4 text-center border border-white/10">
+                <p className="text-xs text-white/60 mb-1">우선주</p>
+                <p className="text-lg font-bold text-white">12.1%</p>
+                <p className="text-xs text-white/50">822,886,700주</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-4 py-10">
+        <Card className="p-0 overflow-hidden">
+          <img
+            src={samsungInfoImg}
+            alt="Samsung Electronics Info"
+            className="w-full object-cover object-top"
+            style={{ maxHeight: "500px" }}
+          />
+        </Card>
       </section>
 
       <section className="max-w-7xl mx-auto px-4 py-10">
