@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import { LogOut, Package, ArrowDownRight, ArrowUpRight, User as UserIcon } from "lucide-react";
-import { SamsungLogo } from "@/components/samsung-logo";
+import { SamsungLogo, SamsungBadge } from "@/components/samsung-logo";
 import type { User, StockTransaction } from "@shared/schema";
 
 export default function DashboardPage() {
@@ -67,8 +67,9 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <SamsungLogo className="h-4 w-auto text-foreground" />
+          <div className="flex items-center gap-2.5">
+            <SamsungBadge size={30} />
+            <SamsungLogo className="h-3.5 w-auto text-foreground" />
             <div className="h-4 w-px bg-border" />
             <span className="font-semibold text-sm tracking-wide text-muted-foreground">주식관리</span>
           </div>

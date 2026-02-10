@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { registerSchema, KOREAN_BANKS } from "@shared/schema";
 import { ArrowLeft } from "lucide-react";
-import { SamsungLogo } from "@/components/samsung-logo";
+import { SamsungLogo, SamsungBadge } from "@/components/samsung-logo";
 import { z } from "zod";
 
 type RegisterForm = z.infer<typeof registerSchema>;
@@ -67,7 +67,10 @@ export default function RegisterPage() {
               <ArrowLeft className="w-4 h-4 mr-1" /> 홈으로
             </Button>
           </Link>
-          <SamsungLogo className="h-6 w-auto text-[#1428a0] mx-auto mb-4" />
+          <div className="flex items-center justify-center gap-2.5 mb-4">
+            <SamsungBadge size={36} />
+            <SamsungLogo className="h-5 w-auto text-[#1428a0]" />
+          </div>
           <h1 className="text-2xl font-bold tracking-tight">회원가입</h1>
           <p className="text-sm text-muted-foreground mt-1">삼성전자 주식관리 시스템</p>
         </div>

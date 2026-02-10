@@ -19,7 +19,7 @@ import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2,
 } from "lucide-react";
-import { SamsungLogo } from "@/components/samsung-logo";
+import { SamsungLogo, SamsungBadge } from "@/components/samsung-logo";
 
 function StockTransactionDialog({
   user,
@@ -252,8 +252,9 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <SamsungLogo className="h-4 w-auto text-foreground" />
+          <div className="flex items-center gap-2.5">
+            <SamsungBadge size={30} />
+            <SamsungLogo className="h-3.5 w-auto text-foreground" />
             <div className="h-4 w-px bg-border" />
             <span className="font-semibold text-sm tracking-wide text-muted-foreground">관리자</span>
             <Badge variant="secondary">Admin</Badge>

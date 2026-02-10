@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, ArrowUpRight, BarChart3, Users, Shield } from "lucide-react";
-import { SamsungLogo } from "@/components/samsung-logo";
+import { SamsungLogo, SamsungBadge } from "@/components/samsung-logo";
 import samsungInfoImg from "@assets/telegram-cloud-photo-size-4-5789658066277043973-y_1770731402444.jpg";
 import samsungChartImg from "@assets/telegram-cloud-photo-size-4-5789658066277043974-y_1770731398499.jpg";
 
@@ -138,9 +138,10 @@ export default function LandingPage() {
       <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-[999]">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-4 flex-wrap">
           <Link href="/">
-            <div className="flex items-center gap-3 cursor-pointer">
-              <SamsungLogo className="h-5 w-auto text-foreground" />
-              <div className="h-5 w-px bg-border" />
+            <div className="flex items-center gap-2.5 cursor-pointer">
+              <SamsungBadge size={32} />
+              <SamsungLogo className="h-4 w-auto text-foreground" />
+              <div className="h-4 w-px bg-border" />
               <span className="font-semibold text-sm tracking-wide text-muted-foreground">주식관리</span>
             </div>
           </Link>
