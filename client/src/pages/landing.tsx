@@ -338,52 +338,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-        <Card className="p-0 overflow-hidden">
-          <img
-            src={samsungInfoImg}
-            alt="Samsung Electronics Info"
-            className="w-full object-cover object-top"
-            style={{ maxHeight: "500px" }}
-          />
-        </Card>
-      </section>
-
-      <section className="max-w-7xl mx-auto px-4 md:px-6 py-10">
-        <div className="text-center mb-8">
-          <p className="text-xs text-muted-foreground tracking-widest uppercase mb-2">Services</p>
-          <h2 className="text-2xl font-bold">주요 서비스</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="p-6 text-center">
-            <div className="w-12 h-12 rounded-md bg-[#1428a0]/10 flex items-center justify-center mx-auto mb-4">
-              <BarChart3 className="w-6 h-6 text-[#1428a0]" />
-            </div>
-            <h3 className="font-bold mb-2">실시간 현황</h3>
-            <p className="text-sm text-muted-foreground">
-              주식 입출고 현황을 실시간으로 확인하세요
-            </p>
-          </Card>
-          <Card className="p-6 text-center">
-            <div className="w-12 h-12 rounded-md bg-[#1428a0]/10 flex items-center justify-center mx-auto mb-4">
-              <Users className="w-6 h-6 text-[#1428a0]" />
-            </div>
-            <h3 className="font-bold mb-2">회원 관리</h3>
-            <p className="text-sm text-muted-foreground">
-              개인 계좌와 주식 현황을 한눈에 관리합니다
-            </p>
-          </Card>
-          <Card className="p-6 text-center">
-            <div className="w-12 h-12 rounded-md bg-[#1428a0]/10 flex items-center justify-center mx-auto mb-4">
-              <Shield className="w-6 h-6 text-[#1428a0]" />
-            </div>
-            <h3 className="font-bold mb-2">안전한 거래</h3>
-            <p className="text-sm text-muted-foreground">
-              안전하고 투명한 주식 거래 시스템을 제공합니다
-            </p>
-          </Card>
-        </div>
-      </section>
 
       <footer className="border-t mt-8">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-10">
