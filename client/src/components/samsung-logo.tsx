@@ -23,39 +23,37 @@ export function SamsungLogo({ className = "" }: { className?: string }) {
 }
 
 export function SamsungBadge({ className = "", size = 40 }: { className?: string; size?: number }) {
-  const w = size;
-  const h = size;
   return (
     <svg
-      width={w}
-      height={h}
-      viewBox="0 0 100 100"
+      width={size}
+      height={size}
+      viewBox="0 0 120 120"
       className={className}
       xmlns="http://www.w3.org/2000/svg"
       aria-label="Samsung"
     >
-      <rect x="0" y="0" width="100" height="100" rx="14" fill="#1428a0" />
+      <rect x="0" y="0" width="120" height="120" rx="24" fill="#1428a0" />
       <text
-        x="50"
-        y="42"
+        x="60"
+        y="52"
         textAnchor="middle"
         fill="#ffffff"
-        fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif"
-        fontSize="16.5"
-        fontWeight="700"
-        letterSpacing="1.5"
+        fontFamily="SamsungOne, 'Helvetica Neue', Helvetica, Arial, sans-serif"
+        fontSize="24"
+        fontWeight="800"
+        letterSpacing="3.5"
       >
         SAM
       </text>
       <text
-        x="50"
-        y="64"
+        x="60"
+        y="80"
         textAnchor="middle"
         fill="#ffffff"
-        fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif"
-        fontSize="16.5"
-        fontWeight="700"
-        letterSpacing="1.5"
+        fontFamily="SamsungOne, 'Helvetica Neue', Helvetica, Arial, sans-serif"
+        fontSize="24"
+        fontWeight="800"
+        letterSpacing="3.5"
       >
         SUNG
       </text>
