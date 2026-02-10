@@ -19,6 +19,7 @@ export const stockTransactions = pgTable("stock_transactions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
   type: text("type").notNull(), // 'in' (입고) or 'out' (출고)
+  brand: text("brand").notNull().default("삼성전자"),
   category: text("category").notNull(),
   stockName: text("stock_name").notNull(),
   quantity: integer("quantity").notNull(),
@@ -90,3 +91,19 @@ export const STOCK_CATEGORIES = [
   "실권주",
   "기타",
 ] as const;
+
+export const BRAND_SUBCATEGORIES: Record<string, string[]> = {
+  "삼성전자": ["스마트폰", "반도체", "가전", "디스플레이", "네트워크"],
+  "삼성SDI": ["배터리", "전자재료"],
+  "삼성바이오로직스": ["바이오시밀러", "CMO/CDO"],
+  "삼성물산": ["건설", "상사", "패션", "리조트"],
+  "삼성생명": ["보험", "투자"],
+  "삼성화재": ["손해보험", "자산운용"],
+  "삼성SDS": ["IT서비스", "물류"],
+  "삼성중공업": ["조선", "해양플랜트"],
+  "삼성엔지니어링": ["플랜트", "건설"],
+  "제일기획": ["광고", "마케팅"],
+  "호텔신라": ["호텔", "면세"],
+} as const;
+
+export const BRANDS = Object.keys(BRAND_SUBCATEGORIES) as string[];
