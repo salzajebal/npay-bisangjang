@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
-import { STOCK_CATEGORIES, BRANDS, BRAND_SUBCATEGORIES } from "@shared/schema";
+import { STOCK_CATEGORIES } from "@shared/schema";
 import type { User, StockTransaction } from "@shared/schema";
 import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
@@ -31,7 +31,6 @@ function StockTransactionDialog({
   onSuccess: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [brand, setBrand] = useState("삼성전자");
   const [category, setCategory] = useState("보통주");
   const [stockName, setStockName] = useState("삼성전자");
   const [quantity, setQuantity] = useState("");
@@ -39,23 +38,11 @@ function StockTransactionDialog({
   const [memo, setMemo] = useState("");
   const { toast } = useToast();
 
-  const subcategories = BRAND_SUBCATEGORIES[brand] || [];
-
-  const handleBrandChange = (newBrand: string) => {
-    setBrand(newBrand);
-    setStockName(newBrand);
-    const subs = BRAND_SUBCATEGORIES[newBrand] || [];
-    if (subs.length > 0) {
-      setCategory(subs[0]);
-    }
-  };
-
   const mutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/admin/transactions", {
         userId: user.id,
         type,
-        brand,
         category,
         stockName,
         quantity: parseInt(quantity),
@@ -106,28 +93,12 @@ function StockTransactionDialog({
         </DialogHeader>
         <div className="space-y-4 mt-2">
           <div className="space-y-2">
-            <Label>브랜드</Label>
-            <Select value={brand} onValueChange={handleBrandChange}>
-              <SelectTrigger data-testid="select-brand">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {BRANDS.map((b) => (
-                  <SelectItem key={b} value={b}>{b}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>소분류</Label>
+            <Label>카테고리</Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger data-testid="select-category">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {subcategories.map((sub) => (
-                  <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                ))}
                 {STOCK_CATEGORIES.map((cat) => (
                   <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                 ))}
@@ -191,7 +162,6 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
-  const [filterBrand, setFilterBrand] = useState<string>("all");
   const { toast } = useToast();
 
   const { data: authData, isLoading: authLoading } = useQuery<{ user: User } | null>({
@@ -264,13 +234,10 @@ export default function AdminPage() {
   );
 
   const filteredTransactions = transactions.filter((tx) => {
-    if (filterBrand !== "all" && (tx as any).brand !== filterBrand) return false;
     if (filterCategory !== "all" && tx.category !== filterCategory) return false;
     if (filterType !== "all" && tx.type !== filterType) return false;
     return true;
   });
-
-  const activeBrandSubcategories = filterBrand !== "all" ? (BRAND_SUBCATEGORIES[filterBrand] || []) : [];
 
   const getUserName = (userId: string) => {
     const u = (allUsers || []).find((u) => u.id === userId);
@@ -428,66 +395,28 @@ export default function AdminPage() {
           </TabsContent>
 
           <TabsContent value="transactions" className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Button
-                  size="sm"
-                  variant={filterBrand === "all" ? "default" : "outline"}
-                  onClick={() => { setFilterBrand("all"); setFilterCategory("all"); }}
-                  data-testid="filter-brand-all"
-                >
-                  전체
-                </Button>
-                {BRANDS.map((b) => (
-                  <Button
-                    key={b}
-                    size="sm"
-                    variant={filterBrand === b ? "default" : "outline"}
-                    onClick={() => { setFilterBrand(b); setFilterCategory("all"); }}
-                    data-testid={`filter-brand-${b}`}
-                  >
-                    {b}
-                  </Button>
-                ))}
-              </div>
-              {filterBrand !== "all" && activeBrandSubcategories.length > 0 && (
-                <div className="flex items-center gap-2 flex-wrap pl-2 border-l-2 border-primary/20">
-                  <Button
-                    size="sm"
-                    variant={filterCategory === "all" ? "secondary" : "ghost"}
-                    onClick={() => setFilterCategory("all")}
-                    data-testid="filter-sub-all"
-                  >
-                    전체
-                  </Button>
-                  {activeBrandSubcategories.map((sub) => (
-                    <Button
-                      key={sub}
-                      size="sm"
-                      variant={filterCategory === sub ? "secondary" : "ghost"}
-                      onClick={() => setFilterCategory(sub)}
-                      data-testid={`filter-sub-${sub}`}
-                    >
-                      {sub}
-                    </Button>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-[140px]" data-testid="select-filter-type">
+                  <SelectValue placeholder="유형" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  <SelectItem value="in">입고</SelectItem>
+                  <SelectItem value="out">출고</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger className="w-[140px]" data-testid="select-filter-category">
+                  <SelectValue placeholder="카테고리" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체</SelectItem>
+                  {STOCK_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
-                </div>
-              )}
-              <div className="flex items-center gap-3 flex-wrap">
-                <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger className="w-[140px]" data-testid="select-filter-type">
-                    <SelectValue placeholder="유형" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">전체</SelectItem>
-                    <SelectItem value="in">입고</SelectItem>
-                    <SelectItem value="out">출고</SelectItem>
-                  </SelectContent>
-                </Select>
-                <span className="text-sm text-muted-foreground">
-                  총 {filteredTransactions.length}건
-                </span>
-              </div>
+                </SelectContent>
+              </Select>
             </div>
 
             {txLoading ? (
@@ -506,8 +435,7 @@ export default function AdminPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>유형</TableHead>
-                        <TableHead>브랜드</TableHead>
-                        <TableHead>소분류</TableHead>
+                        <TableHead>카테고리</TableHead>
                         <TableHead>회원</TableHead>
                         <TableHead>종목</TableHead>
                         <TableHead className="text-right">수량</TableHead>
@@ -527,11 +455,6 @@ export default function AdminPage() {
                               className={tx.type === "in" ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500 text-white"}
                             >
                               {tx.type === "in" ? "입고" : "출고"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" data-testid={`text-brand-${tx.id}`}>
-                              {(tx as any).brand || "삼성전자"}
                             </Badge>
                           </TableCell>
                           <TableCell>{tx.category}</TableCell>
