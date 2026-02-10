@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
-import { BarChart3, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { SamsungLogo } from "@/components/samsung-logo";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -51,9 +52,7 @@ export default function LoginPage() {
               <ArrowLeft className="w-4 h-4 mr-1" /> 홈으로
             </Button>
           </Link>
-          <div className="w-12 h-12 rounded-md bg-primary flex items-center justify-center mx-auto mb-4">
-            <BarChart3 className="w-7 h-7 text-primary-foreground" />
-          </div>
+          <SamsungLogo className="h-6 w-auto text-[#1428a0] mx-auto mb-4" />
           <h1 className="text-2xl font-bold tracking-tight">로그인</h1>
           <p className="text-sm text-muted-foreground mt-1">삼성전자 주식관리 시스템</p>
         </div>

@@ -16,9 +16,10 @@ import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { STOCK_CATEGORIES } from "@shared/schema";
 import type { User, StockTransaction } from "@shared/schema";
 import {
-  BarChart3, LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
-  Plus, Search, Trash2,
+  LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
+  Search, Trash2,
 } from "lucide-react";
+import { SamsungLogo } from "@/components/samsung-logo";
 
 function StockTransactionDialog({
   user,
@@ -252,10 +253,9 @@ export default function AdminPage() {
       <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-lg tracking-tight">관리자 패널</span>
+            <SamsungLogo className="h-4 w-auto text-foreground" />
+            <div className="h-4 w-px bg-border" />
+            <span className="font-semibold text-sm tracking-wide text-muted-foreground">관리자</span>
             <Badge variant="secondary">Admin</Badge>
           </div>
           <Button
