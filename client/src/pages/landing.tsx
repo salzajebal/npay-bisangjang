@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Heart, Star, X, TrendingUp, TrendingDown } from "lucide-react";
+import { Search, Heart, Star, X, TrendingUp, TrendingDown, ExternalLink, MessageCircle } from "lucide-react";
 import { SamsungBadge } from "@/components/samsung-logo";
 
 const KOREAN_STOCKS = [
@@ -461,6 +461,52 @@ function InvestorPanel({ data }: { data: ReturnType<typeof generateInvestorData>
   );
 }
 
+function CommunityPanel() {
+  const [iframeBlocked, setIframeBlocked] = useState(false);
+  const communityUrl = "https://www.tossinvest.com/stocks/A005930/community";
+
+  if (iframeBlocked) {
+    return (
+      <div className="p-4 flex flex-col items-center justify-center gap-3 min-h-[200px]">
+        <MessageCircle className="w-8 h-8 text-muted-foreground/30" />
+        <p className="text-xs text-muted-foreground text-center">토스증권 커뮤니티는 외부 접근이<br />제한되어 있습니다</p>
+        <a href={communityUrl} target="_blank" rel="noopener noreferrer">
+          <Button size="sm" variant="outline" className="text-xs gap-1.5">
+            <ExternalLink className="w-3 h-3" />
+            토스증권에서 보기
+          </Button>
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative" style={{ minHeight: 300 }}>
+      <iframe
+        src={communityUrl}
+        className="w-full border-0"
+        style={{ height: 300 }}
+        sandbox="allow-scripts allow-same-origin allow-popups"
+        onError={() => setIframeBlocked(true)}
+        onLoad={(e) => {
+          try {
+            const frame = e.currentTarget;
+            if (!frame.contentDocument && !frame.contentWindow) {
+              setIframeBlocked(true);
+            }
+          } catch {
+            setIframeBlocked(true);
+          }
+        }}
+        data-testid="iframe-community"
+      />
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ display: iframeBlocked ? "none" : "none" }}>
+        <Skeleton className="w-full h-full" />
+      </div>
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const { data: stockData, isLoading } = useQuery<StockData>({
     queryKey: ["/api/stock/samsung"],
@@ -627,7 +673,7 @@ export default function LandingPage() {
               )}
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="p-0 overflow-hidden">
                 <div className="px-3 py-2 border-b flex items-center justify-between gap-2">
                   <span className="text-sm font-bold">시세</span>
@@ -642,6 +688,19 @@ export default function LandingPage() {
                   <X className="w-3.5 h-3.5 text-muted-foreground/40" />
                 </div>
                 <InvestorPanel data={investor} />
+              </Card>
+
+              <Card className="p-0 overflow-hidden" data-testid="card-community">
+                <div className="px-3 py-2 border-b flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    <span className="text-sm font-bold">커뮤니티</span>
+                  </div>
+                  <a href="https://www.tossinvest.com/stocks/A005930/community" target="_blank" rel="noopener noreferrer" className="text-muted-foreground/40">
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+                <CommunityPanel />
               </Card>
             </div>
           </div>
