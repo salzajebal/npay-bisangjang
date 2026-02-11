@@ -944,27 +944,32 @@ function NewsView() {
   });
 
   const FALLBACK_NEWS = [
-    { title: "삼성전자, HBM4 양산 본격화...AI 반도체 시장 공략 가속", publisher: "한국경제", link: "#", publishedAt: new Date().toISOString(), thumbnail: null },
-    { title: "삼성전자 2나노 파운드리 수율 개선 소식에 주가 강세", publisher: "매일경제", link: "#", publishedAt: new Date(Date.now() - 3600000).toISOString(), thumbnail: null },
-    { title: "삼성전자, 갤럭시 S26 시리즈 사전 예약 역대 최다", publisher: "조선비즈", link: "#", publishedAt: new Date(Date.now() - 7200000).toISOString(), thumbnail: null },
-    { title: "외국인 삼성전자 3거래일 연속 순매수...반도체 기대감", publisher: "서울경제", link: "#", publishedAt: new Date(Date.now() - 10800000).toISOString(), thumbnail: null },
-    { title: "삼성전자, DRAM 가격 반등에 실적 개선 전망", publisher: "이데일리", link: "#", publishedAt: new Date(Date.now() - 14400000).toISOString(), thumbnail: null },
-    { title: "삼성전자 배당 확대 기대...주주환원 정책 강화", publisher: "뉴스1", link: "#", publishedAt: new Date(Date.now() - 18000000).toISOString(), thumbnail: null },
-    { title: "삼성전자, 차세대 메모리 기술 특허 출원 급증", publisher: "전자신문", link: "#", publishedAt: new Date(Date.now() - 21600000).toISOString(), thumbnail: null },
-    { title: "삼성전자 반도체 부문 설비 투자 확대 계획 발표", publisher: "아시아경제", link: "#", publishedAt: new Date(Date.now() - 25200000).toISOString(), thumbnail: null },
+    { title: "삼성전자, HBM4 양산 본격화...AI 반도체 시장 공략 가속", publisher: "한국경제", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "방금 전", thumbnail: null },
+    { title: "삼성전자 2나노 파운드리 수율 개선 소식에 주가 강세", publisher: "매일경제", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "1시간 전", thumbnail: null },
+    { title: "삼성전자, 갤럭시 S26 시리즈 사전 예약 역대 최다", publisher: "조선비즈", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "2시간 전", thumbnail: null },
+    { title: "외국인 삼성전자 3거래일 연속 순매수...반도체 기대감", publisher: "서울경제", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "3시간 전", thumbnail: null },
+    { title: "삼성전자, DRAM 가격 반등에 실적 개선 전망", publisher: "이데일리", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "4시간 전", thumbnail: null },
+    { title: "삼성전자 배당 확대 기대...주주환원 정책 강화", publisher: "뉴스1", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "5시간 전", thumbnail: null },
+    { title: "삼성전자, 차세대 메모리 기술 특허 출원 급증", publisher: "전자신문", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "6시간 전", thumbnail: null },
+    { title: "삼성전자 반도체 부문 설비 투자 확대 계획 발표", publisher: "아시아경제", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "7시간 전", thumbnail: null },
   ];
 
   const news = (newsData && newsData.length > 0) ? newsData : (isLoading ? [] : FALLBACK_NEWS);
 
   function timeAgo(dateStr: string | null) {
     if (!dateStr) return "";
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}분 전`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}시간 전`;
-    const days = Math.floor(hours / 24);
-    return `${days}일 전`;
+    if (dateStr.includes("전") || dateStr.includes("분") || dateStr.includes("시간") || dateStr.includes("일")) return dateStr;
+    try {
+      const diff = Date.now() - new Date(dateStr).getTime();
+      const mins = Math.floor(diff / 60000);
+      if (mins < 60) return `${mins}분 전`;
+      const hours = Math.floor(mins / 60);
+      if (hours < 24) return `${hours}시간 전`;
+      const days = Math.floor(hours / 24);
+      return `${days}일 전`;
+    } catch {
+      return dateStr;
+    }
   }
 
   return (
