@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, Link, Redirect } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -17,9 +16,9 @@ import { STOCK_CATEGORIES } from "@shared/schema";
 import type { User, StockTransaction } from "@shared/schema";
 import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
-  Search, Trash2,
+  Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
 } from "lucide-react";
-import { SamsungLogo, SamsungBadge } from "@/components/samsung-logo";
+import { SamsungBadge } from "@/components/samsung-logo";
 
 function StockTransactionDialog({
   user,
@@ -34,7 +33,7 @@ function StockTransactionDialog({
   const [category, setCategory] = useState("보통주");
   const [stockName, setStockName] = useState("삼성전자");
   const [quantity, setQuantity] = useState("");
-  const [pricePerShare, setPricePerShare] = useState("50000");
+  const [pricePerShare, setPricePerShare] = useState("95000");
   const [memo, setMemo] = useState("");
   const [loadingPrice, setLoadingPrice] = useState(false);
   const { toast } = useToast();
@@ -187,8 +186,18 @@ function StockTransactionDialog({
   );
 }
 
+type AdminSection = "dashboard" | "members" | "transactions";
+
+const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
+  { id: "dashboard", label: "대시보드", icon: LayoutDashboard },
+  { id: "members", label: "회원 관리", icon: Users },
+  { id: "transactions", label: "거래 내역", icon: ClipboardList },
+];
+
 export default function AdminPage() {
   const [, setLocation] = useLocation();
+  const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
@@ -238,9 +247,9 @@ export default function AdminPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background p-4">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <Skeleton className="h-14 w-full" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="space-y-4 w-full max-w-md px-4">
+          <Skeleton className="h-10 w-full" />
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-64 w-full" />
         </div>
@@ -249,8 +258,7 @@ export default function AdminPage() {
   }
 
   if (!authData?.user?.isAdmin) {
-    setLocation("/login");
-    return null;
+    return <Redirect to="/login" />;
   }
 
   const users = (allUsers || []).filter((u) => !u.isAdmin);
@@ -277,246 +285,393 @@ export default function AdminPage() {
   const totalMembers = users.length;
   const totalIn = transactions.filter((t) => t.type === "in").reduce((s, t) => s + t.quantity, 0);
   const totalOut = transactions.filter((t) => t.type === "out").reduce((s, t) => s + t.quantity, 0);
+  const totalValue = transactions.filter((t) => t.type === "in").reduce((s, t) => s + t.quantity * t.pricePerShare, 0);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-2.5">
-            <SamsungBadge size={30} />
-            <SamsungLogo className="h-3.5 w-auto text-foreground" />
-            <div className="h-4 w-px bg-border" />
-            <span className="font-semibold text-sm tracking-wide text-muted-foreground">관리자</span>
-            <Badge variant="secondary">Admin</Badge>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
+    <div className="flex h-screen bg-background overflow-hidden">
+      <aside className={`${sidebarCollapsed ? "w-16" : "w-60"} border-r bg-muted/30 flex flex-col transition-all duration-200 shrink-0`}>
+        <div className={`h-14 border-b flex items-center ${sidebarCollapsed ? "justify-center px-2" : "px-4"} gap-2`}>
+          {!sidebarCollapsed && (
+            <>
+              <SamsungBadge size={28} />
+              <div className="flex flex-col min-w-0">
+                <span className="font-bold text-sm truncate">IBK기업증권</span>
+                <span className="text-[11px] text-muted-foreground">관리자 시스템</span>
+              </div>
+            </>
+          )}
+          {sidebarCollapsed && <SamsungBadge size={28} />}
+        </div>
+
+        <nav className="flex-1 py-3 px-2 space-y-1">
+          {sidebarItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeSection === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveSection(item.id)}
+                className={`w-full flex items-center gap-3 rounded-md text-sm font-medium transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                data-testid={`nav-admin-${item.id}`}
+                title={sidebarCollapsed ? item.label : undefined}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                {!sidebarCollapsed && <span>{item.label}</span>}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="border-t p-2 space-y-1">
+          <Link href="/">
+            <button className={`w-full flex items-center gap-3 rounded-md text-sm text-muted-foreground transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`} data-testid="nav-admin-home" title={sidebarCollapsed ? "메인 홈" : undefined}>
+              <Home className="w-4 h-4 shrink-0" />
+              {!sidebarCollapsed && <span>메인 홈</span>}
+            </button>
+          </Link>
+          <button
             onClick={() => logoutMutation.mutate()}
+            className={`w-full flex items-center gap-3 rounded-md text-sm text-muted-foreground transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`}
             data-testid="button-admin-logout"
+            title={sidebarCollapsed ? "로그아웃" : undefined}
           >
-            <LogOut className="w-4 h-4 mr-1" /> 로그아웃
-          </Button>
+            <LogOut className="w-4 h-4 shrink-0" />
+            {!sidebarCollapsed && <span>로그아웃</span>}
+          </button>
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className={`w-full flex items-center gap-3 rounded-md text-sm text-muted-foreground transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2" : "px-3 py-2"}`}
+            data-testid="button-toggle-sidebar"
+          >
+            {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <><ChevronLeft className="w-4 h-4 shrink-0" /><span>접기</span></>}
+          </button>
         </div>
-      </header>
+      </aside>
 
-      <main className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="p-5">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">총 회원수</p>
-                <p className="text-2xl font-bold mt-1" data-testid="text-total-members">{totalMembers}</p>
-              </div>
-              <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-          </Card>
-          <Card className="p-5">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">총 입고</p>
-                <p className="text-2xl font-bold mt-1 text-red-500" data-testid="text-admin-total-in">{totalIn.toLocaleString()}주</p>
-              </div>
-              <div className="w-10 h-10 rounded-md bg-red-500/10 flex items-center justify-center">
-                <ArrowDownRight className="w-5 h-5 text-red-500" />
-              </div>
-            </div>
-          </Card>
-          <Card className="p-5">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">총 출고</p>
-                <p className="text-2xl font-bold mt-1 text-blue-500" data-testid="text-admin-total-out">{totalOut.toLocaleString()}주</p>
-              </div>
-              <div className="w-10 h-10 rounded-md bg-blue-500/10 flex items-center justify-center">
-                <ArrowUpRight className="w-5 h-5 text-blue-500" />
-              </div>
-            </div>
-          </Card>
-          <Card className="p-5">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">보유 잔량</p>
-                <p className="text-2xl font-bold mt-1" data-testid="text-admin-holding">{(totalIn - totalOut).toLocaleString()}주</p>
-              </div>
-              <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center">
-                <Package className="w-5 h-5 text-primary" />
-              </div>
-            </div>
-          </Card>
-        </div>
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header className="h-14 border-b bg-background flex items-center justify-between gap-4 px-6 shrink-0">
+          <div>
+            <h1 className="font-bold text-lg" data-testid="text-admin-section-title">
+              {sidebarItems.find((i) => i.id === activeSection)?.label}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Badge variant="outline">Admin</Badge>
+          </div>
+        </header>
 
-        <Tabs defaultValue="members" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="members" data-testid="tab-members">
-              <Users className="w-4 h-4 mr-1" /> 회원 관리
-            </TabsTrigger>
-            <TabsTrigger value="transactions" data-testid="tab-transactions">
-              <Package className="w-4 h-4 mr-1" /> 거래 내역
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="members" className="space-y-4">
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="회원 검색 (이름, 아이디, 계좌번호)"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                  data-testid="input-search-members"
-                />
+        <main className="flex-1 overflow-y-auto p-6 space-y-6">
+          {activeSection === "dashboard" && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">총 회원수</p>
+                      <p className="text-2xl font-bold mt-1 tabular-nums" data-testid="text-total-members">{totalMembers}명</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-primary" />
+                    </div>
+                  </div>
+                </Card>
+                <Card className="p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">총 입고</p>
+                      <p className="text-2xl font-bold mt-1 text-red-500 tabular-nums" data-testid="text-admin-total-in">{totalIn.toLocaleString()}주</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-md bg-red-500/10 flex items-center justify-center">
+                      <ArrowDownRight className="w-5 h-5 text-red-500" />
+                    </div>
+                  </div>
+                </Card>
+                <Card className="p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">총 출고</p>
+                      <p className="text-2xl font-bold mt-1 text-blue-500 tabular-nums" data-testid="text-admin-total-out">{totalOut.toLocaleString()}주</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-md bg-blue-500/10 flex items-center justify-center">
+                      <ArrowUpRight className="w-5 h-5 text-blue-500" />
+                    </div>
+                  </div>
+                </Card>
+                <Card className="p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">보유 잔량</p>
+                      <p className="text-2xl font-bold mt-1 tabular-nums" data-testid="text-admin-holding">{(totalIn - totalOut).toLocaleString()}주</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center">
+                      <Package className="w-5 h-5 text-primary" />
+                    </div>
+                  </div>
+                </Card>
               </div>
-            </div>
 
-            {usersLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
-              </div>
-            ) : filteredUsers.length === 0 ? (
-              <Card className="p-12 text-center">
-                <Users className="w-10 h-10 mx-auto mb-3 opacity-30 text-muted-foreground" />
-                <p className="font-medium text-muted-foreground">
-                  {searchTerm ? "검색 결과가 없습니다" : "등록된 회원이 없습니다"}
-                </p>
-              </Card>
-            ) : (
-              <Card className="p-0 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>아이디</TableHead>
-                        <TableHead>성명</TableHead>
-                        <TableHead>은행</TableHead>
-                        <TableHead>계좌번호</TableHead>
-                        <TableHead>예금주</TableHead>
-                        <TableHead>가입일</TableHead>
-                        <TableHead className="text-center">관리</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredUsers.map((u) => (
-                        <TableRow key={u.id} data-testid={`row-user-${u.id}`}>
-                          <TableCell className="font-medium">{u.username}</TableCell>
-                          <TableCell>{u.fullName}</TableCell>
-                          <TableCell>{u.bank}</TableCell>
-                          <TableCell className="font-mono text-sm">{u.accountNumber}</TableCell>
-                          <TableCell>{u.accountHolder}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {new Date(u.createdAt).toLocaleDateString("ko-KR")}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-center gap-2">
-                              <StockTransactionDialog user={u} type="in" onSuccess={refreshData} />
-                              <StockTransactionDialog user={u} type="out" onSuccess={refreshData} />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="p-0 overflow-hidden">
+                  <div className="p-4 border-b flex items-center justify-between gap-4">
+                    <div>
+                      <h3 className="font-bold text-sm">최근 회원</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">최근 가입한 회원 목록</p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setActiveSection("members")} data-testid="link-view-all-members">
+                      전체보기
+                    </Button>
+                  </div>
+                  {usersLoading ? (
+                    <div className="p-4 space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div>
+                  ) : users.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground text-sm">등록된 회원이 없습니다</div>
+                  ) : (
+                    <div className="divide-y">
+                      {users.slice(0, 5).map((u) => (
+                        <div key={u.id} className="px-4 py-3 flex items-center justify-between gap-4" data-testid={`dash-user-${u.id}`}>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <span className="text-xs font-bold text-primary">{u.fullName.charAt(0)}</span>
                             </div>
-                          </TableCell>
-                        </TableRow>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">{u.fullName}</p>
+                              <p className="text-xs text-muted-foreground truncate">{u.bank} · {u.accountNumber}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <StockTransactionDialog user={u} type="in" onSuccess={refreshData} />
+                            <StockTransactionDialog user={u} type="out" onSuccess={refreshData} />
+                          </div>
+                        </div>
                       ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </Card>
-            )}
-          </TabsContent>
+                    </div>
+                  )}
+                </Card>
 
-          <TabsContent value="transactions" className="space-y-4">
-            <div className="flex items-center gap-3 flex-wrap">
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-[140px]" data-testid="select-filter-type">
-                  <SelectValue placeholder="유형" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체</SelectItem>
-                  <SelectItem value="in">입고</SelectItem>
-                  <SelectItem value="out">출고</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="w-[140px]" data-testid="select-filter-category">
-                  <SelectValue placeholder="카테고리" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">전체</SelectItem>
-                  {STOCK_CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {txLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
-              </div>
-            ) : filteredTransactions.length === 0 ? (
-              <Card className="p-12 text-center">
-                <Package className="w-10 h-10 mx-auto mb-3 opacity-30 text-muted-foreground" />
-                <p className="font-medium text-muted-foreground">거래 내역이 없습니다</p>
-              </Card>
-            ) : (
-              <Card className="p-0 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>유형</TableHead>
-                        <TableHead>카테고리</TableHead>
-                        <TableHead>회원</TableHead>
-                        <TableHead>종목</TableHead>
-                        <TableHead className="text-right">수량</TableHead>
-                        <TableHead className="text-right">단가</TableHead>
-                        <TableHead className="text-right">총액</TableHead>
-                        <TableHead>메모</TableHead>
-                        <TableHead>일시</TableHead>
-                        <TableHead className="text-center">삭제</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredTransactions.map((tx) => (
-                        <TableRow key={tx.id} data-testid={`row-tx-${tx.id}`}>
-                          <TableCell>
+                <Card className="p-0 overflow-hidden">
+                  <div className="p-4 border-b flex items-center justify-between gap-4">
+                    <div>
+                      <h3 className="font-bold text-sm">최근 거래</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">최근 입출고 내역</p>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setActiveSection("transactions")} data-testid="link-view-all-tx">
+                      전체보기
+                    </Button>
+                  </div>
+                  {txLoading ? (
+                    <div className="p-4 space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div>
+                  ) : transactions.length === 0 ? (
+                    <div className="p-8 text-center text-muted-foreground text-sm">거래 내역이 없습니다</div>
+                  ) : (
+                    <div className="divide-y">
+                      {transactions.slice(0, 5).map((tx) => (
+                        <div key={tx.id} className="px-4 py-3 flex items-center justify-between gap-4" data-testid={`dash-tx-${tx.id}`}>
+                          <div className="flex items-center gap-3 min-w-0">
                             <Badge
                               variant={tx.type === "in" ? "default" : "secondary"}
-                              className={tx.type === "in" ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500 text-white"}
+                              className={`shrink-0 ${tx.type === "in" ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500 text-white"}`}
                             >
                               {tx.type === "in" ? "입고" : "출고"}
                             </Badge>
-                          </TableCell>
-                          <TableCell>{tx.category}</TableCell>
-                          <TableCell className="font-medium">{getUserName(tx.userId)}</TableCell>
-                          <TableCell>{tx.stockName}</TableCell>
-                          <TableCell className="text-right font-mono">{tx.quantity.toLocaleString()}주</TableCell>
-                          <TableCell className="text-right font-mono">{tx.pricePerShare.toLocaleString()}원</TableCell>
-                          <TableCell className="text-right font-mono">{(tx.quantity * tx.pricePerShare).toLocaleString()}원</TableCell>
-                          <TableCell className="text-sm text-muted-foreground">{tx.memo || "-"}</TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {new Date(tx.createdAt).toLocaleDateString("ko-KR")}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => deleteTransactionMutation.mutate(tx.id)}
-                              data-testid={`button-delete-tx-${tx.id}`}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium truncate">{getUserName(tx.userId)} · {tx.stockName}</p>
+                              <p className="text-xs text-muted-foreground">{tx.quantity.toLocaleString()}주 · {tx.pricePerShare.toLocaleString()}원</p>
+                            </div>
+                          </div>
+                          <span className="text-xs text-muted-foreground shrink-0">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</span>
+                        </div>
                       ))}
-                    </TableBody>
-                  </Table>
+                    </div>
+                  )}
+                </Card>
+              </div>
+
+              <Card className="p-5">
+                <h3 className="font-bold text-sm mb-1">자산 요약</h3>
+                <p className="text-xs text-muted-foreground mb-4">전체 입고 기준 총 자산 가치</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div>
+                    <p className="text-sm text-muted-foreground">총 거래 건수</p>
+                    <p className="text-xl font-bold mt-1 tabular-nums">{transactions.length}건</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">총 입고 금액</p>
+                    <p className="text-xl font-bold mt-1 tabular-nums">{totalValue.toLocaleString()}원</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">현재 보유 잔량</p>
+                    <p className="text-xl font-bold mt-1 tabular-nums">{(totalIn - totalOut).toLocaleString()}주</p>
+                  </div>
                 </div>
               </Card>
-            )}
-          </TabsContent>
-        </Tabs>
-      </main>
+            </>
+          )}
+
+          {activeSection === "members" && (
+            <>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="회원 검색 (이름, 아이디, 계좌번호)"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                    data-testid="input-search-members"
+                  />
+                </div>
+                <Badge variant="outline" className="shrink-0">{filteredUsers.length}명</Badge>
+              </div>
+
+              {usersLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
+                </div>
+              ) : filteredUsers.length === 0 ? (
+                <Card className="p-12 text-center">
+                  <Users className="w-10 h-10 mx-auto mb-3 opacity-30 text-muted-foreground" />
+                  <p className="font-medium text-muted-foreground">
+                    {searchTerm ? "검색 결과가 없습니다" : "등록된 회원이 없습니다"}
+                  </p>
+                </Card>
+              ) : (
+                <Card className="p-0 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>아이디</TableHead>
+                          <TableHead>성명</TableHead>
+                          <TableHead>은행</TableHead>
+                          <TableHead>계좌번호</TableHead>
+                          <TableHead>예금주</TableHead>
+                          <TableHead>가입일</TableHead>
+                          <TableHead className="text-center">관리</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredUsers.map((u) => (
+                          <TableRow key={u.id} data-testid={`row-user-${u.id}`}>
+                            <TableCell className="font-medium">{u.username}</TableCell>
+                            <TableCell>{u.fullName}</TableCell>
+                            <TableCell>{u.bank}</TableCell>
+                            <TableCell className="font-mono text-sm">{u.accountNumber}</TableCell>
+                            <TableCell>{u.accountHolder}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(u.createdAt).toLocaleDateString("ko-KR")}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center justify-center gap-2">
+                                <StockTransactionDialog user={u} type="in" onSuccess={refreshData} />
+                                <StockTransactionDialog user={u} type="out" onSuccess={refreshData} />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </Card>
+              )}
+            </>
+          )}
+
+          {activeSection === "transactions" && (
+            <>
+              <div className="flex items-center gap-3 flex-wrap">
+                <Select value={filterType} onValueChange={setFilterType}>
+                  <SelectTrigger className="w-[140px]" data-testid="select-filter-type">
+                    <SelectValue placeholder="유형" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체</SelectItem>
+                    <SelectItem value="in">입고</SelectItem>
+                    <SelectItem value="out">출고</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="w-[140px]" data-testid="select-filter-category">
+                    <SelectValue placeholder="카테고리" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체</SelectItem>
+                    {STOCK_CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Badge variant="outline" className="shrink-0">{filteredTransactions.length}건</Badge>
+              </div>
+
+              {txLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+                </div>
+              ) : filteredTransactions.length === 0 ? (
+                <Card className="p-12 text-center">
+                  <Package className="w-10 h-10 mx-auto mb-3 opacity-30 text-muted-foreground" />
+                  <p className="font-medium text-muted-foreground">거래 내역이 없습니다</p>
+                </Card>
+              ) : (
+                <Card className="p-0 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>유형</TableHead>
+                          <TableHead>카테고리</TableHead>
+                          <TableHead>회원</TableHead>
+                          <TableHead>종목</TableHead>
+                          <TableHead className="text-right">수량</TableHead>
+                          <TableHead className="text-right">단가</TableHead>
+                          <TableHead className="text-right">총액</TableHead>
+                          <TableHead>메모</TableHead>
+                          <TableHead>일시</TableHead>
+                          <TableHead className="text-center">삭제</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredTransactions.map((tx) => (
+                          <TableRow key={tx.id} data-testid={`row-tx-${tx.id}`}>
+                            <TableCell>
+                              <Badge
+                                variant={tx.type === "in" ? "default" : "secondary"}
+                                className={tx.type === "in" ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500 text-white"}
+                              >
+                                {tx.type === "in" ? "입고" : "출고"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{tx.category}</TableCell>
+                            <TableCell className="font-medium">{getUserName(tx.userId)}</TableCell>
+                            <TableCell>{tx.stockName}</TableCell>
+                            <TableCell className="text-right font-mono tabular-nums">{tx.quantity.toLocaleString()}주</TableCell>
+                            <TableCell className="text-right font-mono tabular-nums">{tx.pricePerShare.toLocaleString()}원</TableCell>
+                            <TableCell className="text-right font-mono tabular-nums">{(tx.quantity * tx.pricePerShare).toLocaleString()}원</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{tx.memo || "-"}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(tx.createdAt).toLocaleDateString("ko-KR")}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => deleteTransactionMutation.mutate(tx.id)}
+                                data-testid={`button-delete-tx-${tx.id}`}
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </Card>
+              )}
+            </>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
