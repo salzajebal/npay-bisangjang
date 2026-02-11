@@ -36,7 +36,25 @@ function StockTransactionDialog({
   const [quantity, setQuantity] = useState("");
   const [pricePerShare, setPricePerShare] = useState("50000");
   const [memo, setMemo] = useState("");
+  const [loadingPrice, setLoadingPrice] = useState(false);
   const { toast } = useToast();
+
+  const fetchRealtimePrice = async () => {
+    setLoadingPrice(true);
+    try {
+      const res = await fetch("/api/stock/samsung");
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
+      if (data.currentPrice) {
+        setPricePerShare(String(data.currentPrice));
+        toast({ title: "실시간 시세 적용", description: `현재가 ${data.currentPrice.toLocaleString()}원이 적용되었습니다` });
+      }
+    } catch {
+      toast({ title: "오류", description: "실시간 시세를 가져올 수 없습니다", variant: "destructive" });
+    } finally {
+      setLoadingPrice(false);
+    }
+  };
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -125,7 +143,19 @@ function StockTransactionDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>단가 (원)</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label>단가 (원)</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={fetchRealtimePrice}
+                  disabled={loadingPrice}
+                  data-testid="button-realtime-price"
+                >
+                  {loadingPrice ? "조회 중..." : "실시간 시세"}
+                </Button>
+              </div>
               <Input
                 type="number"
                 value={pricePerShare}
