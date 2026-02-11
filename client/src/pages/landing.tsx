@@ -8,7 +8,7 @@ import { Search, Heart, Star, X, TrendingUp, TrendingDown, ExternalLink, Message
 import { SamsungBadge } from "@/components/samsung-logo";
 
 const KOREAN_STOCKS = [
-  { name: "삼성전자", code: "005930", price: 56800, change: -200, pct: -0.35 },
+  { name: "삼성전자", code: "005930", price: 95000, change: 1200, pct: 1.28 },
   { name: "SK하이닉스", code: "000660", price: 178500, change: 2500, pct: 1.42 },
   { name: "LG에너지솔루션", code: "373220", price: 368000, change: -5000, pct: -1.34 },
   { name: "삼성바이오로직스", code: "207940", price: 812000, change: 12000, pct: 1.50 },
@@ -130,7 +130,7 @@ interface StockData {
 }
 
 function generateOrderBook(currentPrice: number) {
-  const step = 100;
+  const step = 500;
   const asks: { price: number; quantity: number; totalVol: number }[] = [];
   const bids: { price: number; quantity: number; totalVol: number }[] = [];
   for (let i = 15; i >= 1; i--) {
@@ -145,7 +145,7 @@ function generateOrderBook(currentPrice: number) {
 }
 
 function generateDisplayPrice(basePrice: number): number {
-  const tickOffsets = [-200, -100, 0, 100, 200];
+  const tickOffsets = [-1000, -500, 0, 500, 1000];
   const tick = tickOffsets[Math.floor(Math.random() * tickOffsets.length)];
   return basePrice + tick;
 }
@@ -154,9 +154,9 @@ function generateTrades(basePrice: number) {
   const trades: { price: number; change: number; changePct: number; quantity: number; volume: number; time: string }[] = [];
   const now = new Date();
   for (let i = 0; i < 15; i++) {
-    const offset = Math.floor(Math.random() * 5 - 2) * 100;
+    const offset = Math.floor(Math.random() * 5 - 2) * 500;
     const p = basePrice + offset;
-    const prevClose = basePrice - 200;
+    const prevClose = basePrice - 1000;
     const ch = p - prevClose;
     const pct = parseFloat(((ch / prevClose) * 100).toFixed(2));
     const t = new Date(now.getTime() - i * 3000);
