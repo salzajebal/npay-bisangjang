@@ -83,6 +83,7 @@ export const chatMessages = pgTable("chat_messages", {
   senderId: varchar("sender_id").notNull(),
   senderRole: text("sender_role").notNull(),
   message: text("message").notNull(),
+  isReadByAdmin: integer("is_read_by_admin").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
