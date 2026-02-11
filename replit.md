@@ -1,7 +1,7 @@
-# Samsung Stock Management System (삼성전자 주식관리 시스템)
+# IBK기업증권 주식관리 시스템
 
 ## Overview
-A stock inventory management system for Samsung Electronics shares. Members can register, login, and view their stock transaction history in real-time. Administrators can manage members and process stock in/out (입고/출고) transactions.
+A stock inventory management system for IBK Investment Securities. Members can register, login, and view their stock transaction history in real-time. Administrators can manage members and process stock in/out (입고/출고) transactions. Features Samsung Electronics (005930) live stock data via Yahoo Finance.
 
 ## Architecture
 - **Frontend**: React + Vite + TailwindCSS + shadcn/ui + wouter routing
@@ -10,11 +10,11 @@ A stock inventory management system for Samsung Electronics shares. Members can 
 - **Sessions**: connect-pg-simple for PostgreSQL session storage
 
 ## Key Pages
-- `/` - Landing page with Samsung stock chart (canvas-based) and order book
+- `/` - Landing page with Samsung stock chart (canvas-based), order book, community feed, news, stock info tabs
 - `/login` - User login
 - `/register` - User registration (username, password, name, bank, account info)
 - `/dashboard` - User dashboard showing stock holdings and transaction history
-- `/admin` - Admin panel (login: admin / admin123) with member management and stock transaction CRUD
+- `/admin` - Admin panel (login: admin / admin123) with member management and stock transaction CRUD (with real-time price fetching)
 
 ## Database Schema
 - `users` - Members with bank info, admin flag
@@ -31,6 +31,8 @@ A stock inventory management system for Samsung Electronics shares. Members can 
 - `GET /api/admin/transactions` - Get all transactions (admin only)
 - `POST /api/admin/transactions` - Create stock transaction (admin only)
 - `DELETE /api/admin/transactions/:id` - Delete transaction (admin only)
+- `GET /api/stock/samsung` - Get live Samsung Electronics stock data from Yahoo Finance
+- `GET /api/stock/samsung/news` - Get Korean news about Samsung Electronics
 
 ## Running
 `npm run dev` starts both frontend (Vite) and backend (Express) on port 5000.

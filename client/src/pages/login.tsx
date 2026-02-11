@@ -54,10 +54,10 @@ export default function LoginPage() {
           </Link>
           <div className="flex items-center justify-center gap-2.5 mb-4">
             <SamsungBadge size={36} />
-            <SamsungLogo className="h-5 w-auto text-[#1428a0]" />
+            <SamsungLogo className="h-5 w-auto text-[#004B9C]" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight">로그인</h1>
-          <p className="text-sm text-muted-foreground mt-1">삼성전자 주식관리 시스템</p>
+          <p className="text-sm text-muted-foreground mt-1">IBK기업 주식관리 시스템</p>
         </div>
 
         <Card className="p-6">

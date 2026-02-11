@@ -1113,7 +1113,7 @@ export default function LandingPage() {
             <Link href="/">
               <div className="flex items-center gap-2 cursor-pointer" data-testid="link-home">
                 <SamsungBadge size={24} />
-                <span className="font-bold text-base">삼성증권</span>
+                <span className="font-bold text-base">IBK기업증권</span>
               </div>
             </Link>
             <nav className="hidden md:flex items-center gap-1">
