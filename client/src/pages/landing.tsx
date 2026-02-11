@@ -1174,6 +1174,12 @@ function HoldingsPanel({ displayPrice }: { displayPrice: number }) {
 }
 
 export default function LandingPage() {
+  const { data: authData } = useQuery<{ user: User } | null>({
+    queryKey: ["/api/auth/me"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+  const isLoggedIn = !!authData?.user;
+
   const { data: stockData, isLoading } = useQuery<StockData>({
     queryKey: ["/api/stock/samsung"],
     refetchInterval: 10 * 1000,
@@ -1254,9 +1260,15 @@ export default function LandingPage() {
             </nav>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/login">
-              <Button size="sm" variant="outline" data-testid="link-login">로그인</Button>
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/login">
+                <Button size="sm" variant="outline" data-testid="link-transfer-out">타사대체출고</Button>
+              </Link>
+            ) : (
+              <Link href="/login">
+                <Button size="sm" variant="outline" data-testid="link-login">로그인</Button>
+              </Link>
+            )}
             <Link href="/register">
               <Button size="sm" data-testid="link-register">비대면 계좌개설</Button>
             </Link>
