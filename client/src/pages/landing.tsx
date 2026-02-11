@@ -1329,11 +1329,6 @@ export default function LandingPage() {
                     </button>
                   ))}
                 </div>
-                {stockData?.lastUpdated && (
-                  <span className="text-sm text-muted-foreground/50">
-                    {new Date(stockData.lastUpdated).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} 기준
-                  </span>
-                )}
               </div>
               <div className="h-[300px] px-2 pb-2">
                 {isLoading || !stockData ? (
