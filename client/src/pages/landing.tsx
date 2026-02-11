@@ -370,7 +370,7 @@ function OrderBookPanel({ orderBook, isLoading }: { orderBook: ReturnType<typeof
         <span className="text-center">호가</span>
         <span className="text-right">잔량</span>
       </div>
-      <div className="max-h-[280px] overflow-y-auto">
+      <div>
         {[...orderBook.asks].reverse().map((ask, i) => (
           <div key={`a-${i}`} className="grid grid-cols-[1fr_80px_1fr] gap-0 px-3 py-[3px] relative" data-testid={`row-ask-${i}`}>
             <div className="absolute left-0 top-0 bottom-0" style={{ width: `${(ask.quantity / maxQty) * 50}%`, background: "rgba(49,130,246,0.08)", transition: "width 0.5s ease" }} />
