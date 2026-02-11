@@ -705,15 +705,17 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <Card className="p-0 overflow-hidden h-fit" data-testid="card-order-book">
+          <Card className="p-0 overflow-hidden flex flex-col" data-testid="card-order-book">
             <div className="px-3 py-2 border-b flex items-center justify-between gap-2">
               <span className="text-sm font-bold">호가</span>
               <X className="w-3.5 h-3.5 text-muted-foreground/40" />
             </div>
-            <OrderBookPanel orderBook={orderBook} isLoading={isLoading} />
+            <div className="flex-1 flex flex-col justify-center">
+              <OrderBookPanel orderBook={orderBook} isLoading={isLoading} />
+            </div>
           </Card>
 
-          <Card className="p-0 overflow-hidden h-fit">
+          <Card className="p-0 overflow-hidden flex flex-col">
             <div className="px-3 py-2 border-b flex items-center justify-between gap-2">
               <span className="text-sm font-bold">주문하기</span>
             </div>
