@@ -4,8 +4,102 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Heart, Star, X } from "lucide-react";
+import { Search, Heart, Star, X, TrendingUp, TrendingDown } from "lucide-react";
 import { SamsungBadge } from "@/components/samsung-logo";
+
+const KOREAN_STOCKS = [
+  { name: "삼성전자", code: "005930", price: 56800, change: -200, pct: -0.35 },
+  { name: "SK하이닉스", code: "000660", price: 178500, change: 2500, pct: 1.42 },
+  { name: "LG에너지솔루션", code: "373220", price: 368000, change: -5000, pct: -1.34 },
+  { name: "삼성바이오로직스", code: "207940", price: 812000, change: 12000, pct: 1.50 },
+  { name: "현대자동차", code: "005380", price: 234500, change: 3500, pct: 1.52 },
+  { name: "기아", code: "000270", price: 119800, change: -800, pct: -0.66 },
+  { name: "셀트리온", code: "068270", price: 178900, change: 1200, pct: 0.67 },
+  { name: "KB금융", code: "105560", price: 82400, change: 400, pct: 0.49 },
+  { name: "POSCO홀딩스", code: "005490", price: 298000, change: -3500, pct: -1.16 },
+  { name: "NAVER", code: "035420", price: 214500, change: 4500, pct: 2.14 },
+  { name: "카카오", code: "035720", price: 48950, change: -650, pct: -1.31 },
+  { name: "삼성SDI", code: "006400", price: 372000, change: 7000, pct: 1.92 },
+  { name: "LG화학", code: "051910", price: 298500, change: -1500, pct: -0.50 },
+  { name: "신한지주", code: "055550", price: 51200, change: 200, pct: 0.39 },
+  { name: "현대모비스", code: "012330", price: 236500, change: 1500, pct: 0.64 },
+  { name: "카카오뱅크", code: "323410", price: 27650, change: -350, pct: -1.25 },
+  { name: "삼성물산", code: "028260", price: 125500, change: 500, pct: 0.40 },
+  { name: "하나금융지주", code: "086790", price: 63700, change: 300, pct: 0.47 },
+  { name: "카카오페이", code: "377300", price: 61100, change: -1100, pct: -1.76 },
+  { name: "SK이노베이션", code: "096770", price: 118500, change: 2000, pct: 1.72 },
+];
+
+const MARKET_INDICES = [
+  { name: "코스피", value: "2,610.42", change: "+18.37", pct: "+0.71%", up: true },
+  { name: "코스닥", value: "752.18", change: "+5.24", pct: "+0.70%", up: true },
+  { name: "코스피 200", value: "345.67", change: "+2.85", pct: "+0.83%", up: true },
+  { name: "S&P 500", value: "6,068.50", change: "-23.01", pct: "-0.38%", up: false },
+  { name: "나스닥", value: "19,643.86", change: "-52.38", pct: "-0.27%", up: false },
+  { name: "다우 산업", value: "44,025.81", change: "+134.13", pct: "+0.31%", up: true },
+  { name: "달러 환율", value: "1,455.05", change: "-2.65", pct: "-0.18%", up: false },
+  { name: "WTI", value: "71.24", change: "+0.43", pct: "+0.61%", up: true },
+  { name: "금", value: "2,912.30", change: "+15.40", pct: "+0.53%", up: true },
+];
+
+function ScrollingTicker() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let animId: number;
+    let pos = 0;
+    const speed = 0.5;
+    const tick = () => {
+      pos -= speed;
+      const halfW = el.scrollWidth / 2;
+      if (Math.abs(pos) >= halfW) pos = 0;
+      el.style.transform = `translateX(${pos}px)`;
+      animId = requestAnimationFrame(tick);
+    };
+    animId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animId);
+  }, []);
+
+  const items = [...KOREAN_STOCKS, ...KOREAN_STOCKS];
+
+  return (
+    <div className="bg-muted/30 border-b overflow-hidden h-8 flex items-center" data-testid="scrolling-ticker">
+      <div className="shrink-0 px-3 text-[11px] font-medium text-muted-foreground/70 border-r h-full flex items-center bg-background z-10">
+        국내주식
+      </div>
+      <div className="overflow-hidden flex-1 relative">
+        <div ref={scrollRef} className="flex items-center gap-0 whitespace-nowrap will-change-transform">
+          {items.map((s, i) => (
+            <div key={i} className="flex items-center gap-1.5 px-3 shrink-0">
+              <span className="text-[11px] font-medium text-foreground/80">{s.name}</span>
+              <span className="text-[11px] tabular-nums font-medium text-foreground">{s.price.toLocaleString()}</span>
+              <span className={`text-[10px] tabular-nums font-medium ${s.change >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                {s.change >= 0 ? "+" : ""}{s.change.toLocaleString()} ({s.change >= 0 ? "+" : ""}{s.pct}%)
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MarketIndexTicker() {
+  return (
+    <div className="flex items-center gap-4 overflow-x-auto whitespace-nowrap text-[11px] py-1.5 px-4 scrollbar-none">
+      <span className="text-muted-foreground/60 font-medium shrink-0">투자 유의사항</span>
+      {MARKET_INDICES.map((idx) => (
+        <span key={idx.name} className="flex items-center gap-1 shrink-0">
+          <span className="text-muted-foreground">{idx.name}</span>
+          <b className="text-foreground tabular-nums">{idx.value}</b>
+          <span className={`tabular-nums ${idx.up ? "text-red-500" : "text-blue-500"}`}>{idx.change} ({idx.pct})</span>
+        </span>
+      ))}
+    </div>
+  );
+}
 
 interface StockData {
   currentPrice: number;
@@ -384,6 +478,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <ScrollingTicker />
       <header className="border-b bg-background sticky top-0 z-[999]">
         <div className="max-w-[1400px] mx-auto px-4 h-12 flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
@@ -593,19 +688,8 @@ export default function LandingPage() {
       </div>
 
       <footer className="border-t mt-auto">
-        <div className="max-w-[1400px] mx-auto px-4 overflow-x-auto">
-          <div className="flex items-center gap-6 py-2 text-[11px] text-muted-foreground whitespace-nowrap min-w-0">
-            <span className="font-medium text-foreground/60">투자 유의사항</span>
-            {stockData && (
-              <>
-                <span>현재가 <b className="text-foreground">{displayPrice.toLocaleString()}</b></span>
-                <span>시가 <b className="text-foreground">{stockData.todayOpen.toLocaleString()}</b></span>
-                <span>고가 <b className="text-red-500">{stockData.todayHigh.toLocaleString()}</b></span>
-                <span>저가 <b className="text-blue-500">{stockData.todayLow.toLocaleString()}</b></span>
-                <span>전일종가 <b className="text-foreground">{previousClose.toLocaleString()}</b></span>
-              </>
-            )}
-          </div>
+        <div className="max-w-[1400px] mx-auto overflow-x-auto">
+          <MarketIndexTicker />
         </div>
       </footer>
     </div>
