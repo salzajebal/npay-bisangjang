@@ -576,6 +576,7 @@ export default function AdminPage() {
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [selectedChatRoom, setSelectedChatRoom] = useState<string | null>(null);
+  const selectedChatRoomRef = useRef<string | null>(null);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
   const chatWsRef = useRef<WebSocket | null>(null);
@@ -611,6 +612,8 @@ export default function AdminPage() {
     enabled: !!authData?.user?.isAdmin,
     refetchInterval: 5000,
   });
+
+  const totalUnreadCount = (chatRooms || []).reduce((sum: number, room: any) => sum + (room.unreadCount || 0), 0);
 
   const updateTransferStatusMutation = useMutation({
     mutationFn: async ({ id, status, adminMemo }: { id: string; status: string; adminMemo?: string }) => {
@@ -665,6 +668,16 @@ export default function AdminPage() {
             if (prev.some((m) => m.id === parsed.data.id)) return prev;
             return [...prev, parsed.data];
           });
+          if (parsed.data.senderRole === "user") {
+            const currentRoom = selectedChatRoomRef.current;
+            if (currentRoom && parsed.data.roomId === currentRoom) {
+              fetch(`/api/chat/rooms/${currentRoom}/mark-read`, { method: "POST", credentials: "include" }).then(() => {
+                queryClient.invalidateQueries({ queryKey: ["/api/chat/rooms"] });
+              }).catch(() => {});
+            } else {
+              queryClient.invalidateQueries({ queryKey: ["/api/chat/rooms"] });
+            }
+          }
         }
         if (parsed.type === "notification") {
           const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbsGMcBj+a2telezhJj+DYrGQ/RG2q3+OiXzZEgNThpGc/SF+W4NqkZz1Bd9bnpmk7Rme15NSmaT1ER9bn0apjNkhfvOnSrWI0R2bC8NCtVjRJZMXw1atXM0xnzvfXrFQ0TGXL9NitVTBMZc741qtU");
@@ -683,6 +696,10 @@ export default function AdminPage() {
   }, [authData?.user?.isAdmin]);
 
   useEffect(() => {
+    selectedChatRoomRef.current = selectedChatRoom;
+  }, [selectedChatRoom]);
+
+  useEffect(() => {
     chatMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
@@ -695,6 +712,8 @@ export default function AdminPage() {
           const msgs = await res.json();
           setChatMessages(msgs);
         }
+        await fetch(`/api/chat/rooms/${selectedChatRoom}/mark-read`, { method: "POST", credentials: "include" });
+        queryClient.invalidateQueries({ queryKey: ["/api/chat/rooms"] });
       } catch {}
     }
     loadMessages();
@@ -771,6 +790,7 @@ export default function AdminPage() {
           {sidebarItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeSection === item.id;
+            const showUnread = item.id === "chat" && totalUnreadCount > 0;
             return (
               <button
                 key={item.id}
@@ -779,8 +799,22 @@ export default function AdminPage() {
                 data-testid={`nav-admin-${item.id}`}
                 title={sidebarCollapsed ? item.label : undefined}
               >
-                <Icon className="w-4 h-4 shrink-0" />
-                {!sidebarCollapsed && <span>{item.label}</span>}
+                <div className="relative shrink-0">
+                  <Icon className="w-4 h-4" />
+                  {showUnread && sidebarCollapsed && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" data-testid="badge-chat-unread-icon">
+                      {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
+                    </span>
+                  )}
+                </div>
+                {!sidebarCollapsed && (
+                  <span className="flex-1 text-left">{item.label}</span>
+                )}
+                {showUnread && !sidebarCollapsed && (
+                  <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shrink-0" data-testid="badge-chat-unread">
+                    {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -1293,9 +1327,15 @@ export default function AdminPage() {
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-2">
                                 <p className="text-sm font-medium truncate text-slate-200">{room.userName}</p>
-                                <span className="text-[11px] text-slate-500 shrink-0">
-                                  {new Date(room.lastMessageAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
-                                </span>
+                                {room.unreadCount > 0 ? (
+                                  <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0" data-testid={`badge-room-unread-${room.id}`}>
+                                    {room.unreadCount > 99 ? "99+" : room.unreadCount}
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] text-slate-500 shrink-0">
+                                    {new Date(room.lastMessageAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
+                                  </span>
+                                )}
                               </div>
                               <p className="text-xs text-slate-400 truncate">@{room.userUsername}</p>
                             </div>

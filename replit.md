@@ -25,7 +25,7 @@ A stock inventory management system for IBK Investment Securities. Members can r
 - **입고/출고 처리** - Stock in/out with real-time price fetching
 - **입고량 수정** - Edit transaction quantity, price, category, memo
 - **대체출고 관리** - Approve/reject/hold transfer-out requests from members
-- **1:1 상담** - Real-time chat with members, sound notification on new messages
+- **1:1 상담** - Real-time chat with members, sound notification on new messages, unread message count badges
 
 ## Transfer-Out Feature (타사 대체출고)
 - Users can request stock transfer to other brokerages from the login page (after logging in)
@@ -63,7 +63,9 @@ A stock inventory management system for IBK Investment Securities. Members can r
 - `PATCH /api/admin/transfer-requests/:id` - Update transfer request status (admin only)
 - `POST /api/chat/rooms` - Create/get chat room for current user
 - `GET /api/chat/rooms/my` - Get user's chat rooms
-- `GET /api/chat/rooms` - Get all chat rooms with user info (admin only)
+- `GET /api/chat/rooms` - Get all chat rooms with user info and unread counts (admin only)
+- `GET /api/chat/unread-count` - Get total unread message count for admin (admin only)
+- `POST /api/chat/rooms/:id/mark-read` - Mark all user messages in room as read (admin only)
 - `GET /api/chat/rooms/:id/messages` - Get messages for a chat room
 - `WebSocket /ws/chat` - Real-time chat via WebSocket (session-authenticated)
 - `GET /api/stock/samsung` - Get live Samsung Electronics stock data from Yahoo Finance

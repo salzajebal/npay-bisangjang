@@ -502,15 +502,27 @@ export async function registerRoutes(
   app.get("/api/chat/rooms", requireAdmin, async (_req, res) => {
     const rooms = await storage.getAllChatRooms();
     const allUsers = await storage.getAllUsers();
-    const roomsWithUser = rooms.map(room => {
+    const roomsWithUser = await Promise.all(rooms.map(async (room) => {
       const user = allUsers.find(u => u.id === room.userId);
+      const unreadCount = await storage.getUnreadCountByRoom(room.id);
       return {
         ...room,
         userName: user?.fullName || "알 수 없음",
         userUsername: user?.username || "unknown",
+        unreadCount,
       };
-    });
+    }));
     return res.json(roomsWithUser);
+  });
+
+  app.get("/api/chat/unread-count", requireAdmin, async (_req, res) => {
+    const count = await storage.getTotalUnreadCountForAdmin();
+    return res.json({ count });
+  });
+
+  app.post("/api/chat/rooms/:id/mark-read", requireAdmin, async (req, res) => {
+    await storage.markMessagesAsReadByAdmin(req.params.id);
+    return res.json({ success: true });
   });
 
   app.get("/api/chat/rooms/:id/messages", async (req, res) => {
