@@ -189,20 +189,27 @@ function generateInvestorData() {
   return { personal, foreign, institutional: inst };
 }
 
-function StockChart({ data, chartRange }: { data: { date: string; price: number }[]; chartRange: string }) {
+function StockChart({ data, chartRange, currentPrice }: { data: { date: string; price: number }[]; chartRange: string; currentPrice?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; date: string; price: number } | null>(null);
 
   const filteredData = (() => {
-    if (chartRange === "1y" || data.length === 0) return data;
-    const now = new Date(data[data.length - 1].date);
-    let cutoff = new Date(now);
-    if (chartRange === "1m") cutoff.setMonth(cutoff.getMonth() - 1);
-    else if (chartRange === "3m") cutoff.setMonth(cutoff.getMonth() - 3);
-    else if (chartRange === "6m") cutoff.setMonth(cutoff.getMonth() - 6);
-    else return data;
-    return data.filter((d) => new Date(d.date) >= cutoff);
+    let base = data;
+    if (chartRange !== "1y" && data.length > 0) {
+      const now = new Date(data[data.length - 1].date);
+      let cutoff = new Date(now);
+      if (chartRange === "1m") cutoff.setMonth(cutoff.getMonth() - 1);
+      else if (chartRange === "3m") cutoff.setMonth(cutoff.getMonth() - 3);
+      else if (chartRange === "6m") cutoff.setMonth(cutoff.getMonth() - 6);
+      base = data.filter((d) => new Date(d.date) >= cutoff);
+    }
+    if (currentPrice && currentPrice > 0 && base.length > 0) {
+      const updated = [...base];
+      updated[updated.length - 1] = { ...updated[updated.length - 1], price: currentPrice };
+      return updated;
+    }
+    return base;
   })();
 
   const drawChart = useCallback(() => {
@@ -739,7 +746,7 @@ export default function LandingPage() {
                 {isLoading || !stockData ? (
                   <Skeleton className="w-full h-full" />
                 ) : (
-                  <StockChart data={stockData.chartData} chartRange={chartRange} />
+                  <StockChart data={stockData.chartData} chartRange={chartRange} currentPrice={displayPrice} />
                 )}
               </div>
               {stockData && (
