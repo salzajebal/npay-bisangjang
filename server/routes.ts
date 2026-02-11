@@ -122,52 +122,53 @@ export async function registerRoutes(
         return res.json(newsCache.data);
       }
 
-      const response = await fetch(
-        "https://search.naver.com/search.naver?where=news&query=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90&sm=tab_opt&sort=1&photo=0&field=0&pd=0&ds=&de=&docid=&related=0&mynews=0&office_type=0&office_section_code=0&news_office_checked=&nso=so%3Add%2Cp%3Aall&is_sug_officeid=0&office_category=0&service_area=0",
-        {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept-Language": "ko-KR,ko;q=0.9",
-          },
-        }
-      );
-      const html = await response.text();
+      const rssUrl = "https://news.google.com/rss/search?q=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90&hl=ko&gl=KR&ceid=KR:ko";
+      const response = await fetch(rssUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "Accept-Language": "ko-KR,ko;q=0.9",
+        },
+      });
+      const xml = await response.text();
 
       const news: { title: string; publisher: string; link: string; publishedAt: string | null; thumbnail: string | null }[] = [];
 
-      const articlePattern = /class="news_tit"[^>]*href="([^"]*)"[^>]*title="([^"]*)"/g;
-      let match;
-      while ((match = articlePattern.exec(html)) !== null && news.length < 15) {
-        const link = match[1];
-        const title = match[2].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"');
+      const itemPattern = /<item>([\s\S]*?)<\/item>/g;
+      let itemMatch;
+      while ((itemMatch = itemPattern.exec(xml)) !== null && news.length < 15) {
+        const item = itemMatch[1];
+        const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]>|<title>(.*?)<\/title>/);
+        const linkMatch = item.match(/<link>(.*?)<\/link>/);
+        const pubDateMatch = item.match(/<pubDate>(.*?)<\/pubDate>/);
+        const sourceMatch = item.match(/<source[^>]*>(.*?)<\/source>/);
 
-        const pressPattern = new RegExp(`class="info_group"[^>]*>.*?class="press"[^>]*>([^<]*)`, 's');
-        const remaining = html.slice(match.index);
-        const pressMatch = remaining.match(/class="info press"[^>]*>([^<]*)/);
-        const publisher = pressMatch ? pressMatch[1].trim() : "뉴스";
+        const title = (titleMatch?.[1] || titleMatch?.[2] || "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/<[^>]*>/g, "");
+        const link = linkMatch?.[1] || "";
+        const publisher = sourceMatch?.[1] || "뉴스";
+        const pubDate = pubDateMatch?.[1] || null;
 
-        const timeMatch = remaining.match(/class="info"[^>]*>(\d+[^\s<]*\s*전|[\d.]+\.)/);
-        const timeStr = timeMatch ? timeMatch[1] : null;
+        if (title && link) {
+          const timeDiff = pubDate ? Date.now() - new Date(pubDate).getTime() : 0;
+          const mins = Math.floor(timeDiff / 60000);
+          let timeStr = "방금 전";
+          if (mins < 60) timeStr = `${mins}분 전`;
+          else if (mins < 1440) timeStr = `${Math.floor(mins / 60)}시간 전`;
+          else timeStr = `${Math.floor(mins / 1440)}일 전`;
 
-        news.push({
-          title,
-          publisher,
-          link,
-          publishedAt: timeStr || new Date().toISOString(),
-          thumbnail: null,
-        });
+          news.push({ title, publisher, link, publishedAt: timeStr, thumbnail: null });
+        }
       }
 
       if (news.length === 0) {
         const fallback = [
-          { title: "삼성전자, HBM4 양산 본격화...AI 반도체 시장 공략 가속", publisher: "한국경제", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "방금 전", thumbnail: null },
-          { title: "삼성전자 2나노 파운드리 수율 개선 소식에 주가 강세", publisher: "매일경제", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "1시간 전", thumbnail: null },
-          { title: "삼성전자, 갤럭시 S26 시리즈 사전 예약 역대 최다", publisher: "조선비즈", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "2시간 전", thumbnail: null },
-          { title: "외국인 삼성전자 3거래일 연속 순매수...반도체 기대감", publisher: "서울경제", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "3시간 전", thumbnail: null },
-          { title: "삼성전자, DRAM 가격 반등에 실적 개선 전망", publisher: "이데일리", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "4시간 전", thumbnail: null },
-          { title: "삼성전자 배당 확대 기대...주주환원 정책 강화", publisher: "뉴스1", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "5시간 전", thumbnail: null },
-          { title: "삼성전자, 차세대 메모리 기술 특허 출원 급증", publisher: "전자신문", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "6시간 전", thumbnail: null },
-          { title: "삼성전자 반도체 부문 설비 투자 확대 계획 발표", publisher: "아시아경제", link: "https://search.naver.com/search.naver?query=삼성전자+뉴스", publishedAt: "7시간 전", thumbnail: null },
+          { title: "삼성전자, HBM4 양산 본격화...AI 반도체 시장 공략 가속", publisher: "한국경제", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "방금 전", thumbnail: null },
+          { title: "삼성전자 2나노 파운드리 수율 개선 소식에 주가 강세", publisher: "매일경제", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "1시간 전", thumbnail: null },
+          { title: "삼성전자, 갤럭시 S26 시리즈 사전 예약 역대 최다", publisher: "조선비즈", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "2시간 전", thumbnail: null },
+          { title: "외국인 삼성전자 3거래일 연속 순매수...반도체 기대감", publisher: "서울경제", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "3시간 전", thumbnail: null },
+          { title: "삼성전자, DRAM 가격 반등에 실적 개선 전망", publisher: "이데일리", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "4시간 전", thumbnail: null },
+          { title: "삼성전자 배당 확대 기대...주주환원 정책 강화", publisher: "뉴스1", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "5시간 전", thumbnail: null },
+          { title: "삼성전자, 차세대 메모리 기술 특허 출원 급증", publisher: "전자신문", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "6시간 전", thumbnail: null },
+          { title: "삼성전자 반도체 부문 설비 투자 확대 계획 발표", publisher: "아시아경제", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "7시간 전", thumbnail: null },
         ];
         newsCache = { data: fallback, timestamp: Date.now() };
         return res.json(fallback);
