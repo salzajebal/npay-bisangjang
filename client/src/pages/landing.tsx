@@ -42,15 +42,41 @@ const MARKET_INDICES = [
   { name: "금", value: "2,912.30", change: "+15.40", pct: "+0.53%", up: true },
 ];
 
+function useTickerPrices() {
+  const [prices, setPrices] = useState(() =>
+    KOREAN_STOCKS.map((s) => ({ ...s }))
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPrices((prev) =>
+        prev.map((s) => {
+          const base = KOREAN_STOCKS.find((k) => k.code === s.code)!;
+          const fluctuation = Math.round((Math.random() - 0.5) * base.price * 0.004);
+          const stepRound = base.price >= 100000 ? 500 : base.price >= 50000 ? 100 : 50;
+          const newPrice = Math.round((base.price + fluctuation) / stepRound) * stepRound;
+          const newChange = newPrice - (base.price - base.change);
+          const newPct = parseFloat(((newChange / (base.price - base.change)) * 100).toFixed(2));
+          return { ...s, price: newPrice, change: newChange, pct: newPct };
+        })
+      );
+    }, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
+  return prices;
+}
+
 function ScrollingTicker() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const stocks = useTickerPrices();
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     let animId: number;
     let pos = 0;
-    const speed = 0.5;
+    const speed = 0.6;
     const tick = () => {
       pos -= speed;
       const halfW = el.scrollWidth / 2;
@@ -62,20 +88,20 @@ function ScrollingTicker() {
     return () => cancelAnimationFrame(animId);
   }, []);
 
-  const items = [...KOREAN_STOCKS, ...KOREAN_STOCKS];
+  const items = [...stocks, ...stocks];
 
   return (
-    <div className="bg-muted/30 border-b overflow-hidden h-8 flex items-center" data-testid="scrolling-ticker">
-      <div className="shrink-0 px-3 text-[11px] font-medium text-muted-foreground/70 border-r h-full flex items-center bg-background z-10">
+    <div className="bg-muted/30 border-b overflow-hidden h-10 flex items-center" data-testid="scrolling-ticker">
+      <div className="shrink-0 px-4 text-xs font-bold text-muted-foreground border-r h-full flex items-center bg-background z-10">
         국내주식
       </div>
       <div className="overflow-hidden flex-1 relative">
         <div ref={scrollRef} className="flex items-center gap-0 whitespace-nowrap will-change-transform">
           {items.map((s, i) => (
-            <div key={i} className="flex items-center gap-1.5 px-3 shrink-0">
-              <span className="text-[11px] font-medium text-foreground/80">{s.name}</span>
-              <span className="text-[11px] tabular-nums font-medium text-foreground">{s.price.toLocaleString()}</span>
-              <span className={`text-[10px] tabular-nums font-medium ${s.change >= 0 ? "text-red-500" : "text-blue-500"}`}>
+            <div key={i} className="flex items-center gap-2 px-4 shrink-0">
+              <span className="text-[13px] font-semibold text-foreground">{s.name}</span>
+              <span className="text-[13px] tabular-nums font-bold text-foreground">{s.price.toLocaleString()}</span>
+              <span className={`text-[12px] tabular-nums font-semibold ${s.change >= 0 ? "text-red-500" : "text-blue-500"}`}>
                 {s.change >= 0 ? "+" : ""}{s.change.toLocaleString()} ({s.change >= 0 ? "+" : ""}{s.pct}%)
               </span>
             </div>
