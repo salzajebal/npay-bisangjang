@@ -139,22 +139,25 @@ interface StockData {
   lastUpdated: string;
 }
 
-function generateOrderBook(basePrice: number) {
+function generateOrderBook(currentPrice: number) {
   const step = 100;
   const asks: { price: number; quantity: number; totalVol: number }[] = [];
   const bids: { price: number; quantity: number; totalVol: number }[] = [];
-  const tickOffsets = [-200, -100, 0, 100, 200];
-  const tick = tickOffsets[Math.floor(Math.random() * tickOffsets.length)];
-  const cp = basePrice + tick;
   for (let i = 10; i >= 1; i--) {
     const q = Math.floor(Math.random() * 80000) + 3000;
-    asks.push({ price: cp + i * step, quantity: q, totalVol: Math.floor(Math.random() * 2000000) + 500000 });
+    asks.push({ price: currentPrice + i * step, quantity: q, totalVol: Math.floor(Math.random() * 2000000) + 500000 });
   }
   for (let i = 0; i < 10; i++) {
     const q = Math.floor(Math.random() * 80000) + 3000;
-    bids.push({ price: cp - i * step, quantity: q, totalVol: Math.floor(Math.random() * 2000000) + 500000 });
+    bids.push({ price: currentPrice - i * step, quantity: q, totalVol: Math.floor(Math.random() * 2000000) + 500000 });
   }
-  return { asks, bids, currentPrice: cp };
+  return { asks, bids, currentPrice };
+}
+
+function generateDisplayPrice(basePrice: number): number {
+  const tickOffsets = [-200, -100, 0, 100, 200];
+  const tick = tickOffsets[Math.floor(Math.random() * tickOffsets.length)];
+  return basePrice + tick;
 }
 
 function generateTrades(basePrice: number) {
@@ -467,29 +470,33 @@ export default function LandingPage() {
   const basePrice = stockData?.currentPrice ?? 0;
   const previousClose = stockData?.previousClose ?? 0;
 
+  const [displayPrice, setDisplayPrice] = useState(0);
   const [orderBook, setOrderBook] = useState<ReturnType<typeof generateOrderBook> | null>(null);
   const [trades, setTrades] = useState<ReturnType<typeof generateTrades>>([]);
   const [investor, setInvestor] = useState(() => generateInvestorData());
   const [chartRange, setChartRange] = useState("1y");
   const [activeTab, setActiveTab] = useState("chart");
 
-  const displayPrice = orderBook?.currentPrice ?? basePrice;
   const displayChange = previousClose > 0 ? displayPrice - previousClose : (stockData?.priceChange ?? 0);
   const displayChangePct = previousClose > 0 ? parseFloat(((displayChange / previousClose) * 100).toFixed(2)) : (stockData?.priceChangePercent ?? 0);
   const isUp = displayChange >= 0;
 
   useEffect(() => {
     if (basePrice > 0) {
-      setOrderBook(generateOrderBook(basePrice));
-      setTrades(generateTrades(basePrice));
+      const price = generateDisplayPrice(basePrice);
+      setDisplayPrice(price);
+      setOrderBook(generateOrderBook(price));
+      setTrades(generateTrades(price));
     }
   }, [basePrice]);
 
   useEffect(() => {
     if (basePrice <= 0) return;
     const interval = setInterval(() => {
-      setOrderBook(generateOrderBook(basePrice));
-      setTrades(generateTrades(basePrice));
+      const price = generateDisplayPrice(basePrice);
+      setDisplayPrice(price);
+      setOrderBook(generateOrderBook(price));
+      setTrades(generateTrades(price));
       setInvestor(generateInvestorData());
     }, 2000);
     return () => clearInterval(interval);
