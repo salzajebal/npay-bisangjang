@@ -18,19 +18,23 @@ interface StockData {
   todayHigh: number;
   todayLow: number;
   chartData: { date: string; price: number }[];
+  lastUpdated: string;
 }
 
 function generateOrderBookFromPrice(basePrice: number) {
   const step = 100;
   const asks: { price: number; quantity: number }[] = [];
   const bids: { price: number; quantity: number }[] = [];
+  const tickOffsets = [-200, -100, 0, 100, 200];
+  const tick = tickOffsets[Math.floor(Math.random() * tickOffsets.length)];
+  const displayPrice = basePrice + tick;
   for (let i = 5; i >= 1; i--) {
-    asks.push({ price: basePrice + i * step, quantity: Math.floor(Math.random() * 50000) + 5000 });
+    asks.push({ price: displayPrice + i * step, quantity: Math.floor(Math.random() * 50000) + 5000 });
   }
   for (let i = 0; i < 5; i++) {
-    bids.push({ price: basePrice - i * step, quantity: Math.floor(Math.random() * 50000) + 5000 });
+    bids.push({ price: displayPrice - i * step, quantity: Math.floor(Math.random() * 50000) + 5000 });
   }
-  return { asks, bids, currentPrice: basePrice };
+  return { asks, bids, currentPrice: displayPrice };
 }
 
 function MiniChart({ data }: { data: { date: string; price: number }[] }) {
@@ -119,7 +123,7 @@ function OrderBook({ orderBook }: { orderBook: ReturnType<typeof generateOrderBo
 export default function LandingPage() {
   const { data: stockData, isLoading } = useQuery<StockData>({
     queryKey: ["/api/stock/samsung"],
-    refetchInterval: 5 * 60 * 1000,
+    refetchInterval: 30 * 1000,
   });
 
   const currentPrice = stockData?.currentPrice ?? 0;
@@ -139,9 +143,13 @@ export default function LandingPage() {
     if (currentPrice <= 0) return;
     const interval = setInterval(() => {
       setOrderBook(generateOrderBookFromPrice(currentPrice));
-    }, 3000);
+    }, 2000);
     return () => clearInterval(interval);
   }, [currentPrice]);
+
+  const lastUpdatedText = stockData?.lastUpdated
+    ? new Date(stockData.lastUpdated).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    : "";
 
   return (
     <div className="min-h-screen bg-background">
@@ -263,8 +271,13 @@ export default function LandingPage() {
                   <MiniChart data={stockData.chartData} />
                 )}
               </div>
-              <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground px-1">
-                <span>1년 차트 (Yahoo Finance)</span>
+              <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground px-1 flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <span>1년 차트 (Yahoo Finance)</span>
+                  {lastUpdatedText && (
+                    <span className="text-muted-foreground/60" data-testid="text-last-updated">업데이트 {lastUpdatedText}</span>
+                  )}
+                </div>
                 {stockData && (
                   <div className="flex gap-4">
                     <span>시가 <b className="text-foreground">{stockData.todayOpen.toLocaleString()}</b></span>

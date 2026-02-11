@@ -8,7 +8,7 @@ import { z } from "zod";
 import bcrypt from "bcrypt";
 
 let stockCache: { data: any; timestamp: number } | null = null;
-const CACHE_DURATION = 5 * 60 * 1000;
+const CACHE_DURATION = 60 * 1000;
 
 async function fetchYahooFinanceData() {
   if (stockCache && Date.now() - stockCache.timestamp < CACHE_DURATION) {
@@ -63,6 +63,7 @@ async function fetchYahooFinanceData() {
       todayHigh,
       todayLow,
       chartData,
+      lastUpdated: new Date().toISOString(),
     };
 
     stockCache = { data: responseData, timestamp: Date.now() };
