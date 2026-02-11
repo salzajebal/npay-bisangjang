@@ -404,20 +404,20 @@ function TradesPanel({ trades }: { trades: ReturnType<typeof generateTrades> }) 
         <button onClick={() => setTab("daily")} className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${tab === "daily" ? "border-foreground text-foreground" : "border-transparent text-muted-foreground"}`} data-testid="tab-daily">일별</button>
       </div>
       <div className="text-xs font-mono">
-        <div className="grid grid-cols-5 gap-1 px-3 py-1.5 text-[10px] text-muted-foreground border-b">
+        <div className="grid grid-cols-[70px_40px_52px_1fr_62px] gap-0 px-3 py-1.5 text-[10px] text-muted-foreground border-b">
           <span>현재가</span>
-          <span className="text-right">체결량(주)</span>
+          <span className="text-right">체결량</span>
           <span className="text-right">등락률</span>
-          <span className="text-right">거래량(주)</span>
+          <span className="text-right">거래량</span>
           <span className="text-right">시간</span>
         </div>
         <div className="max-h-[240px] overflow-y-auto">
           {trades.map((t, i) => (
-            <div key={i} className="grid grid-cols-5 gap-1 px-3 py-[3px] text-[11px]">
+            <div key={i} className="grid grid-cols-[70px_40px_52px_1fr_62px] gap-0 px-3 py-[3px] text-[11px]">
               <span className={`tabular-nums ${t.change >= 0 ? "text-red-500" : "text-blue-500"}`}>{t.price.toLocaleString()}</span>
               <span className="text-right tabular-nums text-muted-foreground">{t.quantity}</span>
               <span className={`text-right tabular-nums ${t.change >= 0 ? "text-red-500" : "text-blue-500"}`}>{t.change >= 0 ? "+" : ""}{t.changePct}%</span>
-              <span className="text-right tabular-nums text-muted-foreground">{t.volume.toLocaleString()}</span>
+              <span className="text-right tabular-nums text-muted-foreground truncate">{t.volume.toLocaleString()}</span>
               <span className="text-right tabular-nums text-muted-foreground/60">{t.time}</span>
             </div>
           ))}
