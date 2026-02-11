@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
-import { registerSchema, loginSchema, insertStockTransactionSchema } from "@shared/schema";
+import { registerSchema, loginSchema, insertStockTransactionSchema, updateUserSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
@@ -207,6 +207,9 @@ export async function registerRoutes(
       if (!user || !passwordMatch) {
         return res.status(401).json({ message: "아이디 또는 비밀번호가 일치하지 않습니다" });
       }
+      if (user.isFrozen) {
+        return res.status(403).json({ message: "계정이 동결되었습니다. 관리자에게 문의하세요." });
+      }
       req.session.userId = user.id;
       return res.json({ user: { ...user, password: undefined } });
     } catch (error) {
@@ -273,6 +276,76 @@ export async function registerRoutes(
         return res.status(400).json({ message: error.errors[0].message });
       }
       return res.status(500).json({ message: "서버 오류가 발생했습니다" });
+    }
+  });
+
+  app.get("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    const user = await storage.getUser(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+    }
+    return res.json({ ...user, password: undefined });
+  });
+
+  app.put("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const data = updateUserSchema.parse(req.body);
+      const updateData: any = { ...data };
+      if (data.password) {
+        updateData.password = await bcrypt.hash(data.password, 10);
+      } else {
+        delete updateData.password;
+      }
+      const user = await storage.updateUser(req.params.id, updateData);
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+      return res.json({ ...user, password: undefined });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      return res.status(500).json({ message: "회원 정보 수정에 실패했습니다" });
+    }
+  });
+
+  app.patch("/api/admin/users/:id/freeze", requireAdmin, async (req, res) => {
+    try {
+      const { isFrozen } = req.body;
+      const user = await storage.updateUser(req.params.id, { isFrozen: !!isFrozen });
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+      return res.json({ ...user, password: undefined });
+    } catch (error) {
+      return res.status(500).json({ message: "회원 상태 변경에 실패했습니다" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteUser(req.params.id);
+      return res.json({ message: "회원 삭제 완료" });
+    } catch (error) {
+      return res.status(500).json({ message: "회원 삭제에 실패했습니다" });
+    }
+  });
+
+  app.put("/api/admin/transactions/:id", requireAdmin, async (req, res) => {
+    try {
+      const { quantity, pricePerShare, memo, category } = req.body;
+      const updateData: any = {};
+      if (quantity !== undefined) updateData.quantity = parseInt(quantity);
+      if (pricePerShare !== undefined) updateData.pricePerShare = parseInt(pricePerShare);
+      if (memo !== undefined) updateData.memo = memo;
+      if (category !== undefined) updateData.category = category;
+      const tx = await storage.updateTransaction(req.params.id, updateData);
+      if (!tx) {
+        return res.status(404).json({ message: "거래를 찾을 수 없습니다" });
+      }
+      return res.json(tx);
+    } catch (error) {
+      return res.status(500).json({ message: "거래 수정에 실패했습니다" });
     }
   });
 
