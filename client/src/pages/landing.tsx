@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from "lucide-react";
-import { SamsungLogo, SamsungBadge } from "@/components/samsung-logo";
+import { Search, Heart, Star, X } from "lucide-react";
+import { SamsungBadge } from "@/components/samsung-logo";
 
 interface StockData {
   currentPrice: number;
@@ -20,30 +19,72 @@ interface StockData {
   lastUpdated: string;
 }
 
-function generateOrderBookFromPrice(basePrice: number) {
+function generateOrderBook(basePrice: number) {
   const step = 100;
-  const asks: { price: number; quantity: number }[] = [];
-  const bids: { price: number; quantity: number }[] = [];
+  const asks: { price: number; quantity: number; totalVol: number }[] = [];
+  const bids: { price: number; quantity: number; totalVol: number }[] = [];
   const tickOffsets = [-200, -100, 0, 100, 200];
   const tick = tickOffsets[Math.floor(Math.random() * tickOffsets.length)];
-  const displayPrice = basePrice + tick;
-  for (let i = 5; i >= 1; i--) {
-    asks.push({ price: displayPrice + i * step, quantity: Math.floor(Math.random() * 50000) + 5000 });
+  const cp = basePrice + tick;
+  for (let i = 10; i >= 1; i--) {
+    const q = Math.floor(Math.random() * 80000) + 3000;
+    asks.push({ price: cp + i * step, quantity: q, totalVol: Math.floor(Math.random() * 2000000) + 500000 });
   }
-  for (let i = 0; i < 5; i++) {
-    bids.push({ price: displayPrice - i * step, quantity: Math.floor(Math.random() * 50000) + 5000 });
+  for (let i = 0; i < 10; i++) {
+    const q = Math.floor(Math.random() * 80000) + 3000;
+    bids.push({ price: cp - i * step, quantity: q, totalVol: Math.floor(Math.random() * 2000000) + 500000 });
   }
-  return { asks, bids, currentPrice: displayPrice };
+  return { asks, bids, currentPrice: cp };
 }
 
-function StockChart({ data }: { data: { date: string; price: number }[] }) {
+function generateTrades(basePrice: number) {
+  const trades: { price: number; change: number; changePct: number; quantity: number; volume: number; time: string }[] = [];
+  const now = new Date();
+  for (let i = 0; i < 15; i++) {
+    const offset = Math.floor(Math.random() * 5 - 2) * 100;
+    const p = basePrice + offset;
+    const prevClose = basePrice - 200;
+    const ch = p - prevClose;
+    const pct = parseFloat(((ch / prevClose) * 100).toFixed(2));
+    const t = new Date(now.getTime() - i * 3000);
+    trades.push({
+      price: p,
+      change: ch,
+      changePct: pct,
+      quantity: Math.floor(Math.random() * 50) + 1,
+      volume: Math.floor(Math.random() * 2000000) + 800000,
+      time: `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")}:${t.getSeconds().toString().padStart(2, "0")}`,
+    });
+  }
+  return trades;
+}
+
+function generateInvestorData() {
+  const personal = Math.floor(Math.random() * 20000) - 10000;
+  const foreign = Math.floor(Math.random() * 20000) - 5000;
+  const inst = -(personal + foreign);
+  return { personal, foreign, institutional: inst };
+}
+
+function StockChart({ data, chartRange }: { data: { date: string; price: number }[]; chartRange: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; date: string; price: number } | null>(null);
 
-  useEffect(() => {
+  const filteredData = (() => {
+    if (chartRange === "1y" || data.length === 0) return data;
+    const now = new Date(data[data.length - 1].date);
+    let cutoff = new Date(now);
+    if (chartRange === "1m") cutoff.setMonth(cutoff.getMonth() - 1);
+    else if (chartRange === "3m") cutoff.setMonth(cutoff.getMonth() - 3);
+    else if (chartRange === "6m") cutoff.setMonth(cutoff.getMonth() - 6);
+    else return data;
+    return data.filter((d) => new Date(d.date) >= cutoff);
+  })();
+
+  const drawChart = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas || data.length === 0) return;
+    if (!canvas || filteredData.length === 0) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const dpr = window.devicePixelRatio || 1;
@@ -51,10 +92,10 @@ function StockChart({ data }: { data: { date: string; price: number }[] }) {
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     ctx.scale(dpr, dpr);
-    const padL = 70, padR = 16, padT = 16, padB = 36;
+    const padL = 0, padR = 50, padT = 10, padB = 28;
     const w = rect.width - padL - padR;
     const h = rect.height - padT - padB;
-    const prices = data.map((d) => d.price);
+    const prices = filteredData.map((d) => d.price);
     const minP = Math.min(...prices);
     const maxP = Math.max(...prices);
     const range = maxP - minP || 1;
@@ -63,13 +104,12 @@ function StockChart({ data }: { data: { date: string; price: number }[] }) {
 
     ctx.clearRect(0, 0, rect.width, rect.height);
 
-    const gridColor = "rgba(128,128,128,0.12)";
-    const textColor = "rgba(128,128,128,0.65)";
-    ctx.font = "11px -apple-system, BlinkMacSystemFont, sans-serif";
+    const gridColor = "rgba(128,128,128,0.08)";
+    const textColor = "rgba(128,128,128,0.5)";
+    ctx.font = "10px -apple-system, sans-serif";
 
-    const gridLines = 5;
-    for (let i = 0; i <= gridLines; i++) {
-      const yVal = minY + ((maxY - minY) / gridLines) * i;
+    for (let i = 0; i <= 4; i++) {
+      const yVal = minY + ((maxY - minY) / 4) * i;
       const y = padT + h - ((yVal - minY) / (maxY - minY)) * h;
       ctx.beginPath();
       ctx.moveTo(padL, y);
@@ -78,38 +118,35 @@ function StockChart({ data }: { data: { date: string; price: number }[] }) {
       ctx.lineWidth = 1;
       ctx.stroke();
       ctx.fillStyle = textColor;
-      ctx.textAlign = "right";
+      ctx.textAlign = "left";
       ctx.textBaseline = "middle";
-      ctx.fillText(Math.round(yVal).toLocaleString(), padL - 8, y);
+      ctx.fillText(Math.round(yVal).toLocaleString(), padL + w + 6, y);
     }
 
     const monthsSeen = new Set<string>();
-    data.forEach((d, i) => {
+    filteredData.forEach((d, i) => {
       const m = d.date.substring(0, 7);
-      if (!monthsSeen.has(m)) {
+      if (!monthsSeen.has(m) && i > 0) {
         monthsSeen.add(m);
-        const x = padL + (i / (data.length - 1)) * w;
-        ctx.beginPath();
-        ctx.moveTo(x, padT);
-        ctx.lineTo(x, padT + h);
-        ctx.strokeStyle = gridColor;
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        const x = padL + (i / (filteredData.length - 1)) * w;
         ctx.fillStyle = textColor;
         ctx.textAlign = "center";
         ctx.textBaseline = "top";
         const parts = d.date.split("-");
-        ctx.fillText(`${parts[0].slice(2)}.${parts[1]}`, x, padT + h + 8);
+        ctx.fillText(`${parseInt(parts[1])}월`, x, padT + h + 6);
       }
     });
 
+    const isPositive = filteredData[filteredData.length - 1].price >= filteredData[0].price;
+    const lineColor = isPositive ? "#f04452" : "#3182f6";
+    const fillColorStart = isPositive ? "rgba(240,68,82,0.12)" : "rgba(49,130,246,0.12)";
+
     const gradient = ctx.createLinearGradient(0, padT, 0, padT + h);
-    gradient.addColorStop(0, "rgba(20, 40, 160, 0.18)");
-    gradient.addColorStop(0.5, "rgba(20, 40, 160, 0.06)");
-    gradient.addColorStop(1, "rgba(20, 40, 160, 0)");
+    gradient.addColorStop(0, fillColorStart);
+    gradient.addColorStop(1, "rgba(0,0,0,0)");
     ctx.beginPath();
-    data.forEach((d, i) => {
-      const x = padL + (i / (data.length - 1)) * w;
+    filteredData.forEach((d, i) => {
+      const x = padL + (i / (filteredData.length - 1)) * w;
       const y = padT + h - ((d.price - minY) / (maxY - minY)) * h;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
@@ -121,48 +158,57 @@ function StockChart({ data }: { data: { date: string; price: number }[] }) {
     ctx.fill();
 
     ctx.beginPath();
-    data.forEach((d, i) => {
-      const x = padL + (i / (data.length - 1)) * w;
+    filteredData.forEach((d, i) => {
+      const x = padL + (i / (filteredData.length - 1)) * w;
       const y = padT + h - ((d.price - minY) / (maxY - minY)) * h;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     });
-    ctx.strokeStyle = "#1428a0";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    const lastD = data[data.length - 1];
+    const lastD = filteredData[filteredData.length - 1];
     const lastX = padL + w;
     const lastY = padT + h - ((lastD.price - minY) / (maxY - minY)) * h;
+
+    ctx.fillStyle = lineColor;
+    ctx.fillRect(padL + w + 1, lastY - 10, padR - 2, 20);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 10px -apple-system, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(Math.round(lastD.price).toLocaleString(), padL + w + padR / 2, lastY);
+
     ctx.beginPath();
-    ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
-    ctx.fillStyle = "#1428a0";
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(lastX, lastY, 7, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(20,40,160,0.3)";
-    ctx.lineWidth = 2;
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(padL, lastY);
+    ctx.lineTo(padL + w, lastY);
+    ctx.strokeStyle = lineColor + "40";
+    ctx.lineWidth = 1;
     ctx.stroke();
-  }, [data]);
+    ctx.setLineDash([]);
+  }, [filteredData]);
+
+  useEffect(() => { drawChart(); }, [drawChart]);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const canvas = canvasRef.current;
-    if (!canvas || data.length === 0) return;
+    if (!canvas || filteredData.length === 0) return;
     const rect = canvas.getBoundingClientRect();
-    const padL = 70, padR = 16, padT = 16, padB = 36;
+    const padL = 0, padR = 50, padT = 10, padB = 28;
     const w = rect.width - padL - padR;
     const mx = e.clientX - rect.left - padL;
     if (mx < 0 || mx > w) { setTooltip(null); return; }
-    const idx = Math.round((mx / w) * (data.length - 1));
-    const d = data[Math.max(0, Math.min(idx, data.length - 1))];
-    const prices = data.map((dd) => dd.price);
+    const idx = Math.round((mx / w) * (filteredData.length - 1));
+    const d = filteredData[Math.max(0, Math.min(idx, filteredData.length - 1))];
+    const prices = filteredData.map((dd) => dd.price);
     const minP = Math.min(...prices);
     const maxP = Math.max(...prices);
     const range = maxP - minP || 1;
     const minY = minP - range * 0.05;
     const maxY = maxP + range * 0.05;
     const h = rect.height - padT - padB;
-    const x = padL + (idx / (data.length - 1)) * w;
     const y = padT + h - ((d.price - minY) / (maxY - minY)) * h;
     setTooltip({ x: e.clientX - rect.left, y, date: d.date, price: d.price });
   };
@@ -172,11 +218,10 @@ function StockChart({ data }: { data: { date: string; price: number }[] }) {
       <canvas ref={canvasRef} className="w-full h-full" style={{ display: "block" }} onMouseMove={handleMouseMove} />
       {tooltip && (
         <>
-          <div className="absolute top-0 pointer-events-none" style={{ left: tooltip.x, width: 1, height: "calc(100% - 36px)", background: "rgba(128,128,128,0.3)" }} />
-          <div className="absolute pointer-events-none" style={{ left: 70, right: 16, top: tooltip.y, height: 1, background: "rgba(128,128,128,0.2)" }} />
-          <div className="absolute pointer-events-none bg-foreground text-background px-2.5 py-1.5 rounded-md text-xs font-mono shadow-lg" style={{ left: tooltip.x + 12, top: tooltip.y - 36, whiteSpace: "nowrap" }}>
-            <div className="text-[10px] opacity-70 mb-0.5">{tooltip.date}</div>
-            <div className="font-bold">{tooltip.price.toLocaleString()}원</div>
+          <div className="absolute top-0 pointer-events-none" style={{ left: tooltip.x, width: 1, height: "calc(100% - 28px)", background: "rgba(128,128,128,0.25)" }} />
+          <div className="absolute pointer-events-none bg-foreground text-background px-2 py-1 rounded text-[11px] font-mono" style={{ left: Math.min(tooltip.x + 10, (containerRef.current?.offsetWidth ?? 300) - 120), top: Math.max(tooltip.y - 40, 0), whiteSpace: "nowrap" }}>
+            <span className="opacity-60 mr-2">{tooltip.date}</span>
+            <span className="font-bold">{tooltip.price.toLocaleString()}원</span>
           </div>
         </>
       )}
@@ -184,96 +229,111 @@ function StockChart({ data }: { data: { date: string; price: number }[] }) {
   );
 }
 
-function AnimatedBar({ percent, color, side }: { percent: number; color: string; side: "left" | "right" }) {
-  const barRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (barRef.current) {
-      barRef.current.style.width = `${percent}%`;
-    }
-  }, [percent]);
+function OrderBookPanel({ orderBook, isLoading }: { orderBook: ReturnType<typeof generateOrderBook> | null; isLoading: boolean }) {
+  if (isLoading || !orderBook) {
+    return (
+      <div className="p-4 space-y-2">
+        {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-5 w-full" />)}
+      </div>
+    );
+  }
+
+  const maxQty = Math.max(...orderBook.asks.map((a) => a.quantity), ...orderBook.bids.map((b) => b.quantity));
+
   return (
-    <div
-      ref={barRef}
-      className={`absolute top-0 bottom-0 ${side === "right" ? "right-0" : "left-0"}`}
-      style={{
-        width: "0%",
-        background: color,
-        transition: "width 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
-      }}
-    />
+    <div className="text-xs font-mono">
+      <div className="grid grid-cols-[1fr_80px_1fr] gap-0 px-3 py-1.5 text-[10px] text-muted-foreground border-b">
+        <span>잔량</span>
+        <span className="text-center">호가</span>
+        <span className="text-right">잔량</span>
+      </div>
+      <div className="max-h-[280px] overflow-y-auto">
+        {[...orderBook.asks].reverse().map((ask, i) => (
+          <div key={`a-${i}`} className="grid grid-cols-[1fr_80px_1fr] gap-0 px-3 py-[3px] relative" data-testid={`row-ask-${i}`}>
+            <div className="absolute left-0 top-0 bottom-0" style={{ width: `${(ask.quantity / maxQty) * 50}%`, background: "rgba(49,130,246,0.08)", transition: "width 0.5s ease" }} />
+            <span className="z-10 text-muted-foreground tabular-nums text-right pr-2">{ask.quantity.toLocaleString()}</span>
+            <span className="z-10 text-center text-blue-500 font-medium tabular-nums">{ask.price.toLocaleString()}</span>
+            <span className="z-10 text-right text-muted-foreground/40 tabular-nums"></span>
+          </div>
+        ))}
+        <div className="px-3 py-1.5 bg-muted/30 text-center">
+          <span className="font-bold text-sm text-red-500 tabular-nums" data-testid="text-orderbook-price">{orderBook.currentPrice.toLocaleString()}</span>
+        </div>
+        {orderBook.bids.map((bid, i) => (
+          <div key={`b-${i}`} className="grid grid-cols-[1fr_80px_1fr] gap-0 px-3 py-[3px] relative" data-testid={`row-bid-${i}`}>
+            <div className="absolute right-0 top-0 bottom-0" style={{ width: `${(bid.quantity / maxQty) * 50}%`, background: "rgba(240,68,82,0.08)", transition: "width 0.5s ease" }} />
+            <span className="z-10 text-muted-foreground/40 tabular-nums"></span>
+            <span className="z-10 text-center text-red-500 font-medium tabular-nums">{bid.price.toLocaleString()}</span>
+            <span className="z-10 text-right text-muted-foreground tabular-nums">{bid.quantity.toLocaleString()}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
-function OrderBook({ orderBook }: { orderBook: ReturnType<typeof generateOrderBookFromPrice> }) {
-  const maxQty = Math.max(
-    ...orderBook.asks.map((a) => a.quantity),
-    ...orderBook.bids.map((b) => b.quantity)
-  );
-  const totalAsk = orderBook.asks.reduce((s, a) => s + a.quantity, 0);
-  const totalBid = orderBook.bids.reduce((s, b) => s + b.quantity, 0);
-  const intensityPercent = totalBid + totalAsk > 0 ? Math.round((totalBid / (totalBid + totalAsk)) * 100) : 50;
-
+function TradesPanel({ trades }: { trades: ReturnType<typeof generateTrades> }) {
+  const [tab, setTab] = useState<"realtime" | "daily">("realtime");
   return (
-    <div className="text-sm font-mono">
-      <div className="grid grid-cols-[1fr_auto_1fr] gap-0 px-2 pb-2 text-[10px] text-muted-foreground border-b mb-1">
-        <span>수량(주)</span>
-        <span className="text-center px-3">가격(원)</span>
-        <span className="text-right">수량(주)</span>
+    <div>
+      <div className="flex items-center gap-0 border-b px-3">
+        <button onClick={() => setTab("realtime")} className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${tab === "realtime" ? "border-foreground text-foreground" : "border-transparent text-muted-foreground"}`} data-testid="tab-realtime">실시간</button>
+        <button onClick={() => setTab("daily")} className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${tab === "daily" ? "border-foreground text-foreground" : "border-transparent text-muted-foreground"}`} data-testid="tab-daily">일별</button>
       </div>
-      {[...orderBook.asks].reverse().map((ask, i) => (
-        <div key={`ask-${i}`} className="grid grid-cols-[1fr_auto_1fr] gap-0 px-2 py-[5px] relative" data-testid={`row-ask-${i}`}>
-          <AnimatedBar percent={(ask.quantity / maxQty) * 100} color="rgba(59,130,246,0.1)" side="left" />
-          <span className="text-right z-10 text-muted-foreground text-xs tabular-nums">{ask.quantity.toLocaleString()}</span>
-          <span className="text-center z-10 text-blue-600 dark:text-blue-400 font-medium px-3 text-xs tabular-nums">{ask.price.toLocaleString()}</span>
-          <span className="z-10 text-[10px] text-muted-foreground/50">매도{5 - i}</span>
+      <div className="text-xs font-mono">
+        <div className="grid grid-cols-5 gap-1 px-3 py-1.5 text-[10px] text-muted-foreground border-b">
+          <span>현재가</span>
+          <span className="text-right">체결량(주)</span>
+          <span className="text-right">등락률</span>
+          <span className="text-right">거래량(주)</span>
+          <span className="text-right">시간</span>
+        </div>
+        <div className="max-h-[240px] overflow-y-auto">
+          {trades.map((t, i) => (
+            <div key={i} className="grid grid-cols-5 gap-1 px-3 py-[3px] text-[11px]">
+              <span className={`tabular-nums ${t.change >= 0 ? "text-red-500" : "text-blue-500"}`}>{t.price.toLocaleString()}</span>
+              <span className="text-right tabular-nums text-muted-foreground">{t.quantity}</span>
+              <span className={`text-right tabular-nums ${t.change >= 0 ? "text-red-500" : "text-blue-500"}`}>{t.change >= 0 ? "+" : ""}{t.changePct}%</span>
+              <span className="text-right tabular-nums text-muted-foreground">{t.volume.toLocaleString()}</span>
+              <span className="text-right tabular-nums text-muted-foreground/60">{t.time}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InvestorPanel({ data }: { data: ReturnType<typeof generateInvestorData> }) {
+  const maxVal = Math.max(Math.abs(data.personal), Math.abs(data.foreign), Math.abs(data.institutional), 1);
+  const items = [
+    { label: "개인", value: data.personal },
+    { label: "외국인", value: data.foreign },
+    { label: "기관", value: data.institutional },
+  ];
+  return (
+    <div className="px-3 py-3 space-y-3">
+      {items.map((item) => (
+        <div key={item.label} className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground w-10 shrink-0">{item.label}</span>
+          <div className="flex-1 flex items-center h-4">
+            <div className="w-1/2 flex justify-end">
+              {item.value < 0 && (
+                <div className="h-full rounded-l-sm" style={{ width: `${(Math.abs(item.value) / maxVal) * 100}%`, background: "#3182f6", transition: "width 0.6s ease", minWidth: 2, maxWidth: "100%" }} />
+              )}
+            </div>
+            <div className="w-px h-full bg-border shrink-0" />
+            <div className="w-1/2 flex justify-start">
+              {item.value > 0 && (
+                <div className="h-full rounded-r-sm" style={{ width: `${(Math.abs(item.value) / maxVal) * 100}%`, background: "#f04452", transition: "width 0.6s ease", minWidth: 2, maxWidth: "100%" }} />
+              )}
+            </div>
+          </div>
+          <span className={`text-xs font-medium tabular-nums w-16 text-right ${item.value >= 0 ? "text-red-500" : "text-blue-500"}`}>
+            {item.value >= 0 ? "+" : ""}{item.value.toLocaleString()}
+          </span>
         </div>
       ))}
-
-      <div className="px-2 py-2 my-0.5 bg-muted/30 rounded-md">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[10px] font-semibold text-muted-foreground">현재가</span>
-          <span className="font-bold text-base text-red-500 tabular-nums" data-testid="text-orderbook-price">{orderBook.currentPrice.toLocaleString()}원</span>
-        </div>
-      </div>
-
-      {orderBook.bids.map((bid, i) => (
-        <div key={`bid-${i}`} className="grid grid-cols-[1fr_auto_1fr] gap-0 px-2 py-[5px] relative" data-testid={`row-bid-${i}`}>
-          <AnimatedBar percent={(bid.quantity / maxQty) * 100} color="rgba(239,68,68,0.1)" side="right" />
-          <span className="z-10 text-[10px] text-muted-foreground/50 text-right">매수{i + 1}</span>
-          <span className="text-center z-10 text-red-500 font-medium px-3 text-xs tabular-nums">{bid.price.toLocaleString()}</span>
-          <span className="text-right z-10 text-muted-foreground text-xs tabular-nums">{bid.quantity.toLocaleString()}</span>
-        </div>
-      ))}
-
-      <div className="mt-3 px-2">
-        <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1.5">
-          <span>매도 체결강도</span>
-          <span className="font-bold text-xs text-foreground">{intensityPercent}%</span>
-          <span>매수 체결강도</span>
-        </div>
-        <div className="h-2.5 rounded-full overflow-hidden flex bg-muted/30">
-          <div
-            className="h-full rounded-l-full"
-            style={{
-              width: `${100 - intensityPercent}%`,
-              background: "linear-gradient(90deg, rgba(59,130,246,0.6), rgba(59,130,246,0.3))",
-              transition: "width 0.8s cubic-bezier(0.22, 1, 0.36, 1)",
-            }}
-          />
-          <div
-            className="h-full rounded-r-full"
-            style={{
-              width: `${intensityPercent}%`,
-              background: "linear-gradient(90deg, rgba(239,68,68,0.3), rgba(239,68,68,0.6))",
-              transition: "width 0.8s cubic-bezier(0.22, 1, 0.36, 1)",
-            }}
-          />
-        </div>
-        <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-1">
-          <span className="text-blue-500 tabular-nums">{totalAsk.toLocaleString()}</span>
-          <span className="text-red-500 tabular-nums">{totalBid.toLocaleString()}</span>
-        </div>
-      </div>
     </div>
   );
 }
@@ -285,315 +345,266 @@ export default function LandingPage() {
   });
 
   const basePrice = stockData?.currentPrice ?? 0;
-  const basePriceChange = stockData?.priceChange ?? 0;
   const previousClose = stockData?.previousClose ?? 0;
 
-  const [orderBook, setOrderBook] = useState<ReturnType<typeof generateOrderBookFromPrice> | null>(null);
+  const [orderBook, setOrderBook] = useState<ReturnType<typeof generateOrderBook> | null>(null);
+  const [trades, setTrades] = useState<ReturnType<typeof generateTrades>>([]);
+  const [investor, setInvestor] = useState(() => generateInvestorData());
+  const [chartRange, setChartRange] = useState("1y");
+  const [activeTab, setActiveTab] = useState("chart");
+
   const displayPrice = orderBook?.currentPrice ?? basePrice;
-  const displayChange = previousClose > 0 ? displayPrice - previousClose : basePriceChange;
-  const displayChangePercent = previousClose > 0
-    ? parseFloat(((displayChange / previousClose) * 100).toFixed(2))
-    : stockData?.priceChangePercent ?? 0;
+  const displayChange = previousClose > 0 ? displayPrice - previousClose : (stockData?.priceChange ?? 0);
+  const displayChangePct = previousClose > 0 ? parseFloat(((displayChange / previousClose) * 100).toFixed(2)) : (stockData?.priceChangePercent ?? 0);
   const isUp = displayChange >= 0;
 
   useEffect(() => {
     if (basePrice > 0) {
-      setOrderBook(generateOrderBookFromPrice(basePrice));
+      setOrderBook(generateOrderBook(basePrice));
+      setTrades(generateTrades(basePrice));
     }
   }, [basePrice]);
 
   useEffect(() => {
     if (basePrice <= 0) return;
     const interval = setInterval(() => {
-      setOrderBook(generateOrderBookFromPrice(basePrice));
+      setOrderBook(generateOrderBook(basePrice));
+      setTrades(generateTrades(basePrice));
+      setInvestor(generateInvestorData());
     }, 2000);
     return () => clearInterval(interval);
   }, [basePrice]);
 
-  const lastUpdatedText = stockData?.lastUpdated
-    ? new Date(stockData.lastUpdated).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-    : "";
+  const infoItems = stockData ? [
+    { label: "1일 최고", value: stockData.todayHigh.toLocaleString() },
+    { label: "1일 최저", value: stockData.todayLow.toLocaleString() },
+    { label: "52주 최고", value: stockData.chartData.length > 0 ? Math.max(...stockData.chartData.map(d => d.price)).toLocaleString() : "-" },
+    { label: "52주 최저", value: stockData.chartData.length > 0 ? Math.min(...stockData.chartData.map(d => d.price)).toLocaleString() : "-" },
+  ] : [];
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-background/95 backdrop-blur sticky top-0 z-[999]">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-4 flex-wrap">
-          <Link href="/">
-            <div className="flex items-center gap-2.5 cursor-pointer">
-              <SamsungBadge size={32} />
-              <SamsungLogo className="h-4 w-auto text-foreground" />
-              <div className="h-4 w-px bg-border" />
-              <span className="font-semibold text-sm tracking-wide text-muted-foreground">주식관리</span>
-            </div>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link href="/login">
-              <Button variant="ghost" size="sm" data-testid="link-login">
-                로그인
-              </Button>
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="border-b bg-background sticky top-0 z-[999]">
+        <div className="max-w-[1400px] mx-auto px-4 h-12 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-6">
+            <Link href="/">
+              <div className="flex items-center gap-2 cursor-pointer" data-testid="link-home">
+                <SamsungBadge size={24} />
+                <span className="font-bold text-sm">삼성증권</span>
+              </div>
             </Link>
-            <Link href="/register">
-              <Button size="sm" data-testid="link-register">
-                회원가입
-              </Button>
+            <nav className="hidden md:flex items-center gap-1">
+              {["홈", "피드", "주식 골라보기", "내 계좌"].map((item) => (
+                <Link key={item} href={item === "내 계좌" ? "/dashboard" : "/"}>
+                  <button className="px-3 py-1.5 text-sm text-muted-foreground rounded-md transition-colors" data-testid={`nav-${item}`}>
+                    {item}
+                  </button>
+                </Link>
+              ))}
+            </nav>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center bg-muted/50 rounded-md px-3 gap-2">
+              <Search className="w-3.5 h-3.5 text-muted-foreground" />
+              <input type="text" placeholder="종목 검색하세요" className="bg-transparent border-0 outline-none text-sm py-1.5 w-36 placeholder:text-muted-foreground/50" data-testid="input-search" />
+            </div>
+            <Link href="/login">
+              <Button size="sm" data-testid="link-login">로그인</Button>
             </Link>
           </div>
         </div>
       </header>
 
-      <section className="relative overflow-hidden" style={{ minHeight: "520px" }}>
-        <div className="absolute inset-0">
-          <img
-            src="/images/samsung-building-hero.png"
-            alt="Samsung Electronics Headquarters"
-            className="w-full h-full object-cover scale-105"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0c1b3a]/80 via-[#0c1b3a]/65 to-[#0c1b3a]/85" />
-        </div>
-        <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-20 md:py-28">
-          <div className="text-center mb-12">
-            <div className="inline-block mb-6">
-              <SamsungLogo className="h-8 md:h-10 w-auto text-white mx-auto" />
+      <div className="max-w-[1400px] mx-auto w-full px-4 py-3">
+        <div className="flex items-center gap-3 mb-1">
+          <SamsungBadge size={36} />
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="font-bold text-base" data-testid="text-stock-name">삼성전자</h1>
+              <span className="text-xs text-muted-foreground">005930</span>
             </div>
-            <h1 className="text-3xl md:text-5xl font-bold text-white mb-3 tracking-tight">
-              삼성전자
-            </h1>
-            <p className="text-white/60 text-sm md:text-base max-w-md mx-auto tracking-wide">
-              실시간 주식 현황 확인 및 입출고 관리 시스템
-            </p>
-          </div>
-
-          <div className="flex items-center justify-center gap-4 mb-10 flex-wrap">
-            {isLoading ? (
-              <Skeleton className="h-16 w-64 bg-white/10" />
-            ) : (
-              <>
-                <span className="text-4xl md:text-6xl font-bold text-white tracking-tight">
-                  {displayPrice.toLocaleString()}
-                </span>
-                <span className="text-white/40 text-xl font-light">KRW</span>
-                <div className={`flex items-center gap-1.5 backdrop-blur px-3 py-1.5 rounded-md border ${isUp ? "bg-red-500/20 border-red-400/20" : "bg-blue-500/20 border-blue-400/20"}`}>
-                  {isUp ? <ArrowUpRight className="w-4 h-4 text-red-400" /> : <ArrowDownRight className="w-4 h-4 text-blue-400" />}
-                  <span className={`font-semibold text-base ${isUp ? "text-red-400" : "text-blue-400"}`}>
-                    {isUp ? "+" : ""}{displayChange.toLocaleString()} ({isUp ? "+" : ""}{displayChangePercent}%)
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="flex justify-center gap-4 flex-wrap">
-            <Link href="/register">
-              <Button size="lg" className="bg-white text-[#1428a0] border-white font-semibold px-8">
-                신청하기
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button variant="outline" size="lg" className="text-white border-white/30 bg-white/5 backdrop-blur px-8">
-                로그인
-              </Button>
-            </Link>
           </div>
         </div>
-      </section>
+        <div className="flex items-baseline gap-2 mt-1 flex-wrap">
+          {isLoading ? (
+            <Skeleton className="h-8 w-40" />
+          ) : (
+            <>
+              <span className="text-[28px] font-bold tabular-nums" data-testid="text-current-price">{displayPrice.toLocaleString()}원</span>
+              <span className={`text-sm font-medium ${isUp ? "text-red-500" : "text-blue-500"}`}>
+                어제보다 {isUp ? "+" : ""}{displayChange.toLocaleString()}원 ({isUp ? "+" : ""}{displayChangePct}%)
+              </span>
+            </>
+          )}
+        </div>
+      </div>
 
-      <section className="max-w-7xl mx-auto px-4 md:px-6 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2 p-0 overflow-hidden">
-            <div className="p-5 border-b flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-3">
-                <SamsungLogo className="h-3.5 w-auto text-foreground opacity-70" />
-                <div>
-                  <h2 className="font-bold text-lg" data-testid="text-stock-name">삼성전자 보통주</h2>
-                  <p className="text-xs text-muted-foreground">005930 | KRX</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                {isLoading ? (
-                  <Skeleton className="h-8 w-40" />
-                ) : (
-                  <>
-                    <span className="text-2xl font-bold tracking-tight" data-testid="text-current-price">
-                      {displayPrice.toLocaleString()}원
-                    </span>
-                    <Badge variant="default" className={isUp ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500"}>
-                      {isUp ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                      {isUp ? "+" : ""}{displayChangePercent}%
-                    </Badge>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="p-5">
-              <div className="h-[300px] md:h-[400px]">
-                {isLoading || !stockData ? (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Skeleton className="w-full h-full" />
-                  </div>
-                ) : (
-                  <StockChart data={stockData.chartData} />
-                )}
-              </div>
-              <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground px-1 flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                  <span>1년 차트 (Yahoo Finance)</span>
-                  {lastUpdatedText && (
-                    <span className="text-muted-foreground/60" data-testid="text-last-updated">업데이트 {lastUpdatedText}</span>
-                  )}
-                </div>
-                {stockData && (
-                  <div className="flex gap-4">
-                    <span>시가 <b className="text-foreground">{stockData.todayOpen.toLocaleString()}</b></span>
-                    <span>고가 <b className="text-red-500">{stockData.todayHigh.toLocaleString()}</b></span>
-                    <span>저가 <b className="text-blue-500">{stockData.todayLow.toLocaleString()}</b></span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </Card>
+      <div className="max-w-[1400px] mx-auto w-full px-4">
+        <div className="flex items-center gap-0 border-b">
+          {[
+            { id: "chart", label: "차트·호가" },
+            { id: "info", label: "종목정보" },
+            { id: "news", label: "뉴스·공시" },
+            { id: "trade", label: "거래현황" },
+          ].map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === t.id ? "border-foreground text-foreground" : "border-transparent text-muted-foreground"}`}
+              data-testid={`tab-${t.id}`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-          <Card className="p-0 overflow-hidden" data-testid="card-order-book">
-            <div className="p-5 border-b">
-              <h3 className="font-bold">호가창</h3>
-              <p className="text-xs text-muted-foreground">현재가 기준 매수/매도 호가</p>
-            </div>
-            <div className="p-3">
-              {isLoading || !orderBook ? (
-                <div className="space-y-2 p-3">
-                  {Array.from({ length: 11 }).map((_, i) => (
-                    <Skeleton key={i} className="h-6 w-full" />
+      <div className="max-w-[1400px] mx-auto w-full px-4 py-4 flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px_280px] gap-4">
+
+          <div className="space-y-4">
+            <Card className="p-0 overflow-hidden">
+              <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-1">
+                  {["1m", "3m", "6m", "1y"].map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setChartRange(r)}
+                      className={`px-2.5 py-1 text-xs rounded-md font-medium transition-colors ${chartRange === r ? "bg-foreground text-background" : "text-muted-foreground"}`}
+                      data-testid={`range-${r}`}
+                    >
+                      {r === "1m" ? "1개월" : r === "3m" ? "3개월" : r === "6m" ? "6개월" : "1년"}
+                    </button>
                   ))}
                 </div>
-              ) : (
-                <OrderBook orderBook={orderBook} />
+                {stockData?.lastUpdated && (
+                  <span className="text-[10px] text-muted-foreground/50">
+                    {new Date(stockData.lastUpdated).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} 기준
+                  </span>
+                )}
+              </div>
+              <div className="h-[300px] px-2 pb-2">
+                {isLoading || !stockData ? (
+                  <Skeleton className="w-full h-full" />
+                ) : (
+                  <StockChart data={stockData.chartData} chartRange={chartRange} />
+                )}
+              </div>
+              {stockData && (
+                <div className="px-4 pb-3 flex gap-4 text-[11px] text-muted-foreground border-t pt-2 flex-wrap">
+                  {infoItems.map((item) => (
+                    <span key={item.label}>{item.label} <b className="text-foreground">{item.value}</b></span>
+                  ))}
+                </div>
               )}
-            </div>
-          </Card>
-        </div>
-      </section>
+            </Card>
 
-      <section className="max-w-7xl mx-auto px-4 md:px-6 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="p-6">
-            <div className="flex flex-col gap-5">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <SamsungLogo className="h-3 w-auto text-foreground opacity-50" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="p-0 overflow-hidden">
+                <div className="px-3 py-2 border-b flex items-center justify-between gap-2">
+                  <span className="text-sm font-bold">시세</span>
+                  <X className="w-3.5 h-3.5 text-muted-foreground/40" />
                 </div>
-                <h3 className="font-bold text-xl mt-2">공급물량 단가</h3>
-                <p className="text-sm text-muted-foreground mt-1">선착순 물량 소진 시 마감됩니다</p>
+                <TradesPanel trades={trades} />
+              </Card>
+
+              <Card className="p-0 overflow-hidden">
+                <div className="px-3 py-2 border-b flex items-center justify-between gap-2">
+                  <span className="text-sm font-bold">투자자 동향</span>
+                  <X className="w-3.5 h-3.5 text-muted-foreground/40" />
+                </div>
+                <InvestorPanel data={investor} />
+              </Card>
+            </div>
+          </div>
+
+          <Card className="p-0 overflow-hidden h-fit" data-testid="card-order-book">
+            <div className="px-3 py-2 border-b flex items-center justify-between gap-2">
+              <span className="text-sm font-bold">호가</span>
+              <X className="w-3.5 h-3.5 text-muted-foreground/40" />
+            </div>
+            <OrderBookPanel orderBook={orderBook} isLoading={isLoading} />
+          </Card>
+
+          <Card className="p-0 overflow-hidden h-fit">
+            <div className="px-3 py-2 border-b flex items-center justify-between gap-2">
+              <span className="text-sm font-bold">주문하기</span>
+            </div>
+            <div className="p-3 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground w-16 shrink-0">주문 유형</span>
+                <div className="flex-1 bg-muted/30 rounded-md p-0.5 flex">
+                  <div className="flex-1 text-center text-xs py-1.5 bg-background rounded font-medium shadow-sm">일반 주문</div>
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#1428a0]/8 rounded-md p-5 text-center border border-[#1428a0]/10">
-                  <p className="text-xs text-muted-foreground mb-2">공급물량 단가</p>
-                  <p className="text-2xl font-bold text-[#1428a0]">50,000원</p>
-                  <p className="text-xs text-muted-foreground mt-1">1주당</p>
-                </div>
-                <div className="bg-red-500/8 rounded-md p-5 text-center border border-red-500/10">
-                  <p className="text-xs text-muted-foreground mb-2">현재 시세</p>
-                  <p className="text-2xl font-bold text-red-500" data-testid="text-market-price">
-                    {isLoading ? "---" : `${displayPrice.toLocaleString()}원`}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">1주당</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground w-16 shrink-0">구매 가격</span>
+                <div className="flex-1 flex items-center gap-1">
+                  <button className="px-2 py-1 text-xs rounded bg-muted/50 font-medium" data-testid="btn-price-type-limit">지정가</button>
+                  <button className="px-2 py-1 text-xs rounded text-muted-foreground" data-testid="btn-price-type-market">시장가</button>
                 </div>
               </div>
-              <Link href="/register">
-                <Button className="w-full bg-[#1428a0] border-[#1428a0]" data-testid="button-apply">
-                  지금 신청하기
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground w-16 shrink-0"></span>
+                <div className="flex-1 flex items-center border rounded-md">
+                  <button className="px-2 py-1.5 text-muted-foreground border-r" data-testid="btn-price-minus">-</button>
+                  <input type="text" value={displayPrice > 0 ? displayPrice.toLocaleString() : ""} readOnly className="flex-1 text-center text-sm font-medium bg-transparent outline-none py-1.5 tabular-nums" data-testid="input-price" />
+                  <span className="text-xs text-muted-foreground pr-1">원</span>
+                  <button className="px-2 py-1.5 text-muted-foreground border-l" data-testid="btn-price-plus">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground w-16 shrink-0">수량</span>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span>수량 입력</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground w-16 shrink-0"></span>
+                <div className="flex-1 flex items-center border rounded-md">
+                  <button className="px-2 py-1.5 text-muted-foreground border-r" data-testid="btn-qty-minus">-</button>
+                  <input type="text" placeholder="0" className="flex-1 text-center text-sm bg-transparent outline-none py-1.5 tabular-nums" data-testid="input-qty" />
+                  <button className="px-2 py-1.5 text-muted-foreground border-l" data-testid="btn-qty-plus">+</button>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 flex-wrap">
+                {["10%", "25%", "50%", "최대"].map((pct) => (
+                  <button key={pct} className="flex-1 text-xs py-1.5 rounded-md border text-muted-foreground font-medium" data-testid={`btn-pct-${pct}`}>{pct}</button>
+                ))}
+              </div>
+              <div className="space-y-1 pt-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">구매가능 금액</span>
+                  <span className="font-medium">0원</span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">총 주문 금액</span>
+                  <span className="font-medium">0원</span>
+                </div>
+              </div>
+              <Link href="/login">
+                <Button className="w-full bg-red-500 border-red-500 text-white font-medium" data-testid="btn-buy">
+                  로그인하고 구매하기
                 </Button>
               </Link>
             </div>
           </Card>
-
-          <Card className="p-6">
-            <div className="flex flex-col gap-5">
-              <div>
-                <h3 className="font-bold text-xl">투자 안내</h3>
-                <p className="text-sm text-muted-foreground mt-1">삼성전자 주식 입출고 절차</p>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#1428a0]/10 flex items-center justify-center text-xs font-bold text-[#1428a0]">1</div>
-                  <div>
-                    <p className="font-medium text-sm">회원가입</p>
-                    <p className="text-xs text-muted-foreground">은행 및 계좌 정보를 등록합니다</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#1428a0]/10 flex items-center justify-center text-xs font-bold text-[#1428a0]">2</div>
-                  <div>
-                    <p className="font-medium text-sm">입고 신청</p>
-                    <p className="text-xs text-muted-foreground">관리자에게 주식 입고를 요청합니다</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#1428a0]/10 flex items-center justify-center text-xs font-bold text-[#1428a0]">3</div>
-                  <div>
-                    <p className="font-medium text-sm">주식 관리</p>
-                    <p className="text-xs text-muted-foreground">대시보드에서 보유 현황을 확인합니다</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#1428a0]/10 flex items-center justify-center text-xs font-bold text-[#1428a0]">4</div>
-                  <div>
-                    <p className="font-medium text-sm">출고 처리</p>
-                    <p className="text-xs text-muted-foreground">필요 시 주식 출고를 진행합니다</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
         </div>
-      </section>
+      </div>
 
-      <section className="relative overflow-hidden my-4" style={{ minHeight: "320px" }}>
-        <div className="absolute inset-0">
-          <img
-            src="/images/samsung-factory.png"
-            alt="Samsung Factory"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0c1b3a]/85 via-[#0c1b3a]/70 to-[#0c1b3a]/85" />
-        </div>
-        <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-            <div>
-              <SamsungLogo className="h-5 w-auto text-white/40 mb-5" />
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4 leading-snug">
-                진화된 기술,<br />새로운 아이덴티티
-              </h2>
-              <p className="text-white/60 text-sm leading-relaxed mb-5">
-                삼성전자는 세계 최초의 64M DRAM, 디지털 TV, MP3 플레이어 등 전 세계에 많은 것을 최초로 소개했습니다.
-                글로벌 고객에게 특별한 인상을 남기기 위해 브랜드 이미지를 완전히 새롭게 바꾸었습니다.
-              </p>
-              <p className="text-white/40 text-xs">
-                2023년 3분기말 기준 삼성전자 총발행주식수는 6,792,669,250주입니다.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white/8 backdrop-blur-sm rounded-md p-5 text-center border border-white/10">
-                <p className="text-xs text-white/50 mb-2">보통주</p>
-                <p className="text-2xl font-bold text-white">87.9%</p>
-                <p className="text-xs text-white/40 mt-1">5,969,782,550주</p>
-              </div>
-              <div className="bg-white/8 backdrop-blur-sm rounded-md p-5 text-center border border-white/10">
-                <p className="text-xs text-white/50 mb-2">우선주</p>
-                <p className="text-2xl font-bold text-white">12.1%</p>
-                <p className="text-xs text-white/40 mt-1">822,886,700주</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <footer className="border-t mt-8">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-10">
-          <div className="flex flex-col items-center gap-4">
-            <SamsungLogo className="h-4 w-auto text-muted-foreground/50" />
-            <div className="text-center text-sm text-muted-foreground">
-              <p>삼성전자 주식관리 시스템</p>
-              <p className="mt-1 text-xs">본 서비스는 주식 입출고 관리를 위한 내부 시스템입니다.</p>
-            </div>
+      <footer className="border-t mt-auto">
+        <div className="max-w-[1400px] mx-auto px-4 overflow-x-auto">
+          <div className="flex items-center gap-6 py-2 text-[11px] text-muted-foreground whitespace-nowrap min-w-0">
+            <span className="font-medium text-foreground/60">투자 유의사항</span>
+            {stockData && (
+              <>
+                <span>현재가 <b className="text-foreground">{displayPrice.toLocaleString()}</b></span>
+                <span>시가 <b className="text-foreground">{stockData.todayOpen.toLocaleString()}</b></span>
+                <span>고가 <b className="text-red-500">{stockData.todayHigh.toLocaleString()}</b></span>
+                <span>저가 <b className="text-blue-500">{stockData.todayLow.toLocaleString()}</b></span>
+                <span>전일종가 <b className="text-foreground">{previousClose.toLocaleString()}</b></span>
+              </>
+            )}
           </div>
         </div>
       </footer>
