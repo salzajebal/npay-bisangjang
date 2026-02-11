@@ -4,8 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Heart, Star, X, TrendingUp, TrendingDown, ExternalLink, MessageCircle, MessageSquare, Repeat2, Share2, Newspaper, Clock } from "lucide-react";
+import { Heart, Star, X, TrendingUp, TrendingDown, ExternalLink, MessageCircle, MessageSquare, Repeat2, Share2, Newspaper, Clock, Package, LogIn } from "lucide-react";
 import { SamsungBadge } from "@/components/samsung-logo";
+import { getQueryFn } from "@/lib/queryClient";
+import type { User, StockTransaction } from "@shared/schema";
 
 const KOREAN_STOCKS = [
   { name: "삼성전자", code: "005930", price: 56800, change: -200, pct: -0.35 },
@@ -1056,6 +1058,121 @@ function CommunityPanel() {
   );
 }
 
+function HoldingsPanel({ displayPrice }: { displayPrice: number }) {
+  const { data: authData } = useQuery<{ user: User } | null>({
+    queryKey: ["/api/auth/me"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+
+  const { data: myTransactions } = useQuery<StockTransaction[]>({
+    queryKey: ["/api/transactions/my"],
+    enabled: !!authData?.user,
+  });
+
+  const user = authData?.user;
+
+  const holdings = (myTransactions || []).reduce<Record<string, { qty: number; totalCost: number }>>((acc, tx) => {
+    const key = tx.stockName;
+    if (!acc[key]) acc[key] = { qty: 0, totalCost: 0 };
+    if (tx.type === "in") {
+      acc[key].qty += tx.quantity;
+      acc[key].totalCost += tx.quantity * tx.pricePerShare;
+    } else {
+      acc[key].qty -= tx.quantity;
+      acc[key].totalCost -= tx.quantity * tx.pricePerShare;
+    }
+    return acc;
+  }, {});
+
+  const holdingsList = Object.entries(holdings)
+    .filter(([, v]) => v.qty > 0)
+    .map(([name, v]) => {
+      const avgPrice = Math.round(v.totalCost / v.qty);
+      const currentVal = name === "삼성전자" && displayPrice > 0 ? displayPrice : avgPrice;
+      const evalAmount = v.qty * currentVal;
+      const profitLoss = evalAmount - v.totalCost;
+      const profitPct = v.totalCost > 0 ? parseFloat(((profitLoss / v.totalCost) * 100).toFixed(2)) : 0;
+      return { name, qty: v.qty, avgPrice, currentVal, evalAmount, totalCost: v.totalCost, profitLoss, profitPct };
+    });
+
+  const totalEval = holdingsList.reduce((s, h) => s + h.evalAmount, 0);
+  const totalCost = holdingsList.reduce((s, h) => s + h.totalCost, 0);
+  const totalProfit = totalEval - totalCost;
+  const totalProfitPct = totalCost > 0 ? parseFloat(((totalProfit / totalCost) * 100).toFixed(2)) : 0;
+
+  if (!user) {
+    return (
+      <div className="p-4 flex flex-col items-center justify-center gap-3 py-8">
+        <LogIn className="w-8 h-8 text-muted-foreground/40" />
+        <p className="text-sm text-muted-foreground text-center">로그인하면 보유주식 현황을<br />확인할 수 있습니다</p>
+        <Link href="/login">
+          <Button className="bg-red-500 border-red-500 text-white font-medium" data-testid="btn-login-holdings">
+            로그인하기
+          </Button>
+        </Link>
+        <Link href="/register">
+          <Button variant="outline" size="sm" data-testid="btn-register-holdings">
+            비대면 계좌개설
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-3 space-y-2 text-sm">
+      <div className="bg-muted/30 rounded-md p-3">
+        <p className="text-muted-foreground text-sm mb-1">{user.fullName}님의 보유현황</p>
+        <p className="text-xl font-bold tabular-nums" data-testid="text-total-eval">{totalEval.toLocaleString()}원</p>
+        <p className={`text-sm font-medium tabular-nums ${totalProfit >= 0 ? "text-red-500" : "text-blue-500"}`} data-testid="text-total-profit">
+          평가손익 {totalProfit >= 0 ? "+" : ""}{totalProfit.toLocaleString()}원 ({totalProfit >= 0 ? "+" : ""}{totalProfitPct}%)
+        </p>
+      </div>
+
+      {holdingsList.length === 0 ? (
+        <div className="text-center py-4">
+          <p className="text-muted-foreground text-sm">보유 중인 주식이 없습니다</p>
+          <p className="text-muted-foreground/60 text-sm mt-1">관리자에게 입고 요청하세요</p>
+        </div>
+      ) : (
+        <div className="divide-y">
+          {holdingsList.map((h) => (
+            <div key={h.name} className="py-2.5 first:pt-0 last:pb-0">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <span className="font-semibold">{h.name}</span>
+                <span className="font-bold tabular-nums">{h.evalAmount.toLocaleString()}원</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+                <span>{h.qty}주 · 평단 {h.avgPrice.toLocaleString()}원</span>
+                <span className={`font-medium tabular-nums ${h.profitLoss >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                  {h.profitLoss >= 0 ? "+" : ""}{h.profitLoss.toLocaleString()}원 ({h.profitLoss >= 0 ? "+" : ""}{h.profitPct}%)
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="border-t pt-2 space-y-1.5">
+        <div className="flex items-center justify-between gap-2 text-sm">
+          <span className="text-muted-foreground">총 매입금액</span>
+          <span className="font-medium tabular-nums">{totalCost.toLocaleString()}원</span>
+        </div>
+        <div className="flex items-center justify-between gap-2 text-sm">
+          <span className="text-muted-foreground">현재가</span>
+          <span className="font-medium tabular-nums">{displayPrice > 0 ? displayPrice.toLocaleString() : "-"}원</span>
+        </div>
+      </div>
+
+      <Link href="/dashboard">
+        <Button className="w-full" variant="outline" data-testid="btn-go-dashboard">
+          내 계좌 상세보기
+        </Button>
+      </Link>
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const { data: stockData, isLoading } = useQuery<StockData>({
     queryKey: ["/api/stock/samsung"],
@@ -1283,63 +1400,12 @@ export default function LandingPage() {
 
           <Card className="p-0 overflow-hidden flex flex-col">
             <div className="px-3 py-2 border-b flex items-center justify-between gap-2">
-              <span className="text-base font-bold">주문하기</span>
-            </div>
-            <div className="p-3 space-y-2.5 text-sm">
-              <div className="grid grid-cols-[56px_1fr] items-center gap-x-3">
-                <span className="text-muted-foreground">주문 유형</span>
-                <div className="bg-muted/30 rounded-md p-0.5 flex">
-                  <div className="flex-1 text-center py-1.5 bg-background rounded font-medium shadow-sm">일반 주문</div>
-                </div>
-              </div>
-              <div className="grid grid-cols-[56px_1fr] items-center gap-x-3">
-                <span className="text-muted-foreground">구매 가격</span>
-                <div className="flex items-center gap-1">
-                  <button className="px-2.5 py-1 rounded bg-muted/50 font-medium" data-testid="btn-price-type-limit">지정가</button>
-                  <button className="px-2.5 py-1 rounded text-muted-foreground" data-testid="btn-price-type-market">시장가</button>
-                </div>
-              </div>
-              <div className="grid grid-cols-[56px_1fr] items-center gap-x-3">
-                <span></span>
-                <div className="flex items-center border rounded-md">
-                  <button className="px-2.5 py-1.5 text-muted-foreground border-r" data-testid="btn-price-minus">-</button>
-                  <input type="text" value={displayPrice > 0 ? displayPrice.toLocaleString() : ""} readOnly className="flex-1 text-center text-base font-medium bg-transparent outline-none py-1.5 min-w-0 tabular-nums" data-testid="input-price" />
-                  <button className="px-2.5 py-1.5 text-muted-foreground border-l" data-testid="btn-price-plus">+</button>
-                </div>
-              </div>
-              <div className="grid grid-cols-[56px_1fr] items-center gap-x-3">
-                <span className="text-muted-foreground">수량</span>
-                <span className="text-muted-foreground">수량 입력</span>
-              </div>
-              <div className="grid grid-cols-[56px_1fr] items-center gap-x-3">
-                <span></span>
-                <div className="flex items-center border rounded-md">
-                  <button className="px-2.5 py-1.5 text-muted-foreground border-r" data-testid="btn-qty-minus">-</button>
-                  <input type="text" placeholder="0" className="flex-1 text-center text-base bg-transparent outline-none py-1.5 min-w-0 tabular-nums" data-testid="input-qty" />
-                  <button className="px-2.5 py-1.5 text-muted-foreground border-l" data-testid="btn-qty-plus">+</button>
-                </div>
-              </div>
               <div className="flex items-center gap-1.5">
-                {["10%", "25%", "50%", "최대"].map((pct) => (
-                  <button key={pct} className="flex-1 py-1.5 rounded-md border text-muted-foreground font-medium" data-testid={`btn-pct-${pct}`}>{pct}</button>
-                ))}
+                <Package className="w-4 h-4" />
+                <span className="text-base font-bold">내 보유주식</span>
               </div>
-              <div className="space-y-1 pt-1 border-t">
-                <div className="flex items-center justify-between gap-2 pt-2">
-                  <span className="text-muted-foreground">구매가능 금액</span>
-                  <span className="font-medium tabular-nums">0원</span>
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-muted-foreground">총 주문 금액</span>
-                  <span className="font-medium tabular-nums">0원</span>
-                </div>
-              </div>
-              <Link href="/login">
-                <Button className="w-full bg-red-500 border-red-500 text-white font-medium" data-testid="btn-buy">
-                  로그인하고 구매하기
-                </Button>
-              </Link>
             </div>
+            <HoldingsPanel displayPrice={displayPrice} />
             <div className="border-t" data-testid="card-top-investors">
               <div className="px-3 py-2 border-b">
                 <span className="text-lg font-bold">수익금 상위 투자자 TOP5</span>
