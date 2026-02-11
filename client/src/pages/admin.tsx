@@ -18,7 +18,7 @@ import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
   Eye, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
-  CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send,
+  CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu,
 } from "lucide-react";
 import { SamsungBadge } from "@/components/samsung-logo";
 
@@ -572,6 +572,7 @@ export default function AdminPage() {
   const [, setLocation] = useLocation();
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
@@ -785,72 +786,76 @@ export default function AdminPage() {
   const totalOut = transactions.filter((t) => t.type === "out").reduce((s, t) => s + t.quantity, 0);
   const totalValue = transactions.filter((t) => t.type === "in").reduce((s, t) => s + t.quantity * t.pricePerShare, 0);
 
-  return (
-    <div className="flex h-screen bg-[#0a1628] overflow-hidden">
-      <aside className={`${sidebarCollapsed ? "w-16" : "w-60"} border-r border-[#1e3050] bg-[#111d33] flex flex-col transition-all duration-200 shrink-0`}>
-        <div className={`h-14 border-b border-[#1e3050] flex items-center ${sidebarCollapsed ? "justify-center px-2" : "px-4"} gap-2`}>
-          {!sidebarCollapsed && (
-            <>
-              <SamsungBadge size={28} />
-              <div className="flex flex-col min-w-0">
-                <span className="font-bold text-sm truncate text-white">IBK기업증권</span>
-                <span className="text-[11px] text-slate-400">관리자 시스템</span>
-              </div>
-            </>
-          )}
-          {sidebarCollapsed && <SamsungBadge size={28} />}
-        </div>
-
-        <nav className="flex-1 py-3 px-2 space-y-1">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeSection === item.id;
-            const showUnread = item.id === "chat" && totalUnreadCount > 0;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveSection(item.id)}
-                className={`w-full flex items-center gap-3 rounded-md text-sm font-medium transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${isActive ? "bg-[#004B9C] text-white" : "text-slate-400"}`}
-                data-testid={`nav-admin-${item.id}`}
-                title={sidebarCollapsed ? item.label : undefined}
-              >
-                <div className="relative shrink-0">
-                  <Icon className="w-4 h-4" />
-                  {showUnread && sidebarCollapsed && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" data-testid="badge-chat-unread-icon">
-                      {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
-                    </span>
-                  )}
-                </div>
-                {!sidebarCollapsed && (
-                  <span className="flex-1 text-left">{item.label}</span>
-                )}
-                {showUnread && !sidebarCollapsed && (
-                  <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shrink-0" data-testid="badge-chat-unread">
+  const adminSidebarContent = (isMobile: boolean) => (
+    <>
+      <div className={`h-14 border-b border-[#1e3050] flex items-center ${!isMobile && sidebarCollapsed ? "justify-center px-2" : "px-4"} gap-2`}>
+        {(!isMobile && sidebarCollapsed) ? (
+          <SamsungBadge size={28} />
+        ) : (
+          <>
+            <SamsungBadge size={28} />
+            <div className="flex flex-col min-w-0">
+              <span className="font-bold text-sm truncate text-white">IBK기업증권</span>
+              <span className="text-[11px] text-slate-400">관리자 시스템</span>
+            </div>
+            {isMobile && (
+              <button onClick={() => setMobileSidebarOpen(false)} className="ml-auto p-1" data-testid="button-close-admin-sidebar">
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
+            )}
+          </>
+        )}
+      </div>
+      <nav className="flex-1 py-3 px-2 space-y-1">
+        {sidebarItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeSection === item.id;
+          const showUnread = item.id === "chat" && totalUnreadCount > 0;
+          return (
+            <button
+              key={item.id}
+              onClick={() => { setActiveSection(item.id); if (isMobile) setMobileSidebarOpen(false); }}
+              className={`w-full flex items-center gap-3 rounded-md text-sm font-medium transition-colors ${!isMobile && sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${isActive ? "bg-[#004B9C] text-white" : "text-slate-400"}`}
+              data-testid={`nav-admin-${item.id}`}
+              title={!isMobile && sidebarCollapsed ? item.label : undefined}
+            >
+              <div className="relative shrink-0">
+                <Icon className="w-4 h-4" />
+                {showUnread && !isMobile && sidebarCollapsed && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" data-testid="badge-chat-unread-icon">
                     {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
                   </span>
                 )}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="border-t border-[#1e3050] p-2 space-y-1">
-          <Link href="/">
-            <button className={`w-full flex items-center gap-3 rounded-md text-sm text-slate-400 transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`} data-testid="nav-admin-home" title={sidebarCollapsed ? "메인 홈" : undefined}>
-              <Home className="w-4 h-4 shrink-0" />
-              {!sidebarCollapsed && <span>메인 홈</span>}
+              </div>
+              {(isMobile || !sidebarCollapsed) && (
+                <span className="flex-1 text-left">{item.label}</span>
+              )}
+              {showUnread && (isMobile || !sidebarCollapsed) && (
+                <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shrink-0" data-testid="badge-chat-unread">
+                  {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
+                </span>
+              )}
             </button>
-          </Link>
-          <button
-            onClick={() => logoutMutation.mutate()}
-            className={`w-full flex items-center gap-3 rounded-md text-sm text-slate-400 transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`}
-            data-testid="button-admin-logout"
-            title={sidebarCollapsed ? "로그아웃" : undefined}
-          >
-            <LogOut className="w-4 h-4 shrink-0" />
-            {!sidebarCollapsed && <span>로그아웃</span>}
+          );
+        })}
+      </nav>
+      <div className="border-t border-[#1e3050] p-2 space-y-1">
+        <Link href="/">
+          <button onClick={() => isMobile && setMobileSidebarOpen(false)} className={`w-full flex items-center gap-3 rounded-md text-sm text-slate-400 transition-colors ${!isMobile && sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`} data-testid="nav-admin-home" title={!isMobile && sidebarCollapsed ? "메인 홈" : undefined}>
+            <Home className="w-4 h-4 shrink-0" />
+            {(isMobile || !sidebarCollapsed) && <span>메인 홈</span>}
           </button>
+        </Link>
+        <button
+          onClick={() => logoutMutation.mutate()}
+          className={`w-full flex items-center gap-3 rounded-md text-sm text-slate-400 transition-colors ${!isMobile && sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`}
+          data-testid="button-admin-logout"
+          title={!isMobile && sidebarCollapsed ? "로그아웃" : undefined}
+        >
+          <LogOut className="w-4 h-4 shrink-0" />
+          {(isMobile || !sidebarCollapsed) && <span>로그아웃</span>}
+        </button>
+        {!isMobile && (
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className={`w-full flex items-center gap-3 rounded-md text-sm text-slate-400 transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2" : "px-3 py-2"}`}
@@ -858,13 +863,33 @@ export default function AdminPage() {
           >
             {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <><ChevronLeft className="w-4 h-4 shrink-0" /><span>접기</span></>}
           </button>
+        )}
+      </div>
+    </>
+  );
+
+  return (
+    <div className="flex h-screen bg-[#0a1628] overflow-hidden">
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setMobileSidebarOpen(false)} />
+          <aside className="absolute left-0 top-0 bottom-0 w-64 bg-[#111d33] border-r border-[#1e3050] flex flex-col z-10">
+            {adminSidebarContent(true)}
+          </aside>
         </div>
+      )}
+
+      <aside className={`hidden md:flex ${sidebarCollapsed ? "w-16" : "w-60"} border-r border-[#1e3050] bg-[#111d33] flex-col transition-all duration-200 shrink-0`}>
+        {adminSidebarContent(false)}
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-14 border-b border-[#1e3050] bg-[#0d1f35] flex items-center justify-between gap-4 px-6 shrink-0">
-          <div>
-            <h1 className="font-bold text-lg text-white" data-testid="text-admin-section-title">
+        <header className="h-14 border-b border-[#1e3050] bg-[#0d1f35] flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 shrink-0">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setMobileSidebarOpen(true)} className="md:hidden p-1 text-slate-400" data-testid="button-admin-mobile-menu">
+              <Menu className="w-5 h-5" />
+            </button>
+            <h1 className="font-bold text-base sm:text-lg text-white" data-testid="text-admin-section-title">
               {sidebarItems.find((i) => i.id === activeSection)?.label}
             </h1>
           </div>
@@ -873,7 +898,7 @@ export default function AdminPage() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6 space-y-6">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
           {activeSection === "dashboard" && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1263,11 +1288,11 @@ export default function AdminPage() {
                               {tr.adminMemo || "-"}
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center justify-center gap-1">
+                              <div className="flex items-center justify-center gap-1 flex-nowrap">
                                 <Button
                                   size="sm"
                                   variant="default"
-                                  className="bg-green-600 border-green-600"
+                                  className="bg-green-600 border-green-600 text-xs sm:text-sm px-2 sm:px-3"
                                   onClick={() => updateTransferStatusMutation.mutate({ id: tr.id, status: "approved" })}
                                   disabled={tr.status === "approved" || updateTransferStatusMutation.isPending}
                                   data-testid={`button-approve-${tr.id}`}
@@ -1277,6 +1302,7 @@ export default function AdminPage() {
                                 <Button
                                   size="sm"
                                   variant="destructive"
+                                  className="text-xs sm:text-sm px-2 sm:px-3"
                                   onClick={() => updateTransferStatusMutation.mutate({ id: tr.id, status: "rejected" })}
                                   disabled={tr.status === "rejected" || updateTransferStatusMutation.isPending}
                                   data-testid={`button-reject-${tr.id}`}
@@ -1286,6 +1312,7 @@ export default function AdminPage() {
                                 <Button
                                   size="sm"
                                   variant="secondary"
+                                  className="text-xs sm:text-sm px-2 sm:px-3"
                                   onClick={() => updateTransferStatusMutation.mutate({ id: tr.id, status: "held" })}
                                   disabled={tr.status === "held" || updateTransferStatusMutation.isPending}
                                   data-testid={`button-hold-${tr.id}`}
@@ -1306,15 +1333,15 @@ export default function AdminPage() {
 
           {activeSection === "chat" && (
             <>
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 mb-4 sm:mb-6">
                 <MessageSquare className="w-5 h-5 text-[#4a90d9]" />
                 <div>
-                  <h2 className="text-lg font-bold text-white">1:1 고객 상담</h2>
-                  <p className="text-sm text-slate-400">회원 문의에 실시간으로 응답합니다</p>
+                  <h2 className="text-base sm:text-lg font-bold text-white">1:1 고객 상담</h2>
+                  <p className="text-xs sm:text-sm text-slate-400">회원 문의에 실시간으로 응답합니다</p>
                 </div>
               </div>
-              <div className="flex gap-4 h-[calc(100vh-180px)]">
-                <Card className="w-72 shrink-0 p-0 overflow-hidden flex flex-col bg-[#111d33] border-[#1e3050]">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 h-[calc(100vh-200px)] sm:h-[calc(100vh-180px)]">
+                <Card className={`${selectedChatRoom ? "hidden sm:flex" : "flex"} w-full sm:w-72 sm:shrink-0 p-0 overflow-hidden flex-col bg-[#111d33] border-[#1e3050]`}>
                   <div className="p-3 border-b border-[#1e3050]">
                     <h3 className="text-sm font-bold text-white">상담 목록</h3>
                     <p className="text-xs text-slate-400 mt-0.5">{(chatRooms || []).length}건의 상담</p>
@@ -1360,7 +1387,7 @@ export default function AdminPage() {
                     )}
                   </div>
                 </Card>
-                <Card className="flex-1 p-0 overflow-hidden flex flex-col bg-[#111d33] border-[#1e3050]">
+                <Card className={`${!selectedChatRoom ? "hidden sm:flex" : "flex"} flex-1 p-0 overflow-hidden flex-col bg-[#111d33] border-[#1e3050]`}>
                   {!selectedChatRoom ? (
                     <div className="flex items-center justify-center h-full">
                       <div className="text-center space-y-3">
@@ -1371,6 +1398,9 @@ export default function AdminPage() {
                   ) : (
                     <>
                       <div className="p-3 border-b border-[#1e3050] flex items-center gap-2">
+                        <button onClick={() => setSelectedChatRoom(null)} className="sm:hidden p-1 text-slate-400" data-testid="button-chat-back">
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
                         <div className="w-7 h-7 rounded-full bg-[#004B9C]/20 flex items-center justify-center">
                           <span className="text-xs font-bold text-[#4a90d9]">
                             {((chatRooms || []).find((r: any) => r.id === selectedChatRoom)?.userName || "?").charAt(0)}

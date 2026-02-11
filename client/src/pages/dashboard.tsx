@@ -10,7 +10,7 @@ import { useMutation } from "@tanstack/react-query";
 import {
   LogOut, Package, ArrowDownRight, ArrowUpRight, User as UserIcon,
   TrendingUp, RefreshCw, LayoutDashboard, ClipboardList, Wallet, Home,
-  ChevronLeft, ChevronRight, MessageSquare,
+  ChevronLeft, ChevronRight, MessageSquare, Menu, X,
 } from "lucide-react";
 import { SamsungBadge } from "@/components/samsung-logo";
 import type { User, StockTransaction } from "@shared/schema";
@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const [, setLocation] = useLocation();
   const [activeSection, setActiveSection] = useState<DashSection>("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const { data: authData, isLoading: authLoading } = useQuery<{ user: User } | null>({
     queryKey: ["/api/auth/me"],
@@ -147,76 +148,80 @@ export default function DashboardPage() {
   const totalProfit = totalEval - totalCost;
   const totalProfitPct = totalCost > 0 ? ((totalProfit / totalCost) * 100) : 0;
 
-  return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      <aside className={`${sidebarCollapsed ? "w-16" : "w-60"} border-r bg-muted/30 flex flex-col transition-all duration-200 shrink-0`}>
-        <div className={`h-14 border-b flex items-center ${sidebarCollapsed ? "justify-center px-2" : "px-4"} gap-2`}>
-          {!sidebarCollapsed && (
-            <>
-              <SamsungBadge size={28} />
-              <div className="flex flex-col min-w-0">
-                <span className="font-bold text-sm truncate">IBK기업증권</span>
-                <span className="text-[11px] text-muted-foreground">내 계좌</span>
-              </div>
-            </>
-          )}
-          {sidebarCollapsed && <SamsungBadge size={28} />}
-        </div>
-
-        <nav className="flex-1 py-3 px-2 space-y-1">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeSection === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveSection(item.id)}
-                className={`w-full flex items-center gap-3 rounded-md text-sm font-medium transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-                data-testid={`nav-dash-${item.id}`}
-                title={sidebarCollapsed ? item.label : undefined}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                {!sidebarCollapsed && <span>{item.label}</span>}
+  const sidebarContent = (isMobile: boolean) => (
+    <>
+      <div className={`h-14 border-b flex items-center ${!isMobile && sidebarCollapsed ? "justify-center px-2" : "px-4"} gap-2`}>
+        {(!isMobile && sidebarCollapsed) ? (
+          <SamsungBadge size={28} />
+        ) : (
+          <>
+            <SamsungBadge size={28} />
+            <div className="flex flex-col min-w-0">
+              <span className="font-bold text-sm truncate">IBK기업증권</span>
+              <span className="text-[11px] text-muted-foreground">내 계좌</span>
+            </div>
+            {isMobile && (
+              <button onClick={() => setMobileSidebarOpen(false)} className="ml-auto p-1" data-testid="button-close-mobile-sidebar">
+                <X className="w-5 h-5 text-muted-foreground" />
               </button>
-            );
-          })}
-        </nav>
-
-        <div className="border-t p-2 space-y-1">
-          {!sidebarCollapsed && (
-            <div className="px-3 py-2 mb-1">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <span className="text-xs font-bold text-primary">{user.fullName.charAt(0)}</span>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{user.fullName}</p>
-                  <p className="text-[11px] text-muted-foreground truncate">{user.bank}</p>
-                </div>
+            )}
+          </>
+        )}
+      </div>
+      <nav className="flex-1 py-3 px-2 space-y-1">
+        {sidebarItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeSection === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => { setActiveSection(item.id); if (isMobile) setMobileSidebarOpen(false); }}
+              className={`w-full flex items-center gap-3 rounded-md text-sm font-medium transition-colors ${!isMobile && sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+              data-testid={`nav-dash-${item.id}`}
+              title={!isMobile && sidebarCollapsed ? item.label : undefined}
+            >
+              <Icon className="w-4 h-4 shrink-0" />
+              {(isMobile || !sidebarCollapsed) && <span>{item.label}</span>}
+            </button>
+          );
+        })}
+      </nav>
+      <div className="border-t p-2 space-y-1">
+        {(isMobile || !sidebarCollapsed) && (
+          <div className="px-3 py-2 mb-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <span className="text-xs font-bold text-primary">{user.fullName.charAt(0)}</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{user.fullName}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{user.bank}</p>
               </div>
             </div>
-          )}
-          <Link href="/chat">
-            <button className={`w-full flex items-center gap-3 rounded-md text-sm text-muted-foreground transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`} data-testid="nav-dash-chat" title={sidebarCollapsed ? "1:1 상담" : undefined}>
-              <MessageSquare className="w-4 h-4 shrink-0" />
-              {!sidebarCollapsed && <span>1:1 상담</span>}
-            </button>
-          </Link>
-          <Link href="/">
-            <button className={`w-full flex items-center gap-3 rounded-md text-sm text-muted-foreground transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`} data-testid="nav-dash-home" title={sidebarCollapsed ? "메인 홈" : undefined}>
-              <Home className="w-4 h-4 shrink-0" />
-              {!sidebarCollapsed && <span>메인 홈</span>}
-            </button>
-          </Link>
-          <button
-            onClick={() => logoutMutation.mutate()}
-            className={`w-full flex items-center gap-3 rounded-md text-sm text-muted-foreground transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`}
-            data-testid="button-logout"
-            title={sidebarCollapsed ? "로그아웃" : undefined}
-          >
-            <LogOut className="w-4 h-4 shrink-0" />
-            {!sidebarCollapsed && <span>로그아웃</span>}
+          </div>
+        )}
+        <Link href="/chat">
+          <button onClick={() => isMobile && setMobileSidebarOpen(false)} className={`w-full flex items-center gap-3 rounded-md text-sm text-muted-foreground transition-colors ${!isMobile && sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`} data-testid="nav-dash-chat" title={!isMobile && sidebarCollapsed ? "1:1 상담" : undefined}>
+            <MessageSquare className="w-4 h-4 shrink-0" />
+            {(isMobile || !sidebarCollapsed) && <span>1:1 상담</span>}
           </button>
+        </Link>
+        <Link href="/">
+          <button onClick={() => isMobile && setMobileSidebarOpen(false)} className={`w-full flex items-center gap-3 rounded-md text-sm text-muted-foreground transition-colors ${!isMobile && sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`} data-testid="nav-dash-home" title={!isMobile && sidebarCollapsed ? "메인 홈" : undefined}>
+            <Home className="w-4 h-4 shrink-0" />
+            {(isMobile || !sidebarCollapsed) && <span>메인 홈</span>}
+          </button>
+        </Link>
+        <button
+          onClick={() => logoutMutation.mutate()}
+          className={`w-full flex items-center gap-3 rounded-md text-sm text-muted-foreground transition-colors ${!isMobile && sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`}
+          data-testid="button-logout"
+          title={!isMobile && sidebarCollapsed ? "로그아웃" : undefined}
+        >
+          <LogOut className="w-4 h-4 shrink-0" />
+          {(isMobile || !sidebarCollapsed) && <span>로그아웃</span>}
+        </button>
+        {!isMobile && (
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             className={`w-full flex items-center gap-3 rounded-md text-sm text-muted-foreground transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2" : "px-3 py-2"}`}
@@ -224,27 +229,50 @@ export default function DashboardPage() {
           >
             {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <><ChevronLeft className="w-4 h-4 shrink-0" /><span>접기</span></>}
           </button>
+        )}
+      </div>
+    </>
+  );
+
+  return (
+    <div className="flex h-screen bg-background overflow-hidden">
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileSidebarOpen(false)} />
+          <aside className="absolute left-0 top-0 bottom-0 w-64 bg-background border-r flex flex-col z-10">
+            {sidebarContent(true)}
+          </aside>
         </div>
+      )}
+
+      <aside className={`hidden md:flex ${sidebarCollapsed ? "w-16" : "w-60"} border-r bg-muted/30 flex-col transition-all duration-200 shrink-0`}>
+        {sidebarContent(false)}
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-14 border-b bg-background flex items-center justify-between gap-4 px-6 shrink-0">
-          <h1 className="font-bold text-lg" data-testid="text-dashboard-title">
-            {sidebarItems.find((i) => i.id === activeSection)?.label}
-          </h1>
-          <div className="flex items-center gap-3">
+        <header className="h-14 border-b bg-background flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 shrink-0">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setMobileSidebarOpen(true)} className="md:hidden p-1" data-testid="button-mobile-menu">
+              <Menu className="w-5 h-5" />
+            </button>
+            <h1 className="font-bold text-base sm:text-lg" data-testid="text-dashboard-title">
+              {sidebarItems.find((i) => i.id === activeSection)?.label}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3">
             {lastUpdated && (
               <span className="text-xs text-muted-foreground hidden sm:block">
                 {lastUpdated.toLocaleTimeString("ko-KR")} 기준
               </span>
             )}
             <Button variant="outline" size="sm" onClick={() => refetchStock()} data-testid="button-refresh-price">
-              <RefreshCw className="w-3.5 h-3.5 mr-1" /> 시세 갱신
+              <RefreshCw className="w-3.5 h-3.5 sm:mr-1" />
+              <span className="hidden sm:inline">시세 갱신</span>
             </Button>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-6 space-y-6">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
           {activeSection === "overview" && (
             <>
               <Card className="p-5">

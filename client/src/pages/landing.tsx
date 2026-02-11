@@ -75,17 +75,17 @@ function ScrollingTicker() {
   const items = [...stocks, ...stocks, ...stocks];
 
   return (
-    <div className="bg-muted/30 border-b overflow-hidden h-10 flex items-center" data-testid="scrolling-ticker">
-      <div className="shrink-0 px-4 text-sm font-bold text-muted-foreground border-r h-full flex items-center bg-background z-10">
+    <div className="bg-muted/30 border-b overflow-hidden h-8 sm:h-10 flex items-center" data-testid="scrolling-ticker">
+      <div className="shrink-0 px-2 sm:px-4 text-xs sm:text-sm font-bold text-muted-foreground border-r h-full flex items-center bg-background z-10">
         국내주식
       </div>
       <div className="overflow-hidden flex-1 relative">
         <div className="flex items-center gap-0 whitespace-nowrap will-change-transform animate-ticker">
           {items.map((s, i) => (
-            <div key={i} className="flex items-center gap-2 px-4 shrink-0">
-              <span className="text-base font-semibold text-foreground">{s.name}</span>
-              <span className="text-sm tabular-nums font-bold text-foreground">{s.price.toLocaleString()}</span>
-              <span className={`text-sm tabular-nums font-semibold ${s.change >= 0 ? "text-red-500" : "text-blue-500"}`}>
+            <div key={i} className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 shrink-0">
+              <span className="text-xs sm:text-base font-semibold text-foreground">{s.name}</span>
+              <span className="text-xs sm:text-sm tabular-nums font-bold text-foreground">{s.price.toLocaleString()}</span>
+              <span className={`text-xs sm:text-sm tabular-nums font-semibold ${s.change >= 0 ? "text-red-500" : "text-blue-500"}`}>
                 {s.change >= 0 ? "+" : ""}{s.change.toLocaleString()} ({s.change >= 0 ? "+" : ""}{s.pct}%)
               </span>
             </div>
@@ -1264,12 +1264,12 @@ export default function LandingPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <ScrollingTicker />
       <header className="border-b bg-background sticky top-0 z-[999]">
-        <div className="max-w-[1400px] mx-auto px-4 h-12 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-6">
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-4 h-12 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-6">
             <Link href="/">
-              <div className="flex items-center gap-2 cursor-pointer" data-testid="link-home">
+              <div className="flex items-center gap-1.5 sm:gap-2 cursor-pointer" data-testid="link-home">
                 <SamsungBadge size={24} />
-                <span className="font-bold text-base">IBK기업증권</span>
+                <span className="font-bold text-sm sm:text-base">IBK기업증권</span>
               </div>
             </Link>
             <nav className="hidden md:flex items-center gap-1">
@@ -1292,30 +1292,37 @@ export default function LandingPage() {
               ))}
             </nav>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {isLoggedIn ? (
               <>
                 <Link href="/login">
-                  <Button size="sm" variant="outline" data-testid="link-transfer-out">타사대체출고</Button>
+                  <Button size="sm" variant="outline" className="text-xs sm:text-sm px-2 sm:px-3" data-testid="link-transfer-out">
+                    <span className="hidden sm:inline">타사대체출고</span>
+                    <span className="sm:hidden">대체출고</span>
+                  </Button>
                 </Link>
                 <Button
                   size="sm"
                   variant="outline"
+                  className="text-xs sm:text-sm px-2 sm:px-3"
                   onClick={() => logoutMutation.mutate()}
                   disabled={logoutMutation.isPending}
                   data-testid="button-logout"
                 >
-                  <LogOut className="w-4 h-4 mr-1" />
-                  로그아웃
+                  <LogOut className="w-4 h-4 sm:mr-1" />
+                  <span className="hidden sm:inline">로그아웃</span>
                 </Button>
               </>
             ) : (
               <>
                 <Link href="/login">
-                  <Button size="sm" variant="outline" data-testid="link-login">로그인</Button>
+                  <Button size="sm" variant="outline" className="text-xs sm:text-sm px-2 sm:px-3" data-testid="link-login">로그인</Button>
                 </Link>
                 <Link href="/register">
-                  <Button size="sm" data-testid="link-register">비대면 계좌개설</Button>
+                  <Button size="sm" className="text-xs sm:text-sm px-2 sm:px-3" data-testid="link-register">
+                    <span className="hidden sm:inline">비대면 계좌개설</span>
+                    <span className="sm:hidden">계좌개설</span>
+                  </Button>
                 </Link>
               </>
             )}
@@ -1323,18 +1330,18 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <div className="max-w-[1400px] mx-auto w-full px-4 py-3">
+      <div className="max-w-[1400px] mx-auto w-full px-3 sm:px-4 py-2 sm:py-3">
         <div className="flex items-center gap-2 mb-1">
-          <h1 className="font-bold text-lg" data-testid="text-stock-name">삼성전자</h1>
-          <span className="text-sm text-muted-foreground">005930</span>
+          <h1 className="font-bold text-base sm:text-lg" data-testid="text-stock-name">삼성전자</h1>
+          <span className="text-xs sm:text-sm text-muted-foreground">005930</span>
         </div>
-        <div className="flex items-baseline gap-2 mt-1 flex-wrap">
+        <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1 flex-wrap">
           {isLoading ? (
             <Skeleton className="h-8 w-40" />
           ) : (
             <>
-              <span className="text-[32px] font-bold tabular-nums" data-testid="text-current-price">{displayPrice.toLocaleString()}원</span>
-              <span className={`text-base font-medium ${isUp ? "text-red-500" : "text-blue-500"}`}>
+              <span className="text-2xl sm:text-[32px] font-bold tabular-nums" data-testid="text-current-price">{displayPrice.toLocaleString()}원</span>
+              <span className={`text-xs sm:text-base font-medium ${isUp ? "text-red-500" : "text-blue-500"}`}>
                 어제보다 {isUp ? "+" : ""}{displayChange.toLocaleString()}원 ({isUp ? "+" : ""}{displayChangePct}%)
               </span>
             </>
@@ -1342,8 +1349,8 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto w-full px-4">
-        <div className="flex items-center gap-0 border-b">
+      <div className="max-w-[1400px] mx-auto w-full px-3 sm:px-4">
+        <div className="flex items-center gap-0 border-b overflow-x-auto scrollbar-none">
           {[
             { id: "chart", label: "차트·호가" },
             { id: "feed", label: "피드" },
@@ -1354,7 +1361,7 @@ export default function LandingPage() {
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
-              className={`px-4 py-2.5 text-base font-medium border-b-2 transition-colors ${activeTab === t.id ? "border-foreground text-foreground" : "border-transparent text-muted-foreground"}`}
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base font-medium border-b-2 transition-colors whitespace-nowrap shrink-0 ${activeTab === t.id ? "border-foreground text-foreground" : "border-transparent text-muted-foreground"}`}
               data-testid={`tab-${t.id}`}
             >
               {t.label}
@@ -1370,18 +1377,18 @@ export default function LandingPage() {
       ) : activeTab === "news" ? (
         <NewsView />
       ) : (
-      <div className="max-w-[1400px] mx-auto w-full px-4 py-4 flex-1">
+      <div className="max-w-[1400px] mx-auto w-full px-3 sm:px-4 py-3 sm:py-4 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px_280px] gap-4">
 
           <div className="space-y-4">
             <Card className="p-0 overflow-hidden">
-              <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-2 flex-wrap">
+              <div className="px-3 sm:px-4 pt-2 sm:pt-3 pb-2 flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-1">
                   {["1m", "3m", "6m", "1y"].map((r) => (
                     <button
                       key={r}
                       onClick={() => setChartRange(r)}
-                      className={`px-2.5 py-1 text-sm rounded-md font-medium transition-colors ${chartRange === r ? "bg-foreground text-background" : "text-muted-foreground"}`}
+                      className={`px-2 sm:px-2.5 py-1 text-xs sm:text-sm rounded-md font-medium transition-colors ${chartRange === r ? "bg-foreground text-background" : "text-muted-foreground"}`}
                       data-testid={`range-${r}`}
                     >
                       {r === "1m" ? "1개월" : r === "3m" ? "3개월" : r === "6m" ? "6개월" : "1년"}
@@ -1389,7 +1396,7 @@ export default function LandingPage() {
                   ))}
                 </div>
               </div>
-              <div className="h-[300px] px-2 pb-2">
+              <div className="h-[240px] sm:h-[300px] px-2 pb-2">
                 {isLoading || !stockData ? (
                   <Skeleton className="w-full h-full" />
                 ) : (
@@ -1397,7 +1404,7 @@ export default function LandingPage() {
                 )}
               </div>
               {stockData && (
-                <div className="px-4 pb-3 flex gap-4 text-[13px] text-muted-foreground border-t pt-2 flex-wrap">
+                <div className="px-3 sm:px-4 pb-3 flex gap-2 sm:gap-4 text-[11px] sm:text-[13px] text-muted-foreground border-t pt-2 flex-wrap">
                   {infoItems.map((item) => (
                     <span key={item.label}>{item.label} <b className="text-foreground">{item.value}</b></span>
                   ))}
