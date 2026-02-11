@@ -1234,7 +1234,7 @@ export default function LandingPage() {
               </div>
             </Link>
             <nav className="hidden md:flex items-center gap-1">
-              {["홈", "피드", "주식 골라보기", "내 계좌"].map((item) => (
+              {["홈", "피드", "내 계좌"].map((item) => (
                 item === "피드" ? (
                   <button key={item} onClick={() => setActiveTab("feed")} className="px-3 py-1.5 text-base text-muted-foreground rounded-md transition-colors" data-testid={`nav-${item}`}>
                     {item}
