@@ -687,6 +687,256 @@ function FeedView() {
   );
 }
 
+const REVENUE_SEGMENTS = [
+  { label: "TV, 모니터, 냉장고, 세탁기, 에어컨, 스마트폰, 네트워크시스템, PC 등", pct: 58.13, color: "#3182f6" },
+  { label: "DRAM, NAND Flash, 모바일AP 등", pct: 36.91, color: "#77DD77" },
+  { label: "스마트폰용 OLED패널 등", pct: 9.69, color: "#A0D8EF" },
+  { label: "디지털 콕핏, 카오디오, 포터블 스피커 등", pct: 4.74, color: "#FFE066" },
+  { label: "부문간 내부거래 제거 등", pct: -9.48, color: "#C3B1E1" },
+];
+
+const QUARTERLY_DATA = [
+  { q: "23년 3월", rev: "63.7조원", ni: "1.6조원", margin: "2.47%", growth: "-93.40%" },
+  { q: "23년 6월", rev: "60.0조원", ni: "1.7조원", margin: "2.87%", growth: "9.46%" },
+  { q: "23년 9월", rev: "67.4조원", ni: "5.8조원", margin: "8.67%", growth: "239.07%" },
+  { q: "23년 12월", rev: "67.8조원", ni: "6.3조원", margin: "9.36%", growth: "8.57%" },
+  { q: "24년 3월", rev: "71.9조원", ni: "6.8조원", margin: "9.39%", growth: "6.46%" },
+  { q: "24년 6월", rev: "74.1조원", ni: "9.8조원", margin: "13.29%", growth: "45.70%" },
+  { q: "24년 9월", rev: "79.1조원", ni: "10.1조원", margin: "12.77%", growth: "2.64%" },
+  { q: "24년 12월", rev: "75.8조원", ni: "7.8조원", margin: "10.23%", growth: "-23.23%" },
+  { q: "25년 3월", rev: "79.1조원", ni: "8.2조원", margin: "10.39%", growth: "6.04%" },
+  { q: "25년 6월", rev: "74.6조원", ni: "5.1조원", margin: "6.86%", growth: "-37.78%" },
+  { q: "25년 9월", rev: "86.1조원", ni: "12.2조원", margin: "14.21%", growth: "138.95%" },
+  { q: "25년 12월", rev: "93.8조원", ni: "19.6조원", margin: "20.93%", growth: "60.65%" },
+];
+
+function DonutChart({ segments }: { segments: typeof REVENUE_SEGMENTS }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = 180 * dpr;
+    canvas.height = 180 * dpr;
+    ctx.scale(dpr, dpr);
+    const cx = 90, cy = 90, r = 70, inner = 45;
+    const total = segments.reduce((s, seg) => s + Math.abs(seg.pct), 0);
+    let angle = -Math.PI / 2;
+    segments.forEach((seg) => {
+      const sweep = (Math.abs(seg.pct) / total) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, angle, angle + sweep);
+      ctx.arc(cx, cy, inner, angle + sweep, angle, true);
+      ctx.closePath();
+      ctx.fillStyle = seg.color;
+      ctx.fill();
+      angle += sweep;
+    });
+  }, [segments]);
+  return <canvas ref={canvasRef} className="w-[180px] h-[180px]" />;
+}
+
+function StockInfoView() {
+  return (
+    <div className="max-w-[1400px] mx-auto w-full px-4 py-6 flex-1 space-y-8">
+      <Card className="p-6">
+        <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-lg font-bold">삼성전자</h2>
+              <span className="text-xs text-muted-foreground">국내 · 005930 · 코스피</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-0.5">출처: FnGuide 및 기업 IR자료</p>
+          </div>
+          <Button size="sm" variant="outline" className="text-xs" data-testid="btn-homepage">
+            <ExternalLink className="w-3 h-3 mr-1" />홈페이지
+          </Button>
+        </div>
+        <div className="bg-muted/30 rounded-md p-3 text-sm text-foreground/80 mb-5">
+          동사는 1969년 설립되어 1975년 유가증권시장에 상장하였으며, 2017년 Harman 인수로 전장부품 사업을 확장함.
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border">
+          {[
+            { label: "시가총액", value: "1,078조 8,856억원" },
+            { label: "실제 기업 가치", value: "459조 467억원" },
+            { label: "기업명", value: "Samsung Electronics" },
+            { label: "대표이사", value: "전영현, 노태문" },
+            { label: "상장일", value: "1975년 6월 11일" },
+            { label: "발행주식수", value: "6,735,612,586주" },
+          ].map((item) => (
+            <div key={item.label} className="bg-background p-3">
+              <p className="text-xs text-muted-foreground">{item.label}</p>
+              <p className="text-sm font-semibold mt-1 tabular-nums">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <div>
+        <h2 className="text-lg font-bold mb-1">매출·산업 구성</h2>
+        <p className="text-xs text-muted-foreground mb-4">24년 12월 기준 (출처: FnGuide 및 기업 IR자료)</p>
+        <Card className="p-6">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <DonutChart segments={REVENUE_SEGMENTS} />
+            <div className="space-y-2 flex-1">
+              {REVENUE_SEGMENTS.map((seg) => (
+                <div key={seg.label} className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: seg.color }} />
+                  <span className="text-xs text-foreground/80">{seg.label}</span>
+                  <span className="text-xs font-semibold ml-auto tabular-nums">{seg.pct}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-4">마이너스 매출비중 : 계열사간 내부거래 등에 따른 조정</p>
+        </Card>
+      </div>
+
+      <div>
+        <h2 className="text-lg font-bold mb-1">주요 사업</h2>
+        <Card className="p-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { icon: "📱", title: "스마트폰제조", rank: "시가총액 2위" },
+              { icon: "🔧", title: "종합반도체", rank: "시가총액 1위" },
+              { icon: "💻", title: "컴퓨터와 주변기기", rank: "시가총액 3위" },
+              { icon: "❄️", title: "냉방가전", rank: "시가총액 1위" },
+            ].map((item) => (
+              <div key={item.title} className="flex items-center gap-3 p-2">
+                <div className="w-10 h-10 rounded-md bg-muted/50 flex items-center justify-center text-lg">{item.icon}</div>
+                <div>
+                  <p className="text-xs font-semibold">{item.title}</p>
+                  <p className="text-[10px] text-muted-foreground">{item.rank}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <div>
+        <h2 className="text-lg font-bold mb-1">투자 지표</h2>
+        <p className="text-xs text-muted-foreground mb-3">12:04 기준</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="p-4">
+            <h3 className="text-sm font-bold mb-3">가치평가</h3>
+            <div className="space-y-2">
+              {[
+                { label: "PER", value: "34.6배" },
+                { label: "PSR", value: "3.6배" },
+                { label: "PBR", value: "2.7배" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{item.label}</span>
+                  <span className="text-sm font-semibold tabular-nums">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+          <Card className="p-4">
+            <h3 className="text-sm font-bold mb-3">수익</h3>
+            <div className="space-y-2">
+              {[
+                { label: "EPS", value: "4,815원" },
+                { label: "BPS", value: "60,632원" },
+                { label: "ROE", value: "8.4%" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{item.label}</span>
+                  <span className="text-sm font-semibold tabular-nums">{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold">배당</h3>
+              <span className="text-[10px] text-muted-foreground">최근 12개월</span>
+            </div>
+            <div className="space-y-2">
+              {[
+                { label: "횟수", value: "4번", sub: "12월, 3월, 6월, 9월" },
+                { label: "주당 배당금", value: "연 1,465원" },
+                { label: "수익률", value: "연 0.88%" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{item.label}</span>
+                  <div className="text-right">
+                    <span className="text-sm font-semibold tabular-nums">{item.value}</span>
+                    {item.sub && <p className="text-[9px] text-muted-foreground">{item.sub}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      <div>
+        <h2 className="text-lg font-bold mb-1">재무</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { label: "부채비율", value: "26.64%" },
+            { label: "유동비율", value: "262.94%" },
+            { label: "이자보상비율", value: "10,494.86%" },
+          ].map((item) => (
+            <Card key={item.label} className="p-4">
+              <p className="text-xs text-muted-foreground mb-1">{item.label}</p>
+              <p className="text-2xl font-bold tabular-nums">{item.value}</p>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h2 className="text-lg font-bold mb-1">수익성</h2>
+        <p className="text-xs text-muted-foreground mb-1">매출·순이익 성장률</p>
+        <p className="text-xs text-foreground/80 mb-4">2025년 4분기 삼성전자의 순이익은 19.6조원으로 <b>직전 분기 대비 60.65% 더 높아요.</b></p>
+        <Card className="p-0 overflow-x-auto">
+          <table className="w-full text-xs min-w-[700px]">
+            <thead>
+              <tr className="border-b bg-muted/30">
+                <th className="text-left px-3 py-2 font-semibold text-muted-foreground">항목</th>
+                {QUARTERLY_DATA.map((q) => (
+                  <th key={q.q} className="text-right px-2 py-2 font-medium text-muted-foreground whitespace-nowrap">{q.q}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b">
+                <td className="px-3 py-2 font-semibold flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500" />매출</td>
+                {QUARTERLY_DATA.map((q) => (
+                  <td key={q.q} className="text-right px-2 py-2 tabular-nums">{q.rev}</td>
+                ))}
+              </tr>
+              <tr className="border-b">
+                <td className="px-3 py-2 font-semibold flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-300" />순이익</td>
+                {QUARTERLY_DATA.map((q) => (
+                  <td key={q.q} className="text-right px-2 py-2 tabular-nums">{q.ni}</td>
+                ))}
+              </tr>
+              <tr className="border-b">
+                <td className="px-3 py-2 font-semibold flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-400" />순이익률</td>
+                {QUARTERLY_DATA.map((q) => (
+                  <td key={q.q} className="text-right px-2 py-2 tabular-nums">{q.margin}</td>
+                ))}
+              </tr>
+              <tr>
+                <td className="px-3 py-2 font-semibold">순이익 성장률</td>
+                {QUARTERLY_DATA.map((q) => (
+                  <td key={q.q} className={`text-right px-2 py-2 tabular-nums font-medium ${q.growth.startsWith("-") ? "text-blue-500" : "text-red-500"}`}>{q.growth}</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 function CommunityPanel() {
   const [visiblePosts, setVisiblePosts] = useState(COMMUNITY_POSTS.slice(0, 5));
   const [postIndex, setPostIndex] = useState(5);
@@ -865,6 +1115,8 @@ export default function LandingPage() {
 
       {activeTab === "feed" ? (
         <FeedView />
+      ) : activeTab === "info" ? (
+        <StockInfoView />
       ) : (
       <div className="max-w-[1400px] mx-auto w-full px-4 py-4 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px_280px] gap-4">
