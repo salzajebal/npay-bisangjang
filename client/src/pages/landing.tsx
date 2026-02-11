@@ -143,11 +143,11 @@ function generateOrderBook(currentPrice: number) {
   const step = 100;
   const asks: { price: number; quantity: number; totalVol: number }[] = [];
   const bids: { price: number; quantity: number; totalVol: number }[] = [];
-  for (let i = 10; i >= 1; i--) {
+  for (let i = 5; i >= 1; i--) {
     const q = Math.floor(Math.random() * 80000) + 3000;
     asks.push({ price: currentPrice + i * step, quantity: q, totalVol: Math.floor(Math.random() * 2000000) + 500000 });
   }
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 5; i++) {
     const q = Math.floor(Math.random() * 80000) + 3000;
     bids.push({ price: currentPrice - i * step, quantity: q, totalVol: Math.floor(Math.random() * 2000000) + 500000 });
   }
