@@ -781,11 +781,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      <footer className="border-t mt-auto">
-        <div className="max-w-[1400px] mx-auto overflow-x-auto">
-          <MarketIndexTicker />
-        </div>
-      </footer>
     </div>
   );
 }
