@@ -7,9 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
-import { LogOut, Package, ArrowDownRight, ArrowUpRight, User as UserIcon } from "lucide-react";
-import { SamsungLogo, SamsungBadge } from "@/components/samsung-logo";
+import { LogOut, Package, ArrowDownRight, ArrowUpRight, User as UserIcon, TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
+import { SamsungBadge } from "@/components/samsung-logo";
 import type { User, StockTransaction } from "@shared/schema";
+import { useState, useEffect } from "react";
 
 export default function DashboardPage() {
   const [, setLocation] = useLocation();
@@ -25,6 +26,16 @@ export default function DashboardPage() {
     enabled: !!authData?.user,
   });
 
+  const { data: stockData, isLoading: stockLoading, refetch: refetchStock } = useQuery<{
+    price: number;
+    change: number;
+    changePercent: number;
+    previousClose: number;
+  }>({
+    queryKey: ["/api/stock/samsung"],
+    refetchInterval: 10000,
+  });
+
   const logoutMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/auth/logout");
@@ -34,6 +45,11 @@ export default function DashboardPage() {
       setLocation("/login");
     },
   });
+
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  useEffect(() => {
+    if (stockData?.price) setLastUpdated(new Date());
+  }, [stockData?.price]);
 
   if (authLoading) {
     return (
@@ -58,10 +74,42 @@ export default function DashboardPage() {
 
   const user = authData.user;
   const txList = transactions || [];
+  const livePrice = stockData?.price || 0;
+  const priceChange = stockData?.change || 0;
+  const changePct = stockData?.changePercent || 0;
 
   const totalIn = txList.filter((t) => t.type === "in").reduce((sum, t) => sum + t.quantity, 0);
   const totalOut = txList.filter((t) => t.type === "out").reduce((sum, t) => sum + t.quantity, 0);
   const totalHolding = totalIn - totalOut;
+
+  const holdings: Record<string, { qty: number; totalCost: number }> = {};
+  txList.forEach((tx) => {
+    const key = tx.stockName;
+    if (!holdings[key]) holdings[key] = { qty: 0, totalCost: 0 };
+    if (tx.type === "in") {
+      holdings[key].qty += tx.quantity;
+      holdings[key].totalCost += tx.quantity * tx.pricePerShare;
+    } else {
+      holdings[key].qty -= tx.quantity;
+      holdings[key].totalCost -= tx.quantity * tx.pricePerShare;
+    }
+  });
+
+  const holdingsList = Object.entries(holdings)
+    .filter(([, v]) => v.qty > 0)
+    .map(([name, v]) => {
+      const avgPrice = Math.round(v.totalCost / v.qty);
+      const currentPrice = name === "삼성전자" && livePrice > 0 ? livePrice : avgPrice;
+      const evalAmount = v.qty * currentPrice;
+      const profitLoss = evalAmount - v.totalCost;
+      const profitPct = v.totalCost > 0 ? ((profitLoss / v.totalCost) * 100) : 0;
+      return { name, qty: v.qty, avgPrice, currentPrice, evalAmount, totalCost: v.totalCost, profitLoss, profitPct };
+    });
+
+  const totalEval = holdingsList.reduce((s, h) => s + h.evalAmount, 0);
+  const totalCost = holdingsList.reduce((s, h) => s + h.totalCost, 0);
+  const totalProfit = totalEval - totalCost;
+  const totalProfitPct = totalCost > 0 ? ((totalProfit / totalCost) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -69,9 +117,9 @@ export default function DashboardPage() {
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-2.5">
             <SamsungBadge size={30} />
-            <SamsungLogo className="h-3.5 w-auto text-foreground" />
+            <span className="font-bold text-base">IBK기업증권</span>
             <div className="h-4 w-px bg-border" />
-            <span className="font-semibold text-sm tracking-wide text-muted-foreground">주식관리</span>
+            <span className="font-semibold text-sm tracking-wide text-muted-foreground">내 계좌</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -91,10 +139,79 @@ export default function DashboardPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold" data-testid="text-dashboard-title">내 주식 현황</h1>
-          <p className="text-sm text-muted-foreground mt-1">실시간 입출고 현황을 확인하세요</p>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold" data-testid="text-dashboard-title">내 주식 현황</h1>
+            <p className="text-sm text-muted-foreground mt-1">실시간 시세와 수익률을 확인하세요</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {lastUpdated && (
+              <span className="text-xs text-muted-foreground">
+                {lastUpdated.toLocaleTimeString("ko-KR")} 기준
+              </span>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetchStock()}
+              data-testid="button-refresh-price"
+            >
+              <RefreshCw className="w-3.5 h-3.5 mr-1" /> 시세 새로고침
+            </Button>
+          </div>
         </div>
+
+        <Card className="p-5">
+          <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+            <h3 className="text-sm text-muted-foreground">삼성전자 실시간 시세</h3>
+            {stockLoading ? (
+              <Skeleton className="h-4 w-20" />
+            ) : (
+              <Badge variant="outline" className="font-mono">005930</Badge>
+            )}
+          </div>
+          <div className="flex items-baseline gap-3 flex-wrap">
+            {stockLoading ? (
+              <Skeleton className="h-8 w-32" />
+            ) : (
+              <>
+                <span className="text-3xl font-bold tabular-nums" data-testid="text-live-price">
+                  {livePrice > 0 ? livePrice.toLocaleString() : "-"}원
+                </span>
+                <span className={`text-base font-semibold tabular-nums ${priceChange >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                  {priceChange >= 0 ? "+" : ""}{priceChange.toLocaleString()}원 ({priceChange >= 0 ? "+" : ""}{changePct.toFixed(2)}%)
+                </span>
+              </>
+            )}
+          </div>
+        </Card>
+
+        <Card className="p-5">
+          <h3 className="text-sm text-muted-foreground mb-3">총 자산 평가</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">평가금액</p>
+              <p className="text-2xl font-bold tabular-nums" data-testid="text-total-eval">
+                {totalEval.toLocaleString()}원
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">총 매입금액</p>
+              <p className="text-2xl font-bold tabular-nums" data-testid="text-total-cost">
+                {totalCost.toLocaleString()}원
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">평가손익</p>
+              <p className={`text-2xl font-bold tabular-nums ${totalProfit >= 0 ? "text-red-500" : "text-blue-500"}`} data-testid="text-total-profit">
+                {totalProfit >= 0 ? "+" : ""}{totalProfit.toLocaleString()}원
+              </p>
+              <p className={`text-sm font-medium tabular-nums ${totalProfitPct >= 0 ? "text-red-500" : "text-blue-500"}`} data-testid="text-total-profit-pct">
+                수익률 {totalProfitPct >= 0 ? "+" : ""}{totalProfitPct.toFixed(2)}%
+              </p>
+            </div>
+          </div>
+        </Card>
 
         <Card className="p-5">
           <h3 className="text-sm text-muted-foreground mb-3">내 정보</h3>
@@ -159,6 +276,47 @@ export default function DashboardPage() {
             </div>
           </Card>
         </div>
+
+        {holdingsList.length > 0 && (
+          <Card className="p-0 overflow-hidden">
+            <div className="p-4 border-b">
+              <h3 className="font-bold">보유 종목 현황</h3>
+              <p className="text-xs text-muted-foreground mt-1">실시간 시세 기준 평가손익</p>
+            </div>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>종목명</TableHead>
+                    <TableHead className="text-right">보유수량</TableHead>
+                    <TableHead className="text-right">평균단가</TableHead>
+                    <TableHead className="text-right">현재가</TableHead>
+                    <TableHead className="text-right">평가금액</TableHead>
+                    <TableHead className="text-right">평가손익</TableHead>
+                    <TableHead className="text-right">수익률</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {holdingsList.map((h) => (
+                    <TableRow key={h.name} data-testid={`row-holding-${h.name}`}>
+                      <TableCell className="font-semibold">{h.name}</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">{h.qty.toLocaleString()}주</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">{h.avgPrice.toLocaleString()}원</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">{h.currentPrice.toLocaleString()}원</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">{h.evalAmount.toLocaleString()}원</TableCell>
+                      <TableCell className={`text-right font-mono tabular-nums font-semibold ${h.profitLoss >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                        {h.profitLoss >= 0 ? "+" : ""}{h.profitLoss.toLocaleString()}원
+                      </TableCell>
+                      <TableCell className={`text-right font-mono tabular-nums font-semibold ${h.profitPct >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                        {h.profitPct >= 0 ? "+" : ""}{h.profitPct.toFixed(2)}%
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        )}
 
         <Card className="p-0 overflow-hidden">
           <div className="p-4 border-b">

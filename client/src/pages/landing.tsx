@@ -1176,7 +1176,7 @@ function HoldingsPanel({ displayPrice }: { displayPrice: number }) {
 export default function LandingPage() {
   const { data: stockData, isLoading } = useQuery<StockData>({
     queryKey: ["/api/stock/samsung"],
-    refetchInterval: 30 * 1000,
+    refetchInterval: 10 * 1000,
   });
 
   const basePrice = stockData?.currentPrice ?? 0;
