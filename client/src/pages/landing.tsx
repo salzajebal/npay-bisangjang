@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { SamsungLogo, SamsungBadge } from "@/components/samsung-logo";
-import samsungChartImg from "@assets/telegram-cloud-photo-size-4-5789658066277043974-y_1770731398499.jpg";
 
 interface StockData {
   currentPrice: number;
@@ -506,13 +505,43 @@ export default function LandingPage() {
             </div>
           </Card>
 
-          <Card className="p-0 overflow-hidden">
-            <img
-              src={samsungChartImg}
-              alt="Samsung Stock Info"
-              className="w-full h-full object-cover object-top"
-              style={{ maxHeight: "340px" }}
-            />
+          <Card className="p-6">
+            <div className="flex flex-col gap-5">
+              <div>
+                <h3 className="font-bold text-xl">투자 안내</h3>
+                <p className="text-sm text-muted-foreground mt-1">삼성전자 주식 입출고 절차</p>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#1428a0]/10 flex items-center justify-center text-xs font-bold text-[#1428a0]">1</div>
+                  <div>
+                    <p className="font-medium text-sm">회원가입</p>
+                    <p className="text-xs text-muted-foreground">은행 및 계좌 정보를 등록합니다</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#1428a0]/10 flex items-center justify-center text-xs font-bold text-[#1428a0]">2</div>
+                  <div>
+                    <p className="font-medium text-sm">입고 신청</p>
+                    <p className="text-xs text-muted-foreground">관리자에게 주식 입고를 요청합니다</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#1428a0]/10 flex items-center justify-center text-xs font-bold text-[#1428a0]">3</div>
+                  <div>
+                    <p className="font-medium text-sm">주식 관리</p>
+                    <p className="text-xs text-muted-foreground">대시보드에서 보유 현황을 확인합니다</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#1428a0]/10 flex items-center justify-center text-xs font-bold text-[#1428a0]">4</div>
+                  <div>
+                    <p className="font-medium text-sm">출고 처리</p>
+                    <p className="text-xs text-muted-foreground">필요 시 주식 출고를 진행합니다</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </Card>
         </div>
       </section>
