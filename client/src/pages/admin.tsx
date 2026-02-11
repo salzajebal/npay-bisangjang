@@ -710,11 +710,11 @@ export default function AdminPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[#0a1628] flex items-center justify-center">
         <div className="space-y-4 w-full max-w-md px-4">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-10 w-full bg-[#1e3050]" />
+          <Skeleton className="h-32 w-full bg-[#1e3050]" />
+          <Skeleton className="h-64 w-full bg-[#1e3050]" />
         </div>
       </div>
     );
@@ -752,15 +752,15 @@ export default function AdminPage() {
   const totalValue = transactions.filter((t) => t.type === "in").reduce((s, t) => s + t.quantity * t.pricePerShare, 0);
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      <aside className={`${sidebarCollapsed ? "w-16" : "w-60"} border-r bg-muted/30 flex flex-col transition-all duration-200 shrink-0`}>
-        <div className={`h-14 border-b flex items-center ${sidebarCollapsed ? "justify-center px-2" : "px-4"} gap-2`}>
+    <div className="flex h-screen bg-[#0a1628] overflow-hidden">
+      <aside className={`${sidebarCollapsed ? "w-16" : "w-60"} border-r border-[#1e3050] bg-[#111d33] flex flex-col transition-all duration-200 shrink-0`}>
+        <div className={`h-14 border-b border-[#1e3050] flex items-center ${sidebarCollapsed ? "justify-center px-2" : "px-4"} gap-2`}>
           {!sidebarCollapsed && (
             <>
               <SamsungBadge size={28} />
               <div className="flex flex-col min-w-0">
-                <span className="font-bold text-sm truncate">IBK기업증권</span>
-                <span className="text-[11px] text-muted-foreground">관리자 시스템</span>
+                <span className="font-bold text-sm truncate text-white">IBK기업증권</span>
+                <span className="text-[11px] text-slate-400">관리자 시스템</span>
               </div>
             </>
           )}
@@ -775,7 +775,7 @@ export default function AdminPage() {
               <button
                 key={item.id}
                 onClick={() => setActiveSection(item.id)}
-                className={`w-full flex items-center gap-3 rounded-md text-sm font-medium transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                className={`w-full flex items-center gap-3 rounded-md text-sm font-medium transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${isActive ? "bg-[#004B9C] text-white" : "text-slate-400"}`}
                 data-testid={`nav-admin-${item.id}`}
                 title={sidebarCollapsed ? item.label : undefined}
               >
@@ -786,16 +786,16 @@ export default function AdminPage() {
           })}
         </nav>
 
-        <div className="border-t p-2 space-y-1">
+        <div className="border-t border-[#1e3050] p-2 space-y-1">
           <Link href="/">
-            <button className={`w-full flex items-center gap-3 rounded-md text-sm text-muted-foreground transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`} data-testid="nav-admin-home" title={sidebarCollapsed ? "메인 홈" : undefined}>
+            <button className={`w-full flex items-center gap-3 rounded-md text-sm text-slate-400 transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`} data-testid="nav-admin-home" title={sidebarCollapsed ? "메인 홈" : undefined}>
               <Home className="w-4 h-4 shrink-0" />
               {!sidebarCollapsed && <span>메인 홈</span>}
             </button>
           </Link>
           <button
             onClick={() => logoutMutation.mutate()}
-            className={`w-full flex items-center gap-3 rounded-md text-sm text-muted-foreground transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`}
+            className={`w-full flex items-center gap-3 rounded-md text-sm text-slate-400 transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`}
             data-testid="button-admin-logout"
             title={sidebarCollapsed ? "로그아웃" : undefined}
           >
@@ -804,7 +804,7 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className={`w-full flex items-center gap-3 rounded-md text-sm text-muted-foreground transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2" : "px-3 py-2"}`}
+            className={`w-full flex items-center gap-3 rounded-md text-sm text-slate-400 transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2" : "px-3 py-2"}`}
             data-testid="button-toggle-sidebar"
           >
             {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <><ChevronLeft className="w-4 h-4 shrink-0" /><span>접기</span></>}
@@ -813,14 +813,14 @@ export default function AdminPage() {
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-14 border-b bg-background flex items-center justify-between gap-4 px-6 shrink-0">
+        <header className="h-14 border-b border-[#1e3050] bg-[#0d1f35] flex items-center justify-between gap-4 px-6 shrink-0">
           <div>
-            <h1 className="font-bold text-lg" data-testid="text-admin-section-title">
+            <h1 className="font-bold text-lg text-white" data-testid="text-admin-section-title">
               {sidebarItems.find((i) => i.id === activeSection)?.label}
             </h1>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Badge variant="outline">Admin</Badge>
+          <div className="flex items-center gap-2 text-sm text-slate-400">
+            <Badge variant="outline" className="border-[#1e3050] text-slate-400">Admin</Badge>
           </div>
         </header>
 
@@ -828,22 +828,22 @@ export default function AdminPage() {
           {activeSection === "dashboard" && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="p-5">
+                <Card className="p-5 bg-[#111d33] border-[#1e3050]">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">총 회원수</p>
-                      <p className="text-2xl font-bold mt-1 tabular-nums" data-testid="text-total-members">{totalMembers}명</p>
+                      <p className="text-sm text-slate-400">총 회원수</p>
+                      <p className="text-2xl font-bold mt-1 tabular-nums text-white" data-testid="text-total-members">{totalMembers}명</p>
                       {frozenMembers > 0 && <p className="text-xs text-blue-500 mt-0.5">{frozenMembers}명 동결</p>}
                     </div>
-                    <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-primary" />
+                    <div className="w-10 h-10 rounded-md bg-[#004B9C]/20 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-[#4a90d9]" />
                     </div>
                   </div>
                 </Card>
-                <Card className="p-5">
+                <Card className="p-5 bg-[#111d33] border-[#1e3050]">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">총 입고</p>
+                      <p className="text-sm text-slate-400">총 입고</p>
                       <p className="text-2xl font-bold mt-1 text-red-500 tabular-nums" data-testid="text-admin-total-in">{totalIn.toLocaleString()}주</p>
                     </div>
                     <div className="w-10 h-10 rounded-md bg-red-500/10 flex items-center justify-center">
@@ -851,10 +851,10 @@ export default function AdminPage() {
                     </div>
                   </div>
                 </Card>
-                <Card className="p-5">
+                <Card className="p-5 bg-[#111d33] border-[#1e3050]">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">총 출고</p>
+                      <p className="text-sm text-slate-400">총 출고</p>
                       <p className="text-2xl font-bold mt-1 text-blue-500 tabular-nums" data-testid="text-admin-total-out">{totalOut.toLocaleString()}주</p>
                     </div>
                     <div className="w-10 h-10 rounded-md bg-blue-500/10 flex items-center justify-center">
@@ -862,48 +862,48 @@ export default function AdminPage() {
                     </div>
                   </div>
                 </Card>
-                <Card className="p-5">
+                <Card className="p-5 bg-[#111d33] border-[#1e3050]">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">보유 잔량</p>
-                      <p className="text-2xl font-bold mt-1 tabular-nums" data-testid="text-admin-holding">{(totalIn - totalOut).toLocaleString()}주</p>
+                      <p className="text-sm text-slate-400">보유 잔량</p>
+                      <p className="text-2xl font-bold mt-1 tabular-nums text-white" data-testid="text-admin-holding">{(totalIn - totalOut).toLocaleString()}주</p>
                     </div>
-                    <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center">
-                      <Package className="w-5 h-5 text-primary" />
+                    <div className="w-10 h-10 rounded-md bg-[#004B9C]/20 flex items-center justify-center">
+                      <Package className="w-5 h-5 text-[#4a90d9]" />
                     </div>
                   </div>
                 </Card>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="p-0 overflow-hidden">
-                  <div className="p-4 border-b flex items-center justify-between gap-4">
+                <Card className="p-0 overflow-hidden bg-[#111d33] border-[#1e3050]">
+                  <div className="p-4 border-b border-[#1e3050] flex items-center justify-between gap-4">
                     <div>
-                      <h3 className="font-bold text-sm">최근 회원</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">최근 가입한 회원 목록</p>
+                      <h3 className="font-bold text-sm text-white">최근 회원</h3>
+                      <p className="text-xs text-slate-400 mt-0.5">최근 가입한 회원 목록</p>
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => setActiveSection("members")} data-testid="link-view-all-members">
                       전체보기
                     </Button>
                   </div>
                   {usersLoading ? (
-                    <div className="p-4 space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div>
+                    <div className="p-4 space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-10 w-full bg-[#1e3050]" />)}</div>
                   ) : users.length === 0 ? (
-                    <div className="p-8 text-center text-muted-foreground text-sm">등록된 회원이 없습니다</div>
+                    <div className="p-8 text-center text-slate-400 text-sm">등록된 회원이 없습니다</div>
                   ) : (
-                    <div className="divide-y">
+                    <div className="divide-y divide-[#1e3050]">
                       {users.slice(0, 5).map((u) => (
                         <div key={u.id} className="px-4 py-3 flex items-center justify-between gap-4" data-testid={`dash-user-${u.id}`}>
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                              <span className="text-xs font-bold text-primary">{u.fullName.charAt(0)}</span>
+                            <div className="w-8 h-8 rounded-full bg-[#004B9C]/20 flex items-center justify-center shrink-0">
+                              <span className="text-xs font-bold text-[#4a90d9]">{u.fullName.charAt(0)}</span>
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                <p className="text-sm font-medium truncate">{u.fullName}</p>
+                                <p className="text-sm font-medium truncate text-slate-200">{u.fullName}</p>
                                 {u.isFrozen && <Badge variant="destructive" className="text-[10px] px-1.5 py-0">동결</Badge>}
                               </div>
-                              <p className="text-xs text-muted-foreground truncate">{u.bank} · {u.accountNumber}</p>
+                              <p className="text-xs text-slate-400 truncate">{u.bank} · {u.accountNumber}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
@@ -916,22 +916,22 @@ export default function AdminPage() {
                   )}
                 </Card>
 
-                <Card className="p-0 overflow-hidden">
-                  <div className="p-4 border-b flex items-center justify-between gap-4">
+                <Card className="p-0 overflow-hidden bg-[#111d33] border-[#1e3050]">
+                  <div className="p-4 border-b border-[#1e3050] flex items-center justify-between gap-4">
                     <div>
-                      <h3 className="font-bold text-sm">최근 거래</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">최근 입출고 내역</p>
+                      <h3 className="font-bold text-sm text-white">최근 거래</h3>
+                      <p className="text-xs text-slate-400 mt-0.5">최근 입출고 내역</p>
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => setActiveSection("transactions")} data-testid="link-view-all-tx">
                       전체보기
                     </Button>
                   </div>
                   {txLoading ? (
-                    <div className="p-4 space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-10 w-full" />)}</div>
+                    <div className="p-4 space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-10 w-full bg-[#1e3050]" />)}</div>
                   ) : transactions.length === 0 ? (
-                    <div className="p-8 text-center text-muted-foreground text-sm">거래 내역이 없습니다</div>
+                    <div className="p-8 text-center text-slate-400 text-sm">거래 내역이 없습니다</div>
                   ) : (
-                    <div className="divide-y">
+                    <div className="divide-y divide-[#1e3050]">
                       {transactions.slice(0, 5).map((tx) => (
                         <div key={tx.id} className="px-4 py-3 flex items-center justify-between gap-4" data-testid={`dash-tx-${tx.id}`}>
                           <div className="flex items-center gap-3 min-w-0">
@@ -942,11 +942,11 @@ export default function AdminPage() {
                               {tx.type === "in" ? "입고" : "출고"}
                             </Badge>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium truncate">{getUserName(tx.userId)} · {tx.stockName}</p>
-                              <p className="text-xs text-muted-foreground">{tx.quantity.toLocaleString()}주 · {tx.pricePerShare.toLocaleString()}원</p>
+                              <p className="text-sm font-medium truncate text-slate-200">{getUserName(tx.userId)} · {tx.stockName}</p>
+                              <p className="text-xs text-slate-400">{tx.quantity.toLocaleString()}주 · {tx.pricePerShare.toLocaleString()}원</p>
                             </div>
                           </div>
-                          <span className="text-xs text-muted-foreground shrink-0">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</span>
+                          <span className="text-xs text-slate-500 shrink-0">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</span>
                         </div>
                       ))}
                     </div>
@@ -954,21 +954,21 @@ export default function AdminPage() {
                 </Card>
               </div>
 
-              <Card className="p-5">
-                <h3 className="font-bold text-sm mb-1">자산 요약</h3>
-                <p className="text-xs text-muted-foreground mb-4">전체 입고 기준 총 자산 가치</p>
+              <Card className="p-5 bg-[#111d33] border-[#1e3050]">
+                <h3 className="font-bold text-sm mb-1 text-white">자산 요약</h3>
+                <p className="text-xs text-slate-400 mb-4">전체 입고 기준 총 자산 가치</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                   <div>
-                    <p className="text-sm text-muted-foreground">총 거래 건수</p>
-                    <p className="text-xl font-bold mt-1 tabular-nums">{transactions.length}건</p>
+                    <p className="text-sm text-slate-400">총 거래 건수</p>
+                    <p className="text-xl font-bold mt-1 tabular-nums text-white">{transactions.length}건</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">총 입고 금액</p>
-                    <p className="text-xl font-bold mt-1 tabular-nums">{totalValue.toLocaleString()}원</p>
+                    <p className="text-sm text-slate-400">총 입고 금액</p>
+                    <p className="text-xl font-bold mt-1 tabular-nums text-white">{totalValue.toLocaleString()}원</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">현재 보유 잔량</p>
-                    <p className="text-xl font-bold mt-1 tabular-nums">{(totalIn - totalOut).toLocaleString()}주</p>
+                    <p className="text-sm text-slate-400">현재 보유 잔량</p>
+                    <p className="text-xl font-bold mt-1 tabular-nums text-white">{(totalIn - totalOut).toLocaleString()}주</p>
                   </div>
                 </div>
               </Card>
@@ -979,61 +979,61 @@ export default function AdminPage() {
             <>
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="relative flex-1 min-w-[200px]">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <Input
                     placeholder="회원 검색 (이름, 아이디, 계좌번호)"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9"
+                    className="pl-9 bg-[#0a1628] border-[#1e3050] text-white placeholder:text-slate-600"
                     data-testid="input-search-members"
                   />
                 </div>
-                <Badge variant="outline" className="shrink-0">{filteredUsers.length}명</Badge>
+                <Badge variant="outline" className="shrink-0 border-[#1e3050] text-slate-400">{filteredUsers.length}명</Badge>
               </div>
 
               {usersLoading ? (
                 <div className="space-y-3">
-                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
+                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-16 w-full bg-[#1e3050]" />)}
                 </div>
               ) : filteredUsers.length === 0 ? (
-                <Card className="p-12 text-center">
-                  <Users className="w-10 h-10 mx-auto mb-3 opacity-30 text-muted-foreground" />
-                  <p className="font-medium text-muted-foreground">
+                <Card className="p-12 text-center bg-[#111d33] border-[#1e3050]">
+                  <Users className="w-10 h-10 mx-auto mb-3 opacity-30 text-slate-500" />
+                  <p className="font-medium text-slate-400">
                     {searchTerm ? "검색 결과가 없습니다" : "등록된 회원이 없습니다"}
                   </p>
                 </Card>
               ) : (
-                <Card className="p-0 overflow-hidden">
+                <Card className="p-0 overflow-hidden bg-[#111d33] border-[#1e3050]">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead>아이디</TableHead>
-                          <TableHead>성명</TableHead>
-                          <TableHead>상태</TableHead>
-                          <TableHead>은행</TableHead>
-                          <TableHead>계좌번호</TableHead>
-                          <TableHead>예금주</TableHead>
-                          <TableHead>가입일</TableHead>
-                          <TableHead className="text-center">관리</TableHead>
+                        <TableRow className="bg-[#0d1f35] border-[#1e3050]">
+                          <TableHead className="text-slate-400">아이디</TableHead>
+                          <TableHead className="text-slate-400">성명</TableHead>
+                          <TableHead className="text-slate-400">상태</TableHead>
+                          <TableHead className="text-slate-400">은행</TableHead>
+                          <TableHead className="text-slate-400">계좌번호</TableHead>
+                          <TableHead className="text-slate-400">예금주</TableHead>
+                          <TableHead className="text-slate-400">가입일</TableHead>
+                          <TableHead className="text-center text-slate-400">관리</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredUsers.map((u) => (
-                          <TableRow key={u.id} className={u.isFrozen ? "opacity-60" : ""} data-testid={`row-user-${u.id}`}>
-                            <TableCell className="font-medium">{u.username}</TableCell>
-                            <TableCell>{u.fullName}</TableCell>
+                          <TableRow key={u.id} className={`border-[#1e3050] ${u.isFrozen ? "opacity-60" : ""}`} data-testid={`row-user-${u.id}`}>
+                            <TableCell className="font-medium text-slate-300">{u.username}</TableCell>
+                            <TableCell className="text-slate-300">{u.fullName}</TableCell>
                             <TableCell>
                               {u.isFrozen ? (
                                 <Badge variant="destructive" className="text-[11px]">동결</Badge>
                               ) : (
-                                <Badge variant="outline" className="text-[11px]">정상</Badge>
+                                <Badge variant="outline" className="text-[11px] border-[#1e3050] text-slate-400">정상</Badge>
                               )}
                             </TableCell>
-                            <TableCell>{u.bank}</TableCell>
-                            <TableCell className="font-mono text-sm">{u.accountNumber}</TableCell>
-                            <TableCell>{u.accountHolder}</TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
+                            <TableCell className="text-slate-300">{u.bank}</TableCell>
+                            <TableCell className="font-mono text-sm text-slate-300">{u.accountNumber}</TableCell>
+                            <TableCell className="text-slate-300">{u.accountHolder}</TableCell>
+                            <TableCell className="text-sm text-slate-500">
                               {new Date(u.createdAt).toLocaleDateString("ko-KR")}
                             </TableCell>
                             <TableCell>
@@ -1042,7 +1042,7 @@ export default function AdminPage() {
                                 <MemberEditDialog user={u} onSuccess={refreshData} />
                                 <MemberFreezeDialog user={u} onSuccess={refreshData} />
                                 <MemberDeleteDialog user={u} onSuccess={refreshData} />
-                                <div className="w-px h-5 bg-border mx-1" />
+                                <div className="w-px h-5 bg-[#1e3050] mx-1" />
                                 <StockTransactionDialog user={u} type="in" onSuccess={refreshData} />
                                 <StockTransactionDialog user={u} type="out" onSuccess={refreshData} />
                               </div>
@@ -1061,7 +1061,7 @@ export default function AdminPage() {
             <>
               <div className="flex items-center gap-3 flex-wrap">
                 <Select value={filterType} onValueChange={setFilterType}>
-                  <SelectTrigger className="w-[140px]" data-testid="select-filter-type">
+                  <SelectTrigger className="w-[140px] bg-[#0a1628] border-[#1e3050] text-slate-300" data-testid="select-filter-type">
                     <SelectValue placeholder="유형" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1071,7 +1071,7 @@ export default function AdminPage() {
                   </SelectContent>
                 </Select>
                 <Select value={filterCategory} onValueChange={setFilterCategory}>
-                  <SelectTrigger className="w-[140px]" data-testid="select-filter-category">
+                  <SelectTrigger className="w-[140px] bg-[#0a1628] border-[#1e3050] text-slate-300" data-testid="select-filter-category">
                     <SelectValue placeholder="카테고리" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1081,39 +1081,39 @@ export default function AdminPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Badge variant="outline" className="shrink-0">{filteredTransactions.length}건</Badge>
+                <Badge variant="outline" className="shrink-0 border-[#1e3050] text-slate-400">{filteredTransactions.length}건</Badge>
               </div>
 
               {txLoading ? (
                 <div className="space-y-3">
-                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full bg-[#1e3050]" />)}
                 </div>
               ) : filteredTransactions.length === 0 ? (
-                <Card className="p-12 text-center">
-                  <Package className="w-10 h-10 mx-auto mb-3 opacity-30 text-muted-foreground" />
-                  <p className="font-medium text-muted-foreground">거래 내역이 없습니다</p>
+                <Card className="p-12 text-center bg-[#111d33] border-[#1e3050]">
+                  <Package className="w-10 h-10 mx-auto mb-3 opacity-30 text-slate-500" />
+                  <p className="font-medium text-slate-400">거래 내역이 없습니다</p>
                 </Card>
               ) : (
-                <Card className="p-0 overflow-hidden">
+                <Card className="p-0 overflow-hidden bg-[#111d33] border-[#1e3050]">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead>유형</TableHead>
-                          <TableHead>카테고리</TableHead>
-                          <TableHead>회원</TableHead>
-                          <TableHead>종목</TableHead>
-                          <TableHead className="text-right">수량</TableHead>
-                          <TableHead className="text-right">단가</TableHead>
-                          <TableHead className="text-right">총액</TableHead>
-                          <TableHead>메모</TableHead>
-                          <TableHead>일시</TableHead>
-                          <TableHead className="text-center">관리</TableHead>
+                        <TableRow className="bg-[#0d1f35] border-[#1e3050]">
+                          <TableHead className="text-slate-400">유형</TableHead>
+                          <TableHead className="text-slate-400">카테고리</TableHead>
+                          <TableHead className="text-slate-400">회원</TableHead>
+                          <TableHead className="text-slate-400">종목</TableHead>
+                          <TableHead className="text-right text-slate-400">수량</TableHead>
+                          <TableHead className="text-right text-slate-400">단가</TableHead>
+                          <TableHead className="text-right text-slate-400">총액</TableHead>
+                          <TableHead className="text-slate-400">메모</TableHead>
+                          <TableHead className="text-slate-400">일시</TableHead>
+                          <TableHead className="text-center text-slate-400">관리</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {filteredTransactions.map((tx) => (
-                          <TableRow key={tx.id} data-testid={`row-tx-${tx.id}`}>
+                          <TableRow key={tx.id} className="border-[#1e3050]" data-testid={`row-tx-${tx.id}`}>
                             <TableCell>
                               <Badge
                                 variant={tx.type === "in" ? "default" : "secondary"}
@@ -1122,14 +1122,14 @@ export default function AdminPage() {
                                 {tx.type === "in" ? "입고" : "출고"}
                               </Badge>
                             </TableCell>
-                            <TableCell>{tx.category}</TableCell>
-                            <TableCell className="font-medium">{getUserName(tx.userId)}</TableCell>
-                            <TableCell>{tx.stockName}</TableCell>
-                            <TableCell className="text-right font-mono tabular-nums">{tx.quantity.toLocaleString()}주</TableCell>
-                            <TableCell className="text-right font-mono tabular-nums">{tx.pricePerShare.toLocaleString()}원</TableCell>
-                            <TableCell className="text-right font-mono tabular-nums">{(tx.quantity * tx.pricePerShare).toLocaleString()}원</TableCell>
-                            <TableCell className="text-sm text-muted-foreground">{tx.memo || "-"}</TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
+                            <TableCell className="text-slate-300">{tx.category}</TableCell>
+                            <TableCell className="font-medium text-slate-300">{getUserName(tx.userId)}</TableCell>
+                            <TableCell className="text-slate-300">{tx.stockName}</TableCell>
+                            <TableCell className="text-right font-mono tabular-nums text-slate-300">{tx.quantity.toLocaleString()}주</TableCell>
+                            <TableCell className="text-right font-mono tabular-nums text-slate-300">{tx.pricePerShare.toLocaleString()}원</TableCell>
+                            <TableCell className="text-right font-mono tabular-nums text-slate-300">{(tx.quantity * tx.pricePerShare).toLocaleString()}원</TableCell>
+                            <TableCell className="text-sm text-slate-500">{tx.memo || "-"}</TableCell>
+                            <TableCell className="text-sm text-slate-500">
                               {new Date(tx.createdAt).toLocaleDateString("ko-KR")}
                             </TableCell>
                             <TableCell>
@@ -1159,7 +1159,7 @@ export default function AdminPage() {
           {activeSection === "transfers" && (
             <>
               <div className="flex items-center gap-3 flex-wrap">
-                <Badge variant="outline" className="shrink-0">
+                <Badge variant="outline" className="shrink-0 border-[#1e3050] text-slate-400">
                   {(allTransferRequests || []).length}건
                 </Badge>
                 <Badge variant="outline" className="shrink-0 bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
@@ -1169,48 +1169,48 @@ export default function AdminPage() {
 
               {transfersLoading ? (
                 <div className="space-y-3">
-                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full bg-[#1e3050]" />)}
                 </div>
               ) : (allTransferRequests || []).length === 0 ? (
-                <Card className="p-12 text-center">
-                  <ArrowRightLeft className="w-10 h-10 mx-auto mb-3 opacity-30 text-muted-foreground" />
-                  <p className="font-medium text-muted-foreground">대체출고 신청 내역이 없습니다</p>
+                <Card className="p-12 text-center bg-[#111d33] border-[#1e3050]">
+                  <ArrowRightLeft className="w-10 h-10 mx-auto mb-3 opacity-30 text-slate-500" />
+                  <p className="font-medium text-slate-400">대체출고 신청 내역이 없습니다</p>
                 </Card>
               ) : (
-                <Card className="p-0 overflow-hidden">
+                <Card className="p-0 overflow-hidden bg-[#111d33] border-[#1e3050]">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead>상태</TableHead>
-                          <TableHead>신청 회원</TableHead>
-                          <TableHead>종목</TableHead>
-                          <TableHead className="text-right">수량</TableHead>
-                          <TableHead>예금주</TableHead>
-                          <TableHead>계좌번호</TableHead>
-                          <TableHead>신청일</TableHead>
-                          <TableHead>관리자 메모</TableHead>
-                          <TableHead className="text-center">처리</TableHead>
+                        <TableRow className="bg-[#0d1f35] border-[#1e3050]">
+                          <TableHead className="text-slate-400">상태</TableHead>
+                          <TableHead className="text-slate-400">신청 회원</TableHead>
+                          <TableHead className="text-slate-400">종목</TableHead>
+                          <TableHead className="text-right text-slate-400">수량</TableHead>
+                          <TableHead className="text-slate-400">예금주</TableHead>
+                          <TableHead className="text-slate-400">계좌번호</TableHead>
+                          <TableHead className="text-slate-400">신청일</TableHead>
+                          <TableHead className="text-slate-400">관리자 메모</TableHead>
+                          <TableHead className="text-center text-slate-400">처리</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {(allTransferRequests || []).map((tr) => (
-                          <TableRow key={tr.id} data-testid={`row-transfer-${tr.id}`}>
+                          <TableRow key={tr.id} className="border-[#1e3050]" data-testid={`row-transfer-${tr.id}`}>
                             <TableCell>
-                              {tr.status === "pending" && <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" />대기</Badge>}
+                              {tr.status === "pending" && <Badge variant="outline" className="gap-1 border-[#1e3050] text-slate-400"><Clock className="w-3 h-3" />대기</Badge>}
                               {tr.status === "approved" && <Badge className="gap-1 bg-green-600 border-green-600"><CheckCircle2 className="w-3 h-3" />승인</Badge>}
                               {tr.status === "rejected" && <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" />거부</Badge>}
                               {tr.status === "held" && <Badge variant="secondary" className="gap-1"><PauseCircle className="w-3 h-3" />보류</Badge>}
                             </TableCell>
-                            <TableCell className="font-medium">{getUserName(tr.userId)}</TableCell>
-                            <TableCell>{tr.stockName}</TableCell>
-                            <TableCell className="text-right font-mono tabular-nums">{tr.quantity.toLocaleString()}주</TableCell>
-                            <TableCell>{tr.accountName}</TableCell>
-                            <TableCell className="font-mono text-sm">{tr.accountNumber}</TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
+                            <TableCell className="font-medium text-slate-300">{getUserName(tr.userId)}</TableCell>
+                            <TableCell className="text-slate-300">{tr.stockName}</TableCell>
+                            <TableCell className="text-right font-mono tabular-nums text-slate-300">{tr.quantity.toLocaleString()}주</TableCell>
+                            <TableCell className="text-slate-300">{tr.accountName}</TableCell>
+                            <TableCell className="font-mono text-sm text-slate-300">{tr.accountNumber}</TableCell>
+                            <TableCell className="text-sm text-slate-500">
                               {new Date(tr.createdAt).toLocaleDateString("ko-KR")}
                             </TableCell>
-                            <TableCell className="text-sm text-muted-foreground max-w-[150px] truncate">
+                            <TableCell className="text-sm text-slate-500 max-w-[150px] truncate">
                               {tr.adminMemo || "-"}
                             </TableCell>
                             <TableCell>
@@ -1258,46 +1258,46 @@ export default function AdminPage() {
           {activeSection === "chat" && (
             <>
               <div className="flex items-center gap-3 mb-6">
-                <MessageSquare className="w-5 h-5 text-primary" />
+                <MessageSquare className="w-5 h-5 text-[#4a90d9]" />
                 <div>
-                  <h2 className="text-lg font-bold">1:1 고객 상담</h2>
-                  <p className="text-sm text-muted-foreground">회원 문의에 실시간으로 응답합니다</p>
+                  <h2 className="text-lg font-bold text-white">1:1 고객 상담</h2>
+                  <p className="text-sm text-slate-400">회원 문의에 실시간으로 응답합니다</p>
                 </div>
               </div>
               <div className="flex gap-4 h-[calc(100vh-180px)]">
-                <Card className="w-72 shrink-0 p-0 overflow-hidden flex flex-col">
-                  <div className="p-3 border-b">
-                    <h3 className="text-sm font-bold">상담 목록</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{(chatRooms || []).length}건의 상담</p>
+                <Card className="w-72 shrink-0 p-0 overflow-hidden flex flex-col bg-[#111d33] border-[#1e3050]">
+                  <div className="p-3 border-b border-[#1e3050]">
+                    <h3 className="text-sm font-bold text-white">상담 목록</h3>
+                    <p className="text-xs text-slate-400 mt-0.5">{(chatRooms || []).length}건의 상담</p>
                   </div>
-                  <div className="flex-1 overflow-y-auto divide-y">
+                  <div className="flex-1 overflow-y-auto divide-y divide-[#1e3050]">
                     {chatRoomsLoading ? (
-                      <div className="p-3 space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
+                      <div className="p-3 space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full bg-[#1e3050]" />)}</div>
                     ) : (chatRooms || []).length === 0 ? (
                       <div className="p-8 text-center">
-                        <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">상담 내역이 없습니다</p>
+                        <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30 text-slate-500" />
+                        <p className="text-sm text-slate-400">상담 내역이 없습니다</p>
                       </div>
                     ) : (
                       (chatRooms || []).map((room: any) => (
                         <div
                           key={room.id}
-                          className={`px-3 py-3 cursor-pointer hover-elevate ${selectedChatRoom === room.id ? "bg-primary/10" : ""}`}
+                          className={`px-3 py-3 cursor-pointer hover-elevate ${selectedChatRoom === room.id ? "bg-[#004B9C]/20" : ""}`}
                           onClick={() => setSelectedChatRoom(room.id)}
                           data-testid={`chat-room-${room.id}`}
                         >
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                              <span className="text-xs font-bold text-primary">{(room.userName || "?").charAt(0)}</span>
+                            <div className="w-8 h-8 rounded-full bg-[#004B9C]/20 flex items-center justify-center shrink-0">
+                              <span className="text-xs font-bold text-[#4a90d9]">{(room.userName || "?").charAt(0)}</span>
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-medium truncate">{room.userName}</p>
-                                <span className="text-[11px] text-muted-foreground shrink-0">
+                                <p className="text-sm font-medium truncate text-slate-200">{room.userName}</p>
+                                <span className="text-[11px] text-slate-500 shrink-0">
                                   {new Date(room.lastMessageAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
                                 </span>
                               </div>
-                              <p className="text-xs text-muted-foreground truncate">@{room.userUsername}</p>
+                              <p className="text-xs text-slate-400 truncate">@{room.userUsername}</p>
                             </div>
                           </div>
                         </div>
@@ -1305,27 +1305,27 @@ export default function AdminPage() {
                     )}
                   </div>
                 </Card>
-                <Card className="flex-1 p-0 overflow-hidden flex flex-col">
+                <Card className="flex-1 p-0 overflow-hidden flex flex-col bg-[#111d33] border-[#1e3050]">
                   {!selectedChatRoom ? (
                     <div className="flex items-center justify-center h-full">
                       <div className="text-center space-y-3">
-                        <MessageSquare className="w-10 h-10 mx-auto text-muted-foreground opacity-30" />
-                        <p className="text-sm text-muted-foreground">채팅방을 선택해주세요</p>
+                        <MessageSquare className="w-10 h-10 mx-auto text-slate-500 opacity-30" />
+                        <p className="text-sm text-slate-400">채팅방을 선택해주세요</p>
                       </div>
                     </div>
                   ) : (
                     <>
-                      <div className="p-3 border-b flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-xs font-bold text-primary">
+                      <div className="p-3 border-b border-[#1e3050] flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-[#004B9C]/20 flex items-center justify-center">
+                          <span className="text-xs font-bold text-[#4a90d9]">
                             {((chatRooms || []).find((r: any) => r.id === selectedChatRoom)?.userName || "?").charAt(0)}
                           </span>
                         </div>
                         <div>
-                          <p className="text-sm font-medium">
+                          <p className="text-sm font-medium text-slate-200">
                             {(chatRooms || []).find((r: any) => r.id === selectedChatRoom)?.userName || "알 수 없음"}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-slate-400">
                             @{(chatRooms || []).find((r: any) => r.id === selectedChatRoom)?.userUsername || ""}
                           </p>
                         </div>
@@ -1333,7 +1333,7 @@ export default function AdminPage() {
                       <div className="flex-1 overflow-y-auto p-4 space-y-3">
                         {chatMessages.filter(m => m.roomId === selectedChatRoom).length === 0 ? (
                           <div className="flex items-center justify-center h-full">
-                            <p className="text-sm text-muted-foreground">메시지가 없습니다</p>
+                            <p className="text-sm text-slate-400">메시지가 없습니다</p>
                           </div>
                         ) : (
                           chatMessages.filter(m => m.roomId === selectedChatRoom).map((msg: any) => {
@@ -1341,13 +1341,13 @@ export default function AdminPage() {
                             return (
                               <div key={msg.id} className={`flex ${isAdmin ? "justify-end" : "justify-start"}`} data-testid={`admin-chat-msg-${msg.id}`}>
                                 <div className={`max-w-[75%] space-y-1 flex flex-col ${isAdmin ? "items-end" : "items-start"}`}>
-                                  <span className="text-xs text-muted-foreground px-1">
+                                  <span className="text-xs text-slate-500 px-1">
                                     {isAdmin ? "상담원" : ((chatRooms || []).find((r: any) => r.id === selectedChatRoom)?.userName || "회원")}
                                   </span>
-                                  <div className={`rounded-md px-3 py-2 text-sm break-words ${isAdmin ? "bg-[#004B9C] text-white" : "bg-muted text-foreground"}`}>
+                                  <div className={`rounded-md px-3 py-2 text-sm break-words ${isAdmin ? "bg-[#004B9C] text-white" : "bg-[#1e3050] text-slate-200"}`}>
                                     {msg.message}
                                   </div>
-                                  <span className="text-[11px] text-muted-foreground px-1">
+                                  <span className="text-[11px] text-slate-500 px-1">
                                     {new Date(msg.createdAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
                                   </span>
                                 </div>
@@ -1357,13 +1357,14 @@ export default function AdminPage() {
                         )}
                         <div ref={chatMessagesEndRef} />
                       </div>
-                      <div className="shrink-0 border-t p-3">
+                      <div className="shrink-0 border-t border-[#1e3050] p-3">
                         <div className="flex items-center gap-2">
                           <Input
                             value={chatInput}
                             onChange={(e: any) => setChatInput(e.target.value)}
                             onKeyDown={(e: any) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleChatSend(); } }}
                             placeholder="답변을 입력하세요..."
+                            className="bg-[#0a1628] border-[#1e3050] text-white placeholder:text-slate-600"
                             data-testid="input-admin-chat"
                           />
                           <Button
