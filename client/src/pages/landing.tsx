@@ -4,9 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Heart, Star, X, TrendingUp, TrendingDown, ExternalLink, MessageCircle, MessageSquare, Repeat2, Share2, Newspaper, Clock, Package, LogIn } from "lucide-react";
+import { Heart, Star, X, TrendingUp, TrendingDown, ExternalLink, MessageCircle, MessageSquare, Repeat2, Share2, Newspaper, Clock, Package, LogIn, LogOut } from "lucide-react";
 import { SamsungBadge } from "@/components/samsung-logo";
-import { getQueryFn } from "@/lib/queryClient";
+import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
+import { useMutation } from "@tanstack/react-query";
 import type { User, StockTransaction } from "@shared/schema";
 
 const KOREAN_STOCKS = [
@@ -1180,6 +1181,15 @@ export default function LandingPage() {
   });
   const isLoggedIn = !!authData?.user;
 
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/auth/logout");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    },
+  });
+
   const { data: stockData, isLoading } = useQuery<StockData>({
     queryKey: ["/api/stock/samsung"],
     refetchInterval: 10 * 1000,
@@ -1261,17 +1271,31 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-2">
             {isLoggedIn ? (
-              <Link href="/login">
-                <Button size="sm" variant="outline" data-testid="link-transfer-out">타사대체출고</Button>
-              </Link>
+              <>
+                <Link href="/login">
+                  <Button size="sm" variant="outline" data-testid="link-transfer-out">타사대체출고</Button>
+                </Link>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => logoutMutation.mutate()}
+                  disabled={logoutMutation.isPending}
+                  data-testid="button-logout"
+                >
+                  <LogOut className="w-4 h-4 mr-1" />
+                  로그아웃
+                </Button>
+              </>
             ) : (
-              <Link href="/login">
-                <Button size="sm" variant="outline" data-testid="link-login">로그인</Button>
-              </Link>
+              <>
+                <Link href="/login">
+                  <Button size="sm" variant="outline" data-testid="link-login">로그인</Button>
+                </Link>
+                <Link href="/register">
+                  <Button size="sm" data-testid="link-register">비대면 계좌개설</Button>
+                </Link>
+              </>
             )}
-            <Link href="/register">
-              <Button size="sm" data-testid="link-register">비대면 계좌개설</Button>
-            </Link>
           </div>
         </div>
       </header>
