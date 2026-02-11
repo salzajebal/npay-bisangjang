@@ -1137,10 +1137,6 @@ export default function LandingPage() {
             </nav>
           </div>
           <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center bg-muted/50 rounded-md px-3 gap-2">
-              <Search className="w-3.5 h-3.5 text-muted-foreground" />
-              <input type="text" placeholder="종목 검색하세요" className="bg-transparent border-0 outline-none text-base py-1.5 w-36 placeholder:text-muted-foreground/50" data-testid="input-search" />
-            </div>
             <Link href="/login">
               <Button size="sm" variant="outline" data-testid="link-login">로그인</Button>
             </Link>
