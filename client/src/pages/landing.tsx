@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Heart, Star, X, TrendingUp, TrendingDown, ExternalLink, MessageCircle } from "lucide-react";
+import { Search, Heart, Star, X, TrendingUp, TrendingDown, ExternalLink, MessageCircle, MessageSquare, Repeat2, Share2 } from "lucide-react";
 import { SamsungBadge } from "@/components/samsung-logo";
 
 const KOREAN_STOCKS = [
@@ -553,6 +553,140 @@ const COMMUNITY_POSTS = [
   { user: "삼전홀더", badge: "", time: "40분 전", content: "3년째 홀딩 중인데 이제야 빛을 보는 건가... 조금만 더 힘내자 삼전!", likes: 51 },
 ];
 
+const FEED_POSTS = [
+  {
+    channel: "미국주식이야기",
+    date: "2월 3일",
+    author: "환상감자",
+    title: "무심코 주식 산 30대가 인생 꼬이는 과정",
+    content: "안녕하세요 환상감자입니다.\n직장 생활 5~7년 차, 어느 정도 목돈이 모이고 월급만으로는 답이 없다는 걸 깨닫는 나이가 보통 30대입니다.\n\n이 시기에 많은 이들이 '재테크'라는 이름의 링 위에 오릅니다.",
+    likes: 5649, comments: 836, reposts: 20,
+  },
+  {
+    channel: "미국주식이야기",
+    date: "2월 5일 (수정됨)",
+    author: "돈을부르는고양이",
+    title: "당신이 정말 주식 시장에서 끝까지 살아남고 싶다면",
+    content: "이 원칙만 지켜보세요. 닷컴버블 코로나 금융위기 시절같은 폭락장이 찾아와도 살아남을 수 있을 겁니다.\n\n1. 중소형주 투자하지 않기\n2. 급등주 하지 않기",
+    likes: 1081, comments: 111, reposts: 6,
+  },
+  {
+    channel: "미국주식이야기",
+    date: "1일 (수정됨)",
+    author: "돈을부르는고양이",
+    title: "명심하자",
+    content: "신용거래(빚투) 하지말기\n중소형주 및 이상한 종목 매수하지 말기\n레버리지도 하지말기(중소형주 및 잡종목이라면 더욱 하지말기 정말 레버리지가 너무 하고싶은 도파민의 노예라면 나스닥 에센피 다우지수 추종 etf 2배까지만 하도록 하자)\nM7 빅테크대형주 지수추종을 투자하자(특히나 지수추종은 정말 무적이다)",
+    likes: 593, comments: 54, reposts: 3,
+  },
+  {
+    channel: "삼성전자 토론방",
+    date: "방금 전",
+    author: "주식고수김",
+    title: "",
+    content: "삼성전자 지금 눌림목 구간이라 분할매수 들어갔습니다. 반도체 사이클 바닥 지났다고 봅니다.",
+    likes: 42, comments: 8, reposts: 2,
+  },
+  {
+    channel: "삼성전자 토론방",
+    date: "2분 전",
+    author: "반도체전문가",
+    title: "",
+    content: "HBM4 양산 소식 나오면 한번 더 갈 수 있을 듯. AI 수혜주로 재평가 받는 중.",
+    likes: 38, comments: 12, reposts: 1,
+  },
+  {
+    channel: "삼성전자 토론방",
+    date: "8분 전",
+    author: "데이트레이더",
+    title: "",
+    content: "오늘 외국인 순매수 들어오네요. 단기 반등 나올 수 있는 자리입니다.",
+    likes: 56, comments: 15, reposts: 4,
+  },
+  {
+    channel: "삼성전자 토론방",
+    date: "18분 전",
+    author: "차트분석가",
+    title: "",
+    content: "20일선 지지 확인 후 반등 중. 거래량 동반 상승이면 추가 상승 여력 있어 보입니다.",
+    likes: 71, comments: 22, reposts: 5,
+  },
+  {
+    channel: "삼성전자 토론방",
+    date: "30분 전",
+    author: "뉴스봇",
+    title: "",
+    content: "삼성전자, 차세대 2나노 공정 투자 확대 발표. 시장 반응 긍정적.",
+    likes: 88, comments: 31, reposts: 7,
+  },
+];
+
+function FeedView() {
+  return (
+    <div className="max-w-[1400px] mx-auto w-full px-4 py-4 flex-1">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Star className="w-4 h-4 text-amber-500" />
+            <h2 className="text-base font-bold">주간 인기글</h2>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">한 주간 가장 주목 받은 글만 쏙~옥 모았어요</p>
+          <div className="space-y-0 divide-y">
+            {FEED_POSTS.map((post, i) => (
+              <div key={i} className="py-4 first:pt-0">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1.5 flex-wrap">
+                      <span className="font-medium text-foreground">{post.channel}</span>
+                      <span>{post.date}</span>
+                      <span>·</span>
+                      <span>{post.author}님이 남긴 글</span>
+                    </div>
+                    {post.title && (
+                      <h3 className="text-sm font-bold mb-1.5">{post.title}</h3>
+                    )}
+                    <p className="text-xs text-foreground/80 leading-relaxed whitespace-pre-line line-clamp-4">{post.content}</p>
+                    {post.content.length > 100 && (
+                      <button className="text-xs text-blue-500 mt-1">... 더 보기</button>
+                    )}
+                    <div className="flex items-center gap-4 mt-2.5">
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Heart className="w-3.5 h-3.5" />
+                        <span>{post.likes.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>{post.comments}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Repeat2 className="w-3.5 h-3.5" />
+                        <span>{post.reposts}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Share2 className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                  </div>
+                  <Button size="sm" variant="outline" className="text-[11px] px-3 shrink-0 mt-1">팔로우</Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-1">
+            <h2 className="text-base font-bold">수익금 상위 투자자 TOP5</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">최근 1주일 기준</p>
+          </div>
+          <Card className="p-0 overflow-hidden mt-3">
+            <TopInvestorsPanel />
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CommunityPanel() {
   const [visiblePosts, setVisiblePosts] = useState(COMMUNITY_POSTS.slice(0, 5));
   const [postIndex, setPostIndex] = useState(5);
@@ -702,6 +836,7 @@ export default function LandingPage() {
         <div className="flex items-center gap-0 border-b">
           {[
             { id: "chart", label: "차트·호가" },
+            { id: "feed", label: "피드" },
             { id: "info", label: "종목정보" },
             { id: "news", label: "뉴스·공시" },
             { id: "trade", label: "거래현황" },
@@ -718,6 +853,9 @@ export default function LandingPage() {
         </div>
       </div>
 
+      {activeTab === "feed" ? (
+        <FeedView />
+      ) : (
       <div className="max-w-[1400px] mx-auto w-full px-4 py-4 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px_280px] gap-4">
 
@@ -872,6 +1010,7 @@ export default function LandingPage() {
           </Card>
         </div>
       </div>
+      )}
 
     </div>
   );
