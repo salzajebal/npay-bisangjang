@@ -1289,56 +1289,53 @@ export default function LandingPage() {
             <div className="px-3 py-2 border-b flex items-center justify-between gap-2">
               <span className="text-sm font-bold">주문하기</span>
             </div>
-            <div className="p-3 space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground w-16 shrink-0">주문 유형</span>
-                <div className="flex-1 bg-muted/30 rounded-md p-0.5 flex">
-                  <div className="flex-1 text-center text-xs py-1.5 bg-background rounded font-medium shadow-sm">일반 주문</div>
+            <div className="p-3 space-y-2.5 text-xs">
+              <div className="grid grid-cols-[56px_1fr] items-center gap-x-3">
+                <span className="text-muted-foreground">주문 유형</span>
+                <div className="bg-muted/30 rounded-md p-0.5 flex">
+                  <div className="flex-1 text-center py-1.5 bg-background rounded font-medium shadow-sm">일반 주문</div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground w-16 shrink-0">구매 가격</span>
-                <div className="flex-1 flex items-center gap-1">
-                  <button className="px-2 py-1 text-xs rounded bg-muted/50 font-medium" data-testid="btn-price-type-limit">지정가</button>
-                  <button className="px-2 py-1 text-xs rounded text-muted-foreground" data-testid="btn-price-type-market">시장가</button>
+              <div className="grid grid-cols-[56px_1fr] items-center gap-x-3">
+                <span className="text-muted-foreground">구매 가격</span>
+                <div className="flex items-center gap-1">
+                  <button className="px-2.5 py-1 rounded bg-muted/50 font-medium" data-testid="btn-price-type-limit">지정가</button>
+                  <button className="px-2.5 py-1 rounded text-muted-foreground" data-testid="btn-price-type-market">시장가</button>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground w-16 shrink-0"></span>
-                <div className="flex-1 flex items-center border rounded-md">
-                  <button className="px-2 py-1.5 text-muted-foreground border-r" data-testid="btn-price-minus">-</button>
-                  <input type="text" value={displayPrice > 0 ? displayPrice.toLocaleString() : ""} readOnly className="flex-1 text-center text-sm font-medium bg-transparent outline-none py-1.5 tabular-nums" data-testid="input-price" />
-                  <span className="text-xs text-muted-foreground pr-1">원</span>
-                  <button className="px-2 py-1.5 text-muted-foreground border-l" data-testid="btn-price-plus">+</button>
+              <div className="grid grid-cols-[56px_1fr] items-center gap-x-3">
+                <span></span>
+                <div className="flex items-center border rounded-md">
+                  <button className="px-2.5 py-1.5 text-muted-foreground border-r" data-testid="btn-price-minus">-</button>
+                  <input type="text" value={displayPrice > 0 ? displayPrice.toLocaleString() : ""} readOnly className="flex-1 text-center text-sm font-medium bg-transparent outline-none py-1.5 min-w-0 tabular-nums" data-testid="input-price" />
+                  <button className="px-2.5 py-1.5 text-muted-foreground border-l" data-testid="btn-price-plus">+</button>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground w-16 shrink-0">수량</span>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <span>수량 입력</span>
+              <div className="grid grid-cols-[56px_1fr] items-center gap-x-3">
+                <span className="text-muted-foreground">수량</span>
+                <span className="text-muted-foreground">수량 입력</span>
+              </div>
+              <div className="grid grid-cols-[56px_1fr] items-center gap-x-3">
+                <span></span>
+                <div className="flex items-center border rounded-md">
+                  <button className="px-2.5 py-1.5 text-muted-foreground border-r" data-testid="btn-qty-minus">-</button>
+                  <input type="text" placeholder="0" className="flex-1 text-center text-sm bg-transparent outline-none py-1.5 min-w-0 tabular-nums" data-testid="input-qty" />
+                  <button className="px-2.5 py-1.5 text-muted-foreground border-l" data-testid="btn-qty-plus">+</button>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground w-16 shrink-0"></span>
-                <div className="flex-1 flex items-center border rounded-md">
-                  <button className="px-2 py-1.5 text-muted-foreground border-r" data-testid="btn-qty-minus">-</button>
-                  <input type="text" placeholder="0" className="flex-1 text-center text-sm bg-transparent outline-none py-1.5 tabular-nums" data-testid="input-qty" />
-                  <button className="px-2 py-1.5 text-muted-foreground border-l" data-testid="btn-qty-plus">+</button>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 flex-wrap">
+              <div className="flex items-center gap-1.5">
                 {["10%", "25%", "50%", "최대"].map((pct) => (
-                  <button key={pct} className="flex-1 text-xs py-1.5 rounded-md border text-muted-foreground font-medium" data-testid={`btn-pct-${pct}`}>{pct}</button>
+                  <button key={pct} className="flex-1 py-1.5 rounded-md border text-muted-foreground font-medium" data-testid={`btn-pct-${pct}`}>{pct}</button>
                 ))}
               </div>
-              <div className="space-y-1 pt-1">
-                <div className="flex items-center justify-between text-xs">
+              <div className="space-y-1 pt-1 border-t">
+                <div className="flex items-center justify-between gap-2 pt-2">
                   <span className="text-muted-foreground">구매가능 금액</span>
-                  <span className="font-medium">0원</span>
+                  <span className="font-medium tabular-nums">0원</span>
                 </div>
-                <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center justify-between gap-2">
                   <span className="text-muted-foreground">총 주문 금액</span>
-                  <span className="font-medium">0원</span>
+                  <span className="font-medium tabular-nums">0원</span>
                 </div>
               </div>
               <Link href="/login">
