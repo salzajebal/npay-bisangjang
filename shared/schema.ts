@@ -69,6 +69,23 @@ export const transferRequests = pgTable("transfer_requests", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const chatRooms = pgTable("chat_rooms", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  status: text("status").notNull().default("open"),
+  lastMessageAt: timestamp("last_message_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const chatMessages = pgTable("chat_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  roomId: varchar("room_id").notNull(),
+  senderId: varchar("sender_id").notNull(),
+  senderRole: text("sender_role").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertStockTransactionSchema = createInsertSchema(stockTransactions).omit({
   id: true,
   createdAt: true,
@@ -81,12 +98,20 @@ export const insertTransferRequestSchema = createInsertSchema(transferRequests).
   createdAt: true,
 });
 
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type StockTransaction = typeof stockTransactions.$inferSelect;
 export type InsertStockTransaction = z.infer<typeof insertStockTransactionSchema>;
 export type TransferRequest = typeof transferRequests.$inferSelect;
 export type InsertTransferRequest = z.infer<typeof insertTransferRequestSchema>;
+export type ChatRoom = typeof chatRooms.$inferSelect;
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 
 export const KOREAN_BANKS = [
   "KB국민은행",

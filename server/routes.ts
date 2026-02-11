@@ -6,6 +6,8 @@ import connectPg from "connect-pg-simple";
 import { registerSchema, loginSchema, insertStockTransactionSchema, updateUserSchema, insertTransferRequestSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
+import { WebSocketServer, WebSocket } from "ws";
+import { log } from "./index";
 
 let stockCache: { data: any; timestamp: number } | null = null;
 const CACHE_DURATION = 60 * 1000;
@@ -423,6 +425,171 @@ export async function registerRoutes(
     } catch (error) {
       return res.status(500).json({ message: "상태 변경에 실패했습니다" });
     }
+  });
+
+  // Chat API routes
+  app.post("/api/chat/rooms", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "로그인이 필요합니다" });
+    }
+    const room = await storage.getOrCreateChatRoom(req.session.userId);
+    return res.json(room);
+  });
+
+  app.get("/api/chat/rooms/my", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "로그인이 필요합니다" });
+    }
+    const rooms = await storage.getChatRoomsByUserId(req.session.userId);
+    return res.json(rooms);
+  });
+
+  app.get("/api/chat/rooms", requireAdmin, async (_req, res) => {
+    const rooms = await storage.getAllChatRooms();
+    const allUsers = await storage.getAllUsers();
+    const roomsWithUser = rooms.map(room => {
+      const user = allUsers.find(u => u.id === room.userId);
+      return {
+        ...room,
+        userName: user?.fullName || "알 수 없음",
+        userUsername: user?.username || "unknown",
+      };
+    });
+    return res.json(roomsWithUser);
+  });
+
+  app.get("/api/chat/rooms/:id/messages", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "로그인이 필요합니다" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user) return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+
+    const rooms = user.isAdmin
+      ? await storage.getAllChatRooms()
+      : await storage.getChatRoomsByUserId(req.session.userId);
+
+    const room = rooms.find(r => r.id === req.params.id);
+    if (!room) return res.status(403).json({ message: "접근 권한이 없습니다" });
+
+    const messages = await storage.getChatMessages(req.params.id);
+    return res.json(messages);
+  });
+
+  // WebSocket server for real-time chat
+  const sessionStore = new PgSession({
+    conString: process.env.DATABASE_URL,
+    createTableIfMissing: true,
+  });
+
+  const wss = new WebSocketServer({ noServer: true });
+
+  interface AuthenticatedWebSocket extends WebSocket {
+    userId?: string;
+    isAdmin?: boolean;
+    roomId?: string;
+  }
+
+  httpServer.on("upgrade", (request, socket, head) => {
+    if (request.url !== "/ws/chat") {
+      return;
+    }
+
+    const cookieHeader = request.headers.cookie || "";
+    const sidMatch = cookieHeader.match(/connect\.sid=s%3A([^.]+)/);
+    if (!sidMatch) {
+      socket.destroy();
+      return;
+    }
+
+    const sessionId = sidMatch[1];
+    sessionStore.get(sessionId, (err: any, sessionData: any) => {
+      if (err || !sessionData || !sessionData.userId) {
+        socket.destroy();
+        return;
+      }
+
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        (ws as AuthenticatedWebSocket).userId = sessionData.userId;
+        wss.emit("connection", ws, request, sessionData);
+      });
+    });
+  });
+
+  wss.on("connection", async (ws: AuthenticatedWebSocket, _request: any, sessionData: any) => {
+    const userId = sessionData.userId;
+    const user = await storage.getUser(userId);
+    if (!user) {
+      ws.close();
+      return;
+    }
+
+    ws.userId = userId;
+    ws.isAdmin = user.isAdmin;
+
+    log(`WebSocket connected: ${user.username} (${user.isAdmin ? "admin" : "member"})`);
+
+    ws.on("message", async (rawData) => {
+      try {
+        const data = JSON.parse(rawData.toString());
+
+        if (data.type === "join") {
+          ws.roomId = data.roomId;
+          return;
+        }
+
+        if (data.type === "message" && data.roomId && data.message) {
+          const roomId = data.roomId;
+          const senderRole = ws.isAdmin ? "admin" : "user";
+
+          const msg = await storage.createChatMessage({
+            roomId,
+            senderId: userId,
+            senderRole,
+            message: data.message,
+          });
+          await storage.updateChatRoomLastMessage(roomId);
+
+          const outgoing = JSON.stringify({
+            type: "message",
+            data: msg,
+          });
+
+          wss.clients.forEach((client) => {
+            const authClient = client as AuthenticatedWebSocket;
+            if (client.readyState === WebSocket.OPEN) {
+              if (authClient.isAdmin || authClient.roomId === roomId) {
+                client.send(outgoing);
+              }
+            }
+          });
+
+          if (senderRole === "user") {
+            const notification = JSON.stringify({
+              type: "notification",
+              data: {
+                roomId,
+                userName: user.fullName,
+                userUsername: user.username,
+                message: data.message,
+              },
+            });
+            wss.clients.forEach((client) => {
+              const authClient = client as AuthenticatedWebSocket;
+              if (client.readyState === WebSocket.OPEN && authClient.isAdmin) {
+                client.send(notification);
+              }
+            });
+          }
+        }
+      } catch (e) {
+        log(`WebSocket message error: ${e}`);
+      }
+    });
+
+    ws.on("close", () => {
+      log(`WebSocket disconnected: ${user.username}`);
+    });
   });
 
   return httpServer;

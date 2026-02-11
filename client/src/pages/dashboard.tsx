@@ -10,7 +10,7 @@ import { useMutation } from "@tanstack/react-query";
 import {
   LogOut, Package, ArrowDownRight, ArrowUpRight, User as UserIcon,
   TrendingUp, RefreshCw, LayoutDashboard, ClipboardList, Wallet, Home,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, MessageSquare,
 } from "lucide-react";
 import { SamsungBadge } from "@/components/samsung-logo";
 import type { User, StockTransaction } from "@shared/schema";
@@ -169,6 +169,12 @@ export default function DashboardPage() {
               </div>
             </div>
           )}
+          <Link href="/chat">
+            <button className={`w-full flex items-center gap-3 rounded-md text-sm text-muted-foreground transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`} data-testid="nav-dash-chat" title={sidebarCollapsed ? "1:1 상담" : undefined}>
+              <MessageSquare className="w-4 h-4 shrink-0" />
+              {!sidebarCollapsed && <span>1:1 상담</span>}
+            </button>
+          </Link>
           <Link href="/">
             <button className={`w-full flex items-center gap-3 rounded-md text-sm text-muted-foreground transition-colors ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`} data-testid="nav-dash-home" title={sidebarCollapsed ? "메인 홈" : undefined}>
               <Home className="w-4 h-4 shrink-0" />

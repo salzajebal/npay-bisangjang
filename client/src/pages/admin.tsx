@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, Link, Redirect } from "wouter";
 import { Card } from "@/components/ui/card";
@@ -18,7 +18,7 @@ import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
   Eye, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
-  CheckCircle2, XCircle, PauseCircle, Clock,
+  CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send,
 } from "lucide-react";
 import { SamsungBadge } from "@/components/samsung-logo";
 
@@ -558,13 +558,14 @@ function TransactionEditDialog({ tx, onSuccess }: { tx: StockTransaction; onSucc
   );
 }
 
-type AdminSection = "dashboard" | "members" | "transactions" | "transfers";
+type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "chat";
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "대시보드", icon: LayoutDashboard },
   { id: "members", label: "회원 관리", icon: Users },
   { id: "transactions", label: "거래 내역", icon: ClipboardList },
   { id: "transfers", label: "대체출고 관리", icon: ArrowRightLeft },
+  { id: "chat", label: "1:1 상담", icon: MessageSquare },
 ];
 
 export default function AdminPage() {
@@ -574,6 +575,11 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
+  const [selectedChatRoom, setSelectedChatRoom] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const chatWsRef = useRef<WebSocket | null>(null);
+  const chatMessagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   const { data: authData, isLoading: authLoading } = useQuery<{ user: User } | null>({
@@ -597,6 +603,13 @@ export default function AdminPage() {
     queryKey: ["/api/admin/transfer-requests"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!authData?.user?.isAdmin,
+  });
+
+  const { data: chatRooms, isLoading: chatRoomsLoading } = useQuery<any[]>({
+    queryKey: ["/api/chat/rooms"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!authData?.user?.isAdmin,
+    refetchInterval: 5000,
   });
 
   const updateTransferStatusMutation = useMutation({
@@ -636,6 +649,63 @@ export default function AdminPage() {
     queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
     queryClient.invalidateQueries({ queryKey: ["/api/admin/transfer-requests"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/chat/rooms"] });
+  };
+
+  useEffect(() => {
+    if (!authData?.user?.isAdmin) return;
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/chat`);
+    chatWsRef.current = ws;
+    ws.onmessage = (event) => {
+      try {
+        const parsed = JSON.parse(event.data);
+        if (parsed.type === "message" && parsed.data) {
+          setChatMessages((prev) => {
+            if (prev.some((m) => m.id === parsed.data.id)) return prev;
+            return [...prev, parsed.data];
+          });
+        }
+        if (parsed.type === "notification") {
+          const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbsGMcBj+a2telezhJj+DYrGQ/RG2q3+OiXzZEgNThpGc/SF+W4NqkZz1Bd9bnpmk7Rme15NSmaT1ER9bn0apjNkhfvOnSrWI0R2bC8NCtVjRJZMXw1atXM0xnzvfXrFQ0TGXL9NitVTBMZc741qtU");
+          audio.volume = 0.5;
+          audio.play().catch(() => {});
+          toast({
+            title: "새 상담 메시지",
+            description: `${parsed.data.userName}: ${parsed.data.message.substring(0, 30)}${parsed.data.message.length > 30 ? "..." : ""}`,
+          });
+          queryClient.invalidateQueries({ queryKey: ["/api/chat/rooms"] });
+        }
+      } catch {}
+    };
+    ws.onclose = () => {};
+    return () => { ws.close(); chatWsRef.current = null; };
+  }, [authData?.user?.isAdmin]);
+
+  useEffect(() => {
+    chatMessagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  useEffect(() => {
+    if (!selectedChatRoom) return;
+    async function loadMessages() {
+      try {
+        const res = await fetch(`/api/chat/rooms/${selectedChatRoom}/messages`, { credentials: "include" });
+        if (res.ok) {
+          const msgs = await res.json();
+          setChatMessages(msgs);
+        }
+      } catch {}
+    }
+    loadMessages();
+  }, [selectedChatRoom]);
+
+  const handleChatSend = () => {
+    const text = chatInput.trim();
+    if (!text || !chatWsRef.current || !selectedChatRoom) return;
+    chatWsRef.current.send(JSON.stringify({ type: "join", roomId: selectedChatRoom }));
+    chatWsRef.current.send(JSON.stringify({ type: "message", roomId: selectedChatRoom, message: text }));
+    setChatInput("");
   };
 
   if (authLoading) {
@@ -1182,6 +1252,135 @@ export default function AdminPage() {
                   </div>
                 </Card>
               )}
+            </>
+          )}
+
+          {activeSection === "chat" && (
+            <>
+              <div className="flex items-center gap-3 mb-6">
+                <MessageSquare className="w-5 h-5 text-primary" />
+                <div>
+                  <h2 className="text-lg font-bold">1:1 고객 상담</h2>
+                  <p className="text-sm text-muted-foreground">회원 문의에 실시간으로 응답합니다</p>
+                </div>
+              </div>
+              <div className="flex gap-4 h-[calc(100vh-180px)]">
+                <Card className="w-72 shrink-0 p-0 overflow-hidden flex flex-col">
+                  <div className="p-3 border-b">
+                    <h3 className="text-sm font-bold">상담 목록</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{(chatRooms || []).length}건의 상담</p>
+                  </div>
+                  <div className="flex-1 overflow-y-auto divide-y">
+                    {chatRoomsLoading ? (
+                      <div className="p-3 space-y-2">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
+                    ) : (chatRooms || []).length === 0 ? (
+                      <div className="p-8 text-center">
+                        <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30 text-muted-foreground" />
+                        <p className="text-sm text-muted-foreground">상담 내역이 없습니다</p>
+                      </div>
+                    ) : (
+                      (chatRooms || []).map((room: any) => (
+                        <div
+                          key={room.id}
+                          className={`px-3 py-3 cursor-pointer hover-elevate ${selectedChatRoom === room.id ? "bg-primary/10" : ""}`}
+                          onClick={() => setSelectedChatRoom(room.id)}
+                          data-testid={`chat-room-${room.id}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                              <span className="text-xs font-bold text-primary">{(room.userName || "?").charAt(0)}</span>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-sm font-medium truncate">{room.userName}</p>
+                                <span className="text-[11px] text-muted-foreground shrink-0">
+                                  {new Date(room.lastMessageAt).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
+                                </span>
+                              </div>
+                              <p className="text-xs text-muted-foreground truncate">@{room.userUsername}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </Card>
+                <Card className="flex-1 p-0 overflow-hidden flex flex-col">
+                  {!selectedChatRoom ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center space-y-3">
+                        <MessageSquare className="w-10 h-10 mx-auto text-muted-foreground opacity-30" />
+                        <p className="text-sm text-muted-foreground">채팅방을 선택해주세요</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="p-3 border-b flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-xs font-bold text-primary">
+                            {((chatRooms || []).find((r: any) => r.id === selectedChatRoom)?.userName || "?").charAt(0)}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {(chatRooms || []).find((r: any) => r.id === selectedChatRoom)?.userName || "알 수 없음"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            @{(chatRooms || []).find((r: any) => r.id === selectedChatRoom)?.userUsername || ""}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                        {chatMessages.filter(m => m.roomId === selectedChatRoom).length === 0 ? (
+                          <div className="flex items-center justify-center h-full">
+                            <p className="text-sm text-muted-foreground">메시지가 없습니다</p>
+                          </div>
+                        ) : (
+                          chatMessages.filter(m => m.roomId === selectedChatRoom).map((msg: any) => {
+                            const isAdmin = msg.senderRole === "admin";
+                            return (
+                              <div key={msg.id} className={`flex ${isAdmin ? "justify-end" : "justify-start"}`} data-testid={`admin-chat-msg-${msg.id}`}>
+                                <div className={`max-w-[75%] space-y-1 flex flex-col ${isAdmin ? "items-end" : "items-start"}`}>
+                                  <span className="text-xs text-muted-foreground px-1">
+                                    {isAdmin ? "상담원" : ((chatRooms || []).find((r: any) => r.id === selectedChatRoom)?.userName || "회원")}
+                                  </span>
+                                  <div className={`rounded-md px-3 py-2 text-sm break-words ${isAdmin ? "bg-[#004B9C] text-white" : "bg-muted text-foreground"}`}>
+                                    {msg.message}
+                                  </div>
+                                  <span className="text-[11px] text-muted-foreground px-1">
+                                    {new Date(msg.createdAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                        <div ref={chatMessagesEndRef} />
+                      </div>
+                      <div className="shrink-0 border-t p-3">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={chatInput}
+                            onChange={(e: any) => setChatInput(e.target.value)}
+                            onKeyDown={(e: any) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleChatSend(); } }}
+                            placeholder="답변을 입력하세요..."
+                            data-testid="input-admin-chat"
+                          />
+                          <Button
+                            size="icon"
+                            onClick={handleChatSend}
+                            disabled={!chatInput.trim()}
+                            className="bg-[#004B9C] border-[#004B9C]"
+                            data-testid="button-admin-send"
+                          >
+                            <Send className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </Card>
+              </div>
             </>
           )}
         </main>

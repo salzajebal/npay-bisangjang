@@ -1,6 +1,6 @@
-import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, users, stockTransactions, transferRequests } from "@shared/schema";
+import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, users, stockTransactions, transferRequests, chatRooms, chatMessages } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -18,6 +18,12 @@ export interface IStorage {
   getTransferRequestsByUserId(userId: string): Promise<TransferRequest[]>;
   getAllTransferRequests(): Promise<TransferRequest[]>;
   updateTransferRequestStatus(id: string, status: string, adminMemo?: string): Promise<TransferRequest | undefined>;
+  getOrCreateChatRoom(userId: string): Promise<ChatRoom>;
+  getChatRoomsByUserId(userId: string): Promise<ChatRoom[]>;
+  getAllChatRooms(): Promise<ChatRoom[]>;
+  getChatMessages(roomId: string): Promise<ChatMessage[]>;
+  createChatMessage(data: InsertChatMessage): Promise<ChatMessage>;
+  updateChatRoomLastMessage(roomId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -90,6 +96,35 @@ export class DatabaseStorage implements IStorage {
     if (adminMemo !== undefined) updateData.adminMemo = adminMemo;
     const [req] = await db.update(transferRequests).set(updateData).where(eq(transferRequests.id, id)).returning();
     return req;
+  }
+
+  async getOrCreateChatRoom(userId: string): Promise<ChatRoom> {
+    const [existing] = await db.select().from(chatRooms)
+      .where(and(eq(chatRooms.userId, userId), eq(chatRooms.status, "open")));
+    if (existing) return existing;
+    const [room] = await db.insert(chatRooms).values({ userId }).returning();
+    return room;
+  }
+
+  async getChatRoomsByUserId(userId: string): Promise<ChatRoom[]> {
+    return db.select().from(chatRooms).where(eq(chatRooms.userId, userId)).orderBy(desc(chatRooms.lastMessageAt));
+  }
+
+  async getAllChatRooms(): Promise<ChatRoom[]> {
+    return db.select().from(chatRooms).orderBy(desc(chatRooms.lastMessageAt));
+  }
+
+  async getChatMessages(roomId: string): Promise<ChatMessage[]> {
+    return db.select().from(chatMessages).where(eq(chatMessages.roomId, roomId)).orderBy(chatMessages.createdAt);
+  }
+
+  async createChatMessage(data: InsertChatMessage): Promise<ChatMessage> {
+    const [msg] = await db.insert(chatMessages).values(data).returning();
+    return msg;
+  }
+
+  async updateChatRoomLastMessage(roomId: string): Promise<void> {
+    await db.update(chatRooms).set({ lastMessageAt: new Date() }).where(eq(chatRooms.id, roomId));
   }
 }
 

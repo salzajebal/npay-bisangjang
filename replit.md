@@ -14,6 +14,7 @@ A stock inventory management system for IBK Investment Securities. Members can r
 - `/login` - User login (frozen accounts blocked with message)
 - `/register` - User registration (username, password, name, bank, account info)
 - `/dashboard` - User dashboard showing stock holdings and transaction history
+- `/chat` - 1:1 customer service chat (logged-in members only, real-time WebSocket)
 - `/admin` - Admin panel (login: admin / admin123) with comprehensive member management
 
 ## Admin Features
@@ -24,6 +25,7 @@ A stock inventory management system for IBK Investment Securities. Members can r
 - **입고/출고 처리** - Stock in/out with real-time price fetching
 - **입고량 수정** - Edit transaction quantity, price, category, memo
 - **대체출고 관리** - Approve/reject/hold transfer-out requests from members
+- **1:1 상담** - Real-time chat with members, sound notification on new messages
 
 ## Transfer-Out Feature (타사 대체출고)
 - Users can request stock transfer to other brokerages from the login page (after logging in)
@@ -36,6 +38,8 @@ A stock inventory management system for IBK Investment Securities. Members can r
 - `users` - Members with bank info, admin flag, isFrozen flag
 - `stock_transactions` - Stock in/out records per user with category, quantity, price
 - `transfer_requests` - Transfer-out requests with status (pending/approved/rejected/held), account info
+- `chat_rooms` - 1:1 chat rooms per user with status (open/closed)
+- `chat_messages` - Chat messages with roomId, senderId, senderRole (user/admin)
 - `session` - Express sessions (auto-created by connect-pg-simple)
 
 ## API Routes
@@ -57,6 +61,11 @@ A stock inventory management system for IBK Investment Securities. Members can r
 - `DELETE /api/admin/transactions/:id` - Delete transaction (admin only)
 - `GET /api/admin/transfer-requests` - Get all transfer requests (admin only)
 - `PATCH /api/admin/transfer-requests/:id` - Update transfer request status (admin only)
+- `POST /api/chat/rooms` - Create/get chat room for current user
+- `GET /api/chat/rooms/my` - Get user's chat rooms
+- `GET /api/chat/rooms` - Get all chat rooms with user info (admin only)
+- `GET /api/chat/rooms/:id/messages` - Get messages for a chat room
+- `WebSocket /ws/chat` - Real-time chat via WebSocket (session-authenticated)
 - `GET /api/stock/samsung` - Get live Samsung Electronics stock data from Yahoo Finance
 - `GET /api/stock/samsung/news` - Get Korean news about Samsung Electronics
 
