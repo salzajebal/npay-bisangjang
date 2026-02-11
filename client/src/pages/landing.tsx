@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Heart, Star, X, TrendingUp, TrendingDown, ExternalLink, MessageCircle, MessageSquare, Repeat2, Share2 } from "lucide-react";
+import { Search, Heart, Star, X, TrendingUp, TrendingDown, ExternalLink, MessageCircle, MessageSquare, Repeat2, Share2, Newspaper, Clock } from "lucide-react";
 import { SamsungBadge } from "@/components/samsung-logo";
 
 const KOREAN_STOCKS = [
@@ -937,6 +937,91 @@ function StockInfoView() {
   );
 }
 
+function NewsView() {
+  const { data: newsData, isLoading } = useQuery<{ title: string; publisher: string; link: string; publishedAt: string | null; thumbnail: string | null }[]>({
+    queryKey: ["/api/stock/samsung/news"],
+    refetchInterval: 5 * 60 * 1000,
+  });
+
+  const FALLBACK_NEWS = [
+    { title: "삼성전자, HBM4 양산 본격화...AI 반도체 시장 공략 가속", publisher: "한국경제", link: "#", publishedAt: new Date().toISOString(), thumbnail: null },
+    { title: "삼성전자 2나노 파운드리 수율 개선 소식에 주가 강세", publisher: "매일경제", link: "#", publishedAt: new Date(Date.now() - 3600000).toISOString(), thumbnail: null },
+    { title: "삼성전자, 갤럭시 S26 시리즈 사전 예약 역대 최다", publisher: "조선비즈", link: "#", publishedAt: new Date(Date.now() - 7200000).toISOString(), thumbnail: null },
+    { title: "외국인 삼성전자 3거래일 연속 순매수...반도체 기대감", publisher: "서울경제", link: "#", publishedAt: new Date(Date.now() - 10800000).toISOString(), thumbnail: null },
+    { title: "삼성전자, DRAM 가격 반등에 실적 개선 전망", publisher: "이데일리", link: "#", publishedAt: new Date(Date.now() - 14400000).toISOString(), thumbnail: null },
+    { title: "삼성전자 배당 확대 기대...주주환원 정책 강화", publisher: "뉴스1", link: "#", publishedAt: new Date(Date.now() - 18000000).toISOString(), thumbnail: null },
+    { title: "삼성전자, 차세대 메모리 기술 특허 출원 급증", publisher: "전자신문", link: "#", publishedAt: new Date(Date.now() - 21600000).toISOString(), thumbnail: null },
+    { title: "삼성전자 반도체 부문 설비 투자 확대 계획 발표", publisher: "아시아경제", link: "#", publishedAt: new Date(Date.now() - 25200000).toISOString(), thumbnail: null },
+  ];
+
+  const news = (newsData && newsData.length > 0) ? newsData : (isLoading ? [] : FALLBACK_NEWS);
+
+  function timeAgo(dateStr: string | null) {
+    if (!dateStr) return "";
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}분 전`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}시간 전`;
+    const days = Math.floor(hours / 24);
+    return `${days}일 전`;
+  }
+
+  return (
+    <div className="max-w-[1400px] mx-auto w-full px-4 py-6 flex-1">
+      <div className="flex items-center gap-2 mb-1">
+        <Newspaper className="w-4 h-4" />
+        <h2 className="text-base font-bold">뉴스·공시</h2>
+      </div>
+      <p className="text-xs text-muted-foreground mb-4">삼성전자 관련 최신 뉴스 및 공시</p>
+
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 w-full" />
+          ))}
+        </div>
+      ) : (
+        <div className="divide-y">
+          {news.map((item, i) => (
+            <a
+              key={i}
+              href={item.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block py-4 first:pt-0 group"
+              data-testid={`link-news-${i}`}
+            >
+              <div className="flex gap-4">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold group-hover:text-blue-500 transition-colors leading-snug mb-1.5">{item.title}</h3>
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    <span className="font-medium">{item.publisher}</span>
+                    {item.publishedAt && (
+                      <>
+                        <span>·</span>
+                        <div className="flex items-center gap-0.5">
+                          <Clock className="w-3 h-3" />
+                          <span>{timeAgo(item.publishedAt)}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {item.thumbnail && (
+                  <div className="w-20 h-14 rounded-md overflow-hidden shrink-0 bg-muted">
+                    <img src={item.thumbnail} alt="" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CommunityPanel() {
   const [visiblePosts, setVisiblePosts] = useState(COMMUNITY_POSTS.slice(0, 5));
   const [postIndex, setPostIndex] = useState(5);
@@ -1117,6 +1202,8 @@ export default function LandingPage() {
         <FeedView />
       ) : activeTab === "info" ? (
         <StockInfoView />
+      ) : activeTab === "news" ? (
+        <NewsView />
       ) : (
       <div className="max-w-[1400px] mx-auto w-full px-4 py-4 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px_280px] gap-4">

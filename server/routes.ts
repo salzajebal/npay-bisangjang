@@ -113,6 +113,35 @@ export async function registerRoutes(
     }
   });
 
+  let newsCache: { data: any; timestamp: number } | null = null;
+  const NEWS_CACHE_DURATION = 5 * 60 * 1000;
+
+  app.get("/api/stock/samsung/news", async (_req, res) => {
+    try {
+      if (newsCache && Date.now() - newsCache.timestamp < NEWS_CACHE_DURATION) {
+        return res.json(newsCache.data);
+      }
+
+      const response = await fetch(
+        "https://query1.finance.yahoo.com/v1/finance/search?q=Samsung+Electronics+005930&newsCount=20&quotesCount=0",
+        { headers: { "User-Agent": "Mozilla/5.0" } }
+      );
+      const json = await response.json();
+      const news = (json.news || []).map((item: any) => ({
+        title: item.title,
+        publisher: item.publisher,
+        link: item.link,
+        publishedAt: item.providerPublishTime ? new Date(item.providerPublishTime * 1000).toISOString() : null,
+        thumbnail: item.thumbnail?.resolutions?.[0]?.url || null,
+      }));
+
+      newsCache = { data: news, timestamp: Date.now() };
+      return res.json(news);
+    } catch (error) {
+      return res.status(500).json({ message: "뉴스를 가져올 수 없습니다" });
+    }
+  });
+
   app.post("/api/auth/register", async (req, res) => {
     try {
       const data = registerSchema.parse(req.body);
