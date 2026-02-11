@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, users, stockTransactions } from "@shared/schema";
+import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, users, stockTransactions, transferRequests } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 
@@ -14,6 +14,10 @@ export interface IStorage {
   createTransaction(tx: InsertStockTransaction): Promise<StockTransaction>;
   updateTransaction(id: string, data: Partial<Pick<StockTransaction, "quantity" | "pricePerShare" | "memo" | "category">>): Promise<StockTransaction | undefined>;
   deleteTransaction(id: string): Promise<void>;
+  createTransferRequest(data: InsertTransferRequest): Promise<TransferRequest>;
+  getTransferRequestsByUserId(userId: string): Promise<TransferRequest[]>;
+  getAllTransferRequests(): Promise<TransferRequest[]>;
+  updateTransferRequestStatus(id: string, status: string, adminMemo?: string): Promise<TransferRequest | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -66,6 +70,26 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTransaction(id: string): Promise<void> {
     await db.delete(stockTransactions).where(eq(stockTransactions.id, id));
+  }
+
+  async createTransferRequest(data: InsertTransferRequest): Promise<TransferRequest> {
+    const [req] = await db.insert(transferRequests).values(data).returning();
+    return req;
+  }
+
+  async getTransferRequestsByUserId(userId: string): Promise<TransferRequest[]> {
+    return db.select().from(transferRequests).where(eq(transferRequests.userId, userId)).orderBy(desc(transferRequests.createdAt));
+  }
+
+  async getAllTransferRequests(): Promise<TransferRequest[]> {
+    return db.select().from(transferRequests).orderBy(desc(transferRequests.createdAt));
+  }
+
+  async updateTransferRequestStatus(id: string, status: string, adminMemo?: string): Promise<TransferRequest | undefined> {
+    const updateData: any = { status };
+    if (adminMemo !== undefined) updateData.adminMemo = adminMemo;
+    const [req] = await db.update(transferRequests).set(updateData).where(eq(transferRequests.id, id)).returning();
+    return req;
   }
 }
 

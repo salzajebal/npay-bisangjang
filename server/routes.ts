@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
-import { registerSchema, loginSchema, insertStockTransactionSchema, updateUserSchema } from "@shared/schema";
+import { registerSchema, loginSchema, insertStockTransactionSchema, updateUserSchema, insertTransferRequestSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
@@ -355,6 +355,73 @@ export async function registerRoutes(
       return res.json({ message: "삭제 완료" });
     } catch (error) {
       return res.status(500).json({ message: "삭제 실패" });
+    }
+  });
+
+  app.post("/api/transfer-requests", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "로그인이 필요합니다" });
+    }
+    try {
+      const data = insertTransferRequestSchema.parse(req.body);
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+      const transactions = await storage.getTransactionsByUserId(req.session.userId);
+      const totalIn = transactions.filter(t => t.type === "in").reduce((sum, t) => sum + t.quantity, 0);
+      const totalOut = transactions.filter(t => t.type === "out").reduce((sum, t) => sum + t.quantity, 0);
+      const currentHolding = totalIn - totalOut;
+      if (data.quantity > currentHolding) {
+        return res.status(400).json({ message: `보유 수량(${currentHolding}주)을 초과할 수 없습니다` });
+      }
+      const transferRequest = await storage.createTransferRequest(data);
+      const stockData = await fetchYahooFinanceData();
+      const currentPrice = stockData?.currentPrice || 0;
+      await storage.createTransaction({
+        userId: req.session.userId,
+        type: "out",
+        category: "타사대체출고",
+        stockName: "삼성전자",
+        quantity: data.quantity,
+        pricePerShare: currentPrice,
+        memo: `타사대체출고 신청 - ${data.accountName} (${data.accountNumber})`,
+      });
+      return res.json(transferRequest);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      return res.status(500).json({ message: "출고 신청에 실패했습니다" });
+    }
+  });
+
+  app.get("/api/transfer-requests/my", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "로그인이 필요합니다" });
+    }
+    const requests = await storage.getTransferRequestsByUserId(req.session.userId);
+    return res.json(requests);
+  });
+
+  app.get("/api/admin/transfer-requests", requireAdmin, async (_req, res) => {
+    const requests = await storage.getAllTransferRequests();
+    return res.json(requests);
+  });
+
+  app.patch("/api/admin/transfer-requests/:id", requireAdmin, async (req, res) => {
+    try {
+      const { status, adminMemo } = req.body;
+      if (!["pending", "approved", "rejected", "held"].includes(status)) {
+        return res.status(400).json({ message: "유효하지 않은 상태입니다" });
+      }
+      const updated = await storage.updateTransferRequestStatus(req.params.id, status, adminMemo);
+      if (!updated) {
+        return res.status(404).json({ message: "신청을 찾을 수 없습니다" });
+      }
+      return res.json(updated);
+    } catch (error) {
+      return res.status(500).json({ message: "상태 변경에 실패했습니다" });
     }
   });
 
