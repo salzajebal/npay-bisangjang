@@ -30,9 +30,15 @@ export default function LoginPage() {
       }
     },
     onError: (error: Error) => {
+      let description = "오류가 발생했습니다";
+      if (error.message.includes("401")) {
+        description = "아이디 또는 비밀번호가 일치하지 않습니다";
+      } else if (error.message.includes("403")) {
+        description = "계정이 동결되었습니다. 관리자에게 문의하세요.";
+      }
       toast({
         title: "로그인 실패",
-        description: error.message.includes("401") ? "아이디 또는 비밀번호가 일치하지 않습니다" : "오류가 발생했습니다",
+        description,
         variant: "destructive",
       });
     },
