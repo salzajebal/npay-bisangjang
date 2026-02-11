@@ -427,6 +427,15 @@ function TradesPanel({ trades }: { trades: ReturnType<typeof generateTrades> }) 
   );
 }
 
+const DAILY_INVESTOR_HISTORY = [
+  { date: "오늘", personal: 0, foreign: 0, institutional: 0 },
+  { date: "02.10", personal: 11329, foreign: -21451, institutional: 31297 },
+  { date: "02.09", personal: -232316, foreign: -206951, institutional: -15747 },
+  { date: "02.06", personal: 53609, foreign: -76895, institutional: 22663 },
+  { date: "02.05", personal: -18742, foreign: 42318, institutional: -8953 },
+  { date: "02.04", personal: 67234, foreign: -31567, institutional: -12445 },
+];
+
 function InvestorPanel({ data }: { data: ReturnType<typeof generateInvestorData> }) {
   const maxVal = Math.max(Math.abs(data.personal), Math.abs(data.foreign), Math.abs(data.institutional), 1);
   const items = [
@@ -434,29 +443,59 @@ function InvestorPanel({ data }: { data: ReturnType<typeof generateInvestorData>
     { label: "외국인", value: data.foreign },
     { label: "기관", value: data.institutional },
   ];
+
+  const historyRows = DAILY_INVESTOR_HISTORY.map((row, i) =>
+    i === 0 ? { ...row, personal: data.personal, foreign: data.foreign, institutional: data.institutional } : row
+  );
+
   return (
-    <div className="px-3 py-3 space-y-3">
-      {items.map((item) => (
-        <div key={item.label} className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground w-10 shrink-0">{item.label}</span>
-          <div className="flex-1 flex items-center h-4">
-            <div className="w-1/2 flex justify-end">
-              {item.value < 0 && (
-                <div className="h-full rounded-l-sm" style={{ width: `${(Math.abs(item.value) / maxVal) * 100}%`, background: "#3182f6", transition: "width 0.6s ease", minWidth: 2, maxWidth: "100%" }} />
-              )}
+    <div>
+      <div className="px-3 py-3 space-y-3">
+        {items.map((item) => (
+          <div key={item.label} className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground w-10 shrink-0">{item.label}</span>
+            <div className="flex-1 flex items-center h-4">
+              <div className="w-1/2 flex justify-end">
+                {item.value < 0 && (
+                  <div className="h-full rounded-l-sm" style={{ width: `${(Math.abs(item.value) / maxVal) * 100}%`, background: "#3182f6", transition: "width 0.6s ease", minWidth: 2, maxWidth: "100%" }} />
+                )}
+              </div>
+              <div className="w-px h-full bg-border shrink-0" />
+              <div className="w-1/2 flex justify-start">
+                {item.value > 0 && (
+                  <div className="h-full rounded-r-sm" style={{ width: `${(Math.abs(item.value) / maxVal) * 100}%`, background: "#f04452", transition: "width 0.6s ease", minWidth: 2, maxWidth: "100%" }} />
+                )}
+              </div>
             </div>
-            <div className="w-px h-full bg-border shrink-0" />
-            <div className="w-1/2 flex justify-start">
-              {item.value > 0 && (
-                <div className="h-full rounded-r-sm" style={{ width: `${(Math.abs(item.value) / maxVal) * 100}%`, background: "#f04452", transition: "width 0.6s ease", minWidth: 2, maxWidth: "100%" }} />
-              )}
-            </div>
+            <span className={`text-xs font-medium tabular-nums w-16 text-right ${item.value >= 0 ? "text-red-500" : "text-blue-500"}`}>
+              {item.value >= 0 ? "+" : ""}{item.value.toLocaleString()}
+            </span>
           </div>
-          <span className={`text-xs font-medium tabular-nums w-16 text-right ${item.value >= 0 ? "text-red-500" : "text-blue-500"}`}>
-            {item.value >= 0 ? "+" : ""}{item.value.toLocaleString()}
-          </span>
+        ))}
+      </div>
+
+      <div className="border-t mt-2">
+        <div className="grid grid-cols-4 gap-0 px-3 py-1.5 text-[10px] text-muted-foreground border-b">
+          <span>일자</span>
+          <span className="text-right">개인</span>
+          <span className="text-right">외국인</span>
+          <span className="text-right">기관</span>
         </div>
-      ))}
+        {historyRows.map((row) => (
+          <div key={row.date} className="grid grid-cols-4 gap-0 px-3 py-[4px] text-[11px]">
+            <span className="text-muted-foreground tabular-nums">{row.date}</span>
+            <span className={`text-right tabular-nums ${row.personal >= 0 ? "text-red-500" : "text-blue-500"}`}>
+              {row.personal >= 0 ? "+" : ""}{row.personal.toLocaleString()}
+            </span>
+            <span className={`text-right tabular-nums ${row.foreign >= 0 ? "text-red-500" : "text-blue-500"}`}>
+              {row.foreign >= 0 ? "+" : ""}{row.foreign.toLocaleString()}
+            </span>
+            <span className={`text-right tabular-nums ${row.institutional >= 0 ? "text-red-500" : "text-blue-500"}`}>
+              {row.institutional >= 0 ? "+" : ""}{row.institutional.toLocaleString()}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
