@@ -7,6 +7,73 @@ import { registerSchema, loginSchema, insertStockTransactionSchema } from "@shar
 import { z } from "zod";
 import bcrypt from "bcrypt";
 
+let stockCache: { data: any; timestamp: number } | null = null;
+const CACHE_DURATION = 5 * 60 * 1000;
+
+async function fetchYahooFinanceData() {
+  if (stockCache && Date.now() - stockCache.timestamp < CACHE_DURATION) {
+    return stockCache.data;
+  }
+
+  try {
+    const chartRes = await fetch(
+      "https://query1.finance.yahoo.com/v8/finance/chart/005930.KS?interval=1d&range=1y",
+      { headers: { "User-Agent": "Mozilla/5.0" } }
+    );
+    const chartJson = await chartRes.json();
+    const result = chartJson.chart?.result?.[0];
+
+    if (!result) throw new Error("No data from Yahoo Finance");
+
+    const timestamps = result.timestamp || [];
+    const closes = result.indicators?.quote?.[0]?.close || [];
+    const opens = result.indicators?.quote?.[0]?.open || [];
+    const highs = result.indicators?.quote?.[0]?.high || [];
+    const lows = result.indicators?.quote?.[0]?.low || [];
+
+    const chartData = timestamps.map((ts: number, i: number) => ({
+      date: new Date(ts * 1000).toISOString().split("T")[0],
+      price: Math.round(closes[i] || 0),
+      open: Math.round(opens[i] || 0),
+      high: Math.round(highs[i] || 0),
+      low: Math.round(lows[i] || 0),
+    })).filter((d: any) => d.price > 0);
+
+    const meta = result.meta || {};
+    const currentPrice = Math.round(meta.regularMarketPrice || closes[closes.length - 1] || 0);
+    const validCloses = closes.filter((c: number | null) => c != null && c > 0);
+    const previousClose = validCloses.length >= 2
+      ? Math.round(validCloses[validCloses.length - 2])
+      : Math.round(meta.previousClose || currentPrice);
+    const priceChange = currentPrice - previousClose;
+    const priceChangePercent = previousClose > 0
+      ? parseFloat(((priceChange / previousClose) * 100).toFixed(2))
+      : 0;
+
+    const todayOpen = chartData.length > 0 ? chartData[chartData.length - 1].open : currentPrice;
+    const todayHigh = chartData.length > 0 ? chartData[chartData.length - 1].high : currentPrice;
+    const todayLow = chartData.length > 0 ? chartData[chartData.length - 1].low : currentPrice;
+
+    const responseData = {
+      currentPrice,
+      previousClose,
+      priceChange,
+      priceChangePercent,
+      todayOpen,
+      todayHigh,
+      todayLow,
+      chartData,
+    };
+
+    stockCache = { data: responseData, timestamp: Date.now() };
+    return responseData;
+  } catch (error) {
+    console.error("Yahoo Finance fetch error:", error);
+    if (stockCache) return stockCache.data;
+    throw error;
+  }
+}
+
 const PgSession = connectPg(session);
 
 declare module "express-session" {
@@ -35,6 +102,15 @@ export async function registerRoutes(
       },
     })
   );
+
+  app.get("/api/stock/samsung", async (_req, res) => {
+    try {
+      const data = await fetchYahooFinanceData();
+      return res.json(data);
+    } catch (error) {
+      return res.status(500).json({ message: "주식 데이터를 가져올 수 없습니다" });
+    }
+  });
 
   app.post("/api/auth/register", async (req, res) => {
     try {

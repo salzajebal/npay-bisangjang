@@ -1,38 +1,36 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, ArrowUpRight, BarChart3, Users, Shield } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { SamsungLogo, SamsungBadge } from "@/components/samsung-logo";
-import samsungInfoImg from "@assets/telegram-cloud-photo-size-4-5789658066277043973-y_1770731402444.jpg";
 import samsungChartImg from "@assets/telegram-cloud-photo-size-4-5789658066277043974-y_1770731398499.jpg";
 
-function generateOrderBook() {
-  const basePrice = 83700;
+interface StockData {
+  currentPrice: number;
+  previousClose: number;
+  priceChange: number;
+  priceChangePercent: number;
+  todayOpen: number;
+  todayHigh: number;
+  todayLow: number;
+  chartData: { date: string; price: number }[];
+}
+
+function generateOrderBookFromPrice(basePrice: number) {
+  const step = 100;
   const asks: { price: number; quantity: number }[] = [];
   const bids: { price: number; quantity: number }[] = [];
   for (let i = 5; i >= 1; i--) {
-    asks.push({ price: basePrice + i * 100, quantity: Math.floor(Math.random() * 50000) + 5000 });
+    asks.push({ price: basePrice + i * step, quantity: Math.floor(Math.random() * 50000) + 5000 });
   }
   for (let i = 0; i < 5; i++) {
-    bids.push({ price: basePrice - i * 100, quantity: Math.floor(Math.random() * 50000) + 5000 });
+    bids.push({ price: basePrice - i * step, quantity: Math.floor(Math.random() * 50000) + 5000 });
   }
   return { asks, bids, currentPrice: basePrice };
-}
-
-function generateChartData() {
-  const data: { date: string; price: number }[] = [];
-  let price = 55000;
-  const now = new Date();
-  for (let i = 365; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    price = price + (Math.random() - 0.45) * 1200;
-    price = Math.max(50000, Math.min(90000, price));
-    data.push({ date: `${d.getMonth() + 1}/${d.getDate()}`, price: Math.round(price) });
-  }
-  return data;
 }
 
 function MiniChart({ data }: { data: { date: string; price: number }[] }) {
@@ -82,7 +80,7 @@ function MiniChart({ data }: { data: { date: string; price: number }[] }) {
   return <canvas ref={canvasRef} className="w-full h-full" style={{ display: "block" }} />;
 }
 
-function OrderBook({ orderBook }: { orderBook: ReturnType<typeof generateOrderBook> }) {
+function OrderBook({ orderBook }: { orderBook: ReturnType<typeof generateOrderBookFromPrice> }) {
   const maxQty = Math.max(
     ...orderBook.asks.map((a) => a.quantity),
     ...orderBook.bids.map((b) => b.quantity)
@@ -94,8 +92,8 @@ function OrderBook({ orderBook }: { orderBook: ReturnType<typeof generateOrderBo
         <span className="text-right">가격(원)</span>
         <span className="text-right">수량(주)</span>
       </div>
-      {orderBook.asks.reverse().map((ask, i) => (
-        <div key={`ask-${i}`} className="grid grid-cols-3 gap-2 px-3 py-1 relative">
+      {[...orderBook.asks].reverse().map((ask, i) => (
+        <div key={`ask-${i}`} className="grid grid-cols-3 gap-2 px-3 py-1 relative" data-testid={`row-ask-${i}`}>
           <div className="absolute right-0 top-0 bottom-0 bg-blue-500/8" style={{ width: `${(ask.quantity / maxQty) * 100}%` }} />
           <span className="text-xs text-muted-foreground z-10">매도{5 - i}</span>
           <span className="text-right text-blue-600 z-10 font-medium">{ask.price.toLocaleString()}</span>
@@ -104,10 +102,10 @@ function OrderBook({ orderBook }: { orderBook: ReturnType<typeof generateOrderBo
       ))}
       <div className="grid grid-cols-3 gap-2 px-3 py-2.5 bg-muted/40 my-1 rounded-md">
         <span className="text-xs font-semibold">현재가</span>
-        <span className="text-right font-bold text-lg col-span-2 text-red-500">{orderBook.currentPrice.toLocaleString()}원</span>
+        <span className="text-right font-bold text-lg col-span-2 text-red-500" data-testid="text-orderbook-price">{orderBook.currentPrice.toLocaleString()}원</span>
       </div>
       {orderBook.bids.map((bid, i) => (
-        <div key={`bid-${i}`} className="grid grid-cols-3 gap-2 px-3 py-1 relative">
+        <div key={`bid-${i}`} className="grid grid-cols-3 gap-2 px-3 py-1 relative" data-testid={`row-bid-${i}`}>
           <div className="absolute right-0 top-0 bottom-0 bg-red-500/8" style={{ width: `${(bid.quantity / maxQty) * 100}%` }} />
           <span className="text-xs text-muted-foreground z-10">매수{i + 1}</span>
           <span className="text-right text-red-500 z-10 font-medium">{bid.price.toLocaleString()}</span>
@@ -119,19 +117,31 @@ function OrderBook({ orderBook }: { orderBook: ReturnType<typeof generateOrderBo
 }
 
 export default function LandingPage() {
-  const [chartData] = useState(generateChartData);
-  const [orderBook, setOrderBook] = useState(generateOrderBook);
+  const { data: stockData, isLoading } = useQuery<StockData>({
+    queryKey: ["/api/stock/samsung"],
+    refetchInterval: 5 * 60 * 1000,
+  });
+
+  const currentPrice = stockData?.currentPrice ?? 0;
+  const priceChange = stockData?.priceChange ?? 0;
+  const priceChangePercent = stockData?.priceChangePercent ?? 0;
+  const isUp = priceChange >= 0;
+
+  const [orderBook, setOrderBook] = useState(() => generateOrderBookFromPrice(83700));
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setOrderBook(generateOrderBook());
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
+    if (currentPrice > 0) {
+      setOrderBook(generateOrderBookFromPrice(currentPrice));
+    }
+  }, [currentPrice]);
 
-  const currentPrice = 83700;
-  const priceChange = 1200;
-  const priceChangePercent = 1.45;
+  useEffect(() => {
+    if (currentPrice <= 0) return;
+    const interval = setInterval(() => {
+      setOrderBook(generateOrderBookFromPrice(currentPrice));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [currentPrice]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -183,16 +193,22 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center justify-center gap-4 mb-10 flex-wrap">
-            <span className="text-4xl md:text-6xl font-bold text-white tracking-tight">
-              {currentPrice.toLocaleString()}
-            </span>
-            <span className="text-white/40 text-xl font-light">KRW</span>
-            <div className="flex items-center gap-1.5 bg-red-500/20 backdrop-blur px-3 py-1.5 rounded-md border border-red-400/20">
-              <ArrowUpRight className="w-4 h-4 text-red-400" />
-              <span className="text-red-400 font-semibold text-base">
-                +{priceChange.toLocaleString()} (+{priceChangePercent}%)
-              </span>
-            </div>
+            {isLoading ? (
+              <Skeleton className="h-16 w-64 bg-white/10" />
+            ) : (
+              <>
+                <span className="text-4xl md:text-6xl font-bold text-white tracking-tight">
+                  {currentPrice.toLocaleString()}
+                </span>
+                <span className="text-white/40 text-xl font-light">KRW</span>
+                <div className={`flex items-center gap-1.5 backdrop-blur px-3 py-1.5 rounded-md border ${isUp ? "bg-red-500/20 border-red-400/20" : "bg-blue-500/20 border-blue-400/20"}`}>
+                  {isUp ? <ArrowUpRight className="w-4 h-4 text-red-400" /> : <ArrowDownRight className="w-4 h-4 text-blue-400" />}
+                  <span className={`font-semibold text-base ${isUp ? "text-red-400" : "text-blue-400"}`}>
+                    {isUp ? "+" : ""}{priceChange.toLocaleString()} ({isUp ? "+" : ""}{priceChangePercent}%)
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="flex justify-center gap-4 flex-wrap">
@@ -222,25 +238,40 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-2xl font-bold tracking-tight" data-testid="text-current-price">
-                  {currentPrice.toLocaleString()}원
-                </span>
-                <Badge variant="default" className="bg-red-500 border-red-500">
-                  <TrendingUp className="w-3 h-3 mr-1" />+{priceChangePercent}%
-                </Badge>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-40" />
+                ) : (
+                  <>
+                    <span className="text-2xl font-bold tracking-tight" data-testid="text-current-price">
+                      {currentPrice.toLocaleString()}원
+                    </span>
+                    <Badge variant="default" className={isUp ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500"}>
+                      {isUp ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
+                      {isUp ? "+" : ""}{priceChangePercent}%
+                    </Badge>
+                  </>
+                )}
               </div>
             </div>
             <div className="p-5">
               <div className="h-[300px] md:h-[400px]">
-                <MiniChart data={chartData} />
+                {isLoading || !stockData ? (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Skeleton className="w-full h-full" />
+                  </div>
+                ) : (
+                  <MiniChart data={stockData.chartData} />
+                )}
               </div>
               <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground px-1">
-                <span>1년 차트</span>
-                <div className="flex gap-4">
-                  <span>시가 <b className="text-foreground">82,500</b></span>
-                  <span>고가 <b className="text-red-500">84,200</b></span>
-                  <span>저가 <b className="text-blue-500">82,100</b></span>
-                </div>
+                <span>1년 차트 (Yahoo Finance)</span>
+                {stockData && (
+                  <div className="flex gap-4">
+                    <span>시가 <b className="text-foreground">{stockData.todayOpen.toLocaleString()}</b></span>
+                    <span>고가 <b className="text-red-500">{stockData.todayHigh.toLocaleString()}</b></span>
+                    <span>저가 <b className="text-blue-500">{stockData.todayLow.toLocaleString()}</b></span>
+                  </div>
+                )}
               </div>
             </div>
           </Card>
@@ -248,10 +279,18 @@ export default function LandingPage() {
           <Card className="p-0 overflow-hidden" data-testid="card-order-book">
             <div className="p-5 border-b">
               <h3 className="font-bold">호가창</h3>
-              <p className="text-xs text-muted-foreground">실시간 매수/매도 호가</p>
+              <p className="text-xs text-muted-foreground">현재가 기준 매수/매도 호가</p>
             </div>
             <div className="p-3">
-              <OrderBook orderBook={orderBook} />
+              {isLoading ? (
+                <div className="space-y-2 p-3">
+                  {Array.from({ length: 11 }).map((_, i) => (
+                    <Skeleton key={i} className="h-6 w-full" />
+                  ))}
+                </div>
+              ) : (
+                <OrderBook orderBook={orderBook} />
+              )}
             </div>
           </Card>
         </div>
@@ -275,8 +314,10 @@ export default function LandingPage() {
                   <p className="text-xs text-muted-foreground mt-1">1주당</p>
                 </div>
                 <div className="bg-red-500/8 rounded-md p-5 text-center border border-red-500/10">
-                  <p className="text-xs text-muted-foreground mb-2">52주 최고가</p>
-                  <p className="text-2xl font-bold text-red-500">83,600원</p>
+                  <p className="text-xs text-muted-foreground mb-2">현재 시세</p>
+                  <p className="text-2xl font-bold text-red-500" data-testid="text-market-price">
+                    {isLoading ? "---" : `${currentPrice.toLocaleString()}원`}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">1주당</p>
                 </div>
               </div>
@@ -338,7 +379,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
 
       <footer className="border-t mt-8">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-10">
