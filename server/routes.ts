@@ -106,6 +106,32 @@ export async function registerRoutes(
     })
   );
 
+  // WebSocket server for real-time chat and transaction notifications
+  const wssSessionStore = new PgSession({
+    conString: process.env.DATABASE_URL,
+    createTableIfMissing: true,
+  });
+
+  const wss = new WebSocketServer({ noServer: true });
+
+  interface AuthenticatedWebSocket extends WebSocket {
+    userId?: string;
+    isAdmin?: boolean;
+    roomId?: string;
+  }
+
+  function broadcastTransactionUpdate(targetUserId: string) {
+    const outgoing = JSON.stringify({ type: "transaction_update", userId: targetUserId });
+    wss.clients.forEach((client) => {
+      const authClient = client as AuthenticatedWebSocket;
+      if (client.readyState === WebSocket.OPEN) {
+        if (authClient.userId === targetUserId || authClient.isAdmin) {
+          client.send(outgoing);
+        }
+      }
+    });
+  }
+
   app.get("/api/stock/samsung", async (_req, res) => {
     try {
       const data = await fetchYahooFinanceData();
@@ -296,6 +322,7 @@ export async function registerRoutes(
     try {
       const data = insertStockTransactionSchema.parse(req.body);
       const transaction = await storage.createTransaction(data);
+      broadcastTransactionUpdate(data.userId);
       return res.json(transaction);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -369,6 +396,7 @@ export async function registerRoutes(
       if (!tx) {
         return res.status(404).json({ message: "거래를 찾을 수 없습니다" });
       }
+      broadcastTransactionUpdate(tx.userId);
       return res.json(tx);
     } catch (error) {
       return res.status(500).json({ message: "거래 수정에 실패했습니다" });
@@ -377,7 +405,9 @@ export async function registerRoutes(
 
   app.delete("/api/admin/transactions/:id", requireAdmin, async (req, res) => {
     try {
+      const tx = await storage.getTransaction(req.params.id);
       await storage.deleteTransaction(req.params.id);
+      if (tx) broadcastTransactionUpdate(tx.userId);
       return res.json({ message: "삭제 완료" });
     } catch (error) {
       return res.status(500).json({ message: "삭제 실패" });
@@ -413,6 +443,7 @@ export async function registerRoutes(
         pricePerShare: currentPrice,
         memo: `타사대체출고 신청 - ${data.accountName} (${data.accountNumber})`,
       });
+      broadcastTransactionUpdate(req.session.userId);
       return res.json(transferRequest);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -500,22 +531,9 @@ export async function registerRoutes(
     return res.json(messages);
   });
 
-  // WebSocket server for real-time chat
-  const sessionStore = new PgSession({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: true,
-  });
-
-  const wss = new WebSocketServer({ noServer: true });
-
-  interface AuthenticatedWebSocket extends WebSocket {
-    userId?: string;
-    isAdmin?: boolean;
-    roomId?: string;
-  }
-
+  // WebSocket upgrade handler
   httpServer.on("upgrade", (request, socket, head) => {
-    if (request.url !== "/ws/chat") {
+    if (request.url !== "/ws/chat" && request.url !== "/ws") {
       return;
     }
 
@@ -527,7 +545,7 @@ export async function registerRoutes(
     }
 
     const sessionId = sidMatch[1];
-    sessionStore.get(sessionId, (err: any, sessionData: any) => {
+    wssSessionStore.get(sessionId, (err: any, sessionData: any) => {
       if (err || !sessionData || !sessionData.userId) {
         socket.destroy();
         return;

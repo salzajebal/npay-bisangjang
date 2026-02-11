@@ -9,6 +9,7 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   updateUser(id: string, data: Partial<Pick<User, "fullName" | "accountNumber" | "accountHolder" | "bank" | "password" | "isFrozen">>): Promise<User | undefined>;
   deleteUser(id: string): Promise<void>;
+  getTransaction(id: string): Promise<StockTransaction | undefined>;
   getTransactionsByUserId(userId: string): Promise<StockTransaction[]>;
   getAllTransactions(): Promise<StockTransaction[]>;
   createTransaction(tx: InsertStockTransaction): Promise<StockTransaction>;
@@ -44,6 +45,11 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return db.select().from(users);
+  }
+
+  async getTransaction(id: string): Promise<StockTransaction | undefined> {
+    const [tx] = await db.select().from(stockTransactions).where(eq(stockTransactions.id, id));
+    return tx;
   }
 
   async getTransactionsByUserId(userId: string): Promise<StockTransaction[]> {

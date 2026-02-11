@@ -1071,6 +1071,26 @@ function HoldingsPanel({ displayPrice }: { displayPrice: number }) {
   });
 
   const user = authData?.user;
+  const holdingsWsRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+    holdingsWsRef.current = ws;
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "transaction_update") {
+          queryClient.invalidateQueries({ queryKey: ["/api/transactions/my"] });
+        }
+      } catch {}
+    };
+    return () => {
+      ws.close();
+      holdingsWsRef.current = null;
+    };
+  }, [user?.id]);
 
   const holdings = (myTransactions || []).reduce<Record<string, { qty: number; totalCost: number }>>((acc, tx) => {
     const key = tx.stockName;

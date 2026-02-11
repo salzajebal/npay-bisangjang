@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { SamsungBadge } from "@/components/samsung-logo";
 import type { User, StockTransaction } from "@shared/schema";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 type DashSection = "overview" | "holdings" | "transactions";
 
@@ -64,6 +64,33 @@ export default function DashboardPage() {
   useEffect(() => {
     if (stockData?.currentPrice) setLastUpdated(new Date());
   }, [stockData?.currentPrice]);
+
+  const wsRef = useRef<WebSocket | null>(null);
+  useEffect(() => {
+    if (!authData?.user) return;
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+    wsRef.current = ws;
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "transaction_update") {
+          queryClient.invalidateQueries({ queryKey: ["/api/transactions/my"] });
+        }
+      } catch {}
+    };
+    ws.onclose = () => {
+      setTimeout(() => {
+        if (wsRef.current === ws) {
+          wsRef.current = null;
+        }
+      }, 3000);
+    };
+    return () => {
+      ws.close();
+      wsRef.current = null;
+    };
+  }, [authData?.user?.id]);
 
   if (authLoading) {
     return (
