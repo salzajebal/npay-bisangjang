@@ -1142,7 +1142,10 @@ export default function LandingPage() {
               <input type="text" placeholder="종목 검색하세요" className="bg-transparent border-0 outline-none text-sm py-1.5 w-36 placeholder:text-muted-foreground/50" data-testid="input-search" />
             </div>
             <Link href="/login">
-              <Button size="sm" data-testid="link-login">로그인</Button>
+              <Button size="sm" variant="outline" data-testid="link-login">로그인</Button>
+            </Link>
+            <Link href="/register">
+              <Button size="sm" data-testid="link-register">비대면 계좌개설</Button>
             </Link>
           </div>
         </div>
