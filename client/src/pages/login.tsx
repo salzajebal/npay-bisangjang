@@ -60,8 +60,7 @@ export default function LoginPage() {
       if (data.user.isAdmin) {
         setLocation("/admin");
       } else {
-        setIsLoggedIn(true);
-        queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
+        setLocation("/");
       }
     },
     onError: (error: Error) => {
