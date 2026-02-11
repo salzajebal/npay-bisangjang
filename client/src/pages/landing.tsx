@@ -37,11 +37,14 @@ function generateOrderBookFromPrice(basePrice: number) {
   return { asks, bids, currentPrice: displayPrice };
 }
 
-function MiniChart({ data }: { data: { date: string; price: number }[] }) {
+function StockChart({ data }: { data: { date: string; price: number }[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; date: string; price: number } | null>(null);
+
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || data.length === 0) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const dpr = window.devicePixelRatio || 1;
@@ -49,39 +52,157 @@ function MiniChart({ data }: { data: { date: string; price: number }[] }) {
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     ctx.scale(dpr, dpr);
-    const w = rect.width;
-    const h = rect.height;
+    const padL = 70, padR = 16, padT = 16, padB = 36;
+    const w = rect.width - padL - padR;
+    const h = rect.height - padT - padB;
     const prices = data.map((d) => d.price);
-    const min = Math.min(...prices) - 2000;
-    const max = Math.max(...prices) + 2000;
-    ctx.clearRect(0, 0, w, h);
-    const gradient = ctx.createLinearGradient(0, 0, 0, h);
-    gradient.addColorStop(0, "rgba(59, 130, 246, 0.12)");
-    gradient.addColorStop(1, "rgba(59, 130, 246, 0)");
-    ctx.beginPath();
-    ctx.moveTo(0, h);
+    const minP = Math.min(...prices);
+    const maxP = Math.max(...prices);
+    const range = maxP - minP || 1;
+    const minY = minP - range * 0.05;
+    const maxY = maxP + range * 0.05;
+
+    ctx.clearRect(0, 0, rect.width, rect.height);
+
+    const gridColor = "rgba(128,128,128,0.12)";
+    const textColor = "rgba(128,128,128,0.65)";
+    ctx.font = "11px -apple-system, BlinkMacSystemFont, sans-serif";
+
+    const gridLines = 5;
+    for (let i = 0; i <= gridLines; i++) {
+      const yVal = minY + ((maxY - minY) / gridLines) * i;
+      const y = padT + h - ((yVal - minY) / (maxY - minY)) * h;
+      ctx.beginPath();
+      ctx.moveTo(padL, y);
+      ctx.lineTo(padL + w, y);
+      ctx.strokeStyle = gridColor;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = textColor;
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      ctx.fillText(Math.round(yVal).toLocaleString(), padL - 8, y);
+    }
+
+    const monthsSeen = new Set<string>();
     data.forEach((d, i) => {
-      const x = (i / (data.length - 1)) * w;
-      const y = h - ((d.price - min) / (max - min)) * h;
+      const m = d.date.substring(0, 7);
+      if (!monthsSeen.has(m)) {
+        monthsSeen.add(m);
+        const x = padL + (i / (data.length - 1)) * w;
+        ctx.beginPath();
+        ctx.moveTo(x, padT);
+        ctx.lineTo(x, padT + h);
+        ctx.strokeStyle = gridColor;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = textColor;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        const parts = d.date.split("-");
+        ctx.fillText(`${parts[0].slice(2)}.${parts[1]}`, x, padT + h + 8);
+      }
+    });
+
+    const gradient = ctx.createLinearGradient(0, padT, 0, padT + h);
+    gradient.addColorStop(0, "rgba(20, 40, 160, 0.18)");
+    gradient.addColorStop(0.5, "rgba(20, 40, 160, 0.06)");
+    gradient.addColorStop(1, "rgba(20, 40, 160, 0)");
+    ctx.beginPath();
+    data.forEach((d, i) => {
+      const x = padL + (i / (data.length - 1)) * w;
+      const y = padT + h - ((d.price - minY) / (maxY - minY)) * h;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     });
-    ctx.lineTo(w, h);
-    ctx.lineTo(0, h);
+    ctx.lineTo(padL + w, padT + h);
+    ctx.lineTo(padL, padT + h);
+    ctx.closePath();
     ctx.fillStyle = gradient;
     ctx.fill();
+
     ctx.beginPath();
     data.forEach((d, i) => {
-      const x = (i / (data.length - 1)) * w;
-      const y = h - ((d.price - min) / (max - min)) * h;
+      const x = padL + (i / (data.length - 1)) * w;
+      const y = padT + h - ((d.price - minY) / (maxY - minY)) * h;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     });
     ctx.strokeStyle = "#1428a0";
     ctx.lineWidth = 2;
     ctx.stroke();
+
+    const lastD = data[data.length - 1];
+    const lastX = padL + w;
+    const lastY = padT + h - ((lastD.price - minY) / (maxY - minY)) * h;
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
+    ctx.fillStyle = "#1428a0";
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(lastX, lastY, 7, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(20,40,160,0.3)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
   }, [data]);
-  return <canvas ref={canvasRef} className="w-full h-full" style={{ display: "block" }} />;
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const canvas = canvasRef.current;
+    if (!canvas || data.length === 0) return;
+    const rect = canvas.getBoundingClientRect();
+    const padL = 70, padR = 16, padT = 16, padB = 36;
+    const w = rect.width - padL - padR;
+    const mx = e.clientX - rect.left - padL;
+    if (mx < 0 || mx > w) { setTooltip(null); return; }
+    const idx = Math.round((mx / w) * (data.length - 1));
+    const d = data[Math.max(0, Math.min(idx, data.length - 1))];
+    const prices = data.map((dd) => dd.price);
+    const minP = Math.min(...prices);
+    const maxP = Math.max(...prices);
+    const range = maxP - minP || 1;
+    const minY = minP - range * 0.05;
+    const maxY = maxP + range * 0.05;
+    const h = rect.height - padT - padB;
+    const x = padL + (idx / (data.length - 1)) * w;
+    const y = padT + h - ((d.price - minY) / (maxY - minY)) * h;
+    setTooltip({ x: e.clientX - rect.left, y, date: d.date, price: d.price });
+  };
+
+  return (
+    <div ref={containerRef} className="relative w-full h-full" onMouseLeave={() => setTooltip(null)}>
+      <canvas ref={canvasRef} className="w-full h-full" style={{ display: "block" }} onMouseMove={handleMouseMove} />
+      {tooltip && (
+        <>
+          <div className="absolute top-0 pointer-events-none" style={{ left: tooltip.x, width: 1, height: "calc(100% - 36px)", background: "rgba(128,128,128,0.3)" }} />
+          <div className="absolute pointer-events-none" style={{ left: 70, right: 16, top: tooltip.y, height: 1, background: "rgba(128,128,128,0.2)" }} />
+          <div className="absolute pointer-events-none bg-foreground text-background px-2.5 py-1.5 rounded-md text-xs font-mono shadow-lg" style={{ left: tooltip.x + 12, top: tooltip.y - 36, whiteSpace: "nowrap" }}>
+            <div className="text-[10px] opacity-70 mb-0.5">{tooltip.date}</div>
+            <div className="font-bold">{tooltip.price.toLocaleString()}원</div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function AnimatedBar({ percent, color, side }: { percent: number; color: string; side: "left" | "right" }) {
+  const barRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (barRef.current) {
+      barRef.current.style.width = `${percent}%`;
+    }
+  }, [percent]);
+  return (
+    <div
+      ref={barRef}
+      className={`absolute top-0 bottom-0 ${side === "right" ? "right-0" : "left-0"}`}
+      style={{
+        width: "0%",
+        background: color,
+        transition: "width 0.6s cubic-bezier(0.22, 1, 0.36, 1)",
+      }}
+    />
+  );
 }
 
 function OrderBook({ orderBook }: { orderBook: ReturnType<typeof generateOrderBookFromPrice> }) {
@@ -89,33 +210,71 @@ function OrderBook({ orderBook }: { orderBook: ReturnType<typeof generateOrderBo
     ...orderBook.asks.map((a) => a.quantity),
     ...orderBook.bids.map((b) => b.quantity)
   );
+  const totalAsk = orderBook.asks.reduce((s, a) => s + a.quantity, 0);
+  const totalBid = orderBook.bids.reduce((s, b) => s + b.quantity, 0);
+  const intensityPercent = totalBid + totalAsk > 0 ? Math.round((totalBid / (totalBid + totalAsk)) * 100) : 50;
+
   return (
-    <div className="space-y-0.5 text-sm font-mono">
-      <div className="grid grid-cols-3 gap-2 px-3 pb-2 text-xs text-muted-foreground border-b mb-2">
-        <span>호가</span>
-        <span className="text-right">가격(원)</span>
+    <div className="text-sm font-mono">
+      <div className="grid grid-cols-[1fr_auto_1fr] gap-0 px-2 pb-2 text-[10px] text-muted-foreground border-b mb-1">
+        <span>수량(주)</span>
+        <span className="text-center px-3">가격(원)</span>
         <span className="text-right">수량(주)</span>
       </div>
       {[...orderBook.asks].reverse().map((ask, i) => (
-        <div key={`ask-${i}`} className="grid grid-cols-3 gap-2 px-3 py-1 relative" data-testid={`row-ask-${i}`}>
-          <div className="absolute right-0 top-0 bottom-0 bg-blue-500/8" style={{ width: `${(ask.quantity / maxQty) * 100}%` }} />
-          <span className="text-xs text-muted-foreground z-10">매도{5 - i}</span>
-          <span className="text-right text-blue-600 z-10 font-medium">{ask.price.toLocaleString()}</span>
-          <span className="text-right z-10 text-muted-foreground">{ask.quantity.toLocaleString()}</span>
+        <div key={`ask-${i}`} className="grid grid-cols-[1fr_auto_1fr] gap-0 px-2 py-[5px] relative" data-testid={`row-ask-${i}`}>
+          <AnimatedBar percent={(ask.quantity / maxQty) * 100} color="rgba(59,130,246,0.1)" side="left" />
+          <span className="text-right z-10 text-muted-foreground text-xs tabular-nums">{ask.quantity.toLocaleString()}</span>
+          <span className="text-center z-10 text-blue-600 dark:text-blue-400 font-medium px-3 text-xs tabular-nums">{ask.price.toLocaleString()}</span>
+          <span className="z-10 text-[10px] text-muted-foreground/50">매도{5 - i}</span>
         </div>
       ))}
-      <div className="grid grid-cols-3 gap-2 px-3 py-2.5 bg-muted/40 my-1 rounded-md">
-        <span className="text-xs font-semibold">현재가</span>
-        <span className="text-right font-bold text-lg col-span-2 text-red-500" data-testid="text-orderbook-price">{orderBook.currentPrice.toLocaleString()}원</span>
+
+      <div className="px-2 py-2 my-0.5 bg-muted/30 rounded-md">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px] font-semibold text-muted-foreground">현재가</span>
+          <span className="font-bold text-base text-red-500 tabular-nums" data-testid="text-orderbook-price">{orderBook.currentPrice.toLocaleString()}원</span>
+        </div>
       </div>
+
       {orderBook.bids.map((bid, i) => (
-        <div key={`bid-${i}`} className="grid grid-cols-3 gap-2 px-3 py-1 relative" data-testid={`row-bid-${i}`}>
-          <div className="absolute right-0 top-0 bottom-0 bg-red-500/8" style={{ width: `${(bid.quantity / maxQty) * 100}%` }} />
-          <span className="text-xs text-muted-foreground z-10">매수{i + 1}</span>
-          <span className="text-right text-red-500 z-10 font-medium">{bid.price.toLocaleString()}</span>
-          <span className="text-right z-10 text-muted-foreground">{bid.quantity.toLocaleString()}</span>
+        <div key={`bid-${i}`} className="grid grid-cols-[1fr_auto_1fr] gap-0 px-2 py-[5px] relative" data-testid={`row-bid-${i}`}>
+          <AnimatedBar percent={(bid.quantity / maxQty) * 100} color="rgba(239,68,68,0.1)" side="right" />
+          <span className="z-10 text-[10px] text-muted-foreground/50 text-right">매수{i + 1}</span>
+          <span className="text-center z-10 text-red-500 font-medium px-3 text-xs tabular-nums">{bid.price.toLocaleString()}</span>
+          <span className="text-right z-10 text-muted-foreground text-xs tabular-nums">{bid.quantity.toLocaleString()}</span>
         </div>
       ))}
+
+      <div className="mt-3 px-2">
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1.5">
+          <span>매도 체결강도</span>
+          <span className="font-bold text-xs text-foreground">{intensityPercent}%</span>
+          <span>매수 체결강도</span>
+        </div>
+        <div className="h-2.5 rounded-full overflow-hidden flex bg-muted/30">
+          <div
+            className="h-full rounded-l-full"
+            style={{
+              width: `${100 - intensityPercent}%`,
+              background: "linear-gradient(90deg, rgba(59,130,246,0.6), rgba(59,130,246,0.3))",
+              transition: "width 0.8s cubic-bezier(0.22, 1, 0.36, 1)",
+            }}
+          />
+          <div
+            className="h-full rounded-r-full"
+            style={{
+              width: `${intensityPercent}%`,
+              background: "linear-gradient(90deg, rgba(239,68,68,0.3), rgba(239,68,68,0.6))",
+              transition: "width 0.8s cubic-bezier(0.22, 1, 0.36, 1)",
+            }}
+          />
+        </div>
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-1">
+          <span className="text-blue-500 tabular-nums">{totalAsk.toLocaleString()}</span>
+          <span className="text-red-500 tabular-nums">{totalBid.toLocaleString()}</span>
+        </div>
+      </div>
     </div>
   );
 }
@@ -268,7 +427,7 @@ export default function LandingPage() {
                     <Skeleton className="w-full h-full" />
                   </div>
                 ) : (
-                  <MiniChart data={stockData.chartData} />
+                  <StockChart data={stockData.chartData} />
                 )}
               </div>
               <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground px-1 flex-wrap gap-2">
