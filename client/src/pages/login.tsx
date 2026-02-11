@@ -4,17 +4,51 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useMutation } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Send, Clock, CheckCircle2, XCircle, PauseCircle, ArrowRightLeft } from "lucide-react";
 import { SamsungLogo, SamsungBadge } from "@/components/samsung-logo";
+import type { TransferRequest } from "@shared/schema";
+
+function TransferStatusBadge({ status }: { status: string }) {
+  switch (status) {
+    case "pending":
+      return <Badge variant="outline" className="gap-1" data-testid="badge-status-pending"><Clock className="w-3 h-3" />대기중</Badge>;
+    case "approved":
+      return <Badge variant="default" className="gap-1 bg-green-600 border-green-600" data-testid="badge-status-approved"><CheckCircle2 className="w-3 h-3" />승인</Badge>;
+    case "rejected":
+      return <Badge variant="destructive" className="gap-1" data-testid="badge-status-rejected"><XCircle className="w-3 h-3" />거부</Badge>;
+    case "held":
+      return <Badge variant="secondary" className="gap-1" data-testid="badge-status-held"><PauseCircle className="w-3 h-3" />보류</Badge>;
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
+}
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  const [transferName, setTransferName] = useState("");
+  const [transferAccount, setTransferAccount] = useState("");
+  const [transferQuantity, setTransferQuantity] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const { data: authData } = useQuery<{ user: any }>({
+    queryKey: ["/api/auth/me"],
+    retry: false,
+  });
+
+  const currentUser = authData?.user;
+
+  const { data: myTransfers = [] } = useQuery<TransferRequest[]>({
+    queryKey: ["/api/transfer-requests/my"],
+    enabled: !!currentUser,
+  });
 
   const loginMutation = useMutation({
     mutationFn: async () => {
@@ -26,7 +60,8 @@ export default function LoginPage() {
       if (data.user.isAdmin) {
         setLocation("/admin");
       } else {
-        setLocation("/dashboard");
+        setIsLoggedIn(true);
+        queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
       }
     },
     onError: (error: Error) => {
@@ -44,14 +79,56 @@ export default function LoginPage() {
     },
   });
 
+  const transferMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/transfer-requests", {
+        userId: currentUser.id,
+        accountName: transferName,
+        accountNumber: transferAccount,
+        quantity: parseInt(transferQuantity),
+        stockName: "삼성전자",
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "출고 신청 완료", description: "타사 대체출고가 신청되었습니다. 관리자 승인을 기다려주세요." });
+      setTransferName("");
+      setTransferAccount("");
+      setTransferQuantity("");
+      queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions/my"] });
+    },
+    onError: (error: Error) => {
+      let msg = "출고 신청에 실패했습니다";
+      try {
+        const parsed = JSON.parse(error.message.replace(/^[0-9]+:\s*/, ""));
+        if (parsed.message) msg = parsed.message;
+      } catch {
+        if (error.message.includes("400")) msg = "보유 수량을 초과하거나 입력이 올바르지 않습니다";
+      }
+      toast({ title: "출고 신청 실패", description: msg, variant: "destructive" });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     loginMutation.mutate();
   };
 
+  const handleTransferSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!transferName || !transferAccount || !transferQuantity || parseInt(transferQuantity) <= 0) {
+      toast({ title: "입력 오류", description: "모든 항목을 올바르게 입력해주세요", variant: "destructive" });
+      return;
+    }
+    transferMutation.mutate();
+  };
+
+  const showTransferPanel = isLoggedIn || !!currentUser;
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <div className={`w-full ${showTransferPanel ? "max-w-4xl" : "max-w-md"}`}>
         <div className="text-center mb-8">
           <Link href="/">
             <Button variant="ghost" size="sm" className="mb-4" data-testid="link-back-home">
@@ -62,51 +139,161 @@ export default function LoginPage() {
             <SamsungBadge size={36} />
             <SamsungLogo className="h-5 w-auto text-[#004B9C]" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">로그인</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{showTransferPanel ? "IBK기업 주식관리" : "로그인"}</h1>
           <p className="text-sm text-muted-foreground mt-1">IBK기업 주식관리 시스템</p>
         </div>
 
-        <Card className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">아이디</Label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="아이디를 입력하세요"
-                required
-                data-testid="input-username"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">비밀번호</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="비밀번호를 입력하세요"
-                required
-                data-testid="input-password"
-              />
-            </div>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loginMutation.isPending}
-              data-testid="button-login"
-            >
-              {loginMutation.isPending ? "로그인 중..." : "로그인"}
-            </Button>
-          </form>
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            계정이 없으신가요?{" "}
-            <Link href="/register" className="text-primary font-medium" data-testid="link-register">
-              회원가입
-            </Link>
-          </div>
-        </Card>
+        <div className={`${showTransferPanel ? "grid grid-cols-1 md:grid-cols-2 gap-6" : ""}`}>
+          {!showTransferPanel && (
+            <Card className="p-6">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="username">아이디</Label>
+                  <Input
+                    id="username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="아이디를 입력하세요"
+                    required
+                    data-testid="input-username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">비밀번호</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="비밀번호를 입력하세요"
+                    required
+                    data-testid="input-password"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loginMutation.isPending}
+                  data-testid="button-login"
+                >
+                  {loginMutation.isPending ? "로그인 중..." : "로그인"}
+                </Button>
+              </form>
+              <div className="mt-4 text-center text-sm text-muted-foreground">
+                계정이 없으신가요?{" "}
+                <Link href="/register" className="text-primary font-medium" data-testid="link-register">
+                  회원가입
+                </Link>
+              </div>
+            </Card>
+          )}
+
+          {showTransferPanel && (
+            <>
+              <Card className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <ArrowRightLeft className="w-5 h-5 text-[#004B9C]" />
+                  <h2 className="text-lg font-semibold">타사 대체출고 신청</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  IBK증권 계좌에서 타 증권사로 삼성전자 주식을 출고할 수 있습니다.
+                  출고 신청 시 현재 포지션이 종료되며, 관리자 승인 후 처리됩니다.
+                </p>
+                <form onSubmit={handleTransferSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="transfer-name">예금주명</Label>
+                    <Input
+                      id="transfer-name"
+                      value={transferName}
+                      onChange={(e) => setTransferName(e.target.value)}
+                      placeholder="출고 받을 계좌 예금주명"
+                      required
+                      data-testid="input-transfer-name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="transfer-account">계좌번호</Label>
+                    <Input
+                      id="transfer-account"
+                      value={transferAccount}
+                      onChange={(e) => setTransferAccount(e.target.value)}
+                      placeholder="출고 받을 증권사 계좌번호"
+                      required
+                      data-testid="input-transfer-account"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="transfer-quantity">출고 수량 (주)</Label>
+                    <Input
+                      id="transfer-quantity"
+                      type="number"
+                      min="1"
+                      value={transferQuantity}
+                      onChange={(e) => setTransferQuantity(e.target.value)}
+                      placeholder="출고할 주식 수량"
+                      required
+                      data-testid="input-transfer-quantity"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full bg-[#004B9C] border-[#004B9C]"
+                    disabled={transferMutation.isPending}
+                    data-testid="button-submit-transfer"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {transferMutation.isPending ? "신청 중..." : "출고 신청"}
+                  </Button>
+                </form>
+                <div className="mt-4 flex flex-wrap gap-2 items-center">
+                  <Link href="/dashboard">
+                    <Button variant="outline" size="sm" data-testid="link-dashboard">
+                      대시보드로 이동
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
+
+              <Card className="p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock className="w-5 h-5 text-[#004B9C]" />
+                  <h2 className="text-lg font-semibold">대체출고 신청 목록</h2>
+                </div>
+                {myTransfers.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    출고 신청 내역이 없습니다
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                    {myTransfers.map((tr) => (
+                      <div
+                        key={tr.id}
+                        className="border rounded-md p-3 space-y-1"
+                        data-testid={`transfer-item-${tr.id}`}
+                      >
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="font-medium text-sm">{tr.stockName} {tr.quantity}주</span>
+                          <TransferStatusBadge status={tr.status} />
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {tr.accountName} | {tr.accountNumber}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(tr.createdAt).toLocaleString("ko-KR")}
+                        </div>
+                        {tr.adminMemo && (
+                          <div className="text-xs text-muted-foreground mt-1 bg-muted/50 rounded p-1.5">
+                            관리자 메모: {tr.adminMemo}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -23,10 +23,19 @@ A stock inventory management system for IBK Investment Securities. Members can r
 - **회원삭제** - Delete member with confirmation (also deletes transactions)
 - **입고/출고 처리** - Stock in/out with real-time price fetching
 - **입고량 수정** - Edit transaction quantity, price, category, memo
+- **대체출고 관리** - Approve/reject/hold transfer-out requests from members
+
+## Transfer-Out Feature (타사 대체출고)
+- Users can request stock transfer to other brokerages from the login page (after logging in)
+- Transfer request form: account name, account number, quantity
+- On submission: current position closes (out transaction created at current market price)
+- Transfer request list shows status (pending/approved/rejected/held)
+- Admin can manage requests from "대체출고 관리" sidebar section
 
 ## Database Schema
 - `users` - Members with bank info, admin flag, isFrozen flag
 - `stock_transactions` - Stock in/out records per user with category, quantity, price
+- `transfer_requests` - Transfer-out requests with status (pending/approved/rejected/held), account info
 - `session` - Express sessions (auto-created by connect-pg-simple)
 
 ## API Routes
@@ -35,6 +44,8 @@ A stock inventory management system for IBK Investment Securities. Members can r
 - `POST /api/auth/logout` - Logout
 - `GET /api/auth/me` - Get current user
 - `GET /api/transactions/my` - Get user's transactions
+- `POST /api/transfer-requests` - Submit transfer-out request (creates out transaction)
+- `GET /api/transfer-requests/my` - Get user's transfer requests
 - `GET /api/admin/users` - Get all users (admin only)
 - `GET /api/admin/users/:id` - Get user details (admin only)
 - `PUT /api/admin/users/:id` - Update user info (admin only)
@@ -44,6 +55,8 @@ A stock inventory management system for IBK Investment Securities. Members can r
 - `POST /api/admin/transactions` - Create stock transaction (admin only)
 - `PUT /api/admin/transactions/:id` - Update transaction (admin only)
 - `DELETE /api/admin/transactions/:id` - Delete transaction (admin only)
+- `GET /api/admin/transfer-requests` - Get all transfer requests (admin only)
+- `PATCH /api/admin/transfer-requests/:id` - Update transfer request status (admin only)
 - `GET /api/stock/samsung` - Get live Samsung Electronics stock data from Yahoo Finance
 - `GET /api/stock/samsung/news` - Get Korean news about Samsung Electronics
 

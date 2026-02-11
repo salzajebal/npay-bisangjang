@@ -375,7 +375,7 @@ export async function registerRoutes(
       if (data.quantity > currentHolding) {
         return res.status(400).json({ message: `보유 수량(${currentHolding}주)을 초과할 수 없습니다` });
       }
-      const transferRequest = await storage.createTransferRequest(data);
+      const transferRequest = await storage.createTransferRequest({ ...data, userId: req.session.userId });
       const stockData = await fetchYahooFinanceData();
       const currentPrice = stockData?.currentPrice || 0;
       await storage.createTransaction({

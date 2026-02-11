@@ -13,11 +13,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { STOCK_CATEGORIES, KOREAN_BANKS } from "@shared/schema";
-import type { User, StockTransaction } from "@shared/schema";
+import type { User, StockTransaction, TransferRequest } from "@shared/schema";
 import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
-  Eye, Pencil, Snowflake, UserX, AlertTriangle, Save, X,
+  Eye, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
+  CheckCircle2, XCircle, PauseCircle, Clock,
 } from "lucide-react";
 import { SamsungBadge } from "@/components/samsung-logo";
 
@@ -557,12 +558,13 @@ function TransactionEditDialog({ tx, onSuccess }: { tx: StockTransaction; onSucc
   );
 }
 
-type AdminSection = "dashboard" | "members" | "transactions";
+type AdminSection = "dashboard" | "members" | "transactions" | "transfers";
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "대시보드", icon: LayoutDashboard },
   { id: "members", label: "회원 관리", icon: Users },
   { id: "transactions", label: "거래 내역", icon: ClipboardList },
+  { id: "transfers", label: "대체출고 관리", icon: ArrowRightLeft },
 ];
 
 export default function AdminPage() {
@@ -591,6 +593,25 @@ export default function AdminPage() {
     enabled: !!authData?.user?.isAdmin,
   });
 
+  const { data: allTransferRequests, isLoading: transfersLoading } = useQuery<TransferRequest[]>({
+    queryKey: ["/api/admin/transfer-requests"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!authData?.user?.isAdmin,
+  });
+
+  const updateTransferStatusMutation = useMutation({
+    mutationFn: async ({ id, status, adminMemo }: { id: string; status: string; adminMemo?: string }) => {
+      await apiRequest("PATCH", `/api/admin/transfer-requests/${id}`, { status, adminMemo });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/transfer-requests"] });
+      toast({ title: "상태 변경 완료", description: "대체출고 신청 상태가 변경되었습니다" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "오류", description: error.message, variant: "destructive" });
+    },
+  });
+
   const deleteTransactionMutation = useMutation({
     mutationFn: async (txId: string) => {
       await apiRequest("DELETE", `/api/admin/transactions/${txId}`);
@@ -614,6 +635,7 @@ export default function AdminPage() {
   const refreshData = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/transfer-requests"] });
   };
 
   if (authLoading) {
@@ -1051,6 +1073,105 @@ export default function AdminPage() {
                                   title="삭제"
                                 >
                                   <Trash2 className="w-4 h-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </Card>
+              )}
+            </>
+          )}
+
+          {activeSection === "transfers" && (
+            <>
+              <div className="flex items-center gap-3 flex-wrap">
+                <Badge variant="outline" className="shrink-0">
+                  {(allTransferRequests || []).length}건
+                </Badge>
+                <Badge variant="outline" className="shrink-0 bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
+                  대기 {(allTransferRequests || []).filter(r => r.status === "pending").length}건
+                </Badge>
+              </div>
+
+              {transfersLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+                </div>
+              ) : (allTransferRequests || []).length === 0 ? (
+                <Card className="p-12 text-center">
+                  <ArrowRightLeft className="w-10 h-10 mx-auto mb-3 opacity-30 text-muted-foreground" />
+                  <p className="font-medium text-muted-foreground">대체출고 신청 내역이 없습니다</p>
+                </Card>
+              ) : (
+                <Card className="p-0 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>상태</TableHead>
+                          <TableHead>신청 회원</TableHead>
+                          <TableHead>종목</TableHead>
+                          <TableHead className="text-right">수량</TableHead>
+                          <TableHead>예금주</TableHead>
+                          <TableHead>계좌번호</TableHead>
+                          <TableHead>신청일</TableHead>
+                          <TableHead>관리자 메모</TableHead>
+                          <TableHead className="text-center">처리</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(allTransferRequests || []).map((tr) => (
+                          <TableRow key={tr.id} data-testid={`row-transfer-${tr.id}`}>
+                            <TableCell>
+                              {tr.status === "pending" && <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" />대기</Badge>}
+                              {tr.status === "approved" && <Badge className="gap-1 bg-green-600 border-green-600"><CheckCircle2 className="w-3 h-3" />승인</Badge>}
+                              {tr.status === "rejected" && <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" />거부</Badge>}
+                              {tr.status === "held" && <Badge variant="secondary" className="gap-1"><PauseCircle className="w-3 h-3" />보류</Badge>}
+                            </TableCell>
+                            <TableCell className="font-medium">{getUserName(tr.userId)}</TableCell>
+                            <TableCell>{tr.stockName}</TableCell>
+                            <TableCell className="text-right font-mono tabular-nums">{tr.quantity.toLocaleString()}주</TableCell>
+                            <TableCell>{tr.accountName}</TableCell>
+                            <TableCell className="font-mono text-sm">{tr.accountNumber}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(tr.createdAt).toLocaleDateString("ko-KR")}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground max-w-[150px] truncate">
+                              {tr.adminMemo || "-"}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center justify-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="default"
+                                  className="bg-green-600 border-green-600"
+                                  onClick={() => updateTransferStatusMutation.mutate({ id: tr.id, status: "approved" })}
+                                  disabled={tr.status === "approved" || updateTransferStatusMutation.isPending}
+                                  data-testid={`button-approve-${tr.id}`}
+                                >
+                                  승인
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => updateTransferStatusMutation.mutate({ id: tr.id, status: "rejected" })}
+                                  disabled={tr.status === "rejected" || updateTransferStatusMutation.isPending}
+                                  data-testid={`button-reject-${tr.id}`}
+                                >
+                                  거부
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => updateTransferStatusMutation.mutate({ id: tr.id, status: "held" })}
+                                  disabled={tr.status === "held" || updateTransferStatusMutation.isPending}
+                                  data-testid={`button-hold-${tr.id}`}
+                                >
+                                  보류
                                 </Button>
                               </div>
                             </TableCell>
