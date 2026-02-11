@@ -95,7 +95,7 @@ function ScrollingTicker() {
           100% { transform: translateX(-33.333%); }
         }
         .animate-ticker {
-          animation: tickerScroll 40s linear infinite;
+          animation: tickerScroll 15s linear infinite;
         }
       `}</style>
     </div>
