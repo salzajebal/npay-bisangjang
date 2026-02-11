@@ -751,7 +751,7 @@ export default function LandingPage() {
               )}
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="p-0 overflow-hidden">
                 <div className="px-3 py-2 border-b flex items-center justify-between gap-2">
                   <span className="text-sm font-bold">시세</span>
@@ -779,14 +779,6 @@ export default function LandingPage() {
                   </a>
                 </div>
                 <CommunityPanel />
-              </Card>
-
-              <Card className="p-0 overflow-hidden" data-testid="card-top-investors">
-                <div className="px-3 py-2 border-b">
-                  <span className="text-sm font-bold">수익금 상위 투자자 TOP5</span>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">최근 1주일 기준</p>
-                </div>
-                <TopInvestorsPanel />
               </Card>
             </div>
           </div>
@@ -863,6 +855,14 @@ export default function LandingPage() {
                 </Button>
               </Link>
             </div>
+          </Card>
+
+          <Card className="p-0 overflow-hidden" data-testid="card-top-investors">
+            <div className="px-3 py-2 border-b">
+              <span className="text-sm font-bold">수익금 상위 투자자 TOP5</span>
+              <p className="text-[10px] text-muted-foreground mt-0.5">최근 1주일 기준</p>
+            </div>
+            <TopInvestorsPanel />
           </Card>
         </div>
       </div>
