@@ -57,8 +57,27 @@ export const loginSchema = z.object({
   password: z.string().min(1, "비밀번호를 입력해주세요"),
 });
 
+export const transferRequests = pgTable("transfer_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  accountName: text("account_name").notNull(),
+  accountNumber: text("account_number").notNull(),
+  stockName: text("stock_name").notNull().default("삼성전자"),
+  quantity: integer("quantity").notNull(),
+  status: text("status").notNull().default("pending"), // pending, approved, rejected, held
+  adminMemo: text("admin_memo"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const insertStockTransactionSchema = createInsertSchema(stockTransactions).omit({
   id: true,
+  createdAt: true,
+});
+
+export const insertTransferRequestSchema = createInsertSchema(transferRequests).omit({
+  id: true,
+  status: true,
+  adminMemo: true,
   createdAt: true,
 });
 
@@ -66,6 +85,8 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type StockTransaction = typeof stockTransactions.$inferSelect;
 export type InsertStockTransaction = z.infer<typeof insertStockTransactionSchema>;
+export type TransferRequest = typeof transferRequests.$inferSelect;
+export type InsertTransferRequest = z.infer<typeof insertTransferRequestSchema>;
 
 export const KOREAN_BANKS = [
   "KB국민은행",
