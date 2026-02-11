@@ -461,48 +461,56 @@ function InvestorPanel({ data }: { data: ReturnType<typeof generateInvestorData>
   );
 }
 
-function CommunityPanel() {
-  const [iframeBlocked, setIframeBlocked] = useState(false);
-  const communityUrl = "https://www.tossinvest.com/stocks/A005930/community";
+const COMMUNITY_POSTS = [
+  { user: "주식고수김", badge: "수익률 상위 5%", time: "방금 전", content: "삼성전자 지금 눌림목 구간이라 분할매수 들어갔습니다. 반도체 사이클 바닥 지났다고 봅니다.", likes: 42 },
+  { user: "반도체전문가", badge: "", time: "2분 전", content: "HBM4 양산 소식 나오면 한번 더 갈 수 있을 듯. AI 수혜주로 재평가 받는 중.", likes: 38 },
+  { user: "장기투자러", badge: "", time: "5분 전", content: "배당도 나쁘지 않고 PBR 1배 미만이면 안 살 이유가 없죠. 꾸준히 모아가는 중.", likes: 27 },
+  { user: "데이트레이더", badge: "수익률 상위 10%", time: "8분 전", content: "오늘 외국인 순매수 들어오네요. 단기 반등 나올 수 있는 자리입니다.", likes: 56 },
+  { user: "초보주식", badge: "", time: "12분 전", content: "이 가격이면 싼 건가요? 처음 시작하려는데 삼성전자부터 해도 될까요?", likes: 15 },
+  { user: "가치투자자", badge: "", time: "15분 전", content: "실적 기대감 있고, 파운드리 수주도 늘고 있어서 중장기적으로 긍정적으로 봅니다.", likes: 33 },
+  { user: "차트분석가", badge: "수익률 상위 3%", time: "18분 전", content: "20일선 지지 확인 후 반등 중. 거래량 동반 상승이면 추가 상승 여력 있어 보입니다.", likes: 71 },
+  { user: "배당킹", badge: "", time: "22분 전", content: "삼성전자 분기배당 받으려면 지금 사두는 게 좋습니다. 배당락일 체크하세요.", likes: 29 },
+  { user: "월급투자자", badge: "", time: "25분 전", content: "매달 10주씩 적립식으로 사고 있어요. 5년 뒤를 봅니다.", likes: 44 },
+  { user: "뉴스봇", badge: "", time: "30분 전", content: "삼성전자, 차세대 2나노 공정 투자 확대 발표. 시장 반응 긍정적.", likes: 88 },
+  { user: "기관분석", badge: "수익률 상위 7%", time: "35분 전", content: "외국인 3일 연속 순매수 중. 기관도 매수세 전환. 수급 좋아지고 있습니다.", likes: 62 },
+  { user: "삼전홀더", badge: "", time: "40분 전", content: "3년째 홀딩 중인데 이제야 빛을 보는 건가... 조금만 더 힘내자 삼전!", likes: 51 },
+];
 
-  if (iframeBlocked) {
-    return (
-      <div className="p-4 flex flex-col items-center justify-center gap-3 min-h-[200px]">
-        <MessageCircle className="w-8 h-8 text-muted-foreground/30" />
-        <p className="text-xs text-muted-foreground text-center">토스증권 커뮤니티는 외부 접근이<br />제한되어 있습니다</p>
-        <a href={communityUrl} target="_blank" rel="noopener noreferrer">
-          <Button size="sm" variant="outline" className="text-xs gap-1.5">
-            <ExternalLink className="w-3 h-3" />
-            토스증권에서 보기
-          </Button>
-        </a>
-      </div>
-    );
-  }
+function CommunityPanel() {
+  const [visiblePosts, setVisiblePosts] = useState(COMMUNITY_POSTS.slice(0, 5));
+  const [postIndex, setPostIndex] = useState(5);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPostIndex((prev) => {
+        const next = prev >= COMMUNITY_POSTS.length ? 0 : prev;
+        const newPost = { ...COMMUNITY_POSTS[next], time: "방금 전", likes: Math.floor(Math.random() * 50) + 5 };
+        setVisiblePosts((posts) => [newPost, ...posts.slice(0, 4)]);
+        return next + 1;
+      });
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="relative" style={{ minHeight: 300 }}>
-      <iframe
-        src={communityUrl}
-        className="w-full border-0"
-        style={{ height: 300 }}
-        sandbox="allow-scripts allow-same-origin allow-popups"
-        onError={() => setIframeBlocked(true)}
-        onLoad={(e) => {
-          try {
-            const frame = e.currentTarget;
-            if (!frame.contentDocument && !frame.contentWindow) {
-              setIframeBlocked(true);
-            }
-          } catch {
-            setIframeBlocked(true);
-          }
-        }}
-        data-testid="iframe-community"
-      />
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ display: iframeBlocked ? "none" : "none" }}>
-        <Skeleton className="w-full h-full" />
-      </div>
+    <div className="divide-y max-h-[300px] overflow-y-auto">
+      {visiblePosts.map((post, i) => (
+        <div key={`${post.user}-${i}`} className="px-3 py-2.5 space-y-1" style={{ animation: i === 0 ? "fadeIn 0.4s ease" : "none" }}>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs font-semibold text-foreground">{post.user}</span>
+            {post.badge && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-red-500/10 text-red-500 font-medium">{post.badge}</span>
+            )}
+            <span className="text-[10px] text-muted-foreground/50 ml-auto">{post.time}</span>
+          </div>
+          <p className="text-[11px] text-foreground/80 leading-relaxed">{post.content}</p>
+          <div className="flex items-center gap-1 text-[10px] text-muted-foreground/50">
+            <Heart className="w-3 h-3" />
+            <span>{post.likes}</span>
+          </div>
+        </div>
+      ))}
+      <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }`}</style>
     </div>
   );
 }
