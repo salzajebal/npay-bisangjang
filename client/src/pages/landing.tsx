@@ -68,27 +68,8 @@ function useTickerPrices() {
 }
 
 function ScrollingTicker() {
-  const scrollRef = useRef<HTMLDivElement>(null);
   const stocks = useTickerPrices();
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    let animId: number;
-    let pos = 0;
-    const speed = 0.6;
-    const tick = () => {
-      pos -= speed;
-      const halfW = el.scrollWidth / 2;
-      if (Math.abs(pos) >= halfW) pos = 0;
-      el.style.transform = `translateX(${pos}px)`;
-      animId = requestAnimationFrame(tick);
-    };
-    animId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animId);
-  }, []);
-
-  const items = [...stocks, ...stocks];
+  const items = [...stocks, ...stocks, ...stocks];
 
   return (
     <div className="bg-muted/30 border-b overflow-hidden h-10 flex items-center" data-testid="scrolling-ticker">
@@ -96,7 +77,7 @@ function ScrollingTicker() {
         국내주식
       </div>
       <div className="overflow-hidden flex-1 relative">
-        <div ref={scrollRef} className="flex items-center gap-0 whitespace-nowrap will-change-transform">
+        <div className="flex items-center gap-0 whitespace-nowrap will-change-transform animate-ticker">
           {items.map((s, i) => (
             <div key={i} className="flex items-center gap-2 px-4 shrink-0">
               <span className="text-[13px] font-semibold text-foreground">{s.name}</span>
@@ -108,6 +89,15 @@ function ScrollingTicker() {
           ))}
         </div>
       </div>
+      <style>{`
+        @keyframes tickerScroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-33.333%); }
+        }
+        .animate-ticker {
+          animation: tickerScroll 40s linear infinite;
+        }
+      `}</style>
     </div>
   );
 }
