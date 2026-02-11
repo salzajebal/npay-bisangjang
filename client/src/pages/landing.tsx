@@ -788,11 +788,21 @@ export default function LandingPage() {
             </Link>
             <nav className="hidden md:flex items-center gap-1">
               {["홈", "피드", "주식 골라보기", "내 계좌"].map((item) => (
-                <Link key={item} href={item === "내 계좌" ? "/dashboard" : "/"}>
-                  <button className="px-3 py-1.5 text-sm text-muted-foreground rounded-md transition-colors" data-testid={`nav-${item}`}>
+                item === "피드" ? (
+                  <button key={item} onClick={() => setActiveTab("feed")} className="px-3 py-1.5 text-sm text-muted-foreground rounded-md transition-colors" data-testid={`nav-${item}`}>
                     {item}
                   </button>
-                </Link>
+                ) : item === "홈" ? (
+                  <button key={item} onClick={() => setActiveTab("chart")} className="px-3 py-1.5 text-sm text-muted-foreground rounded-md transition-colors" data-testid={`nav-${item}`}>
+                    {item}
+                  </button>
+                ) : (
+                  <Link key={item} href={item === "내 계좌" ? "/dashboard" : "/"}>
+                    <button className="px-3 py-1.5 text-sm text-muted-foreground rounded-md transition-colors" data-testid={`nav-${item}`}>
+                      {item}
+                    </button>
+                  </Link>
+                )
               ))}
             </nav>
           </div>
