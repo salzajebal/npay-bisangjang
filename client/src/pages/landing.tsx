@@ -285,26 +285,31 @@ export default function LandingPage() {
     refetchInterval: 30 * 1000,
   });
 
-  const currentPrice = stockData?.currentPrice ?? 0;
-  const priceChange = stockData?.priceChange ?? 0;
-  const priceChangePercent = stockData?.priceChangePercent ?? 0;
-  const isUp = priceChange >= 0;
+  const basePrice = stockData?.currentPrice ?? 0;
+  const basePriceChange = stockData?.priceChange ?? 0;
+  const previousClose = stockData?.previousClose ?? 0;
 
   const [orderBook, setOrderBook] = useState(() => generateOrderBookFromPrice(83700));
+  const displayPrice = orderBook.currentPrice;
+  const displayChange = previousClose > 0 ? displayPrice - previousClose : basePriceChange;
+  const displayChangePercent = previousClose > 0
+    ? parseFloat(((displayChange / previousClose) * 100).toFixed(2))
+    : stockData?.priceChangePercent ?? 0;
+  const isUp = displayChange >= 0;
 
   useEffect(() => {
-    if (currentPrice > 0) {
-      setOrderBook(generateOrderBookFromPrice(currentPrice));
+    if (basePrice > 0) {
+      setOrderBook(generateOrderBookFromPrice(basePrice));
     }
-  }, [currentPrice]);
+  }, [basePrice]);
 
   useEffect(() => {
-    if (currentPrice <= 0) return;
+    if (basePrice <= 0) return;
     const interval = setInterval(() => {
-      setOrderBook(generateOrderBookFromPrice(currentPrice));
+      setOrderBook(generateOrderBookFromPrice(basePrice));
     }, 2000);
     return () => clearInterval(interval);
-  }, [currentPrice]);
+  }, [basePrice]);
 
   const lastUpdatedText = stockData?.lastUpdated
     ? new Date(stockData.lastUpdated).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
@@ -365,13 +370,13 @@ export default function LandingPage() {
             ) : (
               <>
                 <span className="text-4xl md:text-6xl font-bold text-white tracking-tight">
-                  {currentPrice.toLocaleString()}
+                  {displayPrice.toLocaleString()}
                 </span>
                 <span className="text-white/40 text-xl font-light">KRW</span>
                 <div className={`flex items-center gap-1.5 backdrop-blur px-3 py-1.5 rounded-md border ${isUp ? "bg-red-500/20 border-red-400/20" : "bg-blue-500/20 border-blue-400/20"}`}>
                   {isUp ? <ArrowUpRight className="w-4 h-4 text-red-400" /> : <ArrowDownRight className="w-4 h-4 text-blue-400" />}
                   <span className={`font-semibold text-base ${isUp ? "text-red-400" : "text-blue-400"}`}>
-                    {isUp ? "+" : ""}{priceChange.toLocaleString()} ({isUp ? "+" : ""}{priceChangePercent}%)
+                    {isUp ? "+" : ""}{displayChange.toLocaleString()} ({isUp ? "+" : ""}{displayChangePercent}%)
                   </span>
                 </div>
               </>
@@ -410,11 +415,11 @@ export default function LandingPage() {
                 ) : (
                   <>
                     <span className="text-2xl font-bold tracking-tight" data-testid="text-current-price">
-                      {currentPrice.toLocaleString()}원
+                      {displayPrice.toLocaleString()}원
                     </span>
                     <Badge variant="default" className={isUp ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500"}>
                       {isUp ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                      {isUp ? "+" : ""}{priceChangePercent}%
+                      {isUp ? "+" : ""}{displayChangePercent}%
                     </Badge>
                   </>
                 )}
@@ -488,7 +493,7 @@ export default function LandingPage() {
                 <div className="bg-red-500/8 rounded-md p-5 text-center border border-red-500/10">
                   <p className="text-xs text-muted-foreground mb-2">현재 시세</p>
                   <p className="text-2xl font-bold text-red-500" data-testid="text-market-price">
-                    {isLoading ? "---" : `${currentPrice.toLocaleString()}원`}
+                    {isLoading ? "---" : `${displayPrice.toLocaleString()}원`}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">1주당</p>
                 </div>
