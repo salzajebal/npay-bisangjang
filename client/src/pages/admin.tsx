@@ -641,7 +641,7 @@ export default function AdminPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
-      setLocation("/login");
+      setLocation("/admin/login");
     },
   });
 
@@ -721,7 +721,7 @@ export default function AdminPage() {
   }
 
   if (!authData?.user?.isAdmin) {
-    return <Redirect to="/login" />;
+    return <Redirect to="/admin/login" />;
   }
 
   const users = (allUsers || []).filter((u) => !u.isAdmin);

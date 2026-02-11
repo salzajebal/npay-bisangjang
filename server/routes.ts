@@ -209,6 +209,30 @@ export async function registerRoutes(
       if (!user || !passwordMatch) {
         return res.status(401).json({ message: "아이디 또는 비밀번호가 일치하지 않습니다" });
       }
+      if (user.isAdmin) {
+        return res.status(403).json({ message: "관리자는 관리자 전용 로그인을 이용해주세요" });
+      }
+      if (user.isFrozen) {
+        return res.status(403).json({ message: "계정이 동결되었습니다. 관리자에게 문의하세요." });
+      }
+      req.session.userId = user.id;
+      return res.json({ user: { ...user, password: undefined } });
+    } catch (error) {
+      return res.status(400).json({ message: "잘못된 요청입니다" });
+    }
+  });
+
+  app.post("/api/auth/admin-login", async (req, res) => {
+    try {
+      const data = loginSchema.parse(req.body);
+      const user = await storage.getUserByUsername(data.username);
+      const passwordMatch = user ? await bcrypt.compare(data.password, user.password) : false;
+      if (!user || !passwordMatch) {
+        return res.status(401).json({ message: "아이디 또는 비밀번호가 일치하지 않습니다" });
+      }
+      if (!user.isAdmin) {
+        return res.status(403).json({ message: "관리자 권한이 없는 계정입니다" });
+      }
       if (user.isFrozen) {
         return res.status(403).json({ message: "계정이 동결되었습니다. 관리자에게 문의하세요." });
       }
