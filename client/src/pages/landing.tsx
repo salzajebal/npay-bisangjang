@@ -1265,14 +1265,9 @@ export default function LandingPage() {
       </header>
 
       <div className="max-w-[1400px] mx-auto w-full px-4 py-3">
-        <div className="flex items-center gap-3 mb-1">
-          <SamsungBadge size={36} />
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="font-bold text-lg" data-testid="text-stock-name">삼성전자</h1>
-              <span className="text-sm text-muted-foreground">005930</span>
-            </div>
-          </div>
+        <div className="flex items-center gap-2 mb-1">
+          <h1 className="font-bold text-lg" data-testid="text-stock-name">삼성전자</h1>
+          <span className="text-sm text-muted-foreground">005930</span>
         </div>
         <div className="flex items-baseline gap-2 mt-1 flex-wrap">
           {isLoading ? (
