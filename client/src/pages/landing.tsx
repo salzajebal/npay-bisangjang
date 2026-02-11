@@ -855,14 +855,13 @@ export default function LandingPage() {
                 </Button>
               </Link>
             </div>
-          </Card>
-
-          <Card className="p-0 overflow-hidden" data-testid="card-top-investors">
-            <div className="px-3 py-2 border-b">
-              <span className="text-sm font-bold">수익금 상위 투자자 TOP5</span>
-              <p className="text-[10px] text-muted-foreground mt-0.5">최근 1주일 기준</p>
+            <div className="border-t" data-testid="card-top-investors">
+              <div className="px-3 py-2 border-b">
+                <span className="text-sm font-bold">수익금 상위 투자자 TOP5</span>
+                <p className="text-[10px] text-muted-foreground mt-0.5">최근 1주일 기준</p>
+              </div>
+              <TopInvestorsPanel />
             </div>
-            <TopInvestorsPanel />
           </Card>
         </div>
       </div>
