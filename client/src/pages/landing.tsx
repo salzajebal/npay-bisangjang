@@ -1084,6 +1084,9 @@ function HoldingsPanel({ displayPrice }: { displayPrice: number }) {
         if (data.type === "transaction_update") {
           queryClient.invalidateQueries({ queryKey: ["/api/transactions/my"] });
         }
+        if (data.type === "transfer_update") {
+          queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
+        }
       } catch {}
     };
     return () => {

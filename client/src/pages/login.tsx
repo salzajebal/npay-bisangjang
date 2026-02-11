@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,32 @@ export default function LoginPage() {
     queryKey: ["/api/transfer-requests/my"],
     enabled: !!currentUser,
   });
+
+  const wsRef = useRef<WebSocket | null>(null);
+  useEffect(() => {
+    if (!currentUser) return;
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+    wsRef.current = ws;
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "transfer_update") {
+          queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
+          if (data.data?.action === "status_change" && data.data?.statusLabel) {
+            toast({
+              title: "대체출고 상태 변경",
+              description: `신청이 "${data.data.statusLabel}" 처리되었습니다`,
+            });
+          }
+        }
+        if (data.type === "transaction_update") {
+          queryClient.invalidateQueries({ queryKey: ["/api/transactions/my"] });
+        }
+      } catch {}
+    };
+    return () => { ws.close(); wsRef.current = null; };
+  }, [currentUser?.id]);
 
   const loginMutation = useMutation({
     mutationFn: async () => {

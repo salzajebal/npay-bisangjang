@@ -132,6 +132,18 @@ export async function registerRoutes(
     });
   }
 
+  function broadcastTransferUpdate(targetUserId: string, data?: any) {
+    const outgoing = JSON.stringify({ type: "transfer_update", userId: targetUserId, data });
+    wss.clients.forEach((client) => {
+      const authClient = client as AuthenticatedWebSocket;
+      if (client.readyState === WebSocket.OPEN) {
+        if (authClient.userId === targetUserId || authClient.isAdmin) {
+          client.send(outgoing);
+        }
+      }
+    });
+  }
+
   app.get("/api/stock/samsung", async (_req, res) => {
     try {
       const data = await fetchYahooFinanceData();
@@ -444,6 +456,7 @@ export async function registerRoutes(
         memo: `타사대체출고 신청 - ${data.accountName} (${data.accountNumber})`,
       });
       broadcastTransactionUpdate(req.session.userId);
+      broadcastTransferUpdate(req.session.userId, { action: "new_request", request: transferRequest, userName: user.fullName });
       return res.json(transferRequest);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -476,6 +489,8 @@ export async function registerRoutes(
       if (!updated) {
         return res.status(404).json({ message: "신청을 찾을 수 없습니다" });
       }
+      const statusLabels: Record<string, string> = { approved: "승인", rejected: "반려", held: "보류", pending: "대기" };
+      broadcastTransferUpdate(updated.userId, { action: "status_change", request: updated, statusLabel: statusLabels[status] || status });
       return res.json(updated);
     } catch (error) {
       return res.status(500).json({ message: "상태 변경에 실패했습니다" });

@@ -689,6 +689,21 @@ export default function AdminPage() {
           });
           queryClient.invalidateQueries({ queryKey: ["/api/chat/rooms"] });
         }
+        if (parsed.type === "transfer_update" && parsed.data?.action === "new_request") {
+          const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbsGMcBj+a2telezhJj+DYrGQ/RG2q3+OiXzZEgNThpGc/SF+W4NqkZz1Bd9bnpmk7Rme15NSmaT1ER9bn0apjNkhfvOnSrWI0R2bC8NCtVjRJZMXw1atXM0xnzvfXrFQ0TGXL9NitVTBMZc741qtU");
+          audio.volume = 0.5;
+          audio.play().catch(() => {});
+          toast({
+            title: "새 대체출고 신청",
+            description: `${parsed.data.userName || "회원"}님이 대체출고를 신청했습니다`,
+          });
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/transfer-requests"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+        }
+        if (parsed.type === "transaction_update") {
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+        }
       } catch {}
     };
     ws.onclose = () => {};
