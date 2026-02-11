@@ -289,8 +289,8 @@ export default function LandingPage() {
   const basePriceChange = stockData?.priceChange ?? 0;
   const previousClose = stockData?.previousClose ?? 0;
 
-  const [orderBook, setOrderBook] = useState(() => generateOrderBookFromPrice(83700));
-  const displayPrice = orderBook.currentPrice;
+  const [orderBook, setOrderBook] = useState<ReturnType<typeof generateOrderBookFromPrice> | null>(null);
+  const displayPrice = orderBook?.currentPrice ?? basePrice;
   const displayChange = previousClose > 0 ? displayPrice - previousClose : basePriceChange;
   const displayChangePercent = previousClose > 0
     ? parseFloat(((displayChange / previousClose) * 100).toFixed(2))
@@ -459,7 +459,7 @@ export default function LandingPage() {
               <p className="text-xs text-muted-foreground">현재가 기준 매수/매도 호가</p>
             </div>
             <div className="p-3">
-              {isLoading ? (
+              {isLoading || !orderBook ? (
                 <div className="space-y-2 p-3">
                   {Array.from({ length: 11 }).map((_, i) => (
                     <Skeleton key={i} className="h-6 w-full" />
