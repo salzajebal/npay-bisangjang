@@ -508,11 +508,11 @@ function InvestorPanel({ data }: { data: ReturnType<typeof generateInvestorData>
 }
 
 const TOP_INVESTORS = [
-  { name: "니은미음", profit: 295611339, pct: 28.93, avatar: "NM" },
-  { name: "하준빠더", profit: 259864836, pct: 404.65, avatar: "HJ" },
-  { name: "플라타나스나무", profit: 215533861, pct: 157.42, avatar: "PT" },
-  { name: "얼쑨이", profit: 194427696, pct: 6.80, avatar: "ES" },
-  { name: "망월동의현인", profit: 193724247, pct: 19.77, avatar: "MW" },
+  { name: "니은미음", profit: 295611339, pct: 28.93, bg: "#FFE066", face: "^_^" },
+  { name: "하준빠더", profit: 259864836, pct: 404.65, bg: "#A0D8EF", face: "B)" },
+  { name: "플라타나스나무", profit: 215533861, pct: 157.42, bg: "#FFB347", face: ":3" },
+  { name: "얼쑨이", profit: 194427696, pct: 6.80, bg: "#C3B1E1", face: ">.<" },
+  { name: "망월동의현인", profit: 193724247, pct: 19.77, bg: "#77DD77", face: "~_~" },
 ];
 
 function TopInvestorsPanel() {
@@ -520,8 +520,8 @@ function TopInvestorsPanel() {
     <div className="divide-y">
       {TOP_INVESTORS.map((inv, i) => (
         <div key={inv.name} className="flex items-center gap-3 px-3 py-2.5">
-          <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground shrink-0">
-            {inv.avatar}
+          <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm shrink-0 select-none" style={{ backgroundColor: inv.bg }}>
+            {inv.face}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-foreground truncate">{inv.name}</p>
