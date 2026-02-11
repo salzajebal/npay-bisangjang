@@ -34,7 +34,7 @@ function StockTransactionDialog({
   const [category, setCategory] = useState("보통주");
   const [stockName, setStockName] = useState("삼성전자");
   const [quantity, setQuantity] = useState("");
-  const [pricePerShare, setPricePerShare] = useState("50000");
+  const [pricePerShare, setPricePerShare] = useState("95000");
   const [memo, setMemo] = useState("");
   const { toast } = useToast();
 
