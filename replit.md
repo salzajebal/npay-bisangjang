@@ -10,8 +10,9 @@ A stock inventory management system for IBK Investment Securities. Members can r
 - **Sessions**: connect-pg-simple for PostgreSQL session storage
 
 ## Key Pages
-- `/` - Landing page with Samsung stock chart (canvas-based), order book, community feed, news, stock info tabs
-- `/login` - User login (frozen accounts blocked with message)
+- `/` - Promotional home page (IBK branding, hero sections, CTAs linking to /trade and /register, login/register buttons, floating CTA bar)
+- `/trade` - Trading page with Samsung stock chart (canvas-based), order book, community feed, news, stock info tabs
+- `/login` - User login (frozen accounts blocked with message). After login redirects to /trade
 - `/register` - User registration (username, password, name, bank, account info)
 - `/dashboard` - User dashboard showing stock holdings and transaction history
 - `/chat` - 1:1 customer service chat (logged-in members only, real-time WebSocket)

@@ -86,7 +86,7 @@ export default function LoginPage() {
       if (data.user.isAdmin) {
         setLocation("/admin");
       } else {
-        setLocation("/");
+        setLocation("/trade");
       }
     },
     onError: (error: Error) => {
