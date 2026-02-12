@@ -128,11 +128,6 @@ interface StockData {
   todayOpen: number;
   todayHigh: number;
   todayLow: number;
-  fiftyTwoWeekHigh: number;
-  fiftyTwoWeekLow: number;
-  volume: number;
-  marketCap: number;
-  sharesOutstanding: number;
   chartData: { date: string; price: number }[];
   lastUpdated: string;
 }
@@ -736,23 +731,7 @@ function DonutChart({ segments }: { segments: typeof REVENUE_SEGMENTS }) {
   return <canvas ref={canvasRef} className="w-[180px] h-[180px]" />;
 }
 
-function formatMarketCap(value: number): string {
-  const jo = Math.floor(value / 1_000_000_000_000);
-  const eok = Math.floor((value % 1_000_000_000_000) / 100_000_000);
-  if (jo > 0) {
-    return `${jo.toLocaleString()}조 ${eok.toLocaleString()}억원`;
-  }
-  return `${eok.toLocaleString()}억원`;
-}
-
-function StockInfoView({ stockData }: { stockData?: StockData }) {
-  const marketCapStr = stockData?.marketCap ? formatMarketCap(stockData.marketCap) : "-";
-  const sharesStr = stockData?.sharesOutstanding ? `${stockData.sharesOutstanding.toLocaleString()}주` : "-";
-  const volumeStr = stockData?.volume ? `${stockData.volume.toLocaleString()}주` : "-";
-  const currentPriceStr = stockData?.currentPrice ? `${stockData.currentPrice.toLocaleString()}원` : "-";
-  const fiftyTwoHighStr = stockData?.fiftyTwoWeekHigh ? `${stockData.fiftyTwoWeekHigh.toLocaleString()}원` : "-";
-  const fiftyTwoLowStr = stockData?.fiftyTwoWeekLow ? `${stockData.fiftyTwoWeekLow.toLocaleString()}원` : "-";
-
+function StockInfoView() {
   return (
     <div className="max-w-[1400px] mx-auto w-full px-4 py-6 flex-1 space-y-8">
       <Card className="p-6">
@@ -762,7 +741,7 @@ function StockInfoView({ stockData }: { stockData?: StockData }) {
               <h2 className="text-xl font-bold">삼성전자</h2>
               <span className="text-sm text-muted-foreground">국내 · 005930 · 코스피</span>
             </div>
-            <p className="text-[13px] text-muted-foreground mt-0.5">출처: Yahoo Finance 실시간 데이터{stockData?.lastUpdated ? ` · ${new Date(stockData.lastUpdated).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })} 기준` : ""}</p>
+            <p className="text-[13px] text-muted-foreground mt-0.5">출처: FnGuide 및 기업 IR자료</p>
           </div>
           <Button size="sm" variant="outline" className="text-sm" data-testid="btn-homepage">
             <ExternalLink className="w-3 h-3 mr-1" />홈페이지
@@ -773,16 +752,14 @@ function StockInfoView({ stockData }: { stockData?: StockData }) {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-border">
           {[
-            { label: "현재가", value: currentPriceStr },
-            { label: "시가총액", value: marketCapStr },
-            { label: "52주 최고", value: fiftyTwoHighStr },
-            { label: "52주 최저", value: fiftyTwoLowStr },
-            { label: "거래량", value: volumeStr },
-            { label: "발행주식수", value: sharesStr },
+            { label: "시가총액", value: "1,078조 8,856억원" },
+            { label: "실제 기업 가치", value: "459조 467억원" },
             { label: "기업명", value: "Samsung Electronics" },
+            { label: "대표이사", value: "전영현, 노태문" },
             { label: "상장일", value: "1975년 6월 11일" },
+            { label: "발행주식수", value: "6,735,612,586주" },
           ].map((item) => (
-            <div key={item.label} className="bg-background p-3" data-testid={`info-${item.label}`}>
+            <div key={item.label} className="bg-background p-3">
               <p className="text-sm text-muted-foreground">{item.label}</p>
               <p className="text-base font-semibold mt-1 tabular-nums">{item.value}</p>
             </div>
@@ -834,7 +811,7 @@ function StockInfoView({ stockData }: { stockData?: StockData }) {
 
       <div>
         <h2 className="text-xl font-bold mb-1">투자 지표</h2>
-        <p className="text-sm text-muted-foreground mb-3">{stockData?.lastUpdated ? `${new Date(stockData.lastUpdated).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })} 기준` : ""}</p>
+        <p className="text-sm text-muted-foreground mb-3">12:04 기준</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="p-4">
             <h3 className="text-base font-bold mb-3">가치평가</h3>
@@ -1279,8 +1256,8 @@ export default function LandingPage() {
   const infoItems = stockData ? [
     { label: "1일 최고", value: stockData.todayHigh.toLocaleString() },
     { label: "1일 최저", value: stockData.todayLow.toLocaleString() },
-    { label: "52주 최고", value: stockData.fiftyTwoWeekHigh > 0 ? stockData.fiftyTwoWeekHigh.toLocaleString() : "-" },
-    { label: "52주 최저", value: stockData.fiftyTwoWeekLow > 0 ? stockData.fiftyTwoWeekLow.toLocaleString() : "-" },
+    { label: "52주 최고", value: stockData.chartData.length > 0 ? Math.max(...stockData.chartData.map(d => d.price)).toLocaleString() : "-" },
+    { label: "52주 최저", value: stockData.chartData.length > 0 ? Math.min(...stockData.chartData.map(d => d.price)).toLocaleString() : "-" },
   ] : [];
 
   return (
@@ -1396,7 +1373,7 @@ export default function LandingPage() {
       {activeTab === "feed" ? (
         <FeedView />
       ) : activeTab === "info" ? (
-        <StockInfoView stockData={stockData} />
+        <StockInfoView />
       ) : activeTab === "news" ? (
         <NewsView />
       ) : (
