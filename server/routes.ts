@@ -53,8 +53,13 @@ async function fetchYahooFinanceData() {
       : 0;
 
     const todayOpen = chartData.length > 0 ? chartData[chartData.length - 1].open : currentPrice;
-    const todayHigh = chartData.length > 0 ? chartData[chartData.length - 1].high : currentPrice;
-    const todayLow = chartData.length > 0 ? chartData[chartData.length - 1].low : currentPrice;
+    const todayHigh = Math.round(meta.regularMarketDayHigh || (chartData.length > 0 ? chartData[chartData.length - 1].high : currentPrice));
+    const todayLow = Math.round(meta.regularMarketDayLow || (chartData.length > 0 ? chartData[chartData.length - 1].low : currentPrice));
+    const fiftyTwoWeekHigh = Math.round(meta.fiftyTwoWeekHigh || 0);
+    const fiftyTwoWeekLow = Math.round(meta.fiftyTwoWeekLow || 0);
+    const volume = meta.regularMarketVolume || 0;
+    const sharesOutstanding = 5_789_113_300 + 822_886_700;
+    const marketCap = currentPrice * sharesOutstanding;
 
     const responseData = {
       currentPrice,
@@ -64,6 +69,11 @@ async function fetchYahooFinanceData() {
       todayOpen,
       todayHigh,
       todayLow,
+      fiftyTwoWeekHigh,
+      fiftyTwoWeekLow,
+      volume,
+      marketCap,
+      sharesOutstanding,
       chartData,
       lastUpdated: new Date().toISOString(),
     };
