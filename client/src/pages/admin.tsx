@@ -1077,7 +1077,42 @@ export default function AdminPage() {
                   </p>
                 </Card>
               ) : (
-                <Card className="p-0 overflow-hidden bg-[#111d33] border-[#1e3050]">
+                <>
+                <div className="md:hidden space-y-3">
+                  {filteredUsers.map((u) => (
+                    <div key={u.id} className={`rounded-md border border-[#1e3050] bg-[#111d33] p-4 space-y-3 ${u.isFrozen ? "opacity-60" : ""}`} data-testid={`row-user-${u.id}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-[#004B9C]/20 flex items-center justify-center shrink-0">
+                          <span className="text-sm font-bold text-[#4a90d9]">{u.fullName.charAt(0)}</span>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-slate-200 truncate">{u.fullName}</p>
+                          <p className="text-xs text-slate-400">@{u.username}</p>
+                        </div>
+                        {u.isFrozen ? (
+                          <Badge variant="destructive" className="text-[11px] shrink-0">동결</Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-[11px] border-[#1e3050] text-slate-400 shrink-0">정상</Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-400 space-y-1">
+                        <p>{u.bank} · {u.accountHolder}</p>
+                        <p className="font-mono text-slate-500">{u.accountNumber}</p>
+                      </div>
+                      <div className="flex items-center gap-1 flex-wrap pt-1 border-t border-[#1e3050]">
+                        <MemberDetailDialog user={u} transactions={transactions} />
+                        <MemberEditDialog user={u} onSuccess={refreshData} />
+                        <MemberFreezeDialog user={u} onSuccess={refreshData} />
+                        <MemberDeleteDialog user={u} onSuccess={refreshData} />
+                        <div className="w-px h-5 bg-[#1e3050] mx-1" />
+                        <StockTransactionDialog user={u} type="in" onSuccess={refreshData} />
+                        <StockTransactionDialog user={u} type="out" onSuccess={refreshData} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Card className="hidden md:block p-0 overflow-hidden bg-[#111d33] border-[#1e3050]">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -1127,6 +1162,7 @@ export default function AdminPage() {
                     </Table>
                   </div>
                 </Card>
+                </>
               )}
             </>
           )}
@@ -1168,7 +1204,47 @@ export default function AdminPage() {
                   <p className="font-medium text-slate-400">거래 내역이 없습니다</p>
                 </Card>
               ) : (
-                <Card className="p-0 overflow-hidden bg-[#111d33] border-[#1e3050]">
+                <>
+                <div className="md:hidden space-y-3">
+                  {filteredTransactions.map((tx) => (
+                    <div key={tx.id} className="rounded-md border border-[#1e3050] bg-[#111d33] p-4 space-y-3" data-testid={`row-tx-${tx.id}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge
+                          variant={tx.type === "in" ? "default" : "secondary"}
+                          className={tx.type === "in" ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500 text-white"}
+                        >
+                          {tx.type === "in" ? "입고" : "출고"}
+                        </Badge>
+                        <span className="text-xs text-slate-500">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</span>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-slate-200">{getUserName(tx.userId)} · {tx.stockName}</p>
+                        <div className="flex items-center gap-3 text-xs text-slate-400">
+                          <span>{tx.quantity.toLocaleString()}주</span>
+                          <span>{tx.pricePerShare.toLocaleString()}원</span>
+                        </div>
+                        <p className="text-sm font-medium text-slate-300 tabular-nums">총 {(tx.quantity * tx.pricePerShare).toLocaleString()}원</p>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 text-xs text-slate-500">
+                        <span>{tx.category}{tx.memo ? ` · ${tx.memo}` : ""}</span>
+                      </div>
+                      <div className="flex items-center gap-1 pt-1 border-t border-[#1e3050]">
+                        <TransactionEditDialog tx={tx} onSuccess={refreshData} />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => deleteTransactionMutation.mutate(tx.id)}
+                          data-testid={`button-delete-tx-${tx.id}`}
+                          title="삭제"
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Card className="hidden md:block p-0 overflow-hidden bg-[#111d33] border-[#1e3050]">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -1226,6 +1302,7 @@ export default function AdminPage() {
                     </Table>
                   </div>
                 </Card>
+                </>
               )}
             </>
           )}
@@ -1251,7 +1328,64 @@ export default function AdminPage() {
                   <p className="font-medium text-slate-400">대체출고 신청 내역이 없습니다</p>
                 </Card>
               ) : (
-                <Card className="p-0 overflow-hidden bg-[#111d33] border-[#1e3050]">
+                <>
+                <div className="md:hidden space-y-3">
+                  {(allTransferRequests || []).map((tr) => (
+                    <div key={tr.id} className="rounded-md border border-[#1e3050] bg-[#111d33] p-4 space-y-3" data-testid={`row-transfer-${tr.id}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          {tr.status === "pending" && <Badge variant="outline" className="gap-1 border-[#1e3050] text-slate-400"><Clock className="w-3 h-3" />대기</Badge>}
+                          {tr.status === "approved" && <Badge className="gap-1 bg-green-600 border-green-600"><CheckCircle2 className="w-3 h-3" />승인</Badge>}
+                          {tr.status === "rejected" && <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" />거부</Badge>}
+                          {tr.status === "held" && <Badge variant="secondary" className="gap-1"><PauseCircle className="w-3 h-3" />보류</Badge>}
+                        </div>
+                        <span className="text-xs text-slate-500">{new Date(tr.createdAt).toLocaleDateString("ko-KR")}</span>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium text-slate-200">{getUserName(tr.userId)}</p>
+                        <p className="text-sm text-slate-300">{tr.stockName} · {tr.quantity.toLocaleString()}주</p>
+                      </div>
+                      <div className="text-xs text-slate-400 space-y-1">
+                        <p>{tr.accountName} · <span className="font-mono text-slate-500">{tr.accountNumber}</span></p>
+                        {tr.adminMemo && <p className="text-slate-500">{tr.adminMemo}</p>}
+                      </div>
+                      <div className="flex items-center gap-1 flex-wrap pt-1 border-t border-[#1e3050]">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="bg-green-600 border-green-600 text-xs"
+                          onClick={() => updateTransferStatusMutation.mutate({ id: tr.id, status: "approved" })}
+                          disabled={tr.status === "approved" || updateTransferStatusMutation.isPending}
+                          data-testid={`button-approve-${tr.id}`}
+                        >
+                          승인
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="text-xs"
+                          onClick={() => updateTransferStatusMutation.mutate({ id: tr.id, status: "rejected" })}
+                          disabled={tr.status === "rejected" || updateTransferStatusMutation.isPending}
+                          data-testid={`button-reject-${tr.id}`}
+                        >
+                          거부
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="text-xs"
+                          onClick={() => updateTransferStatusMutation.mutate({ id: tr.id, status: "held" })}
+                          disabled={tr.status === "held" || updateTransferStatusMutation.isPending}
+                          data-testid={`button-hold-${tr.id}`}
+                        >
+                          보류
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Card className="hidden md:block p-0 overflow-hidden bg-[#111d33] border-[#1e3050]">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -1327,6 +1461,7 @@ export default function AdminPage() {
                     </Table>
                   </div>
                 </Card>
+                </>
               )}
             </>
           )}
