@@ -7,21 +7,41 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   LogOut, Package, ArrowDownRight, ArrowUpRight, User as UserIcon,
   TrendingUp, RefreshCw, LayoutDashboard, ClipboardList, Wallet, Home,
-  ChevronLeft, ChevronRight, MessageSquare, Menu, X,
+  ChevronLeft, ChevronRight, MessageSquare, Menu, X, ArrowRightLeft,
+  Send, Clock, CheckCircle2, XCircle, PauseCircle,
 } from "lucide-react";
 import { SamsungBadge } from "@/components/samsung-logo";
-import type { User, StockTransaction } from "@shared/schema";
+import type { User, StockTransaction, TransferRequest } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
 
-type DashSection = "overview" | "holdings" | "transactions";
+type DashSection = "overview" | "holdings" | "transactions" | "transfer";
+
+function TransferStatusBadge({ status }: { status: string }) {
+  switch (status) {
+    case "pending":
+      return <Badge variant="outline" className="gap-1" data-testid="badge-status-pending"><Clock className="w-3 h-3" />대기중</Badge>;
+    case "approved":
+      return <Badge variant="default" className="gap-1 bg-green-600 border-green-600" data-testid="badge-status-approved"><CheckCircle2 className="w-3 h-3" />승인</Badge>;
+    case "rejected":
+      return <Badge variant="destructive" className="gap-1" data-testid="badge-status-rejected"><XCircle className="w-3 h-3" />거부</Badge>;
+    case "held":
+      return <Badge variant="secondary" className="gap-1" data-testid="badge-status-held"><PauseCircle className="w-3 h-3" />보류</Badge>;
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
+}
 
 const sidebarItems: { id: DashSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "overview", label: "계좌 총괄", icon: LayoutDashboard },
   { id: "holdings", label: "보유 종목", icon: Wallet },
   { id: "transactions", label: "거래 내역", icon: ClipboardList },
+  { id: "transfer", label: "타사 대체출고", icon: ArrowRightLeft },
 ];
 
 export default function DashboardPage() {
@@ -51,6 +71,56 @@ export default function DashboardPage() {
     refetchInterval: 10000,
   });
 
+  const { data: myTransfers = [] } = useQuery<TransferRequest[]>({
+    queryKey: ["/api/transfer-requests/my"],
+    enabled: !!authData?.user,
+  });
+
+  const [transferName, setTransferName] = useState("");
+  const [transferAccount, setTransferAccount] = useState("");
+  const [transferQuantity, setTransferQuantity] = useState("");
+  const { toast } = useToast();
+
+  const transferMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/transfer-requests", {
+        userId: authData!.user.id,
+        accountName: transferName,
+        accountNumber: transferAccount,
+        quantity: parseInt(transferQuantity),
+        stockName: "삼성전자",
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "출고 신청 완료", description: "타사 대체출고가 신청되었습니다. 관리자 승인을 기다려주세요." });
+      setTransferName("");
+      setTransferAccount("");
+      setTransferQuantity("");
+      queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions/my"] });
+    },
+    onError: (error: Error) => {
+      let msg = "출고 신청에 실패했습니다";
+      try {
+        const parsed = JSON.parse(error.message.replace(/^[0-9]+:\s*/, ""));
+        if (parsed.message) msg = parsed.message;
+      } catch {
+        if (error.message.includes("400")) msg = "보유 수량을 초과하거나 입력이 올바르지 않습니다";
+      }
+      toast({ title: "출고 신청 실패", description: msg, variant: "destructive" });
+    },
+  });
+
+  const handleTransferSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!transferName || !transferAccount || !transferQuantity || parseInt(transferQuantity) <= 0) {
+      toast({ title: "입력 오류", description: "모든 항목을 올바르게 입력해주세요", variant: "destructive" });
+      return;
+    }
+    transferMutation.mutate();
+  };
+
   const logoutMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/auth/logout");
@@ -77,6 +147,9 @@ export default function DashboardPage() {
         const data = JSON.parse(event.data);
         if (data.type === "transaction_update") {
           queryClient.invalidateQueries({ queryKey: ["/api/transactions/my"] });
+        }
+        if (data.type === "transfer_update") {
+          queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
         }
       } catch {}
     };
@@ -505,6 +578,112 @@ export default function DashboardPage() {
                 </Card>
               )}
             </>
+          )}
+
+          {activeSection === "transfer" && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <Card className="p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <ArrowRightLeft className="w-5 h-5 text-[#004B9C]" />
+                  <h2 className="text-lg font-semibold" data-testid="text-transfer-title">타사 대체출고 신청</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  IBK증권 계좌에서 타 증권사로 삼성전자 주식을 출고할 수 있습니다.
+                  출고 신청 시 현재 포지션이 종료되며, 관리자 승인 후 처리됩니다.
+                </p>
+                {totalHolding > 0 && (
+                  <div className="bg-muted/50 rounded-md p-3 mb-4 text-sm">
+                    <span className="text-muted-foreground">현재 보유수량: </span>
+                    <span className="font-bold" data-testid="text-transfer-holding">{totalHolding.toLocaleString()}주</span>
+                  </div>
+                )}
+                <form onSubmit={handleTransferSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dash-transfer-name">예금주명</Label>
+                    <Input
+                      id="dash-transfer-name"
+                      value={transferName}
+                      onChange={(e) => setTransferName(e.target.value)}
+                      placeholder="출고 받을 계좌 예금주명"
+                      required
+                      data-testid="input-transfer-name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dash-transfer-account">계좌번호</Label>
+                    <Input
+                      id="dash-transfer-account"
+                      value={transferAccount}
+                      onChange={(e) => setTransferAccount(e.target.value)}
+                      placeholder="출고 받을 증권사 계좌번호"
+                      required
+                      data-testid="input-transfer-account"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dash-transfer-quantity">출고 수량 (주)</Label>
+                    <Input
+                      id="dash-transfer-quantity"
+                      type="number"
+                      min="1"
+                      max={totalHolding}
+                      value={transferQuantity}
+                      onChange={(e) => setTransferQuantity(e.target.value)}
+                      placeholder="출고할 주식 수량"
+                      required
+                      data-testid="input-transfer-quantity"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full bg-[#004B9C] border-[#004B9C]"
+                    disabled={transferMutation.isPending || totalHolding <= 0}
+                    data-testid="button-submit-transfer"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {transferMutation.isPending ? "신청 중..." : "출고 신청"}
+                  </Button>
+                </form>
+              </Card>
+
+              <Card className="p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock className="w-5 h-5 text-[#004B9C]" />
+                  <h2 className="text-lg font-semibold">대체출고 신청 목록</h2>
+                </div>
+                {myTransfers.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    출고 신청 내역이 없습니다
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                    {myTransfers.map((tr) => (
+                      <div
+                        key={tr.id}
+                        className="border rounded-md p-3 space-y-1"
+                        data-testid={`transfer-item-${tr.id}`}
+                      >
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="font-medium text-sm">{tr.stockName} {tr.quantity}주</span>
+                          <TransferStatusBadge status={tr.status} />
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {tr.accountName} | {tr.accountNumber}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(tr.createdAt).toLocaleString("ko-KR")}
+                        </div>
+                        {tr.adminMemo && (
+                          <div className="text-xs text-muted-foreground mt-1 bg-muted/50 rounded p-1.5">
+                            관리자 메모: {tr.adminMemo}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </div>
           )}
         </main>
       </div>
