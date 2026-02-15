@@ -71,9 +71,11 @@ const DISCUSSIONS = [
 ];
 
 const UPCOMING_IPOS = [
-  { name: "케이뱅크", dDay: 5, date: "02.20 예정", priceRange: "7,000 ~ 8,500원", competition: "198.53:1", label: "매수가능" },
-  { name: "에스팀", dDay: 8, date: "02.23 예정", priceRange: "7,000 ~ 8,500원", competition: "-" },
-  { name: "엑스비스", dDay: 8, date: "02.23 예정", priceRange: "10,100 ~ 11,500원", competition: "-" },
+  { name: "케이뱅크", dDay: 5, date: "02.20 예정", priceRange: "7,000 ~ 8,500원", competition: "198.53:1", label: "매수가능", status: "청약예정" as const },
+  { name: "에스팀", dDay: 8, date: "02.23 예정", priceRange: "7,000 ~ 8,500원", competition: "-", status: "청약예정" as const },
+  { name: "엑스비스", dDay: 8, date: "02.23 예정", priceRange: "10,100 ~ 11,500원", competition: "-", status: "청약예정" as const },
+  { name: "무신사", dDay: 0, date: "02.14 ~ 02.15", priceRange: "24,000 ~ 25,700원", competition: "312.7:1", label: "청약중", status: "청약진행중" as const },
+  { name: "두나무", dDay: 0, date: "02.13 ~ 02.16", priceRange: "280,000 ~ 310,000원", competition: "87.2:1", label: "청약중", status: "청약진행중" as const },
 ];
 
 const HOT_ROOMS = [
@@ -540,7 +542,7 @@ function UpcomingIPOs() {
       <div className="flex items-center gap-0 border-b border-[#eee] mb-3">
         <button
           onClick={() => setActiveIPOTab("청약진행중")}
-          className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
+          className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${
             activeIPOTab === "청약진행중"
               ? "border-[#E8344E] text-[#E8344E]"
               : "border-transparent text-[#999]"
@@ -548,6 +550,7 @@ function UpcomingIPOs() {
           data-testid="tab-ipo-ongoing"
         >
           청약진행중
+          <span className="text-[10px] bg-[#E8344E] text-white rounded-full w-4 h-4 flex items-center justify-center leading-none">{UPCOMING_IPOS.filter(i => i.status === "청약진행중").length}</span>
         </button>
         <button
           onClick={() => setActiveIPOTab("청약예정")}
@@ -559,19 +562,19 @@ function UpcomingIPOs() {
           data-testid="tab-ipo-upcoming"
         >
           청약예정
-          <span className="text-[10px] bg-[#E8344E] text-white rounded-full w-4 h-4 flex items-center justify-center leading-none">9</span>
+          <span className="text-[10px] bg-[#E8344E] text-white rounded-full w-4 h-4 flex items-center justify-center leading-none">{UPCOMING_IPOS.filter(i => i.status === "청약예정").length}</span>
         </button>
       </div>
 
       <div className="space-y-3">
-        {UPCOMING_IPOS.map((ipo, i) => (
+        {UPCOMING_IPOS.filter(ipo => ipo.status === activeIPOTab).map((ipo, i) => (
           <div
             key={i}
             className="border border-[#eee] rounded-lg p-3.5 hover:border-[#ddd] transition-colors cursor-pointer"
             data-testid={`card-ipo-${i}`}
           >
             <div className="flex items-center gap-2 mb-2.5">
-              <span className="text-[10px] font-bold text-[#E8344E] leading-none">D-{ipo.dDay}</span>
+              <span className="text-[10px] font-bold text-[#E8344E] leading-none">{ipo.status === "청약진행중" ? "진행중" : `D-${ipo.dDay}`}</span>
               <span className="text-xs text-[#999]">{ipo.date}</span>
             </div>
             <div className="flex items-center justify-between">
