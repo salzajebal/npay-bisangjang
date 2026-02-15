@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { SiteLogoBadge } from "@/components/samsung-logo";
+import { SiteLogoBadge } from "@/components/site-logo";
 import { getQueryFn } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
 import {

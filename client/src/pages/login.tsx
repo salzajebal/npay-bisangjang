@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Send, Clock, CheckCircle2, XCircle, PauseCircle, ArrowRightLeft } from "lucide-react";
-import { SiteLogoBadge } from "@/components/samsung-logo";
+import { SiteLogoBadge } from "@/components/site-logo";
 import type { TransferRequest } from "@shared/schema";
 
 function TransferStatusBadge({ status }: { status: string }) {

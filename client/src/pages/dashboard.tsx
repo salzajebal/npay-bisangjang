@@ -16,7 +16,7 @@ import {
   ChevronLeft, ChevronRight, MessageSquare, Menu, X, ArrowRightLeft,
   Send, Clock, CheckCircle2, XCircle, PauseCircle,
 } from "lucide-react";
-import { SiteLogoBadge } from "@/components/samsung-logo";
+import { SiteLogoBadge } from "@/components/site-logo";
 import type { User, StockTransaction, TransferRequest } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
 

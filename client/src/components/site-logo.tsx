@@ -25,8 +25,3 @@ export function SiteLogoBadge({ className = "", size = 32 }: { className?: strin
     </div>
   );
 }
-
-export const SamsungBadge = SiteLogoBadge;
-export const SamsungLogo = SiteLogo;
-export const SamsungLogoWithBadge = SiteLogo;
-export const SamsungLogoCompact = SiteLogo;

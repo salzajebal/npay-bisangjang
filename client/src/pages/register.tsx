@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { registerSchema, KOREAN_BANKS } from "@shared/schema";
 import { ArrowLeft } from "lucide-react";
-import { SiteLogoBadge } from "@/components/samsung-logo";
+import { SiteLogoBadge } from "@/components/site-logo";
 import { z } from "zod";
 
 type RegisterForm = z.infer<typeof registerSchema>;

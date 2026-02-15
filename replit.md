@@ -26,7 +26,7 @@ A securities platform for Korean unlisted stocks (비상장주식), branded as �
 
 ## Admin Features
 - 회원정보열람, 회원정보변경, 회원동결/해제, 회원삭제
-- 입고/출고 처리 (configurable stock name, not Samsung-specific)
+- 입고/출고 처리 (configurable stock name for unlisted stocks)
 - 입고량 수정, 대체출고 관리, 1:1 상담
 
 ## Stock Categories (비상장)
