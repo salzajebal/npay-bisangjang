@@ -86,12 +86,6 @@ const HOT_ROOMS = [
 
 const NAV_LINKS = [
   { label: "공모주 IPO 캘린더", href: "#" },
-  { label: "서비스소개", href: "#" },
-  { label: "자주하는 질문", href: "#" },
-  { label: "이벤트", href: "#" },
-  { label: "공지사항", href: "#" },
-  { label: "회사소개", href: "#" },
-  { label: "채용", href: "#" },
 ];
 
 function useTickerPrices() {
