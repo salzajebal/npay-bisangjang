@@ -9,74 +9,6 @@ import bcrypt from "bcrypt";
 import { WebSocketServer, WebSocket } from "ws";
 import { log } from "./index";
 
-let stockCache: { data: any; timestamp: number } | null = null;
-const CACHE_DURATION = 60 * 1000;
-
-async function fetchYahooFinanceData() {
-  if (stockCache && Date.now() - stockCache.timestamp < CACHE_DURATION) {
-    return stockCache.data;
-  }
-
-  try {
-    const chartRes = await fetch(
-      "https://query1.finance.yahoo.com/v8/finance/chart/005930.KS?interval=1d&range=1y",
-      { headers: { "User-Agent": "Mozilla/5.0" } }
-    );
-    const chartJson = await chartRes.json();
-    const result = chartJson.chart?.result?.[0];
-
-    if (!result) throw new Error("No data from Yahoo Finance");
-
-    const timestamps = result.timestamp || [];
-    const closes = result.indicators?.quote?.[0]?.close || [];
-    const opens = result.indicators?.quote?.[0]?.open || [];
-    const highs = result.indicators?.quote?.[0]?.high || [];
-    const lows = result.indicators?.quote?.[0]?.low || [];
-
-    const chartData = timestamps.map((ts: number, i: number) => ({
-      date: new Date(ts * 1000).toISOString().split("T")[0],
-      price: Math.round(closes[i] || 0),
-      open: Math.round(opens[i] || 0),
-      high: Math.round(highs[i] || 0),
-      low: Math.round(lows[i] || 0),
-    })).filter((d: any) => d.price > 0);
-
-    const meta = result.meta || {};
-    const currentPrice = Math.round(meta.regularMarketPrice || closes[closes.length - 1] || 0);
-    const validCloses = closes.filter((c: number | null) => c != null && c > 0);
-    const previousClose = validCloses.length >= 2
-      ? Math.round(validCloses[validCloses.length - 2])
-      : Math.round(meta.previousClose || currentPrice);
-    const priceChange = currentPrice - previousClose;
-    const priceChangePercent = previousClose > 0
-      ? parseFloat(((priceChange / previousClose) * 100).toFixed(2))
-      : 0;
-
-    const todayOpen = chartData.length > 0 ? chartData[chartData.length - 1].open : currentPrice;
-    const todayHigh = chartData.length > 0 ? chartData[chartData.length - 1].high : currentPrice;
-    const todayLow = chartData.length > 0 ? chartData[chartData.length - 1].low : currentPrice;
-
-    const responseData = {
-      currentPrice,
-      previousClose,
-      priceChange,
-      priceChangePercent,
-      todayOpen,
-      todayHigh,
-      todayLow,
-      chartData,
-      lastUpdated: new Date().toISOString(),
-    };
-
-    stockCache = { data: responseData, timestamp: Date.now() };
-    return responseData;
-  } catch (error) {
-    console.error("Yahoo Finance fetch error:", error);
-    if (stockCache) return stockCache.data;
-    throw error;
-  }
-}
-
 const PgSession = connectPg(session);
 
 declare module "express-session" {
@@ -95,7 +27,7 @@ export async function registerRoutes(
         conString: process.env.DATABASE_URL,
         createTableIfMissing: true,
       }),
-      secret: process.env.SESSION_SECRET || "samsung-stock-secret-key",
+      secret: process.env.SESSION_SECRET || "securities-plus-secret-key",
       resave: false,
       saveUninitialized: false,
       cookie: {
@@ -144,25 +76,16 @@ export async function registerRoutes(
     });
   }
 
-  app.get("/api/stock/samsung", async (_req, res) => {
-    try {
-      const data = await fetchYahooFinanceData();
-      return res.json(data);
-    } catch (error) {
-      return res.status(500).json({ message: "주식 데이터를 가져올 수 없습니다" });
-    }
-  });
-
   let newsCache: { data: any; timestamp: number } | null = null;
   const NEWS_CACHE_DURATION = 5 * 60 * 1000;
 
-  app.get("/api/stock/samsung/news", async (_req, res) => {
+  app.get("/api/stocks/news", async (_req, res) => {
     try {
       if (newsCache && Date.now() - newsCache.timestamp < NEWS_CACHE_DURATION) {
         return res.json(newsCache.data);
       }
 
-      const rssUrl = "https://news.google.com/rss/search?q=%EC%82%BC%EC%84%B1%EC%A0%84%EC%9E%90&hl=ko&gl=KR&ceid=KR:ko";
+      const rssUrl = "https://news.google.com/rss/search?q=%EB%B9%84%EC%83%81%EC%9E%A5+%EC%A3%BC%EC%8B%9D&hl=ko&gl=KR&ceid=KR:ko";
       const response = await fetch(rssUrl, {
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
@@ -171,11 +94,12 @@ export async function registerRoutes(
       });
       const xml = await response.text();
 
-      const news: { title: string; publisher: string; link: string; publishedAt: string | null; thumbnail: string | null }[] = [];
+      const news: { title: string; publisher: string; link: string; publishedAt: string; color: string }[] = [];
+      const brandColors = ["#E8344E", "#333", "#5F0080", "#1976D2", "#43A047", "#E65100", "#FF6D00", "#00838F"];
 
       const itemPattern = /<item>([\s\S]*?)<\/item>/g;
       let itemMatch;
-      while ((itemMatch = itemPattern.exec(xml)) !== null && news.length < 15) {
+      while ((itemMatch = itemPattern.exec(xml)) !== null && news.length < 10) {
         const item = itemMatch[1];
         const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]>|<title>(.*?)<\/title>/);
         const linkMatch = item.match(/<link>(.*?)<\/link>/);
@@ -188,27 +112,22 @@ export async function registerRoutes(
         const pubDate = pubDateMatch?.[1] || null;
 
         if (title && link) {
-          const timeDiff = pubDate ? Date.now() - new Date(pubDate).getTime() : 0;
-          const mins = Math.floor(timeDiff / 60000);
-          let timeStr = "방금 전";
-          if (mins < 60) timeStr = `${mins}분 전`;
-          else if (mins < 1440) timeStr = `${Math.floor(mins / 60)}시간 전`;
-          else timeStr = `${Math.floor(mins / 1440)}일 전`;
-
-          news.push({ title, publisher, link, publishedAt: timeStr, thumbnail: null });
+          let dateStr = "방금 전";
+          if (pubDate) {
+            const d = new Date(pubDate);
+            dateStr = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+          }
+          news.push({ title, publisher, link, publishedAt: dateStr, color: brandColors[news.length % brandColors.length] });
         }
       }
 
       if (news.length === 0) {
         const fallback = [
-          { title: "삼성전자, HBM4 양산 본격화...AI 반도체 시장 공략 가속", publisher: "한국경제", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "방금 전", thumbnail: null },
-          { title: "삼성전자 2나노 파운드리 수율 개선 소식에 주가 강세", publisher: "매일경제", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "1시간 전", thumbnail: null },
-          { title: "삼성전자, 갤럭시 S26 시리즈 사전 예약 역대 최다", publisher: "조선비즈", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "2시간 전", thumbnail: null },
-          { title: "외국인 삼성전자 3거래일 연속 순매수...반도체 기대감", publisher: "서울경제", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "3시간 전", thumbnail: null },
-          { title: "삼성전자, DRAM 가격 반등에 실적 개선 전망", publisher: "이데일리", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "4시간 전", thumbnail: null },
-          { title: "삼성전자 배당 확대 기대...주주환원 정책 강화", publisher: "뉴스1", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "5시간 전", thumbnail: null },
-          { title: "삼성전자, 차세대 메모리 기술 특허 출원 급증", publisher: "전자신문", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "6시간 전", thumbnail: null },
-          { title: "삼성전자 반도체 부문 설비 투자 확대 계획 발표", publisher: "아시아경제", link: "https://news.google.com/search?q=삼성전자&hl=ko&gl=KR", publishedAt: "7시간 전", thumbnail: null },
+          { title: "[단독] 토스, 해외 코인 거래소 인수 검토...美 기관 플랫폼과 접촉", publisher: "한국경제", link: "#", publishedAt: "2026.02.13", color: "#E8344E" },
+          { title: "'IPO 삼수생' 케이뱅크, 공모가 8300원 확정...내달 5일 상장 예정", publisher: "파이낸셜뉴스", link: "#", publishedAt: "2026.02.13", color: "#333" },
+          { title: "놀유니버스, 부산관광공사·SM C&C와 '부산원아시아페스티벌' MOU 체결", publisher: "한국경제", link: "#", publishedAt: "2026.02.13", color: "#43A047" },
+          { title: "빗썸 사업자 면허 갱신, 무기한 연기될 듯", publisher: "한국경제", link: "#", publishedAt: "2026.02.13", color: "#E65100" },
+          { title: "네이버-두나무 결합, '대주주 지분 제한'에 막히나", publisher: "뉴시스", link: "#", publishedAt: "2026.02.13", color: "#5F0080" },
         ];
         newsCache = { data: fallback, timestamp: Date.now() };
         return res.json(fallback);
@@ -444,13 +363,12 @@ export async function registerRoutes(
         return res.status(400).json({ message: `보유 수량(${currentHolding}주)을 초과할 수 없습니다` });
       }
       const transferRequest = await storage.createTransferRequest({ ...data, userId: req.session.userId });
-      const stockData = await fetchYahooFinanceData();
-      const currentPrice = stockData?.currentPrice || 0;
+      const currentPrice = 0;
       await storage.createTransaction({
         userId: req.session.userId,
         type: "out",
         category: "타사대체출고",
-        stockName: "삼성전자",
+        stockName: data.stockName || "비상장주식",
         quantity: data.quantity,
         pricePerShare: currentPrice,
         memo: `타사대체출고 신청 - ${data.accountName} (${data.accountNumber})`,

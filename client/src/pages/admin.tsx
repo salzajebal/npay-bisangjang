@@ -20,7 +20,6 @@ import {
   Eye, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
   CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu,
 } from "lucide-react";
-import { SamsungBadge } from "@/components/samsung-logo";
 
 function StockTransactionDialog({
   user,
@@ -32,30 +31,12 @@ function StockTransactionDialog({
   onSuccess: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [category, setCategory] = useState("보통주");
-  const [stockName, setStockName] = useState("삼성전자");
+  const [category, setCategory] = useState("일반");
+  const [stockName, setStockName] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [pricePerShare, setPricePerShare] = useState("95000");
+  const [pricePerShare, setPricePerShare] = useState("");
   const [memo, setMemo] = useState("");
-  const [loadingPrice, setLoadingPrice] = useState(false);
   const { toast } = useToast();
-
-  const fetchRealtimePrice = async () => {
-    setLoadingPrice(true);
-    try {
-      const res = await fetch("/api/stock/samsung");
-      if (!res.ok) throw new Error("Failed to fetch");
-      const data = await res.json();
-      if (data.currentPrice) {
-        setPricePerShare(String(data.currentPrice));
-        toast({ title: "실시간 시세 적용", description: `현재가 ${data.currentPrice.toLocaleString()}원이 적용되었습니다` });
-      }
-    } catch {
-      toast({ title: "오류", description: "실시간 시세를 가져올 수 없습니다", variant: "destructive" });
-    } finally {
-      setLoadingPrice(false);
-    }
-  };
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -130,13 +111,8 @@ function StockTransactionDialog({
               <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="수량 입력" data-testid="input-quantity" />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <Label>단가 (원)</Label>
-                <Button type="button" size="sm" variant="outline" onClick={fetchRealtimePrice} disabled={loadingPrice} data-testid="button-realtime-price">
-                  {loadingPrice ? "조회 중..." : "실시간 시세"}
-                </Button>
-              </div>
-              <Input type="number" value={pricePerShare} onChange={(e) => setPricePerShare(e.target.value)} data-testid="input-price" />
+              <Label>단가 (원)</Label>
+              <Input type="number" value={pricePerShare} onChange={(e) => setPricePerShare(e.target.value)} placeholder="단가 입력" data-testid="input-price" />
             </div>
           </div>
           <div className="space-y-2">
@@ -790,12 +766,16 @@ export default function AdminPage() {
     <>
       <div className={`h-14 border-b border-[#1e3050] flex items-center ${!isMobile && sidebarCollapsed ? "justify-center px-2" : "px-4"} gap-2`}>
         {(!isMobile && sidebarCollapsed) ? (
-          <SamsungBadge size={28} />
+          <div className="w-7 h-7 rounded-md bg-[#E8344E] flex items-center justify-center shrink-0">
+            <span className="text-white text-xs font-bold">U+</span>
+          </div>
         ) : (
           <>
-            <SamsungBadge size={28} />
+            <div className="w-7 h-7 rounded-md bg-[#E8344E] flex items-center justify-center shrink-0">
+              <span className="text-white text-xs font-bold">U+</span>
+            </div>
             <div className="flex flex-col min-w-0">
-              <span className="font-bold text-sm truncate text-white">IBK기업증권</span>
+              <span className="font-bold text-sm truncate text-white">증권플러스 비상장</span>
               <span className="text-[11px] text-slate-400">관리자 시스템</span>
             </div>
             {isMobile && (
@@ -815,7 +795,7 @@ export default function AdminPage() {
             <button
               key={item.id}
               onClick={() => { setActiveSection(item.id); if (isMobile) setMobileSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 rounded-md text-sm font-medium transition-colors ${!isMobile && sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${isActive ? "bg-[#004B9C] text-white" : "text-slate-400"}`}
+              className={`w-full flex items-center gap-3 rounded-md text-sm font-medium transition-colors ${!isMobile && sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${isActive ? "bg-[#E8344E] text-white" : "text-slate-400"}`}
               data-testid={`nav-admin-${item.id}`}
               title={!isMobile && sidebarCollapsed ? item.label : undefined}
             >
@@ -909,8 +889,8 @@ export default function AdminPage() {
                       <p className="text-2xl font-bold mt-1 tabular-nums text-white" data-testid="text-total-members">{totalMembers}명</p>
                       {frozenMembers > 0 && <p className="text-xs text-blue-500 mt-0.5">{frozenMembers}명 동결</p>}
                     </div>
-                    <div className="w-10 h-10 rounded-md bg-[#004B9C]/20 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-[#4a90d9]" />
+                    <div className="w-10 h-10 rounded-md bg-[#E8344E]/20 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-[#E8344E]" />
                     </div>
                   </div>
                 </Card>
@@ -942,8 +922,8 @@ export default function AdminPage() {
                       <p className="text-sm text-slate-400">보유 잔량</p>
                       <p className="text-2xl font-bold mt-1 tabular-nums text-white" data-testid="text-admin-holding">{(totalIn - totalOut).toLocaleString()}주</p>
                     </div>
-                    <div className="w-10 h-10 rounded-md bg-[#004B9C]/20 flex items-center justify-center">
-                      <Package className="w-5 h-5 text-[#4a90d9]" />
+                    <div className="w-10 h-10 rounded-md bg-[#E8344E]/20 flex items-center justify-center">
+                      <Package className="w-5 h-5 text-[#E8344E]" />
                     </div>
                   </div>
                 </Card>
@@ -969,8 +949,8 @@ export default function AdminPage() {
                       {users.slice(0, 5).map((u) => (
                         <div key={u.id} className="px-4 py-3 flex items-center justify-between gap-4" data-testid={`dash-user-${u.id}`}>
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-8 h-8 rounded-full bg-[#004B9C]/20 flex items-center justify-center shrink-0">
-                              <span className="text-xs font-bold text-[#4a90d9]">{u.fullName.charAt(0)}</span>
+                            <div className="w-8 h-8 rounded-full bg-[#E8344E]/20 flex items-center justify-center shrink-0">
+                              <span className="text-xs font-bold text-[#E8344E]">{u.fullName.charAt(0)}</span>
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
@@ -1082,8 +1062,8 @@ export default function AdminPage() {
                   {filteredUsers.map((u) => (
                     <div key={u.id} className={`rounded-md border border-[#1e3050] bg-[#111d33] p-4 space-y-3 ${u.isFrozen ? "opacity-60" : ""}`} data-testid={`row-user-${u.id}`}>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#004B9C]/20 flex items-center justify-center shrink-0">
-                          <span className="text-sm font-bold text-[#4a90d9]">{u.fullName.charAt(0)}</span>
+                        <div className="w-10 h-10 rounded-full bg-[#E8344E]/20 flex items-center justify-center shrink-0">
+                          <span className="text-sm font-bold text-[#E8344E]">{u.fullName.charAt(0)}</span>
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-slate-200 truncate">{u.fullName}</p>
@@ -1469,7 +1449,7 @@ export default function AdminPage() {
           {activeSection === "chat" && (
             <>
               <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                <MessageSquare className="w-5 h-5 text-[#4a90d9]" />
+                <MessageSquare className="w-5 h-5 text-[#E8344E]" />
                 <div>
                   <h2 className="text-base sm:text-lg font-bold text-white">1:1 고객 상담</h2>
                   <p className="text-xs sm:text-sm text-slate-400">회원 문의에 실시간으로 응답합니다</p>
@@ -1493,13 +1473,13 @@ export default function AdminPage() {
                       (chatRooms || []).map((room: any) => (
                         <div
                           key={room.id}
-                          className={`px-3 py-3 cursor-pointer hover-elevate ${selectedChatRoom === room.id ? "bg-[#004B9C]/20" : ""}`}
+                          className={`px-3 py-3 cursor-pointer hover-elevate ${selectedChatRoom === room.id ? "bg-[#E8344E]/20" : ""}`}
                           onClick={() => setSelectedChatRoom(room.id)}
                           data-testid={`chat-room-${room.id}`}
                         >
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-[#004B9C]/20 flex items-center justify-center shrink-0">
-                              <span className="text-xs font-bold text-[#4a90d9]">{(room.userName || "?").charAt(0)}</span>
+                            <div className="w-8 h-8 rounded-full bg-[#E8344E]/20 flex items-center justify-center shrink-0">
+                              <span className="text-xs font-bold text-[#E8344E]">{(room.userName || "?").charAt(0)}</span>
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-2">
@@ -1536,8 +1516,8 @@ export default function AdminPage() {
                         <button onClick={() => setSelectedChatRoom(null)} className="sm:hidden p-1 text-slate-400" data-testid="button-chat-back">
                           <ChevronLeft className="w-5 h-5" />
                         </button>
-                        <div className="w-7 h-7 rounded-full bg-[#004B9C]/20 flex items-center justify-center">
-                          <span className="text-xs font-bold text-[#4a90d9]">
+                        <div className="w-7 h-7 rounded-full bg-[#E8344E]/20 flex items-center justify-center">
+                          <span className="text-xs font-bold text-[#E8344E]">
                             {((chatRooms || []).find((r: any) => r.id === selectedChatRoom)?.userName || "?").charAt(0)}
                           </span>
                         </div>
@@ -1564,7 +1544,7 @@ export default function AdminPage() {
                                   <span className="text-xs text-slate-500 px-1">
                                     {isAdmin ? "상담원" : ((chatRooms || []).find((r: any) => r.id === selectedChatRoom)?.userName || "회원")}
                                   </span>
-                                  <div className={`rounded-md px-3 py-2 text-sm break-words ${isAdmin ? "bg-[#004B9C] text-white" : "bg-[#1e3050] text-slate-200"}`}>
+                                  <div className={`rounded-md px-3 py-2 text-sm break-words ${isAdmin ? "bg-[#E8344E] text-white" : "bg-[#1e3050] text-slate-200"}`}>
                                     {msg.message}
                                   </div>
                                   <span className="text-[11px] text-slate-500 px-1">
@@ -1591,7 +1571,7 @@ export default function AdminPage() {
                             size="icon"
                             onClick={handleChatSend}
                             disabled={!chatInput.trim()}
-                            className="bg-[#004B9C] border-[#004B9C]"
+                            className="bg-[#E8344E] border-[#E8344E]"
                             data-testid="button-admin-send"
                           >
                             <Send className="w-4 h-4" />

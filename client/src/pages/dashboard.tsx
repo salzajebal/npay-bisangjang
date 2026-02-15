@@ -12,11 +12,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   LogOut, Package, ArrowDownRight, ArrowUpRight, User as UserIcon,
-  TrendingUp, RefreshCw, LayoutDashboard, ClipboardList, Wallet, Home,
+  LayoutDashboard, ClipboardList, Wallet, Home,
   ChevronLeft, ChevronRight, MessageSquare, Menu, X, ArrowRightLeft,
   Send, Clock, CheckCircle2, XCircle, PauseCircle,
 } from "lucide-react";
-import { SamsungBadge } from "@/components/samsung-logo";
+import { SiteLogoBadge } from "@/components/samsung-logo";
 import type { User, StockTransaction, TransferRequest } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
 
@@ -61,15 +61,6 @@ export default function DashboardPage() {
     enabled: !!authData?.user,
   });
 
-  const { data: stockData, isLoading: stockLoading, refetch: refetchStock } = useQuery<{
-    currentPrice: number;
-    change: number;
-    changePercent: number;
-    previousClose: number;
-  }>({
-    queryKey: ["/api/stock/samsung"],
-    refetchInterval: 10000,
-  });
 
   const { data: myTransfers = [] } = useQuery<TransferRequest[]>({
     queryKey: ["/api/transfer-requests/my"],
@@ -88,7 +79,7 @@ export default function DashboardPage() {
         accountName: transferName,
         accountNumber: transferAccount,
         quantity: parseInt(transferQuantity),
-        stockName: "삼성전자",
+        stockName: "비상장주식",
       });
       return res.json();
     },
@@ -131,10 +122,6 @@ export default function DashboardPage() {
     },
   });
 
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  useEffect(() => {
-    if (stockData?.currentPrice) setLastUpdated(new Date());
-  }, [stockData?.currentPrice]);
 
   const wsRef = useRef<WebSocket | null>(null);
   useEffect(() => {
@@ -184,9 +171,9 @@ export default function DashboardPage() {
 
   const user = authData.user;
   const txList = transactions || [];
-  const livePrice = stockData?.currentPrice || 0;
-  const priceChange = stockData?.change || 0;
-  const changePct = stockData?.changePercent || 0;
+  const livePrice = 0;
+  const priceChange = 0;
+  const changePct = 0;
 
   const totalIn = txList.filter((t) => t.type === "in").reduce((sum, t) => sum + t.quantity, 0);
   const totalOut = txList.filter((t) => t.type === "out").reduce((sum, t) => sum + t.quantity, 0);
@@ -209,7 +196,7 @@ export default function DashboardPage() {
     .filter(([, v]) => v.qty > 0)
     .map(([name, v]) => {
       const avgPrice = Math.round(v.totalCost / v.qty);
-      const currentPrice = name === "삼성전자" && livePrice > 0 ? livePrice : avgPrice;
+      const currentPrice = avgPrice;
       const evalAmount = v.qty * currentPrice;
       const profitLoss = evalAmount - v.totalCost;
       const profitPct = v.totalCost > 0 ? ((profitLoss / v.totalCost) * 100) : 0;
@@ -225,12 +212,12 @@ export default function DashboardPage() {
     <>
       <div className={`h-14 border-b flex items-center ${!isMobile && sidebarCollapsed ? "justify-center px-2" : "px-4"} gap-2`}>
         {(!isMobile && sidebarCollapsed) ? (
-          <SamsungBadge size={28} />
+          <SiteLogoBadge size={28} />
         ) : (
           <>
-            <SamsungBadge size={28} />
+            <SiteLogoBadge size={28} />
             <div className="flex flex-col min-w-0">
-              <span className="font-bold text-sm truncate">IBK기업증권</span>
+              <span className="font-bold text-sm truncate">증권플러스 비상장</span>
               <span className="text-[11px] text-muted-foreground">내 계좌</span>
             </div>
             {isMobile && (
@@ -332,41 +319,14 @@ export default function DashboardPage() {
               {sidebarItems.find((i) => i.id === activeSection)?.label}
             </h1>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            {lastUpdated && (
-              <span className="text-xs text-muted-foreground hidden sm:block">
-                {lastUpdated.toLocaleTimeString("ko-KR")} 기준
-              </span>
-            )}
-            <Button variant="outline" size="sm" onClick={() => refetchStock()} data-testid="button-refresh-price">
-              <RefreshCw className="w-3.5 h-3.5 sm:mr-1" />
-              <span className="hidden sm:inline">시세 갱신</span>
-            </Button>
-          </div>
         </header>
 
         <main className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
           {activeSection === "overview" && (
             <>
               <Card className="p-5">
-                <div className="flex items-center justify-between gap-4 mb-3 flex-wrap">
-                  <h3 className="text-sm text-muted-foreground">삼성전자 실시간 시세</h3>
-                  <Badge variant="outline" className="font-mono">005930</Badge>
-                </div>
-                <div className="flex items-baseline gap-3 flex-wrap">
-                  {stockLoading ? (
-                    <Skeleton className="h-8 w-32" />
-                  ) : (
-                    <>
-                      <span className="text-3xl font-bold tabular-nums" data-testid="text-live-price">
-                        {livePrice > 0 ? livePrice.toLocaleString() : "-"}원
-                      </span>
-                      <span className={`text-base font-semibold tabular-nums ${priceChange >= 0 ? "text-red-500" : "text-blue-500"}`}>
-                        {priceChange >= 0 ? "+" : ""}{priceChange.toLocaleString()}원 ({priceChange >= 0 ? "+" : ""}{changePct.toFixed(2)}%)
-                      </span>
-                    </>
-                  )}
-                </div>
+                <h3 className="text-sm text-muted-foreground mb-3">비상장 주식 시세</h3>
+                <p className="text-sm text-muted-foreground">보유 종목의 시세는 입고 단가 기준으로 표시됩니다</p>
               </Card>
 
               <Card className="p-5">
@@ -456,10 +416,7 @@ export default function DashboardPage() {
             <>
               <Card className="p-5">
                 <div className="flex items-center justify-between gap-4 mb-3 flex-wrap">
-                  <h3 className="text-sm text-muted-foreground">삼성전자 현재가</h3>
-                  <span className={`text-lg font-bold tabular-nums ${priceChange >= 0 ? "text-red-500" : "text-blue-500"}`}>
-                    {livePrice > 0 ? livePrice.toLocaleString() : "-"}원
-                  </span>
+                  <h3 className="text-sm text-muted-foreground">보유 종목 현재가</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                   <div>
@@ -584,11 +541,11 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <Card className="p-5">
                 <div className="flex items-center gap-2 mb-4">
-                  <ArrowRightLeft className="w-5 h-5 text-[#004B9C]" />
+                  <ArrowRightLeft className="w-5 h-5 text-[#E8344E]" />
                   <h2 className="text-lg font-semibold" data-testid="text-transfer-title">타사 대체출고 신청</h2>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  IBK증권 계좌에서 타 증권사로 삼성전자 주식을 출고할 수 있습니다.
+                  현재 보유 중인 비상장 주식을 타 증권사로 출고할 수 있습니다.
                   출고 신청 시 현재 포지션이 종료되며, 관리자 승인 후 처리됩니다.
                 </p>
                 {totalHolding > 0 && (
@@ -636,7 +593,7 @@ export default function DashboardPage() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-[#004B9C] border-[#004B9C]"
+                    className="w-full bg-[#E8344E] border-[#E8344E]"
                     disabled={transferMutation.isPending || totalHolding <= 0}
                     data-testid="button-submit-transfer"
                   >
@@ -648,7 +605,7 @@ export default function DashboardPage() {
 
               <Card className="p-5">
                 <div className="flex items-center gap-2 mb-4">
-                  <Clock className="w-5 h-5 text-[#004B9C]" />
+                  <Clock className="w-5 h-5 text-[#E8344E]" />
                   <h2 className="text-lg font-semibold">대체출고 신청 목록</h2>
                 </div>
                 {myTransfers.length === 0 ? (

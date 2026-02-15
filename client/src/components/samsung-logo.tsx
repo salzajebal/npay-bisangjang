@@ -1,67 +1,32 @@
-export function SamsungLogo({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 500 52"
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label="IBK기업증권"
-    >
-      <text
-        x="250"
-        y="42"
-        textAnchor="middle"
-        fill="currentColor"
-        fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif"
-        fontSize="48"
-        fontWeight="700"
-        letterSpacing="4"
-      >
-        IBK기업증권
-      </text>
-    </svg>
-  );
-}
-
-export function SamsungBadge({ className = "", size = 40 }: { className?: string; size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 120 120"
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label="IBK"
-    >
-      <rect x="0" y="0" width="120" height="120" rx="24" fill="#004B9C" />
-      <text
-        x="60"
-        y="75"
-        textAnchor="middle"
-        fill="#ffffff"
-        fontFamily="'Helvetica Neue', Helvetica, Arial, sans-serif"
-        fontSize="40"
-        fontWeight="800"
-        letterSpacing="2"
-      >
-        IBK
-      </text>
-    </svg>
-  );
-}
-
-export function SamsungLogoWithBadge({ className = "", badgeSize = 32 }: { className?: string; badgeSize?: number }) {
-  return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
-      <SamsungBadge size={badgeSize} />
-      <SamsungLogo className="h-4 w-auto" />
-    </div>
-  );
-}
-
-export function SamsungLogoCompact({ className = "", size = 24 }: { className?: string; size?: number }) {
+export function SiteLogo({ className = "" }: { className?: string }) {
   return (
     <div className={`flex items-center gap-2 ${className}`}>
-      <SamsungLogo className={`h-[${size}px] w-auto`} />
+      <div className="w-8 h-8 rounded-md bg-[#E8344E] flex items-center justify-center shrink-0">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" fill="white" />
+          <path d="M9 22V12h6v10" stroke="#E8344E" strokeWidth="2" />
+        </svg>
+      </div>
+      <span className="font-bold text-lg text-foreground whitespace-nowrap">증권플러스 비상장</span>
     </div>
   );
 }
+
+export function SiteLogoBadge({ className = "", size = 32 }: { className?: string; size?: number }) {
+  return (
+    <div
+      className={`rounded-md bg-[#E8344E] flex items-center justify-center shrink-0 ${className}`}
+      style={{ width: size, height: size }}
+    >
+      <svg width={size * 0.6} height={size * 0.6} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" fill="white" />
+        <path d="M9 22V12h6v10" stroke="#E8344E" strokeWidth="2" />
+      </svg>
+    </div>
+  );
+}
+
+export const SamsungBadge = SiteLogoBadge;
+export const SamsungLogo = SiteLogo;
+export const SamsungLogoWithBadge = SiteLogo;
+export const SamsungLogoCompact = SiteLogo;

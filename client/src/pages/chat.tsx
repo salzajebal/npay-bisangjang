@@ -129,7 +129,7 @@ export default function ChatPage() {
     <div className="flex flex-col h-screen bg-background" data-testid="page-chat">
       <header
         className="h-14 shrink-0 flex items-center gap-3 px-4 text-white"
-        style={{ backgroundColor: "#004B9C" }}
+        style={{ backgroundColor: "#E8344E" }}
         data-testid="chat-header"
       >
         <Link href="/dashboard">
@@ -191,7 +191,7 @@ export default function ChatPage() {
                   <div
                     className={`rounded-md px-3 py-2 text-sm break-words ${
                       isUser
-                        ? "bg-[#004B9C] text-white"
+                        ? "bg-[#E8344E] text-white"
                         : "bg-muted text-foreground"
                     }`}
                     data-testid={`chat-bubble-${msg.id}`}
@@ -223,7 +223,7 @@ export default function ChatPage() {
             size="icon"
             onClick={handleSend}
             disabled={!wsConnected || !inputText.trim()}
-            className="bg-[#004B9C] border-[#004B9C]"
+            className="bg-[#E8344E] border-[#E8344E]"
             data-testid="button-send-message"
           >
             <Send className="w-4 h-4" />

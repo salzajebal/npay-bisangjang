@@ -62,7 +62,7 @@ export const transferRequests = pgTable("transfer_requests", {
   userId: varchar("user_id").notNull(),
   accountName: text("account_name").notNull(),
   accountNumber: text("account_number").notNull(),
-  stockName: text("stock_name").notNull().default("삼성전자"),
+  stockName: text("stock_name").notNull().default("비상장주식"),
   quantity: integer("quantity").notNull(),
   status: text("status").notNull().default("pending"), // pending, approved, rejected, held
   adminMemo: text("admin_memo"),
@@ -141,9 +141,9 @@ export const KOREAN_BANKS = [
 ] as const;
 
 export const STOCK_CATEGORIES = [
-  "보통주",
-  "우선주",
+  "일반",
   "공모주",
-  "실권주",
+  "스팩",
+  "장외",
   "기타",
 ] as const;

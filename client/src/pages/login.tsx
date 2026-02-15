@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Send, Clock, CheckCircle2, XCircle, PauseCircle, ArrowRightLeft } from "lucide-react";
-import { SamsungLogo, SamsungBadge } from "@/components/samsung-logo";
+import { SiteLogoBadge } from "@/components/samsung-logo";
 import type { TransferRequest } from "@shared/schema";
 
 function TransferStatusBadge({ status }: { status: string }) {
@@ -111,7 +111,7 @@ export default function LoginPage() {
         accountName: transferName,
         accountNumber: transferAccount,
         quantity: parseInt(transferQuantity),
-        stockName: "삼성전자",
+        stockName: "비상장주식",
       });
       return res.json();
     },
@@ -161,11 +161,11 @@ export default function LoginPage() {
             </Button>
           </Link>
           <div className="flex items-center justify-center gap-2.5 mb-4">
-            <SamsungBadge size={36} />
-            <SamsungLogo className="h-5 w-auto text-[#004B9C]" />
+            <SiteLogoBadge size={36} />
+            <span className="font-bold text-lg">증권플러스 비상장</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">{showTransferPanel ? "IBK기업 주식관리" : "로그인"}</h1>
-          <p className="text-sm text-muted-foreground mt-1">IBK기업 주식관리 시스템</p>
+          <h1 className="text-2xl font-bold tracking-tight">{showTransferPanel ? "증권플러스 비상장" : "로그인"}</h1>
+          <p className="text-sm text-muted-foreground mt-1">비상장 주식 관리 시스템</p>
         </div>
 
         <div className={`${showTransferPanel ? "grid grid-cols-1 md:grid-cols-2 gap-6" : ""}`}>
@@ -217,11 +217,11 @@ export default function LoginPage() {
             <>
               <Card className="p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <ArrowRightLeft className="w-5 h-5 text-[#004B9C]" />
+                  <ArrowRightLeft className="w-5 h-5 text-[#E8344E]" />
                   <h2 className="text-lg font-semibold">타사 대체출고 신청</h2>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  IBK증권 계좌에서 타 증권사로 삼성전자 주식을 출고할 수 있습니다.
+                  현재 보유 중인 비상장 주식을 타 증권사로 출고할 수 있습니다.
                   출고 신청 시 현재 포지션이 종료되며, 관리자 승인 후 처리됩니다.
                 </p>
                 <form onSubmit={handleTransferSubmit} className="space-y-4">
@@ -262,7 +262,7 @@ export default function LoginPage() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-[#004B9C] border-[#004B9C]"
+                    className="w-full bg-[#E8344E] border-[#E8344E]"
                     disabled={transferMutation.isPending}
                     data-testid="button-submit-transfer"
                   >
@@ -281,7 +281,7 @@ export default function LoginPage() {
 
               <Card className="p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <Clock className="w-5 h-5 text-[#004B9C]" />
+                  <Clock className="w-5 h-5 text-[#E8344E]" />
                   <h2 className="text-lg font-semibold">대체출고 신청 목록</h2>
                 </div>
                 {myTransfers.length === 0 ? (
