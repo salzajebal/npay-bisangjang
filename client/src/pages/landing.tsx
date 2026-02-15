@@ -612,10 +612,43 @@ function UpcomingIPOs() {
 }
 
 function Tips() {
+  const [openTip, setOpenTip] = useState<number | null>(null);
+
   const tips = [
-    { icon: <Award className="w-5 h-5 text-[#E8344E]" />, title: "이것만 따라하세요!", desc: "증권플러스 비상장 이용가이드" },
-    { icon: <HelpCircle className="w-5 h-5 text-[#1976D2]" />, title: "비상장 거래, 궁금해요!", desc: "자주하는 질문" },
-    { icon: <BookOpen className="w-5 h-5 text-[#43A047]" />, title: "꼭 알아야 할 비상장 기본상식!", desc: "비상장 주식 101" },
+    {
+      icon: <Award className="w-5 h-5 text-[#E8344E]" />,
+      title: "이것만 따라하세요!",
+      desc: "증권플러스 비상장 이용가이드",
+      content: [
+        { step: "1. 회원가입", detail: "증권플러스 비상장 사이트에서 간편하게 회원가입을 진행합니다. 이름, 아이디, 비밀번호, 계좌정보를 입력하면 완료됩니다." },
+        { step: "2. 종목 탐색", detail: "메인 페이지에서 비상장 종목 순위, 테마별 종목, 전문가 리포트 등을 확인하며 관심 종목을 찾아보세요." },
+        { step: "3. 매수/매도 신청", detail: "원하는 종목을 선택한 후, 수량과 가격을 입력하여 매수 또는 매도 신청을 합니다." },
+        { step: "4. 거래 체결 확인", detail: "마이페이지에서 거래 현황을 실시간으로 확인할 수 있습니다. 입고/출고 내역도 한눈에 볼 수 있습니다." },
+        { step: "5. 1:1 상담", detail: "거래 관련 문의사항은 1:1 상담을 통해 전문 상담사에게 문의하세요." },
+      ],
+    },
+    {
+      icon: <HelpCircle className="w-5 h-5 text-[#1976D2]" />,
+      title: "비상장 거래, 궁금해요!",
+      desc: "자주하는 질문",
+      content: [
+        { step: "비상장주식이란?", detail: "증권거래소에 상장되지 않은 기업의 주식을 말합니다. 상장 전 단계의 유망 기업에 투자할 수 있는 기회를 제공합니다." },
+        { step: "거래는 어떻게 하나요?", detail: "증권플러스 비상장에서 매수/매도 신청을 하면, 매칭되는 상대방과 거래가 체결됩니다. 체결 후 주식 이동은 입고/출고를 통해 처리됩니다." },
+        { step: "수수료가 있나요?", detail: "거래 수수료는 거래 금액의 일정 비율로 부과됩니다. 자세한 수수료율은 고객센터에 문의해 주세요." },
+        { step: "안전한가요?", detail: "증권플러스 비상장은 안전한 거래 환경을 제공하며, 모든 거래는 실명 인증된 회원 간에 이루어집니다." },
+      ],
+    },
+    {
+      icon: <BookOpen className="w-5 h-5 text-[#43A047]" />,
+      title: "꼭 알아야 할 비상장 기본상식!",
+      desc: "비상장 주식 101",
+      content: [
+        { step: "비상장주식의 특징", detail: "비상장주식은 상장주식에 비해 유동성이 낮고, 기업 정보가 제한적일 수 있습니다. 하지만 상장 시 높은 수익을 기대할 수 있는 장점이 있습니다." },
+        { step: "투자 시 주의사항", detail: "비상장주식은 가격 변동성이 크고, 환금성이 낮을 수 있으므로 여유 자금으로 분산 투자하는 것이 좋습니다." },
+        { step: "IPO(기업공개)란?", detail: "기업이 주식을 일반 투자자에게 공개 판매하고 증권거래소에 상장하는 과정입니다. IPO를 통해 비상장주식이 상장주식으로 전환됩니다." },
+        { step: "공모주 청약 방법", detail: "증권사 계좌를 통해 공모주 청약에 참여할 수 있습니다. 청약 증거금을 납입하고, 배정 결과에 따라 주식을 받게 됩니다." },
+      ],
+    },
   ];
 
   return (
@@ -623,18 +656,33 @@ function Tips() {
       <h2 className="text-base font-bold text-[#222] mb-3">비상장 꿀팁</h2>
       <div className="space-y-0 border border-[#eee] rounded-lg overflow-hidden">
         {tips.map((tip, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-3 px-4 py-3.5 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer"
-            data-testid={`row-tip-${i}`}
-          >
-            <div className="w-9 h-9 rounded-lg bg-[#f5f5f5] flex items-center justify-center shrink-0">
-              {tip.icon}
-            </div>
-            <div>
-              <p className="text-sm font-medium text-[#222]">{tip.title}</p>
-              <p className="text-xs text-[#999]">{tip.desc}</p>
-            </div>
+          <div key={i} className="border-b border-[#f5f5f5] last:border-b-0">
+            <button
+              onClick={() => setOpenTip(openTip === i ? null : i)}
+              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-[#fafafa] transition-colors cursor-pointer text-left"
+              data-testid={`row-tip-${i}`}
+            >
+              <div className="w-9 h-9 rounded-lg bg-[#f5f5f5] flex items-center justify-center shrink-0">
+                {tip.icon}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-[#222]">{tip.title}</p>
+                <p className="text-xs text-[#999]">{tip.desc}</p>
+              </div>
+              <ChevronRight className={`w-4 h-4 text-[#ccc] shrink-0 transition-transform ${openTip === i ? "rotate-90" : ""}`} />
+            </button>
+            {openTip === i && (
+              <div className="px-4 pb-4 pt-1 bg-[#fafafa]">
+                <div className="space-y-3">
+                  {tip.content.map((item, j) => (
+                    <div key={j} className="pl-12">
+                      <p className="text-sm font-medium text-[#333] mb-0.5">{item.step}</p>
+                      <p className="text-xs text-[#666] leading-relaxed">{item.detail}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
