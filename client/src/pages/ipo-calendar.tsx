@@ -15,33 +15,39 @@ import { getQueryFn } from "@/lib/queryClient";
 
 type PageTab = "calendar" | "pretrade" | "faq";
 
-const IPO_STATUS_COLORS: Record<string, string> = {
-  "주관사선정": "#E0E0E0",
-  "기술평가통과": "#E8EAF6",
-  "심사청구": "#F3E5F5",
-  "심사승인": "#FCE4EC",
-  "신고서제출": "#FFF3E0",
-  "수요예측": "#E8F5E9",
-  "공모청약": "#FFEBEE",
-  "상장": "#E3F2FD",
-  "환불": "#F5F5F5",
-  "배정": "#FFFDE7",
-};
+const IPO_STATUS_LEGEND = [
+  { label: "주관사선정", dot: "#FFC107" },
+  { label: "기술평가통과", dot: "#CE93D8" },
+  { label: "심사청구", dot: "#E57373" },
+  { label: "심사승인", dot: "#EF5350" },
+  { label: "신고서제출", dot: "#EC407A" },
+  { label: "수요예측", dot: "#4CAF50" },
+  { label: "공모청약", dot: "#E53935" },
+  { label: "상장", dot: "#1565C0" },
+  { label: "환불", dot: "#9E9E9E" },
+  { label: "배정", dot: "#8BC34A" },
+];
 
 const CALENDAR_EVENTS = [
-  { name: "한패스", day: 2, endDay: 2, color: "#E0E0E0", status: "주관사선정" },
-  { name: "교보20호기업인수...", day: 2, endDay: 2, color: "#E0E0E0", status: "주관사선정" },
-  { name: "케이뱅크", day: 4, endDay: 6, color: "#FFEBEE", status: "공모청약" },
-  { name: "세미티에스", day: 5, endDay: 5, color: "#E0E0E0", status: "주관사선정" },
-  { name: "엑스비스", day: 5, endDay: 6, color: "#E8EAF6", status: "기술평가통과" },
-  { name: "케이뱅크", day: 9, endDay: 13, color: "#E8F5E9", status: "수요예측" },
-  { name: "엑스비스", day: 10, endDay: 12, color: "#E0E0E0", status: "주관사선정" },
-  { name: "에스팀", day: 10, endDay: 12, color: "#E8EAF6", status: "기술평가통과" },
-  { name: "케이뱅크", day: 20, endDay: 20, color: "#E3F2FD", status: "상장" },
-  { name: "케이뱅크", day: 23, endDay: 27, color: "#FFFDE7", status: "배정" },
-  { name: "에스팀", day: 25, endDay: 25, color: "#FFEBEE", status: "공모청약" },
-  { name: "케이뱅크", day: 25, endDay: 25, color: "#F5F5F5", status: "환불" },
-  { name: "아이엠바이오로직스", day: 27, endDay: 27, color: "#E8EAF6", status: "기술평가통과" },
+  { name: "한패스", day: 2, endDay: 2, color: "#E8E8E8", status: "주관사선정" },
+  { name: "교보20호기업인수...", day: 2, endDay: 2, color: "#E8E8E8", status: "주관사선정" },
+  { name: "케이뱅크", day: 4, endDay: 6, color: "#D7C8E8", status: "공모청약" },
+  { name: "세미티에스", day: 5, endDay: 5, color: "#E8E8E8", status: "주관사선정" },
+  { name: "엑스비스", day: 6, endDay: 6, color: "#D7C8E8", status: "기술평가통과" },
+  { name: "케이뱅크", day: 9, endDay: 10, color: "#C8D8F0", status: "수요예측" },
+  { name: "엑스비스", day: 10, endDay: 13, color: "#D7C8E8", status: "기술평가통과" },
+  { name: "에스팀", day: 10, endDay: 13, color: "#D7C8E8", status: "기술평가통과" },
+  { name: "케이뱅크", day: 20, endDay: 20, color: "#FCDDE1", status: "상장" },
+  { name: "케이뱅크", day: 23, endDay: 23, color: "#C8D8F0", status: "배정" },
+  { name: "카나프테라퓨틱스", day: 23, endDay: 27, color: "#D7C8E8", status: "기술평가통과" },
+  { name: "에스팀", day: 23, endDay: 23, color: "#D7C8E8", status: "기술평가통과" },
+  { name: "엑스비스", day: 23, endDay: 23, color: "#D7C8E8", status: "기술평가통과" },
+  { name: "에스팀", day: 25, endDay: 25, color: "#D7C8E8", status: "공모청약" },
+  { name: "케이뱅크", day: 25, endDay: 25, color: "#E8E8E8", status: "환불" },
+  { name: "에스팀", day: 26, endDay: 26, color: "#D7C8E8", status: "기술평가통과" },
+  { name: "엑스비스", day: 26, endDay: 26, color: "#D7C8E8", status: "기술평가통과" },
+  { name: "엑스비스", day: 26, endDay: 26, color: "#E8E8E8", status: "주관사선정" },
+  { name: "아이엠바이오로직스", day: 27, endDay: 27, color: "#D7C8E8", status: "기술평가통과" },
 ];
 
 const UPCOMING_IPO_LIST = [
@@ -88,7 +94,7 @@ const IPO_NEWS = [
   { title: "코스모로보틱스, 증권신고서 제출...코스닥 IPO...", publisher: "한국경제", date: "2026.02.13" },
 ];
 
-function CalendarGrid() {
+function CalendarView() {
   const dayNames = ["월", "화", "수", "목", "금"];
   const weekRows = [
     [2, 3, 4, 5, 6],
@@ -134,33 +140,33 @@ function CalendarGrid() {
   }
 
   return (
-    <div className="border border-[#eee] rounded-lg overflow-hidden" data-testid="calendar-grid">
-      <div className="grid grid-cols-5 border-b border-[#eee] bg-[#fafafa]">
+    <div className="border border-[#e0e0e0]" data-testid="calendar-grid">
+      <div className="grid grid-cols-5 bg-[#fafafa] border-b border-[#e0e0e0]">
         {dayNames.map(d => (
-          <div key={d} className="px-2 py-2 text-xs text-[#666] text-center font-medium">{d}</div>
+          <div key={d} className="px-3 py-2.5 text-[13px] text-[#555] font-medium text-center border-r border-[#e0e0e0] last:border-r-0">{d}</div>
         ))}
       </div>
       {weekRows.map((week, wi) => {
         const lanes = getEventsForWeek(week);
         return (
-          <div key={wi} className="border-b border-[#eee] last:border-b-0">
+          <div key={wi} className="border-b border-[#e0e0e0] last:border-b-0">
             <div className="grid grid-cols-5">
               {week.map((day, di) => (
-                <div key={di} className="px-1.5 pt-1 pb-0 border-r border-[#eee] last:border-r-0">
-                  <div className="text-[11px] text-[#666]">{day}</div>
+                <div key={di} className="border-r border-[#e0e0e0] last:border-r-0 px-3 pt-2">
+                  <div className="text-[13px] text-[#555] text-right">{day}</div>
                 </div>
               ))}
             </div>
-            <div className="min-h-[45px] px-0.5 pb-1">
+            <div className="py-1 px-1" style={{ minHeight: Math.max(lanes.length * 26 + 4, 50) }}>
               {lanes.map((lane, li) => (
-                <div key={li} className="flex mb-px">
+                <div key={li} className="flex h-[24px] mb-[2px]">
                   {(() => {
                     const cells: JSX.Element[] = [];
                     let col = 0;
                     while (col < 5) {
                       const ev = lane[col];
                       if (!ev) {
-                        cells.push(<div key={col} className="flex-1" />);
+                        cells.push(<div key={col} style={{ flex: 1 }} />);
                         col++;
                       } else {
                         let span = 1;
@@ -168,11 +174,12 @@ function CalendarGrid() {
                         cells.push(
                           <div
                             key={col}
-                            className="text-[9px] leading-tight px-1 py-0.5 rounded truncate mx-px"
-                            style={{ backgroundColor: ev.color, flex: span }}
+                            className="flex items-center gap-1 px-1.5 rounded-sm truncate mx-[1px]"
+                            style={{ backgroundColor: ev.color, flex: span, height: 22 }}
                             title={`${ev.name} - ${ev.status}`}
                           >
-                            <span className="text-[#444]">● {ev.name}</span>
+                            <StockIcon name={ev.name} size={16} />
+                            <span className="text-[11px] text-[#333] font-medium truncate">{ev.name}</span>
                           </div>
                         );
                         col += span;
@@ -526,23 +533,23 @@ export default function IPOCalendarPage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 mb-4">
-            {Object.entries(IPO_STATUS_COLORS).map(([label, color]) => (
+          <div className="flex flex-wrap items-center gap-2 mb-5">
+            {IPO_STATUS_LEGEND.map(({ label, dot }) => (
               <span
                 key={label}
-                className="text-[10px] px-2 py-1 rounded-full border border-[#eee]"
-                style={{ backgroundColor: color }}
+                className="inline-flex items-center gap-1 text-[12px] text-[#555] px-2.5 py-1 rounded-full border border-[#e0e0e0] bg-white"
               >
-                ● {label}
+                <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: dot }} />
+                {label}
               </span>
             ))}
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-1 min-w-0">
-              <CalendarGrid />
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className="flex-[2] min-w-0">
+              <CalendarView />
             </div>
-            <div className="lg:w-[340px] shrink-0">
+            <div className="lg:w-[320px] shrink-0">
               <UpcomingSidebar />
             </div>
           </div>
