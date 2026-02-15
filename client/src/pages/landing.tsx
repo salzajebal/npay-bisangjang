@@ -391,8 +391,11 @@ function MajorNews() {
       </div>
       <div className="space-y-0 border border-[#eee] rounded-lg overflow-hidden">
         {(news as any[]).slice(0, 5).map((item: any, i: number) => (
-          <div
+          <a
             key={i}
+            href={item.url || item.link || `https://search.naver.com/search.naver?query=${encodeURIComponent(item.title)}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-start gap-3 px-4 py-3.5 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer"
             data-testid={`row-news-${i}`}
           >
@@ -406,7 +409,8 @@ function MajorNews() {
               <p className="text-sm font-medium text-[#222] leading-snug line-clamp-2">{item.title}</p>
               <p className="text-xs text-[#999] mt-1">{item.source} · {item.date}</p>
             </div>
-          </div>
+            <ExternalLink className="w-3.5 h-3.5 text-[#ccc] shrink-0 mt-1" />
+          </a>
         ))}
       </div>
     </section>
@@ -690,14 +694,85 @@ function Tips() {
   );
 }
 
+const DISCUSSION_COMMENTS: Record<string, { user: string; text: string; time: string }[]> = {
+  "케이뱅크": [
+    { user: "투자왕김씨", text: "IPO 공모가 8300원이면 적정한 것 같은데, 다들 어떻게 생각하세요?", time: "방금 전" },
+    { user: "비상장고수", text: "기관경쟁률이 198:1이면 꽤 높은 편이죠. 긍정적으로 봅니다", time: "1분 전" },
+    { user: "주식초보", text: "PBR 1.38배면 은행주 중에서는 어떤 수준인가요?", time: "2분 전" },
+    { user: "장기투자자", text: "카카오뱅크 상장 때랑 비교하면 밸류에이션이 합리적이라고 봅니다", time: "3분 전" },
+    { user: "분석가A", text: "FI 지분 매각 이슈가 해소되면 주가 상승 여력 충분합니다", time: "5분 전" },
+    { user: "비상장매니아", text: "비상장에서 11,600원에 거래되고 있으니 공모가 대비 프리미엄이 있네요", time: "7분 전" },
+    { user: "공모주헌터", text: "이번에 꼭 청약 성공하고 싶네요. 증거금 얼마나 넣어야 할까요?", time: "8분 전" },
+    { user: "경제전문가", text: "올해 상반기 최대 IPO가 될 것 같습니다. 시장 관심도가 높아요", time: "10분 전" },
+  ],
+  "빗썸": [
+    { user: "코인투자자", text: "빗썸 IPO 소식 들으셨나요? 올해 안에 상장 추진한다던데", time: "방금 전" },
+    { user: "암호화폐분석", text: "거래소 수수료 수익이 안정적이라 밸류에이션 괜찮을 듯", time: "2분 전" },
+    { user: "디지털자산", text: "업비트랑 비교하면 시장점유율은 좀 밀리지만 성장성은 있죠", time: "4분 전" },
+    { user: "비상장투자", text: "현재 비상장 시장에서 거래가 활발한 편입니다", time: "6분 전" },
+    { user: "크립토매니아", text: "가상자산법 시행 이후 규제 환경이 개선되면 수혜 볼 수 있을 것 같아요", time: "9분 전" },
+  ],
+  "오톰": [
+    { user: "AI투자자", text: "로봇 AI 기술력은 인정하는데 수익화가 관건이죠", time: "방금 전" },
+    { user: "테크분석", text: "B2B 시장에서 레퍼런스가 쌓이고 있어서 기대됩니다", time: "3분 전" },
+    { user: "미래기술", text: "국내 로봇 기업 중에서 기술력 상위권이라고 봅니다", time: "5분 전" },
+  ],
+  "현대엔지니어링": [
+    { user: "건설주전문", text: "현대건설 자회사인데 분리상장 가능성이 있다고 보시나요?", time: "방금 전" },
+    { user: "플랜트분석", text: "해외 플랜트 수주가 늘어나고 있어서 실적 개선 기대", time: "4분 전" },
+    { user: "가치투자자", text: "비상장 가격 대비 자산가치가 저평가 되어있다고 생각합니다", time: "8분 전" },
+  ],
+  "이브이알스튜디오": [
+    { user: "VR매니아", text: "메타버스 시장이 다시 주목받으면서 기대감이 올라가고 있어요", time: "방금 전" },
+    { user: "IT분석가", text: "VR 콘텐츠 제작 기술력은 국내 최고 수준이라고 봅니다", time: "5분 전" },
+  ],
+};
+
 function HotDiscussionRooms() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const [liveComments, setLiveComments] = useState<{ user: string; text: string; time: string }[]>([]);
+  const commentsEndRef = useRef<HTMLDivElement>(null);
 
   const scroll = (dir: "left" | "right") => {
     if (scrollRef.current) {
       scrollRef.current.scrollBy({ left: dir === "left" ? -200 : 200, behavior: "smooth" });
     }
   };
+
+  useEffect(() => {
+    if (!selectedRoom) return;
+    const base = DISCUSSION_COMMENTS[selectedRoom] || [];
+    setLiveComments([...base]);
+
+    const extraComments = [
+      { user: "실시간유저1", text: "저도 이 종목 관심있게 보고 있습니다!" },
+      { user: "투자고수", text: "장기적으로 좋은 종목이라고 생각해요" },
+      { user: "초보투자자", text: "혹시 적정 매수가가 어느 정도일까요?" },
+      { user: "분석전문가", text: "현재 가격이면 진입 타이밍 괜찮아 보입니다" },
+      { user: "비상장팬", text: "비상장 투자는 인내심이 중요하죠" },
+      { user: "시장관찰자", text: "최근 거래량이 늘어나고 있어서 주목할 만합니다" },
+      { user: "주식연구원", text: "펀더멘탈 분석 결과 긍정적입니다" },
+      { user: "경제학도", text: "업종 전망도 밝은 편이라 기대됩니다" },
+    ];
+    let idx = 0;
+    const interval = setInterval(() => {
+      if (idx < extraComments.length) {
+        setLiveComments(prev => [{ ...extraComments[idx], time: "방금 전" }, ...prev.map(c => ({
+          ...c,
+          time: c.time === "방금 전" ? "1분 전" : c.time
+        }))]);
+        idx++;
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [selectedRoom]);
+
+  useEffect(() => {
+    if (commentsEndRef.current) {
+      commentsEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [liveComments]);
 
   return (
     <div id="hot-rooms" data-testid="section-hot-rooms">
@@ -728,7 +803,10 @@ function HotDiscussionRooms() {
         {HOT_ROOMS.map((room, i) => (
           <div
             key={i}
-            className="shrink-0 w-[160px] border border-[#eee] rounded-lg p-3 hover:border-[#ddd] transition-colors cursor-pointer"
+            onClick={() => setSelectedRoom(selectedRoom === room.name ? null : room.name)}
+            className={`shrink-0 w-[160px] border rounded-lg p-3 transition-colors cursor-pointer ${
+              selectedRoom === room.name ? "border-[#E8344E] bg-[#fef2f2]" : "border-[#eee] hover:border-[#ddd]"
+            }`}
             data-testid={`card-hot-room-${i}`}
           >
             <div className="flex items-center gap-2 mb-2">
@@ -747,6 +825,63 @@ function HotDiscussionRooms() {
           </div>
         ))}
       </div>
+
+      {selectedRoom && (
+        <div className="mt-3 border border-[#eee] rounded-lg overflow-hidden" data-testid="discussion-panel">
+          <div className="flex items-center justify-between px-4 py-2.5 bg-[#fafafa] border-b border-[#eee]">
+            <div className="flex items-center gap-2">
+              <StockIcon name={selectedRoom} size={22} />
+              <span className="text-sm font-bold text-[#222]">{selectedRoom} 토론방</span>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E8344E] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E8344E]" />
+              </span>
+              <span className="text-[10px] text-[#E8344E]">LIVE</span>
+            </div>
+            <button
+              onClick={() => setSelectedRoom(null)}
+              className="text-xs text-[#999] hover:text-[#666]"
+              data-testid="button-close-discussion"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="max-h-[280px] overflow-y-auto px-4 py-2 space-y-2">
+            {liveComments.map((comment, i) => (
+              <div
+                key={`${comment.user}-${i}`}
+                className={`flex items-start gap-2 py-1.5 ${i === 0 ? "animate-fade-in" : ""}`}
+                data-testid={`comment-${i}`}
+              >
+                <div className="w-6 h-6 rounded-full bg-[#f0f0f0] flex items-center justify-center shrink-0 mt-0.5">
+                  <User className="w-3 h-3 text-[#999]" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium text-[#555]">{comment.user}</span>
+                    <span className="text-[10px] text-[#bbb]">{comment.time}</span>
+                  </div>
+                  <p className="text-[13px] text-[#333] leading-snug">{comment.text}</p>
+                </div>
+              </div>
+            ))}
+            <div ref={commentsEndRef} />
+          </div>
+          <div className="px-4 py-2.5 border-t border-[#eee] bg-[#fafafa]">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="토론에 참여하세요..."
+                className="flex-1 h-8 px-3 rounded-lg bg-white border border-[#eee] text-xs outline-none focus:border-[#E8344E]"
+                data-testid="input-discussion"
+              />
+              <button className="h-8 px-3 bg-[#E8344E] text-white text-xs rounded-lg hover:bg-[#d42e45] transition-colors" data-testid="button-send-discussion">
+                전송
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
