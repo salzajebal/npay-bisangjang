@@ -5,8 +5,6 @@ import {
   Search,
   ChevronRight,
   ChevronLeft,
-  TrendingUp,
-  TrendingDown,
   MessageCircle,
   Calendar,
   BookOpen,
@@ -20,19 +18,21 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
+import { StockIcon } from "@/components/stock-icon";
+import { SiteLogoBadge } from "@/components/site-logo";
 import type { User as UserType } from "@shared/schema";
 
 const UNLISTED_STOCKS = [
-  { rank: 1, name: "케이뱅크", code: "279570", price: 11600, change: -6.45, orders: 504, category: "일반", color: "#E8344E", isIPO: true },
-  { rank: 2, name: "두나무", code: "389930", price: 307000, change: 1.99, orders: 120, category: "일반", color: "#333", isIPO: false },
-  { rank: 3, name: "빗썸", code: "341650", price: 214000, change: -3.17, orders: 50, category: "일반", color: "#E8344E", isIPO: false },
-  { rank: 4, name: "무신사", code: "458860", price: 25700, change: 0, orders: 127, category: "일반", color: "#111", isIPO: true },
-  { rank: 5, name: "오아시스", code: "370190", price: 9600, change: -6.8, orders: 65, category: "일반", color: "#4CAF50", isIPO: false },
-  { rank: 6, name: "컬리", code: "408480", price: 20300, change: -1.46, orders: 49, category: "일반", color: "#5F0080", isIPO: false },
-  { rank: 7, name: "에스엠랩", code: "419350", price: 1280, change: 4.07, orders: 37, category: "일반", color: "#1976D2", isIPO: false },
-  { rank: 8, name: "야놀자", code: "350920", price: 26900, change: 0.37, orders: 54, category: "일반", color: "#E8344E", isIPO: false },
-  { rank: 9, name: "케이솔루션", code: "413490", price: 7650, change: 10.87, orders: 16, category: "일반", color: "#43A047", isIPO: false },
-  { rank: 10, name: "에너진", code: "403680", price: 3560, change: 7.23, orders: 50, category: "일반", color: "#E65100", isIPO: false },
+  { rank: 1, name: "케이뱅크", code: "279570", price: 11600, change: -6.45, orders: 506, category: "일반", isIPO: true },
+  { rank: 2, name: "두나무", code: "389930", price: 307000, change: 1.99, orders: 120, category: "일반", isIPO: false },
+  { rank: 3, name: "빗썸", code: "341650", price: 214000, change: -3.17, orders: 50, category: "일반", isIPO: false },
+  { rank: 4, name: "무신사", code: "458860", price: 25700, change: 0, orders: 128, category: "일반", isIPO: true },
+  { rank: 5, name: "오아시스", code: "370190", price: 9600, change: -6.8, orders: 65, category: "일반", isIPO: false },
+  { rank: 6, name: "컬리", code: "408480", price: 20300, change: -1.46, orders: 49, category: "일반", isIPO: false },
+  { rank: 7, name: "에스엠랩", code: "419350", price: 1280, change: 4.07, orders: 37, category: "일반", isIPO: false },
+  { rank: 8, name: "야놀자", code: "350920", price: 26900, change: 0.37, orders: 54, category: "일반", isIPO: false },
+  { rank: 9, name: "케이솔루션", code: "413490", price: 7650, change: 10.87, orders: 16, category: "일반", isIPO: false },
+  { rank: 10, name: "에너진", code: "403680", price: 3560, change: 7.23, orders: 50, category: "일반", isIPO: false },
 ];
 
 const RANKING_TABS = ["일반종목", "거래많은", "상승률 높은", "상장준비 시작", "예상시총 높은", "매출이 상승한"];
@@ -66,18 +66,17 @@ const DISCUSSIONS = [
 ];
 
 const UPCOMING_IPOS = [
-  { name: "LG CNS", dDay: 5, date: "02.20 예정", priceRange: "53,700 ~ 61,900원", competition: "1,084.97:1", color: "#E8344E" },
-  { name: "서울보증보험", dDay: 8, date: "02.23 예정", priceRange: "32,000 ~ 40,000원", competition: "872.35:1", color: "#1976D2" },
-  { name: "에이피알", dDay: 12, date: "02.27 예정", priceRange: "18,000 ~ 22,000원", competition: "-", color: "#43A047" },
-  { name: "케이뱅크", dDay: 21, date: "03.08 예정", priceRange: "9,500 ~ 11,500원", competition: "-", color: "#E8344E" },
+  { name: "케이뱅크", dDay: 5, date: "02.20 예정", priceRange: "7,000 ~ 8,500원", competition: "198.53:1", label: "매수가능" },
+  { name: "에스팀", dDay: 8, date: "02.23 예정", priceRange: "7,000 ~ 8,500원", competition: "-" },
+  { name: "엑스비스", dDay: 8, date: "02.23 예정", priceRange: "10,100 ~ 11,500원", competition: "-" },
 ];
 
 const HOT_ROOMS = [
-  { name: "케이뱅크", tags: ["#IPO", "#은행"], count: 1284, color: "#E8344E" },
-  { name: "빗썸", tags: ["#암호화폐", "#거래소"], count: 956, color: "#E8344E" },
-  { name: "오톰", tags: ["#AI", "#로봇"], count: 743, color: "#333" },
-  { name: "현대엔지니어링", tags: ["#건설", "#플랜트"], count: 621, color: "#1976D2" },
-  { name: "이브이알스튜디오", tags: ["#VR", "#메타버스"], count: 512, color: "#6B4CE6" },
+  { name: "케이뱅크", tags: ["#IPO", "#은행"], count: 1284 },
+  { name: "빗썸", tags: ["#암호화폐", "#거래소"], count: 956 },
+  { name: "오톰", tags: ["#AI", "#로봇"], count: 743 },
+  { name: "현대엔지니어링", tags: ["#건설", "#플랜트"], count: 621 },
+  { name: "이브이알스튜디오", tags: ["#VR", "#메타버스"], count: 512 },
 ];
 
 const NAV_LINKS = [
@@ -127,10 +126,8 @@ function Header({ user }: { user: UserType | null }) {
       <div className="max-w-[1200px] mx-auto px-4">
         <div className="flex items-center justify-between gap-4 h-14">
           <Link href="/" data-testid="link-home">
-            <div className="flex items-center gap-2 shrink-0 cursor-pointer">
-              <div className="w-7 h-7 rounded-md bg-[#E8344E] flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-white" />
-              </div>
+            <div className="flex items-center gap-1.5 shrink-0 cursor-pointer">
+              <SiteLogoBadge size={28} />
               <span className="text-[#222] font-bold text-base whitespace-nowrap">증권플러스 <span className="text-[#E8344E]">비상장</span></span>
             </div>
           </Link>
@@ -158,6 +155,9 @@ function Header({ user }: { user: UserType | null }) {
                 {link.label}
               </a>
             ))}
+            <div className="ml-1 cursor-pointer" data-testid="button-notification">
+              <SiteLogoBadge size={28} />
+            </div>
           </nav>
 
           <div className="hidden md:flex items-center gap-2 shrink-0">
@@ -289,7 +289,7 @@ function StockRankings() {
         <div className="grid grid-cols-[40px_1fr_100px_80px_70px_50px] gap-0 px-4 py-2.5 bg-[#fafafa] text-xs text-[#999] border-b border-[#eee]">
           <span></span>
           <span>종목명</span>
-          <span className="text-right">체결평균가</span>
+          <span className="text-right flex items-center justify-end gap-0.5">체결평균가 <span className="text-[10px]">&#9660;</span></span>
           <span className="text-right">등락률</span>
           <span className="text-right">전체주문</span>
           <span className="text-right">구분</span>
@@ -302,12 +302,7 @@ function StockRankings() {
           >
             <span className="text-sm text-[#999] font-medium">{stock.rank}</span>
             <div className="flex items-center gap-2.5">
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                style={{ backgroundColor: stock.color }}
-              >
-                {stock.name.charAt(0)}
-              </div>
+              <StockIcon name={stock.name} size={32} />
               <div className="flex items-center gap-1.5">
                 <span className="text-sm font-medium text-[#222]">{stock.name}</span>
                 {stock.isIPO && (
@@ -319,7 +314,7 @@ function StockRankings() {
             <span className={`text-sm text-right tabular-nums font-medium ${stock.change > 0 ? "text-[#f04452]" : stock.change < 0 ? "text-[#3182f6]" : "text-[#999]"}`}>
               {stock.change > 0 ? "+" : ""}{stock.change.toFixed(2)}%
             </span>
-            <span className="text-sm text-[#666] text-right tabular-nums">{stock.orders}</span>
+            <span className="text-sm text-[#666] text-right tabular-nums">{stock.orders}건</span>
             <span className="text-xs text-[#999] text-right">{stock.category}</span>
           </div>
         ))}
@@ -537,34 +532,37 @@ function UpcomingIPOs() {
         {UPCOMING_IPOS.map((ipo, i) => (
           <div
             key={i}
-            className="border border-[#eee] rounded-lg p-3 hover:border-[#ddd] transition-colors cursor-pointer"
+            className="border border-[#eee] rounded-lg p-3.5 hover:border-[#ddd] transition-colors cursor-pointer"
             data-testid={`card-ipo-${i}`}
           >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold text-white bg-[#E8344E] px-1.5 py-0.5 rounded leading-none">D-{ipo.dDay}</span>
+            <div className="flex items-center gap-2 mb-2.5">
+              <span className="text-[10px] font-bold text-[#E8344E] leading-none">D-{ipo.dDay}</span>
               <span className="text-xs text-[#999]">{ipo.date}</span>
             </div>
-            <div className="flex items-center gap-2.5 mb-2">
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-                style={{ backgroundColor: ipo.color }}
-              >
-                {ipo.name.charAt(0)}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <StockIcon name={ipo.name} size={36} />
+                <div>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-sm font-bold text-[#222]">{ipo.name}</span>
+                    {"label" in ipo && (ipo as any).label && (
+                      <span className="text-[10px] text-[#E8344E] font-medium">{(ipo as any).label}</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-[#666]">공모가 {ipo.priceRange}</p>
+                  <p className="text-xs text-[#999]">기관경쟁률 {ipo.competition}</p>
+                </div>
               </div>
-              <span className="text-sm font-medium text-[#222]">{ipo.name}</span>
-            </div>
-            <div className="text-xs text-[#666] space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="text-[#999]">공모가</span>
-                <span className="font-medium text-[#222]">{ipo.priceRange}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[#999]">기관경쟁률</span>
-                <span className="font-medium text-[#222]">{ipo.competition}</span>
-              </div>
+              <ChevronRight className="w-4 h-4 text-[#ccc] shrink-0" />
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="mt-4 text-center">
+        <a href="#" className="inline-flex items-center gap-1 text-sm text-[#666] border border-[#eee] rounded-full px-5 py-2 hover:bg-[#fafafa] transition-colors" data-testid="link-more-ipos">
+          종목 더보기 <ChevronRight className="w-3.5 h-3.5" />
+        </a>
       </div>
     </div>
   );
@@ -643,12 +641,7 @@ function HotDiscussionRooms() {
             data-testid={`card-hot-room-${i}`}
           >
             <div className="flex items-center gap-2 mb-2">
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-                style={{ backgroundColor: room.color }}
-              >
-                {room.name.charAt(0)}
-              </div>
+              <StockIcon name={room.name} size={28} />
               <span className="text-sm font-medium text-[#222] truncate">{room.name}</span>
             </div>
             <div className="flex flex-wrap gap-1 mb-2">
@@ -671,10 +664,8 @@ function Footer() {
   return (
     <footer className="bg-[#fafafa] border-t border-[#eee] mt-12" data-testid="footer">
       <div className="max-w-[1200px] mx-auto px-4 py-8">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-6 h-6 rounded bg-[#E8344E] flex items-center justify-center">
-            <TrendingUp className="w-3.5 h-3.5 text-white" />
-          </div>
+        <div className="flex items-center gap-1.5 mb-4">
+          <SiteLogoBadge size={22} />
           <span className="text-sm font-bold text-[#222]">증권플러스 <span className="text-[#E8344E]">비상장</span></span>
         </div>
 
@@ -709,7 +700,13 @@ export default function TradePage() {
     <div className="min-h-screen bg-white" data-testid="page-landing">
       <Header user={user ?? null} />
 
-      <main className="max-w-[1200px] mx-auto px-4 py-6">
+      <div className="flex justify-center py-2">
+        <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#E8344E] text-white text-xs font-medium rounded-full cursor-pointer hover:bg-[#d42e45] transition-colors" data-testid="banner-update">
+          업데이트 됐어요!
+        </span>
+      </div>
+
+      <main className="max-w-[1200px] mx-auto px-4 py-4">
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1 min-w-0 space-y-8">
             <StockRankings />

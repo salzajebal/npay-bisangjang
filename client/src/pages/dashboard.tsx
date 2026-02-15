@@ -17,6 +17,7 @@ import {
   Send, Clock, CheckCircle2, XCircle, PauseCircle,
 } from "lucide-react";
 import { SiteLogoBadge } from "@/components/site-logo";
+import { StockIcon } from "@/components/stock-icon";
 import type { User, StockTransaction, TransferRequest } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
 
@@ -460,7 +461,12 @@ export default function DashboardPage() {
                       <TableBody>
                         {holdingsList.map((h) => (
                           <TableRow key={h.name} data-testid={`row-holding-${h.name}`}>
-                            <TableCell className="font-semibold">{h.name}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <StockIcon name={h.name} size={28} />
+                                <span className="font-semibold">{h.name}</span>
+                              </div>
+                            </TableCell>
                             <TableCell className="text-right font-mono tabular-nums">{h.qty.toLocaleString()}주</TableCell>
                             <TableCell className="text-right font-mono tabular-nums">{h.avgPrice.toLocaleString()}원</TableCell>
                             <TableCell className="text-right font-mono tabular-nums">{h.currentPrice.toLocaleString()}원</TableCell>
@@ -521,7 +527,12 @@ export default function DashboardPage() {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-sm">{tx.category}</TableCell>
-                            <TableCell className="font-medium">{tx.stockName}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <StockIcon name={tx.stockName} size={24} />
+                                <span className="font-medium">{tx.stockName}</span>
+                              </div>
+                            </TableCell>
                             <TableCell className="text-right font-mono tabular-nums">{tx.quantity.toLocaleString()}주</TableCell>
                             <TableCell className="text-right font-mono tabular-nums">{tx.pricePerShare.toLocaleString()}원</TableCell>
                             <TableCell className="text-right font-mono tabular-nums">{(tx.quantity * tx.pricePerShare).toLocaleString()}원</TableCell>
@@ -621,7 +632,10 @@ export default function DashboardPage() {
                         data-testid={`transfer-item-${tr.id}`}
                       >
                         <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <span className="font-medium text-sm">{tr.stockName} {tr.quantity}주</span>
+                          <div className="flex items-center gap-1.5">
+                            <StockIcon name={tr.stockName} size={20} />
+                            <span className="font-medium text-sm">{tr.stockName} {tr.quantity}주</span>
+                          </div>
                           <TransferStatusBadge status={tr.status} />
                         </div>
                         <div className="text-xs text-muted-foreground">

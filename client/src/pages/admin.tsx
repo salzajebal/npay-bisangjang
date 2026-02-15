@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { STOCK_CATEGORIES, KOREAN_BANKS } from "@shared/schema";
+import { StockIcon } from "@/components/stock-icon";
 import type { User, StockTransaction, TransferRequest } from "@shared/schema";
 import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
@@ -209,7 +210,7 @@ function MemberDetailDialog({ user, transactions }: { user: User; transactions: 
                       <Badge variant={tx.type === "in" ? "default" : "secondary"} className={`shrink-0 text-[11px] ${tx.type === "in" ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500 text-white"}`}>
                         {tx.type === "in" ? "입고" : "출고"}
                       </Badge>
-                      <span className="truncate">{tx.stockName} {tx.quantity}주</span>
+                      <span className="truncate flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{tx.stockName} {tx.quantity}주</span>
                     </div>
                     <span className="text-muted-foreground shrink-0 text-xs">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</span>
                   </div>
@@ -996,7 +997,7 @@ export default function AdminPage() {
                               {tx.type === "in" ? "입고" : "출고"}
                             </Badge>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium truncate text-slate-200">{getUserName(tx.userId)} · {tx.stockName}</p>
+                              <p className="text-sm font-medium truncate text-slate-200 flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{getUserName(tx.userId)} · {tx.stockName}</p>
                               <p className="text-xs text-slate-400">{tx.quantity.toLocaleString()}주 · {tx.pricePerShare.toLocaleString()}원</p>
                             </div>
                           </div>
@@ -1198,7 +1199,7 @@ export default function AdminPage() {
                         <span className="text-xs text-slate-500">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</span>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm font-medium text-slate-200">{getUserName(tx.userId)} · {tx.stockName}</p>
+                        <p className="text-sm font-medium text-slate-200 flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{getUserName(tx.userId)} · {tx.stockName}</p>
                         <div className="flex items-center gap-3 text-xs text-slate-400">
                           <span>{tx.quantity.toLocaleString()}주</span>
                           <span>{tx.pricePerShare.toLocaleString()}원</span>
@@ -1254,7 +1255,12 @@ export default function AdminPage() {
                             </TableCell>
                             <TableCell className="text-slate-300">{tx.category}</TableCell>
                             <TableCell className="font-medium text-slate-300">{getUserName(tx.userId)}</TableCell>
-                            <TableCell className="text-slate-300">{tx.stockName}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1.5">
+                                <StockIcon name={tx.stockName} size={22} />
+                                <span className="text-slate-300">{tx.stockName}</span>
+                              </div>
+                            </TableCell>
                             <TableCell className="text-right font-mono tabular-nums text-slate-300">{tx.quantity.toLocaleString()}주</TableCell>
                             <TableCell className="text-right font-mono tabular-nums text-slate-300">{tx.pricePerShare.toLocaleString()}원</TableCell>
                             <TableCell className="text-right font-mono tabular-nums text-slate-300">{(tx.quantity * tx.pricePerShare).toLocaleString()}원</TableCell>
@@ -1323,7 +1329,7 @@ export default function AdminPage() {
                       </div>
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-slate-200">{getUserName(tr.userId)}</p>
-                        <p className="text-sm text-slate-300">{tr.stockName} · {tr.quantity.toLocaleString()}주</p>
+                        <p className="text-sm text-slate-300 flex items-center gap-1.5"><StockIcon name={tr.stockName} size={18} />{tr.stockName} · {tr.quantity.toLocaleString()}주</p>
                       </div>
                       <div className="text-xs text-slate-400 space-y-1">
                         <p>{tr.accountName} · <span className="font-mono text-slate-500">{tr.accountNumber}</span></p>
@@ -1391,7 +1397,12 @@ export default function AdminPage() {
                               {tr.status === "held" && <Badge variant="secondary" className="gap-1"><PauseCircle className="w-3 h-3" />보류</Badge>}
                             </TableCell>
                             <TableCell className="font-medium text-slate-300">{getUserName(tr.userId)}</TableCell>
-                            <TableCell className="text-slate-300">{tr.stockName}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-1.5">
+                                <StockIcon name={tr.stockName} size={22} />
+                                <span className="text-slate-300">{tr.stockName}</span>
+                              </div>
+                            </TableCell>
                             <TableCell className="text-right font-mono tabular-nums text-slate-300">{tr.quantity.toLocaleString()}주</TableCell>
                             <TableCell className="text-slate-300">{tr.accountName}</TableCell>
                             <TableCell className="font-mono text-sm text-slate-300">{tr.accountNumber}</TableCell>
