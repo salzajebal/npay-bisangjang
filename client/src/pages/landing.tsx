@@ -365,6 +365,62 @@ function StockRankings() {
   );
 }
 
+const PUBLISHER_DOMAINS: Record<string, string> = {
+  "서울경제": "sedaily.com",
+  "한국경제": "hankyung.com",
+  "매일경제": "mk.co.kr",
+  "조선비즈": "biz.chosun.com",
+  "조선일보": "chosun.com",
+  "머니투데이": "mt.co.kr",
+  "네이트": "nate.com",
+  "라이센스뉴스": "licensenews.kr",
+  "중앙일보": "joongang.co.kr",
+  "연합뉴스": "yna.co.kr",
+  "연합인포맥스": "einfomax.co.kr",
+  "시사저널": "sisajournal.com",
+  "v.daum.net": "daum.net",
+  "이데일리": "edaily.co.kr",
+  "뉴스1": "news1.kr",
+  "아시아경제": "asiae.co.kr",
+  "파이낸셜뉴스": "fnnews.com",
+  "헤럴드경제": "heraldcorp.com",
+  "디지털데일리": "ddaily.co.kr",
+  "블로터": "bloter.net",
+};
+
+function PublisherLogo({ publisher, size = 28 }: { publisher: string; size?: number }) {
+  const domain = PUBLISHER_DOMAINS[publisher];
+  const faviconUrl = domain
+    ? `https://www.google.com/s2/favicons?domain=${domain}&sz=64`
+    : null;
+
+  if (faviconUrl) {
+    return (
+      <img
+        src={faviconUrl}
+        alt={publisher}
+        className="rounded-full shrink-0 object-cover bg-white"
+        style={{ width: size, height: size }}
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.style.display = "none";
+          target.parentElement?.querySelector(".fallback")?.classList.remove("hidden");
+        }}
+      />
+    );
+  }
+
+  const initial = publisher.charAt(0);
+  return (
+    <div
+      className="rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 bg-[#888]"
+      style={{ width: size, height: size }}
+    >
+      {initial}
+    </div>
+  );
+}
+
 function MajorNews() {
   const { data: newsData } = useQuery<{ title: string; source: string; date: string; url?: string }[]>({
     queryKey: ["/api/stocks/news"],
@@ -399,15 +455,12 @@ function MajorNews() {
             className="flex items-start gap-3 px-4 py-3.5 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer"
             data-testid={`row-news-${i}`}
           >
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 mt-0.5"
-              style={{ backgroundColor: item.color || "#E8344E" }}
-            >
-              N
+            <div className="shrink-0 mt-0.5">
+              <PublisherLogo publisher={item.publisher || item.source || ""} size={28} />
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium text-[#222] leading-snug line-clamp-2">{item.title}</p>
-              <p className="text-xs text-[#999] mt-1">{item.source} · {item.date}</p>
+              <p className="text-xs text-[#999] mt-1">{item.publisher || item.source} · {item.publishedAt || item.date}</p>
             </div>
             <ExternalLink className="w-3.5 h-3.5 text-[#ccc] shrink-0 mt-1" />
           </a>
@@ -433,11 +486,8 @@ function ExpertReports() {
             className="flex items-start gap-3 px-4 py-3.5 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer"
             data-testid={`row-report-${i}`}
           >
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0 mt-0.5"
-              style={{ backgroundColor: report.color }}
-            >
-              <BookOpen className="w-3.5 h-3.5" />
+            <div className="shrink-0 mt-0.5">
+              <SiteLogoBadge size={28} />
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium text-[#222] leading-snug line-clamp-2">{report.title}</p>
