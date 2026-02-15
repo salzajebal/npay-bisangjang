@@ -734,12 +734,6 @@ export default function TradePage() {
     <div className="min-h-screen bg-white" data-testid="page-landing">
       <Header user={user ?? null} />
 
-      <div className="flex justify-center py-2">
-        <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#E8344E] text-white text-xs font-medium rounded-full cursor-pointer hover:bg-[#d42e45] transition-colors" data-testid="banner-update">
-          업데이트 됐어요!
-        </span>
-      </div>
-
       <main className="max-w-[1200px] mx-auto px-4 py-4">
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1 min-w-0 space-y-8">
