@@ -23,16 +23,21 @@ import { SiteLogoBadge } from "@/components/site-logo";
 import type { User as UserType } from "@shared/schema";
 
 const UNLISTED_STOCKS = [
-  { rank: 1, name: "케이뱅크", code: "279570", price: 11600, change: -6.45, orders: 506, category: "일반", isIPO: true },
-  { rank: 2, name: "두나무", code: "389930", price: 307000, change: 1.99, orders: 120, category: "일반", isIPO: false },
-  { rank: 3, name: "빗썸", code: "341650", price: 214000, change: -3.17, orders: 50, category: "일반", isIPO: false },
-  { rank: 4, name: "무신사", code: "458860", price: 25700, change: 0, orders: 128, category: "일반", isIPO: true },
-  { rank: 5, name: "오아시스", code: "370190", price: 9600, change: -6.8, orders: 65, category: "일반", isIPO: false },
-  { rank: 6, name: "컬리", code: "408480", price: 20300, change: -1.46, orders: 49, category: "일반", isIPO: false },
-  { rank: 7, name: "에스엠랩", code: "419350", price: 1280, change: 4.07, orders: 37, category: "일반", isIPO: false },
-  { rank: 8, name: "야놀자", code: "350920", price: 26900, change: 0.37, orders: 54, category: "일반", isIPO: false },
-  { rank: 9, name: "케이솔루션", code: "413490", price: 7650, change: 10.87, orders: 16, category: "일반", isIPO: false },
-  { rank: 10, name: "에너진", code: "403680", price: 3560, change: 7.23, orders: 50, category: "일반", isIPO: false },
+  { name: "케이뱅크", code: "279570", price: 11600, change: -6.45, orders: 506, category: "일반", isIPO: true, marketCap: 52000, revenueGrowth: 18.5, ipoPrep: true },
+  { name: "두나무", code: "389930", price: 307000, change: 1.99, orders: 120, category: "일반", isIPO: false, marketCap: 98000, revenueGrowth: 42.3, ipoPrep: false },
+  { name: "빗썸", code: "341650", price: 214000, change: -3.17, orders: 50, category: "일반", isIPO: false, marketCap: 35000, revenueGrowth: 31.2, ipoPrep: false },
+  { name: "무신사", code: "458860", price: 25700, change: 0, orders: 128, category: "일반", isIPO: true, marketCap: 45000, revenueGrowth: 22.1, ipoPrep: true },
+  { name: "오아시스", code: "370190", price: 9600, change: -6.8, orders: 65, category: "일반", isIPO: false, marketCap: 8500, revenueGrowth: -5.3, ipoPrep: false },
+  { name: "컬리", code: "408480", price: 20300, change: -1.46, orders: 49, category: "일반", isIPO: false, marketCap: 28000, revenueGrowth: 15.7, ipoPrep: false },
+  { name: "에스엠랩", code: "419350", price: 1280, change: 4.07, orders: 37, category: "일반", isIPO: false, marketCap: 3200, revenueGrowth: 67.8, ipoPrep: false },
+  { name: "야놀자", code: "350920", price: 26900, change: 0.37, orders: 54, category: "일반", isIPO: false, marketCap: 42000, revenueGrowth: 28.4, ipoPrep: false },
+  { name: "케이솔루션", code: "413490", price: 7650, change: 10.87, orders: 16, category: "일반", isIPO: false, marketCap: 5600, revenueGrowth: 85.2, ipoPrep: true },
+  { name: "에너진", code: "403680", price: 3560, change: 7.23, orders: 50, category: "일반", isIPO: false, marketCap: 4100, revenueGrowth: 53.6, ipoPrep: false },
+  { name: "오톰", code: "378160", price: 15200, change: 2.35, orders: 42, category: "일반", isIPO: false, marketCap: 12000, revenueGrowth: 35.1, ipoPrep: false },
+  { name: "현대엔지니어링", code: "064540", price: 68500, change: -0.87, orders: 28, category: "일반", isIPO: false, marketCap: 75000, revenueGrowth: 8.2, ipoPrep: true },
+  { name: "이브이알스튜디오", code: "379660", price: 4350, change: 12.41, orders: 31, category: "일반", isIPO: false, marketCap: 2800, revenueGrowth: 120.5, ipoPrep: false },
+  { name: "토스", code: "285240", price: 185000, change: 3.52, orders: 88, category: "일반", isIPO: false, marketCap: 130000, revenueGrowth: 45.8, ipoPrep: true },
+  { name: "에스팀", code: "414260", price: 7500, change: 5.63, orders: 22, category: "전문", isIPO: true, marketCap: 1800, revenueGrowth: 92.3, ipoPrep: true },
 ];
 
 const RANKING_TABS = ["일반종목", "거래많은", "상승률 높은", "상장준비 시작", "예상시총 높은", "매출이 상승한"];
@@ -111,6 +116,31 @@ function useTickerPrices() {
   }, []);
 
   return stocks;
+}
+
+function getSortedStocks(stocks: typeof UNLISTED_STOCKS, tab: string) {
+  let sorted = [...stocks];
+  switch (tab) {
+    case "거래많은":
+      sorted.sort((a, b) => b.orders - a.orders);
+      break;
+    case "상승률 높은":
+      sorted.sort((a, b) => b.change - a.change);
+      break;
+    case "상장준비 시작":
+      sorted = sorted.filter((s) => s.ipoPrep || s.isIPO);
+      break;
+    case "예상시총 높은":
+      sorted.sort((a, b) => b.marketCap - a.marketCap);
+      break;
+    case "매출이 상승한":
+      sorted = sorted.filter((s) => s.revenueGrowth > 0).sort((a, b) => b.revenueGrowth - a.revenueGrowth);
+      break;
+    default:
+      sorted.sort((a, b) => b.orders - a.orders);
+      break;
+  }
+  return sorted.slice(0, 10).map((s, i) => ({ ...s, rank: i + 1 }));
 }
 
 function Header({ user }: { user: UserType | null }) {
@@ -253,15 +283,19 @@ function Header({ user }: { user: UserType | null }) {
 }
 
 function StockRankings() {
-  const stocks = useTickerPrices();
+  const allStocks = useTickerPrices();
   const [activeTab, setActiveTab] = useState("일반종목");
+  const displayStocks = getSortedStocks(allStocks, activeTab);
+
+  const now = new Date();
+  const timeStr = `${String(now.getFullYear()).slice(2)}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")} 기준`;
 
   return (
     <section data-testid="section-stock-rankings">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-bold text-[#222]">종목 순위</h2>
-          <span className="text-xs text-[#999]">26.02.15 13:30 기준</span>
+          <span className="text-xs text-[#999]">{timeStr}</span>
         </div>
         <a href="#" className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-rankings-all">
           전체보기 <ChevronRight className="w-3.5 h-3.5" />
@@ -294,7 +328,7 @@ function StockRankings() {
           <span className="text-right">전체주문</span>
           <span className="text-right">구분</span>
         </div>
-        {stocks.map((stock) => (
+        {displayStocks.map((stock) => (
           <div
             key={stock.code}
             className="grid grid-cols-[40px_1fr_100px_80px_70px_50px] gap-0 px-4 py-3 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer items-center"
