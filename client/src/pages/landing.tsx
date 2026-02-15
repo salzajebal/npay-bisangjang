@@ -179,6 +179,11 @@ function Header({ user }: { user: UserType | null }) {
                 {link.label}
               </a>
             ))}
+            <Link href="/my-stocks">
+              <span className="text-[13px] text-[#666] px-2 py-1 whitespace-nowrap hover:text-[#222] transition-colors cursor-pointer" data-testid="link-nav-my-stocks">
+                공모주 마이페이지
+              </span>
+            </Link>
             <div className="ml-1 cursor-pointer" data-testid="button-notification">
               <SiteLogoBadge size={28} />
             </div>
@@ -251,6 +256,11 @@ function Header({ user }: { user: UserType | null }) {
               {link.label}
             </a>
           ))}
+          <Link href="/my-stocks">
+            <span className="block text-sm text-[#666] py-2 hover:text-[#222] cursor-pointer" data-testid="link-mobile-nav-my-stocks">
+              공모주 마이페이지
+            </span>
+          </Link>
           <div className="border-t border-[#eee] pt-3 flex items-center gap-3">
             {user ? (
               <>

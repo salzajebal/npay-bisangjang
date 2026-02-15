@@ -11,6 +11,7 @@ import DashboardPage from "@/pages/dashboard";
 import AdminPage from "@/pages/admin";
 import AdminLoginPage from "@/pages/admin-login";
 import ChatPage from "@/pages/chat";
+import MyStocksPage from "@/pages/my-stocks";
 
 function Router() {
   return (
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
       <Route path="/dashboard" component={DashboardPage} />
+      <Route path="/my-stocks" component={MyStocksPage} />
       <Route path="/admin/login" component={AdminLoginPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/chat" component={ChatPage} />
