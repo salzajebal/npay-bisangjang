@@ -168,25 +168,22 @@ function Header({ user }: { user: UserType | null }) {
             </div>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-1 shrink-0">
+          <nav className="hidden lg:flex items-center gap-3 shrink-0">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
-                className="text-[13px] text-[#666] px-2 py-1 whitespace-nowrap hover:text-[#222] transition-colors"
+                className="text-[13px] text-[#666] px-1 py-1 whitespace-nowrap hover:text-[#222] transition-colors"
                 data-testid={`link-nav-${link.label}`}
               >
                 {link.label}
               </a>
             ))}
             <Link href="/my-stocks">
-              <span className="text-[13px] text-[#666] px-2 py-1 whitespace-nowrap hover:text-[#222] transition-colors cursor-pointer" data-testid="link-nav-my-stocks">
+              <span className="text-[13px] text-[#E8344E] font-bold px-3 py-1.5 whitespace-nowrap border border-[#E8344E] rounded-full hover:bg-[#E8344E] hover:text-white transition-colors cursor-pointer" data-testid="link-nav-my-stocks">
                 공모주 마이페이지
               </span>
             </Link>
-            <div className="ml-1 cursor-pointer" data-testid="button-notification">
-              <SiteLogoBadge size={28} />
-            </div>
           </nav>
 
           <div className="hidden md:flex items-center gap-2 shrink-0">
@@ -257,7 +254,7 @@ function Header({ user }: { user: UserType | null }) {
             </a>
           ))}
           <Link href="/my-stocks">
-            <span className="block text-sm text-[#666] py-2 hover:text-[#222] cursor-pointer" data-testid="link-mobile-nav-my-stocks">
+            <span className="inline-block text-sm text-[#E8344E] font-bold py-2 cursor-pointer" data-testid="link-mobile-nav-my-stocks">
               공모주 마이페이지
             </span>
           </Link>
