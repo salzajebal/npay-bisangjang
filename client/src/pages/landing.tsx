@@ -87,7 +87,7 @@ const HOT_ROOMS = [
 ];
 
 const NAV_LINKS = [
-  { label: "공모주 IPO 캘린더", href: "#" },
+  { label: "공모주 IPO 캘린더", href: "/ipo-calendar" },
 ];
 
 function useTickerPrices() {
@@ -534,7 +534,7 @@ function UpcomingIPOs() {
     <div data-testid="section-upcoming-ipos">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-base font-bold text-[#222]">다가오는 청약 종목</h2>
-        <a href="#" className="text-xs text-[#E8344E] flex items-center gap-0.5 hover:underline" data-testid="link-ipo-calendar">
+        <a href="/ipo-calendar" className="text-xs text-[#E8344E] flex items-center gap-0.5 hover:underline" data-testid="link-ipo-calendar">
           IPO 캘린더 보기 <ChevronRight className="w-3 h-3" />
         </a>
       </div>
@@ -598,7 +598,7 @@ function UpcomingIPOs() {
       </div>
 
       <div className="mt-4 text-center">
-        <a href="#" className="inline-flex items-center gap-1 text-sm text-[#666] border border-[#eee] rounded-full px-5 py-2 hover:bg-[#fafafa] transition-colors" data-testid="link-more-ipos">
+        <a href="/ipo-calendar" className="inline-flex items-center gap-1 text-sm text-[#666] border border-[#eee] rounded-full px-5 py-2 hover:bg-[#fafafa] transition-colors" data-testid="link-more-ipos">
           종목 더보기 <ChevronRight className="w-3.5 h-3.5" />
         </a>
       </div>
