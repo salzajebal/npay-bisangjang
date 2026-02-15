@@ -87,6 +87,11 @@ const HOT_ROOMS = [
 ];
 
 const NAV_LINKS = [
+  { label: "종목랭킹", href: "#rankings" },
+  { label: "뉴스", href: "#news" },
+  { label: "전문가리포트", href: "#reports" },
+  { label: "테마", href: "#themes" },
+  { label: "토론", href: "#discussions" },
   { label: "공모주 IPO 캘린더", href: "/ipo-calendar" },
 ];
 
@@ -294,7 +299,7 @@ function StockRankings() {
   const timeStr = `${String(now.getFullYear()).slice(2)}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")} 기준`;
 
   return (
-    <section data-testid="section-stock-rankings">
+    <section id="rankings" data-testid="section-stock-rankings">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-bold text-[#222]">종목 순위</h2>
@@ -377,7 +382,7 @@ function MajorNews() {
   const news = newsData || fallbackNews;
 
   return (
-    <section data-testid="section-major-news">
+    <section id="news" data-testid="section-major-news">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold text-[#222]">주요 뉴스</h2>
         <a href="#" className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-news-all">
@@ -410,7 +415,7 @@ function MajorNews() {
 
 function ExpertReports() {
   return (
-    <section data-testid="section-expert-reports">
+    <section id="reports" data-testid="section-expert-reports">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold text-[#222]">전문가 리포트</h2>
         <a href="#" className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-reports-all">
@@ -446,7 +451,7 @@ function ThemeStocks() {
   const themeData = THEME_COMPANIES[activeTheme] || THEME_COMPANIES["일반종목"];
 
   return (
-    <section data-testid="section-theme-stocks">
+    <section id="themes" data-testid="section-theme-stocks">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold text-[#222]">테마별 종목</h2>
       </div>
@@ -491,7 +496,7 @@ function ThemeStocks() {
 
 function PopularDiscussions() {
   return (
-    <section data-testid="section-popular-discussions">
+    <section id="discussions" data-testid="section-popular-discussions">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold text-[#222]">인기 토론</h2>
         <a href="#" className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-discussions-all">
@@ -531,7 +536,7 @@ function UpcomingIPOs() {
   const [activeIPOTab, setActiveIPOTab] = useState("청약예정");
 
   return (
-    <div data-testid="section-upcoming-ipos">
+    <div id="ipos" data-testid="section-upcoming-ipos">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-base font-bold text-[#222]">다가오는 청약 종목</h2>
         <a href="/ipo-calendar" className="text-xs text-[#E8344E] flex items-center gap-0.5 hover:underline" data-testid="link-ipo-calendar">
@@ -614,7 +619,7 @@ function Tips() {
   ];
 
   return (
-    <div data-testid="section-tips">
+    <div id="tips" data-testid="section-tips">
       <h2 className="text-base font-bold text-[#222] mb-3">비상장 꿀팁</h2>
       <div className="space-y-0 border border-[#eee] rounded-lg overflow-hidden">
         {tips.map((tip, i) => (
@@ -647,7 +652,7 @@ function HotDiscussionRooms() {
   };
 
   return (
-    <div data-testid="section-hot-rooms">
+    <div id="hot-rooms" data-testid="section-hot-rooms">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-bold text-[#222]">HOT 토론방</h2>
@@ -762,6 +767,8 @@ export default function TradePage() {
         .scrollbar-none::-webkit-scrollbar { display: none; }
         .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        html { scroll-behavior: smooth; }
+        [id] { scroll-margin-top: 70px; }
       `}</style>
     </div>
   );
