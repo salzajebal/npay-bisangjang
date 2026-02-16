@@ -139,7 +139,8 @@ export default function MyStocksPage() {
             <p className="text-xs text-[#bbb] mt-1">관리자가 주식을 입고하면 여기에 표시됩니다</p>
           </div>
         ) : (
-          <div className="border border-[#eee] rounded-lg overflow-hidden">
+          <>
+          <div className="border border-[#eee] rounded-lg overflow-hidden hidden sm:block">
             <Table>
               <TableHeader>
                 <TableRow className="bg-[#f8f9fa]">
@@ -170,6 +171,26 @@ export default function MyStocksPage() {
               </TableBody>
             </Table>
           </div>
+          <div className="sm:hidden space-y-3">
+            {holdings.map((h) => (
+              <div key={h.name} className="border border-[#eee] rounded-lg p-3" data-testid={`card-holding-${h.name}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <StockIcon name={h.name} size={28} />
+                    <div className="min-w-0">
+                      <span className="text-sm font-medium text-[#222] truncate block">{h.name}</span>
+                      <Badge variant="outline" className="text-[10px] mt-0.5">{h.category}</Badge>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-medium text-[#222]">{(h.qty * h.avgPrice).toLocaleString()}원</p>
+                    <p className="text-xs text-[#666]">{h.qty.toLocaleString()}주 · {h.avgPrice.toLocaleString()}원</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          </>
         )}
 
         <div className="mt-8 border-t border-[#eee] pt-6">
@@ -177,7 +198,8 @@ export default function MyStocksPage() {
           {txList.length === 0 ? (
             <p className="text-sm text-[#999]">거래 내역이 없습니다</p>
           ) : (
-            <div className="border border-[#eee] rounded-lg overflow-hidden">
+            <>
+            <div className="border border-[#eee] rounded-lg overflow-hidden hidden sm:block">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-[#f8f9fa]">
@@ -212,6 +234,27 @@ export default function MyStocksPage() {
                 </TableBody>
               </Table>
             </div>
+            <div className="sm:hidden space-y-2">
+              {txList.map((tx) => (
+                <div key={tx.id} className="border border-[#eee] rounded-lg p-3 flex items-center gap-3" data-testid={`card-tx-${tx.id}`}>
+                  <Badge variant={tx.type === "in" ? "default" : "secondary"} className={tx.type === "in" ? "bg-[#E8344E] text-white text-xs shrink-0" : "text-xs shrink-0"}>
+                    {tx.type === "in" ? "입고" : "출고"}
+                  </Badge>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <StockIcon name={tx.stockName} size={22} />
+                    <div className="min-w-0">
+                      <span className="text-sm text-[#222] truncate block">{tx.stockName}</span>
+                      <span className="text-[11px] text-[#999]">{tx.createdAt ? new Date(tx.createdAt).toLocaleDateString("ko-KR") : "-"}</span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm text-[#222]">{tx.quantity.toLocaleString()}주</p>
+                    <p className="text-xs text-[#666]">{tx.pricePerShare.toLocaleString()}원</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            </>
           )}
         </div>
       </main>

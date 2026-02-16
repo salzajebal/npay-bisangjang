@@ -329,7 +329,7 @@ function StockRankings() {
       </div>
 
       <div className="border border-[#eee] rounded-lg overflow-hidden">
-        <div className="grid grid-cols-[40px_1fr_100px_80px_70px_50px] gap-0 px-4 py-2.5 bg-[#fafafa] text-xs text-[#999] border-b border-[#eee]">
+        <div className="hidden sm:grid grid-cols-[40px_1fr_100px_80px_70px_50px] gap-0 px-4 py-2.5 bg-[#fafafa] text-xs text-[#999] border-b border-[#eee]">
           <span></span>
           <span>종목명</span>
           <span className="text-right flex items-center justify-end gap-0.5">체결평균가 <span className="text-[10px]">&#9660;</span></span>
@@ -340,7 +340,7 @@ function StockRankings() {
         {displayStocks.map((stock) => (
           <div
             key={stock.code}
-            className="grid grid-cols-[40px_1fr_100px_80px_70px_50px] gap-0 px-4 py-3 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer items-center"
+            className="hidden sm:grid grid-cols-[40px_1fr_100px_80px_70px_50px] gap-0 px-4 py-3 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer items-center"
             data-testid={`row-stock-${stock.code}`}
           >
             <span className="text-sm text-[#999] font-medium">{stock.rank}</span>
@@ -359,6 +359,31 @@ function StockRankings() {
             </span>
             <span className="text-sm text-[#666] text-right tabular-nums">{stock.orders}건</span>
             <span className="text-xs text-[#999] text-right">{stock.category}</span>
+          </div>
+        ))}
+        {displayStocks.map((stock) => (
+          <div
+            key={`m-${stock.code}`}
+            className="sm:hidden flex items-center gap-3 px-3 py-3 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer"
+            data-testid={`row-stock-mobile-${stock.code}`}
+          >
+            <span className="text-xs text-[#999] font-medium w-5 shrink-0 text-center">{stock.rank}</span>
+            <StockIcon name={stock.name} size={28} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-medium text-[#222] truncate">{stock.name}</span>
+                {stock.isIPO && (
+                  <span className="text-[10px] px-1 py-0.5 rounded bg-[#E8344E] text-white font-medium leading-none shrink-0">IPO</span>
+                )}
+              </div>
+              <span className="text-[11px] text-[#999]">{stock.orders}건 · {stock.category}</span>
+            </div>
+            <div className="text-right shrink-0">
+              <p className="text-sm font-medium text-[#222] tabular-nums">{stock.price.toLocaleString()}원</p>
+              <p className={`text-xs tabular-nums font-medium ${stock.change > 0 ? "text-[#f04452]" : stock.change < 0 ? "text-[#3182f6]" : "text-[#999]"}`}>
+                {stock.change > 0 ? "+" : ""}{stock.change.toFixed(2)}%
+              </p>
+            </div>
           </div>
         ))}
       </div>

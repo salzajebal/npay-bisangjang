@@ -444,7 +444,8 @@ export default function DashboardPage() {
                   <p className="text-sm text-muted-foreground mt-1">관리자에게 입고 요청하세요</p>
                 </Card>
               ) : (
-                <Card className="p-0 overflow-hidden">
+                <>
+                <Card className="p-0 overflow-hidden hidden sm:block">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -483,6 +484,33 @@ export default function DashboardPage() {
                     </Table>
                   </div>
                 </Card>
+                <div className="sm:hidden space-y-3">
+                  {holdingsList.map((h) => (
+                    <Card key={h.name} className="p-3" data-testid={`card-holding-mobile-${h.name}`}>
+                      <div className="flex items-center justify-between gap-3 mb-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <StockIcon name={h.name} size={28} />
+                          <span className="font-semibold text-sm truncate">{h.name}</span>
+                        </div>
+                        <span className={`text-sm font-semibold tabular-nums ${h.profitPct >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                          {h.profitPct >= 0 ? "+" : ""}{h.profitPct.toFixed(2)}%
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                        <div className="flex justify-between"><span className="text-muted-foreground">보유수량</span><span className="tabular-nums">{h.qty.toLocaleString()}주</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">평가금액</span><span className="tabular-nums">{h.evalAmount.toLocaleString()}원</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">평균단가</span><span className="tabular-nums">{h.avgPrice.toLocaleString()}원</span></div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">평가손익</span>
+                          <span className={`tabular-nums font-semibold ${h.profitLoss >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                            {h.profitLoss >= 0 ? "+" : ""}{h.profitLoss.toLocaleString()}원
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+                </>
               )}
             </>
           )}
@@ -500,7 +528,8 @@ export default function DashboardPage() {
                   <p className="text-sm text-muted-foreground mt-1">관리자가 주식을 입고하면 여기에 표시됩니다</p>
                 </Card>
               ) : (
-                <Card className="p-0 overflow-hidden">
+                <>
+                <Card className="p-0 overflow-hidden hidden sm:block">
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -544,6 +573,31 @@ export default function DashboardPage() {
                     </Table>
                   </div>
                 </Card>
+                <div className="sm:hidden space-y-2">
+                  {txList.map((tx) => (
+                    <Card key={tx.id} className="p-3" data-testid={`card-transaction-mobile-${tx.id}`}>
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Badge
+                            variant={tx.type === "in" ? "default" : "secondary"}
+                            className={tx.type === "in" ? "bg-red-500 border-red-500 text-xs shrink-0" : "bg-blue-500 border-blue-500 text-white text-xs shrink-0"}
+                          >
+                            {tx.type === "in" ? "입고" : "출고"}
+                          </Badge>
+                          <StockIcon name={tx.stockName} size={22} />
+                          <span className="font-medium text-sm truncate">{tx.stockName}</span>
+                        </div>
+                        <span className="text-sm font-semibold tabular-nums shrink-0">{(tx.quantity * tx.pricePerShare).toLocaleString()}원</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{tx.quantity.toLocaleString()}주 x {tx.pricePerShare.toLocaleString()}원 · {tx.category}</span>
+                        <span>{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</span>
+                      </div>
+                      {tx.memo && <p className="text-xs text-muted-foreground mt-1">{tx.memo}</p>}
+                    </Card>
+                  ))}
+                </div>
+                </>
               )}
             </>
           )}

@@ -264,9 +264,9 @@ function PreTradeSection() {
     <div data-testid="section-pretrade">
       <div className="bg-[#f8f9fa] py-8 px-4 mb-8">
         <div className="max-w-[1200px] mx-auto">
-          <h2 className="text-lg font-bold text-[#222] mb-6">청약 전에도 비상장 주식으로 미리 거래할 수 있어요!</h2>
+          <h2 className="text-base sm:text-lg font-bold text-[#222] mb-6">청약 전에도 비상장 주식으로 미리 거래할 수 있어요!</h2>
           <div className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-1 bg-white rounded-lg p-5 border border-[#eee]">
+            <div className="flex-1 bg-white rounded-lg p-4 sm:p-5 border border-[#eee]">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-[#222]">지금 거래 많은 IPO 종목 TOP5</h3>
                 <span className="text-[11px] text-[#999]">02.15 14:55 기준</span>
@@ -306,7 +306,7 @@ function PreTradeSection() {
               </div>
             </div>
 
-            <div className="lg:w-[380px] bg-white rounded-lg p-5 border-2 border-[#E8344E]">
+            <div className="lg:w-[380px] bg-white rounded-lg p-4 sm:p-5 border-2 border-[#E8344E]">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-[#222]">비상장 주식일 때 미리 샀다면?</h3>
                 <div className="flex items-center gap-1">
@@ -356,9 +356,9 @@ function PreTradeSection() {
       </div>
 
       <div className="max-w-[1200px] mx-auto px-4 mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-bold text-[#222]">이제 막 상장준비를 시작한, 눈여겨 볼 종목</h3>
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-sm sm:text-base font-bold text-[#222]">이제 막 상장준비를 시작한, 눈여겨 볼 종목</h3>
             <span className="text-[11px] text-[#999]">02.15 14:30 기준</span>
             <Info className="w-3.5 h-3.5 text-[#ccc]" />
           </div>
@@ -484,10 +484,10 @@ export default function IPOCalendarPage() {
       </header>
 
       <div className="max-w-[1200px] mx-auto px-4">
-        <div className="flex items-center gap-4 border-b border-[#eee]">
+        <div className="flex items-center gap-2 sm:gap-4 border-b border-[#eee] overflow-x-auto scrollbar-none">
           <button
             onClick={() => setActivePageTab("calendar")}
-            className={`py-4 text-base font-bold border-b-2 transition-colors ${
+            className={`py-4 text-sm sm:text-base font-bold border-b-2 transition-colors whitespace-nowrap ${
               activePageTab === "calendar" ? "border-[#222] text-[#222]" : "border-transparent text-[#999]"
             }`}
             data-testid="tab-page-calendar"
@@ -496,7 +496,7 @@ export default function IPOCalendarPage() {
           </button>
           <button
             onClick={() => setActivePageTab("pretrade")}
-            className={`py-4 text-base border-b-2 transition-colors ${
+            className={`py-4 text-sm sm:text-base border-b-2 transition-colors whitespace-nowrap ${
               activePageTab === "pretrade" ? "border-[#222] text-[#222] font-bold" : "border-transparent text-[#999]"
             }`}
             data-testid="tab-page-pretrade"
@@ -505,7 +505,7 @@ export default function IPOCalendarPage() {
           </button>
           <button
             onClick={() => setActivePageTab("faq")}
-            className={`py-4 text-base border-b-2 transition-colors ${
+            className={`py-4 text-sm sm:text-base border-b-2 transition-colors whitespace-nowrap ${
               activePageTab === "faq" ? "border-[#222] text-[#222] font-bold" : "border-transparent text-[#999]"
             }`}
             data-testid="tab-page-faq"
@@ -546,8 +546,10 @@ export default function IPOCalendarPage() {
           </div>
 
           <div className="flex flex-col lg:flex-row gap-8">
-            <div className="flex-[2] min-w-0">
-              <CalendarView />
+            <div className="flex-[2] min-w-0 overflow-x-auto">
+              <div className="min-w-[500px]">
+                <CalendarView />
+              </div>
             </div>
             <div className="lg:w-[320px] shrink-0">
               <UpcomingSidebar />
@@ -583,6 +585,11 @@ export default function IPOCalendarPage() {
           <p className="text-[11px] text-[#bbb] mt-2">© 2026 증권플러스 비상장. All rights reserved.</p>
         </div>
       </footer>
+
+      <style>{`
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   );
 }
