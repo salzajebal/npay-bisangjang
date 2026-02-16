@@ -28,6 +28,8 @@ A securities platform for Korean unlisted stocks (비상장주식), branded as �
 - 회원정보열람, 회원정보변경, 회원동결/해제, 회원삭제
 - 입고/출고 처리 (configurable stock name for unlisted stocks)
 - 입고량 수정, 대체출고 관리, 1:1 상담
+- 종목 관리: IPO 청약 종목 추가/수정/삭제, 활성/비활성 관리, 청약진행중/청약예정 상태 관리
+- 국내 주식 종목 검색 (140+ Korean stocks searchable for activation)
 
 ## Stock Categories (비상장)
 - 일반, 공모주, 스팩, 장외, 기타
@@ -38,12 +40,14 @@ A securities platform for Korean unlisted stocks (비상장주식), branded as �
 - `transfer_requests` - Transfer-out requests with status, default stockName "비상장주식"
 - `chat_rooms` - 1:1 chat rooms per user
 - `chat_messages` - Chat messages with roomId, senderId, senderRole
+- `ipo_stocks` - IPO stocks with stockName, startDate, endDate, brokers, priceMin, priceMax, competitionRate, status (active/inactive), subscriptionStatus (청약진행중/청약예정)
 - `session` - Express sessions
 
 ## API Routes
 - Auth: POST /api/auth/register, /api/auth/login, /api/auth/logout, GET /api/auth/me
 - User: GET /api/transactions/my, POST /api/transfer-requests, GET /api/transfer-requests/my
-- Admin: CRUD on /api/admin/users, /api/admin/transactions, /api/admin/transfer-requests
+- Admin: CRUD on /api/admin/users, /api/admin/transactions, /api/admin/transfer-requests, /api/admin/ipo-stocks
+- Public: GET /api/ipo-stocks (active IPO stocks for landing page)
 - Chat: /api/chat/rooms, WebSocket /ws/chat
 - Stock: GET /api/stocks/news (Korean unlisted stock news from Google RSS with caching)
 

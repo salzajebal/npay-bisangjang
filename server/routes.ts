@@ -493,7 +493,10 @@ export async function registerRoutes(
 
   app.patch("/api/admin/ipo-stocks/:id", requireAdmin, async (req, res) => {
     try {
-      const updated = await storage.updateIpoStock(req.params.id, req.body);
+      const data = { ...req.body };
+      if (data.priceMin != null) data.priceMin = parseInt(data.priceMin);
+      if (data.priceMax != null) data.priceMax = parseInt(data.priceMax);
+      const updated = await storage.updateIpoStock(req.params.id, data);
       if (!updated) {
         return res.status(404).json({ message: "종목을 찾을 수 없습니다" });
       }

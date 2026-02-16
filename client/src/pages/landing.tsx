@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import type { IpoStock } from "@shared/schema";
 import {
   Search,
   ChevronRight,
@@ -590,6 +591,27 @@ function PopularDiscussions() {
 
 function UpcomingIPOs() {
   const [activeIPOTab, setActiveIPOTab] = useState("청약예정");
+  const { data: apiStocks } = useQuery<IpoStock[]>({
+    queryKey: ["/api/ipo-stocks"],
+  });
+
+  const ipoList = (apiStocks && apiStocks.length > 0) ? apiStocks.map((s) => {
+    const start = new Date(s.startDate);
+    const end = new Date(s.endDate);
+    const now = new Date();
+    const dDay = Math.max(0, Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+    const isOngoing = now >= start && now <= end;
+    const formatDate = (d: Date) => `${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+    return {
+      name: s.stockName,
+      dDay: isOngoing ? 0 : dDay,
+      date: isOngoing ? `${formatDate(start)} ~ ${formatDate(end)}` : `${formatDate(start)} 예정`,
+      priceRange: `${s.priceMin.toLocaleString()} ~ ${s.priceMax.toLocaleString()}원`,
+      competition: s.competitionRate || "-",
+      label: s.subscriptionStatus === "청약진행중" ? "청약중" : (dDay <= 3 ? "매수가능" : ""),
+      status: s.subscriptionStatus,
+    };
+  }) : UPCOMING_IPOS;
 
   return (
     <div id="ipos" data-testid="section-upcoming-ipos">
@@ -611,7 +633,7 @@ function UpcomingIPOs() {
           data-testid="tab-ipo-ongoing"
         >
           청약진행중
-          <span className="text-[10px] bg-[#E8344E] text-white rounded-full w-4 h-4 flex items-center justify-center leading-none">{UPCOMING_IPOS.filter(i => i.status === "청약진행중").length}</span>
+          <span className="text-[10px] bg-[#E8344E] text-white rounded-full w-4 h-4 flex items-center justify-center leading-none">{ipoList.filter(i => i.status === "청약진행중").length}</span>
         </button>
         <button
           onClick={() => setActiveIPOTab("청약예정")}
@@ -623,12 +645,14 @@ function UpcomingIPOs() {
           data-testid="tab-ipo-upcoming"
         >
           청약예정
-          <span className="text-[10px] bg-[#E8344E] text-white rounded-full w-4 h-4 flex items-center justify-center leading-none">{UPCOMING_IPOS.filter(i => i.status === "청약예정").length}</span>
+          <span className="text-[10px] bg-[#E8344E] text-white rounded-full w-4 h-4 flex items-center justify-center leading-none">{ipoList.filter(i => i.status === "청약예정").length}</span>
         </button>
       </div>
 
       <div className="space-y-3">
-        {UPCOMING_IPOS.filter(ipo => ipo.status === activeIPOTab).map((ipo, i) => (
+        {ipoList.filter(ipo => ipo.status === activeIPOTab).length === 0 ? (
+          <div className="text-center py-8 text-sm text-[#999]">등록된 종목이 없습니다</div>
+        ) : ipoList.filter(ipo => ipo.status === activeIPOTab).map((ipo, i) => (
           <div
             key={i}
             className="border border-[#eee] rounded-lg p-3.5 hover:border-[#ddd] transition-colors cursor-pointer"
@@ -644,8 +668,8 @@ function UpcomingIPOs() {
                 <div>
                   <div className="flex items-center gap-1.5 mb-0.5">
                     <span className="text-sm font-bold text-[#222]">{ipo.name}</span>
-                    {"label" in ipo && (ipo as any).label && (
-                      <span className="text-[10px] text-[#E8344E] font-medium">{(ipo as any).label}</span>
+                    {ipo.label && (
+                      <span className="text-[10px] text-[#E8344E] font-medium">{ipo.label}</span>
                     )}
                   </div>
                   <p className="text-xs text-[#666]">공모가 {ipo.priceRange}</p>

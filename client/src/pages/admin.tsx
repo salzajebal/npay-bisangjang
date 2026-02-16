@@ -14,12 +14,12 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { STOCK_CATEGORIES, KOREAN_BANKS } from "@shared/schema";
 import { StockIcon } from "@/components/stock-icon";
-import type { User, StockTransaction, TransferRequest } from "@shared/schema";
+import type { User, StockTransaction, TransferRequest, IpoStock } from "@shared/schema";
 import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
   Eye, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
-  CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu,
+  CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu, Plus,
 } from "lucide-react";
 
 function StockTransactionDialog({
@@ -535,13 +535,390 @@ function TransactionEditDialog({ tx, onSuccess }: { tx: StockTransaction; onSucc
   );
 }
 
-type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "chat";
+const KOREAN_STOCK_LIST = [
+  "삼성전자","SK하이닉스","LG에너지솔루션","삼성바이오로직스","현대자동차","기아","셀트리온","KB금융","POSCO홀딩스","신한지주",
+  "삼성SDI","LG화학","NAVER","카카오","하나금융지주","현대모비스","삼성물산","SK이노베이션","LG전자","삼성생명",
+  "한국전력","SK텔레콤","KT","우리금융지주","삼성화재","포스코인터내셔널","SK","한화에어로스페이스","대한항공","HMM",
+  "LG","고려아연","삼성전기","한화솔루션","한국타이어앤테크놀로지","CJ제일제당","S-Oil","두산에너빌리티","롯데케미칼","엔씨소프트",
+  "카카오뱅크","크래프톤","삼성에스디에스","NH투자증권","미래에셋증권","한국투자증권","키움증권","대신증권","SK바이오팜","SK바이오사이언스",
+  "에코프로비엠","에코프로","포스코퓨처엠","알테오젠","한미약품","유한양행","녹십자","JYP엔터","HYBE","SM엔터",
+  "넷마블","펄어비스","컴투스","CJ ENM","스튜디오드래곤","카카오게임즈","위메이드","쿠팡","SK스퀘어","LG이노텍",
+  "두산밥캣","한화오션","HD현대","HD한국조선해양","HD현대중공업","현대건설","GS건설","대우건설","현대엔지니어링","DL이앤씨",
+  "한전KPS","한국가스공사","에스원","CJ대한통운","하이브","아모레퍼시픽","LG생활건강","호텔신라","F&F","한섬",
+  "케이뱅크","무신사","두나무","빗썸","에스팀","엑스비스","카나프테라퓨틱스","토스","야놀자","컬리",
+  "오아시스","에너진","오톰","이브이알스튜디오","에스엠랩","케이솔루션","비바리퍼블리카","직방","마켓컬리","쏘카",
+  "원스토어","리디","버킷플레이스","당근","지그재그","클래스101","스파크플러스","마이리얼트립","타다","플레이디",
+  "위블","코리아센터","브레인즈컴퍼니","메디톡스","휴젤","파마리서치","제넥신","진원생명과학","씨젠","에이비엘바이오",
+  "레인보우로보틱스","두산로보틱스","한화시스템","LIG넥스원","현대로템","풍산","한국항공우주","한화","LG디스플레이","BOE",
+];
+
+function StocksManagementSection({
+  ipoStocks,
+  isLoading,
+  onCreate,
+  onUpdate,
+  onDelete,
+  isCreating,
+  isUpdating,
+}: {
+  ipoStocks: IpoStock[];
+  isLoading: boolean;
+  onCreate: (data: any) => void;
+  onUpdate: (data: any) => void;
+  onDelete: (id: string) => void;
+  isCreating: boolean;
+  isUpdating: boolean;
+}) {
+  const [addOpen, setAddOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editStock, setEditStock] = useState<IpoStock | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [stockSearch, setStockSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+
+  const [formData, setFormData] = useState({
+    stockName: "",
+    startDate: "",
+    endDate: "",
+    brokers: "",
+    priceMin: "",
+    priceMax: "",
+    competitionRate: "",
+    status: "active",
+    subscriptionStatus: "청약예정",
+  });
+
+  const resetForm = () => {
+    setFormData({ stockName: "", startDate: "", endDate: "", brokers: "", priceMin: "", priceMax: "", competitionRate: "", status: "active", subscriptionStatus: "청약예정" });
+    setStockSearch("");
+  };
+
+  const filteredStockSuggestions = stockSearch.length >= 1
+    ? KOREAN_STOCK_LIST.filter(s => s.includes(stockSearch)).slice(0, 8)
+    : [];
+
+  const handleAdd = () => {
+    if (!formData.stockName || !formData.startDate || !formData.endDate || !formData.brokers || !formData.priceMin || !formData.priceMax) return;
+    onCreate(formData);
+    setAddOpen(false);
+    resetForm();
+  };
+
+  const handleEdit = () => {
+    if (!editStock) return;
+    onUpdate({ id: editStock.id, ...formData });
+    setEditOpen(false);
+    setEditStock(null);
+    resetForm();
+  };
+
+  const openEdit = (stock: IpoStock) => {
+    setEditStock(stock);
+    setFormData({
+      stockName: stock.stockName,
+      startDate: stock.startDate,
+      endDate: stock.endDate,
+      brokers: stock.brokers,
+      priceMin: String(stock.priceMin),
+      priceMax: String(stock.priceMax),
+      competitionRate: stock.competitionRate || "",
+      status: stock.status,
+      subscriptionStatus: stock.subscriptionStatus,
+    });
+    setEditOpen(true);
+  };
+
+  const filteredStocks = ipoStocks.filter((s) => {
+    if (filterStatus !== "all" && s.status !== filterStatus) return false;
+    if (searchTerm && !s.stockName.includes(searchTerm)) return false;
+    return true;
+  });
+
+  const stockFormFields = (
+    <div className="space-y-4 mt-2">
+      <div className="space-y-2">
+        <Label>종목명</Label>
+        <div className="relative">
+          <Input
+            value={formData.stockName}
+            onChange={(e) => { setFormData({ ...formData, stockName: e.target.value }); setStockSearch(e.target.value); }}
+            placeholder="종목명 검색 (예: 삼성전자)"
+            data-testid="input-stock-name"
+          />
+          {filteredStockSuggestions.length > 0 && stockSearch && formData.stockName === stockSearch && (
+            <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+              {filteredStockSuggestions.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  className="w-full text-left px-3 py-2 text-sm hover-elevate flex items-center gap-2"
+                  onClick={() => { setFormData({ ...formData, stockName: name }); setStockSearch(""); }}
+                  data-testid={`suggest-stock-${name}`}
+                >
+                  <StockIcon name={name} size={20} />
+                  <span>{name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>시작일</Label>
+          <Input type="date" value={formData.startDate} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} data-testid="input-stock-start" />
+        </div>
+        <div className="space-y-2">
+          <Label>종료일</Label>
+          <Input type="date" value={formData.endDate} onChange={(e) => setFormData({ ...formData, endDate: e.target.value })} data-testid="input-stock-end" />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label>증권사</Label>
+        <Input value={formData.brokers} onChange={(e) => setFormData({ ...formData, brokers: e.target.value })} placeholder="예: NH, 삼성, 한국" data-testid="input-stock-brokers" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>최소 공모가</Label>
+          <Input type="number" value={formData.priceMin} onChange={(e) => setFormData({ ...formData, priceMin: e.target.value })} placeholder="7000" data-testid="input-stock-price-min" />
+        </div>
+        <div className="space-y-2">
+          <Label>최대 공모가</Label>
+          <Input type="number" value={formData.priceMax} onChange={(e) => setFormData({ ...formData, priceMax: e.target.value })} placeholder="8500" data-testid="input-stock-price-max" />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label>기관경쟁률</Label>
+        <Input value={formData.competitionRate} onChange={(e) => setFormData({ ...formData, competitionRate: e.target.value })} placeholder="198.53:1 (없으면 비워두기)" data-testid="input-stock-competition" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>청약 상태</Label>
+          <Select value={formData.subscriptionStatus} onValueChange={(v) => setFormData({ ...formData, subscriptionStatus: v })}>
+            <SelectTrigger data-testid="select-subscription-status"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="청약진행중">청약진행중</SelectItem>
+              <SelectItem value="청약예정">청약예정</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>활성 상태</Label>
+          <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
+            <SelectTrigger data-testid="select-stock-status"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">활성</SelectItem>
+              <SelectItem value="inactive">비활성</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap flex-1">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="종목 검색"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+              data-testid="input-search-stocks"
+            />
+          </div>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[120px]" data-testid="select-filter-stock-status">
+              <SelectValue placeholder="상태" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체</SelectItem>
+              <SelectItem value="active">활성</SelectItem>
+              <SelectItem value="inactive">비활성</SelectItem>
+            </SelectContent>
+          </Select>
+          <Badge variant="outline" className="shrink-0">{filteredStocks.length}건</Badge>
+        </div>
+        <Dialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); if (!v) resetForm(); }}>
+          <DialogTrigger asChild>
+            <Button className="bg-[#E8344E] border-[#E8344E]" data-testid="button-add-stock">
+              <Plus className="w-4 h-4 mr-1" />종목 추가
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>종목 추가</DialogTitle>
+              <DialogDescription>새로운 청약 종목을 등록합니다</DialogDescription>
+            </DialogHeader>
+            {stockFormFields}
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => { setAddOpen(false); resetForm(); }}>취소</Button>
+              <Button className="bg-[#E8344E] border-[#E8344E]" onClick={handleAdd} disabled={isCreating} data-testid="button-confirm-add-stock">
+                {isCreating ? "추가 중..." : "추가"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full bg-gray-200" />)}
+        </div>
+      ) : filteredStocks.length === 0 ? (
+        <Card className="p-12 text-center">
+          <Package className="w-10 h-10 mx-auto mb-3 opacity-30 text-gray-400" />
+          <p className="font-medium text-gray-500">
+            {searchTerm ? "검색 결과가 없습니다" : "등록된 종목이 없습니다"}
+          </p>
+        </Card>
+      ) : (
+        <>
+          <div className="md:hidden space-y-3">
+            {filteredStocks.map((stock) => (
+              <Card key={stock.id} className="p-4 space-y-3" data-testid={`card-stock-${stock.id}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <StockIcon name={stock.stockName} size={28} />
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">{stock.stockName}</p>
+                      <p className="text-xs text-gray-500">{stock.brokers}</p>
+                    </div>
+                  </div>
+                  <Badge variant={stock.status === "active" ? "default" : "secondary"} className={stock.status === "active" ? "bg-green-600 border-green-600" : ""}>
+                    {stock.status === "active" ? "활성" : "비활성"}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
+                  <span>시작: {stock.startDate}</span>
+                  <span>종료: {stock.endDate}</span>
+                  <span>공모가: {stock.priceMin.toLocaleString()} ~ {stock.priceMax.toLocaleString()}원</span>
+                  <span>경쟁률: {stock.competitionRate || "-"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className={stock.subscriptionStatus === "청약진행중" ? "text-[#E8344E] border-[#E8344E]" : ""}>{stock.subscriptionStatus}</Badge>
+                </div>
+                <div className="flex items-center gap-1 pt-2 border-t border-gray-200">
+                  <Button size="sm" variant="default" className="bg-blue-500 border-blue-500 text-xs" onClick={() => openEdit(stock)} data-testid={`button-edit-stock-${stock.id}`}>
+                    <Pencil className="w-3 h-3 mr-1" />수정
+                  </Button>
+                  <Button size="sm" variant="destructive" className="text-xs" onClick={() => onDelete(stock.id)} data-testid={`button-delete-stock-${stock.id}`}>
+                    <Trash2 className="w-3 h-3 mr-1" />삭제
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={stock.status === "active" ? "secondary" : "default"}
+                    className={`text-xs ml-auto ${stock.status !== "active" ? "bg-green-600 border-green-600" : ""}`}
+                    onClick={() => onUpdate({ id: stock.id, status: stock.status === "active" ? "inactive" : "active" })}
+                    data-testid={`button-toggle-stock-${stock.id}`}
+                  >
+                    {stock.status === "active" ? "비활성화" : "활성화"}
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          <Card className="hidden md:block p-0 overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="text-gray-500">종목명</TableHead>
+                    <TableHead className="text-gray-500">시작일</TableHead>
+                    <TableHead className="text-gray-500">종료일</TableHead>
+                    <TableHead className="text-gray-500">증권사</TableHead>
+                    <TableHead className="text-right text-gray-500">공모가</TableHead>
+                    <TableHead className="text-gray-500">경쟁률</TableHead>
+                    <TableHead className="text-gray-500">청약상태</TableHead>
+                    <TableHead className="text-gray-500">상태</TableHead>
+                    <TableHead className="text-center text-gray-500">작업</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredStocks.map((stock) => (
+                    <TableRow key={stock.id} data-testid={`row-stock-${stock.id}`}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <StockIcon name={stock.stockName} size={24} />
+                          <span className="font-medium text-gray-900">{stock.stockName}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-gray-700">{stock.startDate}</TableCell>
+                      <TableCell className="text-gray-700">{stock.endDate}</TableCell>
+                      <TableCell className="text-gray-700">{stock.brokers}</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums text-gray-700">
+                        {stock.priceMin.toLocaleString()} ~ {stock.priceMax.toLocaleString()}원
+                      </TableCell>
+                      <TableCell className="text-gray-700">{stock.competitionRate || "-"}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={stock.subscriptionStatus === "청약진행중" ? "text-[#E8344E] border-[#E8344E]" : ""}>
+                          {stock.subscriptionStatus}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={stock.status === "active" ? "default" : "secondary"} className={stock.status === "active" ? "bg-green-600 border-green-600" : ""}>
+                          {stock.status === "active" ? "활성" : "비활성"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-1">
+                          <Button size="sm" variant="default" className="bg-blue-500 border-blue-500 text-xs" onClick={() => openEdit(stock)} data-testid={`button-edit-stock-${stock.id}`}>
+                            <Pencil className="w-3 h-3 mr-1" />수정
+                          </Button>
+                          <Button size="sm" variant="destructive" className="text-xs" onClick={() => onDelete(stock.id)} data-testid={`button-delete-stock-${stock.id}`}>
+                            <Trash2 className="w-3 h-3 mr-1" />삭제
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={stock.status === "active" ? "secondary" : "default"}
+                            className={`text-xs ${stock.status !== "active" ? "bg-green-600 border-green-600" : ""}`}
+                            onClick={() => onUpdate({ id: stock.id, status: stock.status === "active" ? "inactive" : "active" })}
+                            data-testid={`button-toggle-stock-${stock.id}`}
+                          >
+                            {stock.status === "active" ? "비활성화" : "활성화"}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        </>
+      )}
+
+      <Dialog open={editOpen} onOpenChange={(v) => { setEditOpen(v); if (!v) { setEditStock(null); resetForm(); } }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>종목 수정</DialogTitle>
+            <DialogDescription>{editStock?.stockName} 정보를 수정합니다</DialogDescription>
+          </DialogHeader>
+          {stockFormFields}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setEditOpen(false); setEditStock(null); resetForm(); }}>취소</Button>
+            <Button className="bg-[#E8344E] border-[#E8344E]" onClick={handleEdit} disabled={isUpdating} data-testid="button-confirm-edit-stock">
+              {isUpdating ? "수정 중..." : "수정"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "stocks" | "chat";
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "대시보드", icon: LayoutDashboard },
   { id: "members", label: "회원 관리", icon: Users },
   { id: "transactions", label: "거래 내역", icon: ClipboardList },
   { id: "transfers", label: "대체출고 관리", icon: ArrowRightLeft },
+  { id: "stocks", label: "종목 관리", icon: Package },
   { id: "chat", label: "1:1 상담", icon: MessageSquare },
 ];
 
@@ -591,7 +968,52 @@ export default function AdminPage() {
     refetchInterval: 5000,
   });
 
+  const { data: ipoStocksData, isLoading: ipoStocksLoading } = useQuery<IpoStock[]>({
+    queryKey: ["/api/admin/ipo-stocks"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!authData?.user?.isAdmin,
+  });
+
   const totalUnreadCount = (chatRooms || []).reduce((sum: number, room: any) => sum + (room.unreadCount || 0), 0);
+
+  const createIpoStockMutation = useMutation({
+    mutationFn: async (data: any) => {
+      await apiRequest("POST", "/api/admin/ipo-stocks", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/ipo-stocks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ipo-stocks"] });
+      toast({ title: "종목 추가 완료" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "오류", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateIpoStockMutation = useMutation({
+    mutationFn: async ({ id, ...data }: any) => {
+      await apiRequest("PATCH", `/api/admin/ipo-stocks/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/ipo-stocks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ipo-stocks"] });
+      toast({ title: "종목 수정 완료" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "오류", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteIpoStockMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/admin/ipo-stocks/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/ipo-stocks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/ipo-stocks"] });
+      toast({ title: "종목 삭제 완료" });
+    },
+  });
 
   const updateTransferStatusMutation = useMutation({
     mutationFn: async ({ id, status, adminMemo }: { id: string; status: string; adminMemo?: string }) => {
@@ -997,7 +1419,7 @@ export default function AdminPage() {
                               {tx.type === "in" ? "입고" : "출고"}
                             </Badge>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium truncate text-gray-700 flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{getUserName(tx.userId)} · {tx.stockName}</p>
+                              <span className="text-sm font-medium truncate text-gray-700 flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{getUserName(tx.userId)} · {tx.stockName}</span>
                               <p className="text-xs text-gray-500">{tx.quantity.toLocaleString()}주 · {tx.pricePerShare.toLocaleString()}원</p>
                             </div>
                           </div>
@@ -1199,7 +1621,7 @@ export default function AdminPage() {
                         <span className="text-xs text-gray-400">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</span>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm font-medium text-gray-700 flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{getUserName(tx.userId)} · {tx.stockName}</p>
+                        <span className="text-sm font-medium text-gray-700 flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{getUserName(tx.userId)} · {tx.stockName}</span>
                         <div className="flex items-center gap-3 text-xs text-gray-500">
                           <span>{tx.quantity.toLocaleString()}주</span>
                           <span>{tx.pricePerShare.toLocaleString()}원</span>
@@ -1329,7 +1751,7 @@ export default function AdminPage() {
                       </div>
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-gray-700">{getUserName(tr.userId)}</p>
-                        <p className="text-sm text-gray-700 flex items-center gap-1.5"><StockIcon name={tr.stockName} size={18} />{tr.stockName} · {tr.quantity.toLocaleString()}주</p>
+                        <span className="text-sm text-gray-700 flex items-center gap-1.5"><StockIcon name={tr.stockName} size={18} />{tr.stockName} · {tr.quantity.toLocaleString()}주</span>
                       </div>
                       <div className="text-xs text-gray-500 space-y-1">
                         <p>{tr.accountName} · <span className="font-mono text-gray-400">{tr.accountNumber}</span></p>
@@ -1455,6 +1877,18 @@ export default function AdminPage() {
                 </>
               )}
             </>
+          )}
+
+          {activeSection === "stocks" && (
+            <StocksManagementSection
+              ipoStocks={ipoStocksData || []}
+              isLoading={ipoStocksLoading}
+              onCreate={(data: any) => createIpoStockMutation.mutate(data)}
+              onUpdate={(data: any) => updateIpoStockMutation.mutate(data)}
+              onDelete={(id: string) => deleteIpoStockMutation.mutate(id)}
+              isCreating={createIpoStockMutation.isPending}
+              isUpdating={updateIpoStockMutation.isPending}
+            />
           )}
 
           {activeSection === "chat" && (
