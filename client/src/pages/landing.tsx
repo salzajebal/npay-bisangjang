@@ -401,6 +401,8 @@ function PublisherLogo({ publisher, size = 28 }: { publisher: string; size?: num
         alt={publisher}
         className="rounded-full shrink-0 object-cover bg-white"
         style={{ width: size, height: size }}
+        loading="lazy"
+        decoding="async"
         onError={(e) => {
           const target = e.target as HTMLImageElement;
           target.style.display = "none";

@@ -53,6 +53,8 @@ export function StockIcon({ name, size = 32 }: { name: string; size?: number }) 
         data-testid={`icon-stock-${name}`}
         crossOrigin="anonymous"
         referrerPolicy="no-referrer"
+        loading="lazy"
+        decoding="async"
       />
     );
   }

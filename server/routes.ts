@@ -77,7 +77,51 @@ export async function registerRoutes(
   }
 
   let newsCache: { data: any; timestamp: number } | null = null;
-  const NEWS_CACHE_DURATION = 5 * 60 * 1000;
+  const NEWS_CACHE_DURATION = 30 * 60 * 1000;
+
+  async function prefetchNews() {
+    try {
+      const rssUrl = "https://news.google.com/rss/search?q=%EB%B9%84%EC%83%81%EC%9E%A5+%EC%A3%BC%EC%8B%9D&hl=ko&gl=KR&ceid=KR:ko";
+      const response = await fetch(rssUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "Accept-Language": "ko-KR,ko;q=0.9",
+        },
+        signal: AbortSignal.timeout(8000),
+      });
+      const xml = await response.text();
+      const news: any[] = [];
+      const brandColors = ["#E8344E", "#333", "#5F0080", "#1976D2", "#43A047", "#E65100", "#FF6D00", "#00838F"];
+      const itemPattern = /<item>([\s\S]*?)<\/item>/g;
+      let itemMatch;
+      while ((itemMatch = itemPattern.exec(xml)) !== null && news.length < 10) {
+        const item = itemMatch[1];
+        const titleMatch = item.match(/<title><!\[CDATA\[(.*?)\]\]>|<title>(.*?)<\/title>/);
+        const linkMatch = item.match(/<link>(.*?)<\/link>/);
+        const pubDateMatch = item.match(/<pubDate>(.*?)<\/pubDate>/);
+        const sourceMatch = item.match(/<source[^>]*>(.*?)<\/source>/);
+        const title = (titleMatch?.[1] || titleMatch?.[2] || "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/<[^>]*>/g, "");
+        const link = linkMatch?.[1] || "";
+        const publisher = sourceMatch?.[1] || "뉴스";
+        const pubDate = pubDateMatch?.[1] || null;
+        if (title && link) {
+          let dateStr = "방금 전";
+          if (pubDate) {
+            const d = new Date(pubDate);
+            dateStr = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+          }
+          news.push({ title, publisher, link, publishedAt: dateStr, color: brandColors[news.length % brandColors.length] });
+        }
+      }
+      if (news.length > 0) {
+        newsCache = { data: news, timestamp: Date.now() };
+        log("News cache preloaded successfully");
+      }
+    } catch {
+      log("News prefetch failed, will retry on first request");
+    }
+  }
+  prefetchNews();
 
   app.get("/api/stocks/news", async (_req, res) => {
     try {
@@ -91,6 +135,7 @@ export async function registerRoutes(
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
           "Accept-Language": "ko-KR,ko;q=0.9",
         },
+        signal: AbortSignal.timeout(8000),
       });
       const xml = await response.text();
 
