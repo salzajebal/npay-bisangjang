@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, users, stockTransactions, transferRequests, chatRooms, chatMessages } from "@shared/schema";
+import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
 
@@ -28,6 +28,11 @@ export interface IStorage {
   getUnreadCountByRoom(roomId: string): Promise<number>;
   getTotalUnreadCountForAdmin(): Promise<number>;
   markMessagesAsReadByAdmin(roomId: string): Promise<void>;
+  getAllIpoStocks(): Promise<IpoStock[]>;
+  getActiveIpoStocks(): Promise<IpoStock[]>;
+  createIpoStock(data: InsertIpoStock): Promise<IpoStock>;
+  updateIpoStock(id: string, data: Partial<InsertIpoStock>): Promise<IpoStock | undefined>;
+  deleteIpoStock(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -154,6 +159,28 @@ export class DatabaseStorage implements IStorage {
     await db.update(chatMessages)
       .set({ isReadByAdmin: 1 })
       .where(and(eq(chatMessages.roomId, roomId), eq(chatMessages.senderRole, "user"), eq(chatMessages.isReadByAdmin, 0)));
+  }
+
+  async getAllIpoStocks(): Promise<IpoStock[]> {
+    return db.select().from(ipoStocks).orderBy(desc(ipoStocks.createdAt));
+  }
+
+  async getActiveIpoStocks(): Promise<IpoStock[]> {
+    return db.select().from(ipoStocks).where(eq(ipoStocks.status, "active")).orderBy(desc(ipoStocks.createdAt));
+  }
+
+  async createIpoStock(data: InsertIpoStock): Promise<IpoStock> {
+    const [stock] = await db.insert(ipoStocks).values(data).returning();
+    return stock;
+  }
+
+  async updateIpoStock(id: string, data: Partial<InsertIpoStock>): Promise<IpoStock | undefined> {
+    const [stock] = await db.update(ipoStocks).set(data).where(eq(ipoStocks.id, id)).returning();
+    return stock;
+  }
+
+  async deleteIpoStock(id: string): Promise<void> {
+    await db.delete(ipoStocks).where(eq(ipoStocks.id, id));
   }
 }
 

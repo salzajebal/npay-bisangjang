@@ -460,6 +460,58 @@ export async function registerRoutes(
     }
   });
 
+  // IPO Stock Management routes
+  app.get("/api/ipo-stocks", async (_req, res) => {
+    const stocks = await storage.getActiveIpoStocks();
+    return res.json(stocks);
+  });
+
+  app.get("/api/admin/ipo-stocks", requireAdmin, async (_req, res) => {
+    const stocks = await storage.getAllIpoStocks();
+    return res.json(stocks);
+  });
+
+  app.post("/api/admin/ipo-stocks", requireAdmin, async (req, res) => {
+    try {
+      const { stockName, startDate, endDate, brokers, priceMin, priceMax, competitionRate, status, subscriptionStatus } = req.body;
+      if (!stockName || !startDate || !endDate || !brokers || priceMin == null || priceMax == null) {
+        return res.status(400).json({ message: "필수 항목을 모두 입력해주세요" });
+      }
+      const stock = await storage.createIpoStock({
+        stockName, startDate, endDate, brokers,
+        priceMin: parseInt(priceMin),
+        priceMax: parseInt(priceMax),
+        competitionRate: competitionRate || null,
+        status: status || "active",
+        subscriptionStatus: subscriptionStatus || "청약예정",
+      });
+      return res.json(stock);
+    } catch (error) {
+      return res.status(500).json({ message: "종목 추가에 실패했습니다" });
+    }
+  });
+
+  app.patch("/api/admin/ipo-stocks/:id", requireAdmin, async (req, res) => {
+    try {
+      const updated = await storage.updateIpoStock(req.params.id, req.body);
+      if (!updated) {
+        return res.status(404).json({ message: "종목을 찾을 수 없습니다" });
+      }
+      return res.json(updated);
+    } catch (error) {
+      return res.status(500).json({ message: "종목 수정에 실패했습니다" });
+    }
+  });
+
+  app.delete("/api/admin/ipo-stocks/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteIpoStock(req.params.id);
+      return res.json({ message: "삭제 완료" });
+    } catch (error) {
+      return res.status(500).json({ message: "종목 삭제에 실패했습니다" });
+    }
+  });
+
   // Chat API routes
   app.post("/api/chat/rooms", async (req, res) => {
     if (!req.session.userId) {
