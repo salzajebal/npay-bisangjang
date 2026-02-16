@@ -114,6 +114,28 @@ export type ChatRoom = typeof chatRooms.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 
+export const ipoStocks = pgTable("ipo_stocks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stockName: text("stock_name").notNull(),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date").notNull(),
+  brokers: text("brokers").notNull(),
+  priceMin: integer("price_min").notNull(),
+  priceMax: integer("price_max").notNull(),
+  competitionRate: text("competition_rate"),
+  status: text("status").notNull().default("active"),
+  subscriptionStatus: text("subscription_status").notNull().default("청약예정"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertIpoStockSchema = createInsertSchema(ipoStocks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type IpoStock = typeof ipoStocks.$inferSelect;
+export type InsertIpoStock = z.infer<typeof insertIpoStockSchema>;
+
 export const KOREAN_BANKS = [
   "KB국민은행",
   "신한은행",
