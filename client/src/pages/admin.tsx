@@ -22,6 +22,23 @@ import {
   CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu, Plus, BookOpen,
 } from "lucide-react";
 
+const KOREAN_STOCK_LIST = [
+  "삼성전자","SK하이닉스","LG에너지솔루션","삼성바이오로직스","현대자동차","기아","셀트리온","KB금융","POSCO홀딩스","신한지주",
+  "삼성SDI","LG화학","NAVER","카카오","하나금융지주","현대모비스","삼성물산","SK이노베이션","LG전자","삼성생명",
+  "한국전력","SK텔레콤","KT","우리금융지주","삼성화재","포스코인터내셔널","SK","한화에어로스페이스","대한항공","HMM",
+  "LG","고려아연","삼성전기","한화솔루션","한국타이어앤테크놀로지","CJ제일제당","S-Oil","두산에너빌리티","롯데케미칼","엔씨소프트",
+  "카카오뱅크","크래프톤","삼성에스디에스","NH투자증권","미래에셋증권","한국투자증권","키움증권","대신증권","SK바이오팜","SK바이오사이언스",
+  "에코프로비엠","에코프로","포스코퓨처엠","알테오젠","한미약품","유한양행","녹십자","JYP엔터","HYBE","SM엔터",
+  "넷마블","펄어비스","컴투스","CJ ENM","스튜디오드래곤","카카오게임즈","위메이드","쿠팡","SK스퀘어","LG이노텍",
+  "두산밥캣","한화오션","HD현대","HD한국조선해양","HD현대중공업","현대건설","GS건설","대우건설","현대엔지니어링","DL이앤씨",
+  "한전KPS","한국가스공사","에스원","CJ대한통운","하이브","아모레퍼시픽","LG생활건강","호텔신라","F&F","한섬",
+  "케이뱅크","무신사","두나무","빗썸","에스팀","엑스비스","카나프테라퓨틱스","토스","야놀자","컬리",
+  "오아시스","에너진","오톰","이브이알스튜디오","에스엠랩","케이솔루션","비바리퍼블리카","직방","마켓컬리","쏘카",
+  "원스토어","리디","버킷플레이스","당근","지그재그","클래스101","스파크플러스","마이리얼트립","타다","플레이디",
+  "위블","코리아센터","브레인즈컴퍼니","메디톡스","휴젤","파마리서치","제넥신","진원생명과학","씨젠","에이비엘바이오",
+  "레인보우로보틱스","두산로보틱스","한화시스템","LIG넥스원","현대로템","풍산","한국항공우주","한화","LG디스플레이","BOE",
+];
+
 function StockTransactionDialog({
   user,
   type,
@@ -34,10 +51,15 @@ function StockTransactionDialog({
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState("일반");
   const [stockName, setStockName] = useState("");
+  const [stockSearch, setStockSearch] = useState("");
   const [quantity, setQuantity] = useState("");
   const [pricePerShare, setPricePerShare] = useState("");
   const [memo, setMemo] = useState("");
   const { toast } = useToast();
+
+  const filteredStocks = stockSearch.length > 0
+    ? KOREAN_STOCK_LIST.filter(s => s.includes(stockSearch)).slice(0, 8)
+    : [];
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -57,7 +79,10 @@ function StockTransactionDialog({
         description: `${user.fullName}님에게 ${stockName} ${quantity}주 ${type === "in" ? "입고" : "출고"} 완료`,
       });
       setOpen(false);
+      setStockName("");
+      setStockSearch("");
       setQuantity("");
+      setPricePerShare("");
       setMemo("");
       onSuccess();
     },
@@ -102,9 +127,39 @@ function StockTransactionDialog({
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 relative">
             <Label>종목명</Label>
-            <Input value={stockName} onChange={(e) => setStockName(e.target.value)} data-testid="input-stock-name" />
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                value={stockSearch || stockName}
+                onChange={(e) => { setStockSearch(e.target.value); setStockName(e.target.value); }}
+                placeholder="종목명 검색 (예: 삼성전자)"
+                className="pl-9"
+                data-testid="input-stock-name"
+              />
+            </div>
+            {stockName && !stockSearch && (
+              <div className="flex items-center gap-2 mt-1 px-1">
+                <StockIcon name={stockName} size={20} />
+                <span className="text-sm font-medium text-gray-700">{stockName}</span>
+              </div>
+            )}
+            {filteredStocks.length > 0 && stockSearch && (
+              <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-[240px] overflow-y-auto">
+                {filteredStocks.map((name) => (
+                  <button
+                    key={name}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
+                    onClick={() => { setStockName(name); setStockSearch(""); }}
+                    data-testid={`suggestion-stock-${name}`}
+                  >
+                    <StockIcon name={name} size={24} />
+                    <span className="font-medium text-gray-800">{name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -120,7 +175,7 @@ function StockTransactionDialog({
             <Label>메모</Label>
             <Input value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="메모 (선택)" data-testid="input-memo" />
           </div>
-          <Button className="w-full" onClick={() => mutation.mutate()} disabled={mutation.isPending || !quantity || parseInt(quantity) <= 0} data-testid="button-submit-transaction">
+          <Button className="w-full" onClick={() => mutation.mutate()} disabled={mutation.isPending || !stockName || !quantity || parseInt(quantity) <= 0} data-testid="button-submit-transaction">
             {mutation.isPending ? "처리 중..." : type === "in" ? "입고 처리" : "출고 처리"}
           </Button>
         </div>
@@ -534,23 +589,6 @@ function TransactionEditDialog({ tx, onSuccess }: { tx: StockTransaction; onSucc
     </Dialog>
   );
 }
-
-const KOREAN_STOCK_LIST = [
-  "삼성전자","SK하이닉스","LG에너지솔루션","삼성바이오로직스","현대자동차","기아","셀트리온","KB금융","POSCO홀딩스","신한지주",
-  "삼성SDI","LG화학","NAVER","카카오","하나금융지주","현대모비스","삼성물산","SK이노베이션","LG전자","삼성생명",
-  "한국전력","SK텔레콤","KT","우리금융지주","삼성화재","포스코인터내셔널","SK","한화에어로스페이스","대한항공","HMM",
-  "LG","고려아연","삼성전기","한화솔루션","한국타이어앤테크놀로지","CJ제일제당","S-Oil","두산에너빌리티","롯데케미칼","엔씨소프트",
-  "카카오뱅크","크래프톤","삼성에스디에스","NH투자증권","미래에셋증권","한국투자증권","키움증권","대신증권","SK바이오팜","SK바이오사이언스",
-  "에코프로비엠","에코프로","포스코퓨처엠","알테오젠","한미약품","유한양행","녹십자","JYP엔터","HYBE","SM엔터",
-  "넷마블","펄어비스","컴투스","CJ ENM","스튜디오드래곤","카카오게임즈","위메이드","쿠팡","SK스퀘어","LG이노텍",
-  "두산밥캣","한화오션","HD현대","HD한국조선해양","HD현대중공업","현대건설","GS건설","대우건설","현대엔지니어링","DL이앤씨",
-  "한전KPS","한국가스공사","에스원","CJ대한통운","하이브","아모레퍼시픽","LG생활건강","호텔신라","F&F","한섬",
-  "케이뱅크","무신사","두나무","빗썸","에스팀","엑스비스","카나프테라퓨틱스","토스","야놀자","컬리",
-  "오아시스","에너진","오톰","이브이알스튜디오","에스엠랩","케이솔루션","비바리퍼블리카","직방","마켓컬리","쏘카",
-  "원스토어","리디","버킷플레이스","당근","지그재그","클래스101","스파크플러스","마이리얼트립","타다","플레이디",
-  "위블","코리아센터","브레인즈컴퍼니","메디톡스","휴젤","파마리서치","제넥신","진원생명과학","씨젠","에이비엘바이오",
-  "레인보우로보틱스","두산로보틱스","한화시스템","LIG넥스원","현대로템","풍산","한국항공우주","한화","LG디스플레이","BOE",
-];
 
 function StocksManagementSection({
   ipoStocks,

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { Link, Redirect } from "wouter";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -7,7 +8,7 @@ import { ArrowLeft, Package, LogIn, TrendingUp, TrendingDown } from "lucide-reac
 import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
 import type { User, StockTransaction } from "@shared/schema";
-import { getCurrentMarketPrice } from "@/lib/market-prices";
+import { fetchStockPrices } from "@/lib/market-prices";
 
 export default function MyStocksPage() {
   const { data: user, isLoading: userLoading } = useQuery<User | null>({
@@ -18,6 +19,36 @@ export default function MyStocksPage() {
     queryKey: ["/api/transactions/my"],
     enabled: !!user,
   });
+
+  const [priceData, setPriceData] = useState<Record<string, { currentPrice: number; changePercent: number }>>({});
+
+  const txList = (transactions || []);
+  const inTx = txList.filter(tx => tx.type === "in");
+
+  const holdingsMap = new Map<string, { qty: number; totalCost: number; category: string }>();
+  for (const tx of inTx) {
+    const existing = holdingsMap.get(tx.stockName) || { qty: 0, totalCost: 0, category: tx.category };
+    existing.qty += tx.quantity;
+    existing.totalCost += tx.quantity * tx.pricePerShare;
+    holdingsMap.set(tx.stockName, existing);
+  }
+
+  for (const tx of txList.filter(t => t.type === "out")) {
+    const existing = holdingsMap.get(tx.stockName);
+    if (existing) {
+      existing.qty -= tx.quantity;
+      if (existing.qty <= 0) holdingsMap.delete(tx.stockName);
+    }
+  }
+
+  const stockNames = Array.from(holdingsMap.keys());
+  const stockNamesKey = JSON.stringify(stockNames);
+
+  useEffect(() => {
+    if (stockNames.length > 0) {
+      fetchStockPrices(stockNames).then(setPriceData);
+    }
+  }, [stockNamesKey]);
 
   if (userLoading) {
     return (
@@ -57,28 +88,9 @@ export default function MyStocksPage() {
     );
   }
 
-  const txList = transactions || [];
-  const inTx = txList.filter(tx => tx.type === "in");
-
-  const holdingsMap = new Map<string, { qty: number; totalCost: number; category: string }>();
-  for (const tx of inTx) {
-    const existing = holdingsMap.get(tx.stockName) || { qty: 0, totalCost: 0, category: tx.category };
-    existing.qty += tx.quantity;
-    existing.totalCost += tx.quantity * tx.pricePerShare;
-    holdingsMap.set(tx.stockName, existing);
-  }
-
-  for (const tx of txList.filter(t => t.type === "out")) {
-    const existing = holdingsMap.get(tx.stockName);
-    if (existing) {
-      existing.qty -= tx.quantity;
-      if (existing.qty <= 0) holdingsMap.delete(tx.stockName);
-    }
-  }
-
   const holdings = Array.from(holdingsMap.entries()).map(([name, data]) => {
     const avgPrice = Math.round(data.totalCost / (data.qty || 1));
-    const market = getCurrentMarketPrice(name, avgPrice);
+    const market = priceData[name] || { currentPrice: avgPrice, changePercent: 0 };
     const currentPrice = market.currentPrice;
     const evalAmount = data.qty * currentPrice;
     const totalCost = data.qty * avgPrice;

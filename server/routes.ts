@@ -123,6 +123,138 @@ export async function registerRoutes(
   }
   prefetchNews();
 
+  const STOCK_CODE_MAP: Record<string, string> = {
+    "삼성전자": "005930", "SK하이닉스": "000660", "LG에너지솔루션": "373220",
+    "삼성바이오로직스": "207940", "현대자동차": "005380", "기아": "000270",
+    "셀트리온": "068270", "KB금융": "105560", "POSCO홀딩스": "005490",
+    "신한지주": "055550", "삼성SDI": "006400", "LG화학": "051910",
+    "NAVER": "035420", "카카오": "035720", "하나금융지주": "086790",
+    "현대모비스": "012330", "삼성물산": "028260", "SK이노베이션": "096770",
+    "LG전자": "066570", "삼성생명": "032830", "한국전력": "015760",
+    "SK텔레콤": "017670", "KT": "030200", "우리금융지주": "316140",
+    "삼성화재": "000810", "포스코인터내셔널": "047050", "SK": "034730",
+    "한화에어로스페이스": "012450", "대한항공": "003490", "HMM": "011200",
+    "LG": "003550", "고려아연": "010130", "삼성전기": "009150",
+    "한화솔루션": "009830", "한국타이어앤테크놀로지": "161390", "CJ제일제당": "097950",
+    "S-Oil": "010950", "두산에너빌리티": "034020", "롯데케미칼": "011170",
+    "엔씨소프트": "036570", "카카오뱅크": "323410", "크래프톤": "259960",
+    "삼성에스디에스": "018260", "NH투자증권": "005940", "미래에셋증권": "006800",
+    "한국투자증권": "071050", "키움증권": "039490", "대신증권": "003540",
+    "SK바이오팜": "326030", "SK바이오사이언스": "302440", "에코프로비엠": "247540",
+    "에코프로": "086520", "포스코퓨처엠": "003670", "알테오젠": "196170",
+    "한미약품": "128940", "유한양행": "000100", "녹십자": "006280",
+    "JYP엔터": "035900", "HYBE": "352820", "하이브": "352820",
+    "SM엔터": "041510", "넷마블": "251270", "펄어비스": "263750",
+    "컴투스": "078340", "CJ ENM": "035760", "스튜디오드래곤": "253450",
+    "카카오게임즈": "293490", "위메이드": "112040", "SK스퀘어": "402340",
+    "LG이노텍": "011070", "두산밥캣": "241560", "한화오션": "042660",
+    "HD현대": "267250", "HD한국조선해양": "009540", "HD현대중공업": "329180",
+    "현대건설": "000720", "GS건설": "006360", "대우건설": "047040",
+    "DL이앤씨": "375500", "한전KPS": "051600", "한국가스공사": "036460",
+    "에스원": "012750", "CJ대한통운": "000120", "아모레퍼시픽": "090430",
+    "LG생활건강": "051900", "호텔신라": "008770", "F&F": "383220",
+    "한섬": "020000", "쏘카": "403550", "한화": "000880",
+    "한화시스템": "272210", "LIG넥스원": "079550", "현대로템": "064350",
+    "풍산": "103140", "LG디스플레이": "034220", "한국항공우주": "047810",
+    "레인보우로보틱스": "277810", "두산로보틱스": "454910",
+    "메디톡스": "086900", "휴젤": "145020", "파마리서치": "214450",
+    "제넥신": "095700", "씨젠": "096530", "에이비엘바이오": "298380",
+    "진원생명과학": "011000", "코리아센터": "290510", "브레인즈컴퍼니": "099390",
+  };
+
+  const UNLISTED_PRICES: Record<string, { price: number; change: number }> = {
+    "케이뱅크": { price: 11600, change: -6.45 },
+    "두나무": { price: 307000, change: 1.99 },
+    "빗썸": { price: 214000, change: -3.17 },
+    "무신사": { price: 25700, change: 0 },
+    "오아시스": { price: 9600, change: -6.8 },
+    "컬리": { price: 20300, change: -1.46 },
+    "에스엠랩": { price: 1280, change: 4.07 },
+    "야놀자": { price: 26900, change: 0.37 },
+    "케이솔루션": { price: 7650, change: 10.87 },
+    "에너진": { price: 3560, change: 7.23 },
+    "오톰": { price: 15200, change: 2.35 },
+    "현대엔지니어링": { price: 68500, change: -0.87 },
+    "이브이알스튜디오": { price: 4350, change: 12.41 },
+    "토스": { price: 185000, change: 3.52 },
+    "비바리퍼블리카": { price: 185000, change: 3.52 },
+    "에스팀": { price: 7500, change: 5.63 },
+    "직방": { price: 8200, change: -2.38 },
+    "당근": { price: 42000, change: 1.45 },
+    "원스토어": { price: 15800, change: 0.64 },
+    "클래스101": { price: 3200, change: -4.17 },
+    "마이리얼트립": { price: 5500, change: 2.78 },
+    "카나프테라퓨틱스": { price: 12400, change: -1.59 },
+    "엑스비스": { price: 6800, change: 3.03 },
+  };
+
+  const priceCache = new Map<string, { price: number; change: number; timestamp: number }>();
+  const PRICE_CACHE_DURATION = 5 * 60 * 1000;
+
+  async function fetchNaverPrice(stockCode: string): Promise<{ price: number; change: number } | null> {
+    try {
+      const resp = await fetch(`https://m.stock.naver.com/api/stock/${stockCode}/basic`, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!resp.ok) return null;
+      const data = await resp.json();
+      const price = parseInt((data.closePrice || "0").replace(/,/g, ""));
+      const ratio = parseFloat(data.fluctuationsRatio || "0");
+      const direction = data.compareToPreviousPrice?.code;
+      const changePercent = direction === "5" || direction === "4" ? -Math.abs(ratio) : ratio;
+      if (price > 0) return { price, change: changePercent };
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  app.post("/api/stocks/prices", async (req, res) => {
+    try {
+      const { stockNames } = req.body as { stockNames: string[] };
+      if (!Array.isArray(stockNames) || stockNames.length === 0) {
+        return res.json({});
+      }
+
+      const results: Record<string, { currentPrice: number; changePercent: number }> = {};
+      const fetchPromises: Promise<void>[] = [];
+
+      for (const name of stockNames.slice(0, 50)) {
+        const cached = priceCache.get(name);
+        if (cached && Date.now() - cached.timestamp < PRICE_CACHE_DURATION) {
+          results[name] = { currentPrice: cached.price, changePercent: cached.change };
+          continue;
+        }
+
+        const unlisted = UNLISTED_PRICES[name];
+        if (unlisted) {
+          results[name] = { currentPrice: unlisted.price, changePercent: unlisted.change };
+          priceCache.set(name, { ...unlisted, timestamp: Date.now() });
+          continue;
+        }
+
+        const code = STOCK_CODE_MAP[name];
+        if (code) {
+          fetchPromises.push(
+            fetchNaverPrice(code).then((result) => {
+              if (result) {
+                results[name] = { currentPrice: result.price, changePercent: result.change };
+                priceCache.set(name, { ...result, timestamp: Date.now() });
+              }
+            })
+          );
+        }
+      }
+
+      await Promise.all(fetchPromises);
+      return res.json(results);
+    } catch (error) {
+      log(`Stock prices error: ${error}`);
+      return res.status(500).json({ message: "가격 정보를 가져올 수 없습니다" });
+    }
+  });
+
   app.get("/api/stocks/news", async (_req, res) => {
     try {
       if (newsCache && Date.now() - newsCache.timestamp < NEWS_CACHE_DURATION) {

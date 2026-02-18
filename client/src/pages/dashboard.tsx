@@ -20,7 +20,7 @@ import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
 import type { User, StockTransaction, TransferRequest } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
-import { getCurrentMarketPrice } from "@/lib/market-prices";
+import { fetchStockPrices } from "@/lib/market-prices";
 
 type DashSection = "overview" | "holdings" | "transactions" | "transfer";
 
@@ -155,6 +155,30 @@ export default function DashboardPage() {
     };
   }, [authData?.user?.id]);
 
+  const [priceData, setPriceData] = useState<Record<string, { currentPrice: number; changePercent: number }>>({});
+
+  const txList = transactions || [];
+  const holdings: Record<string, { qty: number; totalCost: number }> = {};
+  txList.forEach((tx) => {
+    const key = tx.stockName;
+    if (!holdings[key]) holdings[key] = { qty: 0, totalCost: 0 };
+    if (tx.type === "in") {
+      holdings[key].qty += tx.quantity;
+      holdings[key].totalCost += tx.quantity * tx.pricePerShare;
+    } else {
+      holdings[key].qty -= tx.quantity;
+      holdings[key].totalCost -= tx.quantity * tx.pricePerShare;
+    }
+  });
+  const holdingStockNames = Object.entries(holdings).filter(([, v]) => v.qty > 0).map(([name]) => name);
+  const holdingStockNamesKey = JSON.stringify(holdingStockNames);
+
+  useEffect(() => {
+    if (holdingStockNames.length > 0) {
+      fetchStockPrices(holdingStockNames).then(setPriceData);
+    }
+  }, [holdingStockNamesKey]);
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -172,30 +196,15 @@ export default function DashboardPage() {
   }
 
   const user = authData.user;
-  const txList = transactions || [];
-
   const totalIn = txList.filter((t) => t.type === "in").reduce((sum, t) => sum + t.quantity, 0);
   const totalOut = txList.filter((t) => t.type === "out").reduce((sum, t) => sum + t.quantity, 0);
   const totalHolding = totalIn - totalOut;
-
-  const holdings: Record<string, { qty: number; totalCost: number }> = {};
-  txList.forEach((tx) => {
-    const key = tx.stockName;
-    if (!holdings[key]) holdings[key] = { qty: 0, totalCost: 0 };
-    if (tx.type === "in") {
-      holdings[key].qty += tx.quantity;
-      holdings[key].totalCost += tx.quantity * tx.pricePerShare;
-    } else {
-      holdings[key].qty -= tx.quantity;
-      holdings[key].totalCost -= tx.quantity * tx.pricePerShare;
-    }
-  });
 
   const holdingsList = Object.entries(holdings)
     .filter(([, v]) => v.qty > 0)
     .map(([name, v]) => {
       const avgPrice = Math.round(v.totalCost / v.qty);
-      const market = getCurrentMarketPrice(name, avgPrice);
+      const market = priceData[name] || { currentPrice: avgPrice, changePercent: 0 };
       const currentPrice = market.currentPrice;
       const evalAmount = v.qty * currentPrice;
       const profitLoss = evalAmount - v.totalCost;
