@@ -13,6 +13,7 @@ import AdminLoginPage from "@/pages/admin-login";
 import ChatPage from "@/pages/chat";
 import MyStocksPage from "@/pages/my-stocks";
 import IPOCalendarPage from "@/pages/ipo-calendar";
+import AdminManualPage from "@/pages/admin-manual";
 
 function Router() {
   return (
@@ -23,6 +24,7 @@ function Router() {
       <Route path="/dashboard" component={DashboardPage} />
       <Route path="/my-stocks" component={MyStocksPage} />
       <Route path="/ipo-calendar" component={IPOCalendarPage} />
+      <Route path="/admin/manual" component={AdminManualPage} />
       <Route path="/admin/login" component={AdminLoginPage} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/chat" component={ChatPage} />

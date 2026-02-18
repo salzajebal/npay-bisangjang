@@ -19,7 +19,7 @@ import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
   Eye, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
-  CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu, Plus,
+  CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu, Plus, BookOpen,
 } from "lucide-react";
 
 function StockTransactionDialog({
@@ -1243,6 +1243,12 @@ export default function AdminPage() {
         })}
       </nav>
       <div className="border-t border-gray-200 p-2 space-y-1">
+        <Link href="/admin/manual">
+          <button onClick={() => isMobile && setMobileSidebarOpen(false)} className={`w-full flex items-center gap-3 rounded-md text-sm text-gray-600 transition-colors ${!isMobile && sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`} data-testid="nav-admin-manual" title={!isMobile && sidebarCollapsed ? "사용 매뉴얼" : undefined}>
+            <BookOpen className="w-4 h-4 shrink-0" />
+            {(isMobile || !sidebarCollapsed) && <span>사용 매뉴얼</span>}
+          </button>
+        </Link>
         <Link href="/">
           <button onClick={() => isMobile && setMobileSidebarOpen(false)} className={`w-full flex items-center gap-3 rounded-md text-sm text-gray-600 transition-colors ${!isMobile && sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"}`} data-testid="nav-admin-home" title={!isMobile && sidebarCollapsed ? "메인 홈" : undefined}>
             <Home className="w-4 h-4 shrink-0" />
