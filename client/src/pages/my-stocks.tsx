@@ -3,10 +3,11 @@ import { Link, Redirect } from "wouter";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, LogIn } from "lucide-react";
+import { ArrowLeft, Package, LogIn, TrendingUp, TrendingDown } from "lucide-react";
 import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
 import type { User, StockTransaction } from "@shared/schema";
+import { getCurrentMarketPrice } from "@/lib/market-prices";
 
 export default function MyStocksPage() {
   const { data: user, isLoading: userLoading } = useQuery<User | null>({
@@ -75,14 +76,32 @@ export default function MyStocksPage() {
     }
   }
 
-  const holdings = Array.from(holdingsMap.entries()).map(([name, data]) => ({
-    name,
-    qty: data.qty,
-    avgPrice: Math.round(data.totalCost / (data.qty || 1)),
-    category: data.category,
-  }));
+  const holdings = Array.from(holdingsMap.entries()).map(([name, data]) => {
+    const avgPrice = Math.round(data.totalCost / (data.qty || 1));
+    const market = getCurrentMarketPrice(name, avgPrice);
+    const currentPrice = market.currentPrice;
+    const evalAmount = data.qty * currentPrice;
+    const totalCost = data.qty * avgPrice;
+    const profitLoss = evalAmount - totalCost;
+    const profitPct = totalCost > 0 ? ((profitLoss / totalCost) * 100) : 0;
+    return {
+      name,
+      qty: data.qty,
+      avgPrice,
+      currentPrice,
+      evalAmount,
+      totalCost,
+      profitLoss,
+      profitPct,
+      category: data.category,
+      changePercent: market.changePercent,
+    };
+  });
 
-  const totalValue = holdings.reduce((sum, h) => sum + h.qty * h.avgPrice, 0);
+  const totalEval = holdings.reduce((sum, h) => sum + h.evalAmount, 0);
+  const totalCost = holdings.reduce((sum, h) => sum + h.totalCost, 0);
+  const totalProfit = totalEval - totalCost;
+  const totalProfitPct = totalCost > 0 ? ((totalProfit / totalCost) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-white" data-testid="page-my-stocks">
@@ -113,14 +132,29 @@ export default function MyStocksPage() {
           <p className="text-sm text-[#666]">관리자가 입고 처리한 종목이 표시됩니다</p>
         </div>
 
-        <div className="bg-[#f8f9fa] rounded-lg p-5 mb-6 flex flex-wrap gap-6">
-          <div>
-            <p className="text-xs text-[#999] mb-1">보유 종목수</p>
-            <p className="text-lg font-bold text-[#222]" data-testid="text-holdings-count">{holdings.length}개</p>
+        <div className="bg-[#f8f9fa] rounded-lg p-5 mb-6">
+          <div className="flex flex-wrap gap-6 mb-3">
+            <div>
+              <p className="text-xs text-[#999] mb-1">보유 종목수</p>
+              <p className="text-lg font-bold text-[#222]" data-testid="text-holdings-count">{holdings.length}개</p>
+            </div>
+            <div>
+              <p className="text-xs text-[#999] mb-1">총 평가금액</p>
+              <p className="text-lg font-bold text-[#222]" data-testid="text-total-value">{totalEval.toLocaleString()}원</p>
+            </div>
+            <div>
+              <p className="text-xs text-[#999] mb-1">총 매입금액</p>
+              <p className="text-lg font-bold text-[#222]" data-testid="text-total-cost">{totalCost.toLocaleString()}원</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-[#999] mb-1">총 평가금액</p>
-            <p className="text-lg font-bold text-[#222]" data-testid="text-total-value">{totalValue.toLocaleString()}원</p>
+          <div className="flex items-center gap-3 pt-3 border-t border-[#eee]">
+            <div>
+              <p className="text-xs text-[#999] mb-1">평가손익</p>
+              <p className={`text-lg font-bold tabular-nums ${totalProfit >= 0 ? "text-[#f04452]" : "text-[#3182f6]"}`} data-testid="text-total-profit">
+                {totalProfit >= 0 ? "+" : ""}{totalProfit.toLocaleString()}원
+                <span className="text-sm ml-1">({totalProfitPct >= 0 ? "+" : ""}{totalProfitPct.toFixed(2)}%)</span>
+              </p>
+            </div>
           </div>
         </div>
 
@@ -148,7 +182,10 @@ export default function MyStocksPage() {
                   <TableHead className="text-xs text-[#666] font-medium text-center">카테고리</TableHead>
                   <TableHead className="text-xs text-[#666] font-medium text-right">보유수량</TableHead>
                   <TableHead className="text-xs text-[#666] font-medium text-right">평균단가</TableHead>
+                  <TableHead className="text-xs text-[#666] font-medium text-right">현재가</TableHead>
                   <TableHead className="text-xs text-[#666] font-medium text-right">평가금액</TableHead>
+                  <TableHead className="text-xs text-[#666] font-medium text-right">평가손익</TableHead>
+                  <TableHead className="text-xs text-[#666] font-medium text-right">수익률</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -163,9 +200,16 @@ export default function MyStocksPage() {
                     <TableCell className="text-center">
                       <Badge variant="outline" className="text-xs">{h.category}</Badge>
                     </TableCell>
-                    <TableCell className="text-right text-sm text-[#222]">{h.qty.toLocaleString()}주</TableCell>
-                    <TableCell className="text-right text-sm text-[#222]">{h.avgPrice.toLocaleString()}원</TableCell>
-                    <TableCell className="text-right text-sm font-medium text-[#222]">{(h.qty * h.avgPrice).toLocaleString()}원</TableCell>
+                    <TableCell className="text-right text-sm text-[#222] tabular-nums">{h.qty.toLocaleString()}주</TableCell>
+                    <TableCell className="text-right text-sm text-[#222] tabular-nums">{h.avgPrice.toLocaleString()}원</TableCell>
+                    <TableCell className="text-right text-sm text-[#222] tabular-nums">{h.currentPrice.toLocaleString()}원</TableCell>
+                    <TableCell className="text-right text-sm font-medium text-[#222] tabular-nums">{h.evalAmount.toLocaleString()}원</TableCell>
+                    <TableCell className={`text-right text-sm font-semibold tabular-nums ${h.profitLoss >= 0 ? "text-[#f04452]" : "text-[#3182f6]"}`}>
+                      {h.profitLoss >= 0 ? "+" : ""}{h.profitLoss.toLocaleString()}원
+                    </TableCell>
+                    <TableCell className={`text-right text-sm font-semibold tabular-nums ${h.profitPct >= 0 ? "text-[#f04452]" : "text-[#3182f6]"}`}>
+                      {h.profitPct >= 0 ? "+" : ""}{h.profitPct.toFixed(2)}%
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -174,7 +218,7 @@ export default function MyStocksPage() {
           <div className="sm:hidden space-y-3">
             {holdings.map((h) => (
               <div key={h.name} className="border border-[#eee] rounded-lg p-3" data-testid={`card-holding-${h.name}`}>
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <StockIcon name={h.name} size={28} />
                     <div className="min-w-0">
@@ -183,9 +227,19 @@ export default function MyStocksPage() {
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-medium text-[#222]">{(h.qty * h.avgPrice).toLocaleString()}원</p>
-                    <p className="text-xs text-[#666]">{h.qty.toLocaleString()}주 · {h.avgPrice.toLocaleString()}원</p>
+                    <p className={`text-sm font-semibold tabular-nums ${h.profitPct >= 0 ? "text-[#f04452]" : "text-[#3182f6]"}`}>
+                      {h.profitPct >= 0 ? "+" : ""}{h.profitPct.toFixed(2)}%
+                    </p>
+                    <p className={`text-xs tabular-nums ${h.profitLoss >= 0 ? "text-[#f04452]" : "text-[#3182f6]"}`}>
+                      {h.profitLoss >= 0 ? "+" : ""}{h.profitLoss.toLocaleString()}원
+                    </p>
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                  <div className="flex justify-between"><span className="text-[#999]">보유수량</span><span className="text-[#222] tabular-nums">{h.qty.toLocaleString()}주</span></div>
+                  <div className="flex justify-between"><span className="text-[#999]">현재가</span><span className="text-[#222] tabular-nums">{h.currentPrice.toLocaleString()}원</span></div>
+                  <div className="flex justify-between"><span className="text-[#999]">평균단가</span><span className="text-[#222] tabular-nums">{h.avgPrice.toLocaleString()}원</span></div>
+                  <div className="flex justify-between"><span className="text-[#999]">평가금액</span><span className="text-[#222] tabular-nums">{h.evalAmount.toLocaleString()}원</span></div>
                 </div>
               </div>
             ))}

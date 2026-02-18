@@ -20,6 +20,7 @@ import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
 import type { User, StockTransaction, TransferRequest } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
+import { getCurrentMarketPrice } from "@/lib/market-prices";
 
 type DashSection = "overview" | "holdings" | "transactions" | "transfer";
 
@@ -172,9 +173,6 @@ export default function DashboardPage() {
 
   const user = authData.user;
   const txList = transactions || [];
-  const livePrice = 0;
-  const priceChange = 0;
-  const changePct = 0;
 
   const totalIn = txList.filter((t) => t.type === "in").reduce((sum, t) => sum + t.quantity, 0);
   const totalOut = txList.filter((t) => t.type === "out").reduce((sum, t) => sum + t.quantity, 0);
@@ -197,11 +195,12 @@ export default function DashboardPage() {
     .filter(([, v]) => v.qty > 0)
     .map(([name, v]) => {
       const avgPrice = Math.round(v.totalCost / v.qty);
-      const currentPrice = avgPrice;
+      const market = getCurrentMarketPrice(name, avgPrice);
+      const currentPrice = market.currentPrice;
       const evalAmount = v.qty * currentPrice;
       const profitLoss = evalAmount - v.totalCost;
       const profitPct = v.totalCost > 0 ? ((profitLoss / v.totalCost) * 100) : 0;
-      return { name, qty: v.qty, avgPrice, currentPrice, evalAmount, totalCost: v.totalCost, profitLoss, profitPct };
+      return { name, qty: v.qty, avgPrice, currentPrice, evalAmount, totalCost: v.totalCost, profitLoss, profitPct, changePercent: market.changePercent };
     });
 
   const totalEval = holdingsList.reduce((s, h) => s + h.evalAmount, 0);
@@ -327,7 +326,7 @@ export default function DashboardPage() {
             <>
               <Card className="p-5">
                 <h3 className="text-sm text-muted-foreground mb-3">비상장 주식 시세</h3>
-                <p className="text-sm text-muted-foreground">보유 종목의 시세는 입고 단가 기준으로 표시됩니다</p>
+                <p className="text-sm text-muted-foreground">보유 종목의 현재 시세에 따라 평가금액과 수익률이 계산됩니다</p>
               </Card>
 
               <Card className="p-5">
@@ -492,20 +491,20 @@ export default function DashboardPage() {
                           <StockIcon name={h.name} size={28} />
                           <span className="font-semibold text-sm truncate">{h.name}</span>
                         </div>
-                        <span className={`text-sm font-semibold tabular-nums ${h.profitPct >= 0 ? "text-red-500" : "text-blue-500"}`}>
-                          {h.profitPct >= 0 ? "+" : ""}{h.profitPct.toFixed(2)}%
-                        </span>
+                        <div className="text-right shrink-0">
+                          <span className={`text-sm font-semibold tabular-nums ${h.profitPct >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                            {h.profitPct >= 0 ? "+" : ""}{h.profitPct.toFixed(2)}%
+                          </span>
+                          <p className={`text-xs tabular-nums ${h.profitLoss >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                            {h.profitLoss >= 0 ? "+" : ""}{h.profitLoss.toLocaleString()}원
+                          </p>
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                         <div className="flex justify-between"><span className="text-muted-foreground">보유수량</span><span className="tabular-nums">{h.qty.toLocaleString()}주</span></div>
-                        <div className="flex justify-between"><span className="text-muted-foreground">평가금액</span><span className="tabular-nums">{h.evalAmount.toLocaleString()}원</span></div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">현재가</span><span className="tabular-nums">{h.currentPrice.toLocaleString()}원</span></div>
                         <div className="flex justify-between"><span className="text-muted-foreground">평균단가</span><span className="tabular-nums">{h.avgPrice.toLocaleString()}원</span></div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">평가손익</span>
-                          <span className={`tabular-nums font-semibold ${h.profitLoss >= 0 ? "text-red-500" : "text-blue-500"}`}>
-                            {h.profitLoss >= 0 ? "+" : ""}{h.profitLoss.toLocaleString()}원
-                          </span>
-                        </div>
+                        <div className="flex justify-between"><span className="text-muted-foreground">평가금액</span><span className="tabular-nums">{h.evalAmount.toLocaleString()}원</span></div>
                       </div>
                     </Card>
                   ))}
