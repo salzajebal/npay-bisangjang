@@ -7,6 +7,7 @@ const STOCK_LOGOS: Record<string, { logo: string; bg: string }> = {
   "무신사": { logo: "https://static.ustockplus.com/admin/2023-12/694577d0-9b8c-40f3-94fa-8ae34891c1e4.png", bg: "#111111" },
   "오아시스": { logo: "https://static.ustockplus.com/admin/2023-01/bbb364a1-7dbd-49ea-8f5e-845b91b16967.png", bg: "#4CAF50" },
   "컬리": { logo: "https://static.ustockplus.com/logo/stock/408480.png", bg: "#5F0080" },
+  "마켓컬리": { logo: "https://static.ustockplus.com/logo/stock/408480.png", bg: "#5F0080" },
   "에스엠랩": { logo: "https://static.ustockplus.com/logo/company/2768.png", bg: "#2196F3" },
   "야놀자": { logo: "https://static.ustockplus.com/admin/2025-05/a7e5b7ed-4b35-4a76-ab0d-1599271e9696.png", bg: "#E8344E" },
   "케이솔루션": { logo: "https://static.ustockplus.com/admin/2023-04/d9a62c72-0d34-4e9a-b87e-ab11e1339567.png", bg: "#43A047" },
@@ -32,6 +33,8 @@ const STOCK_LOGOS: Record<string, { logo: string; bg: string }> = {
   "클래스101": { logo: "https://static.ustockplus.com/logo/company/1428.png", bg: "#E8344E" },
   "마이리얼트립": { logo: "https://static.ustockplus.com/logo/company/1430.png", bg: "#3182f6" },
   "리센스메디컬": { logo: "https://static.ustockplus.com/logo/company/105.png", bg: "#1976D2" },
+  "오톰": { logo: "https://static.ustockplus.com/logo/company/77025.png", bg: "#333333" },
+  "넷마블몬스터": { logo: "https://static.ustockplus.com/logo/stock/214490.png", bg: "#333333" },
   "비상장주식": { logo: "", bg: "#E8344E" },
 };
 
@@ -102,6 +105,7 @@ const STOCK_CODE_MAP: Record<string, string> = {
   "컴투스": "078340",
   "CJ ENM": "035760",
   "스튜디오드래곤": "253450",
+  "카카오게임즈": "293490",
   "위메이드": "112040",
   "SK스퀘어": "402340",
   "LG이노텍": "011070",
@@ -124,7 +128,6 @@ const STOCK_CODE_MAP: Record<string, string> = {
   "F&F": "383220",
   "한섬": "020000",
   "쏘카": "403550",
-  "카카오게임즈": "293490",
   "한화": "000880",
   "한화시스템": "272210",
   "LIG넥스원": "079550",
@@ -144,8 +147,8 @@ const STOCK_CODE_MAP: Record<string, string> = {
   "씨젠": "096530",
   "에이비엘바이오": "298380",
   "진원생명과학": "011000",
-  "LG CNS": "064400",
-  "마켓컬리": "408480",
+  "코리아센터": "290510",
+  "브레인즈컴퍼니": "099390",
 };
 
 const BRAND_COLORS: Record<string, string> = {
@@ -207,7 +210,6 @@ export function StockIcon({ name, size = 32 }: { name: string; size?: number }) 
         style={{ width: size, height: size }}
         onError={() => setImgError(true)}
         data-testid={`icon-stock-${name}`}
-        crossOrigin="anonymous"
         referrerPolicy="no-referrer"
         loading="lazy"
         decoding="async"
