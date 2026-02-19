@@ -121,8 +121,7 @@ export default function MyStocksPage() {
 
       <main className="max-w-[1200px] mx-auto px-4 py-6">
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-[#222] mb-1" data-testid="text-greeting">{user.fullName}님의 보유 종목</h1>
-          <p className="text-sm text-[#666]">관리자가 입고 처리한 종목이 표시됩니다</p>
+          <h1 className="text-xl font-bold text-[#222]" data-testid="text-greeting">{user.fullName}님의 보유 종목</h1>
         </div>
 
         <div className="bg-[#f8f9fa] rounded-lg p-5 mb-6">
