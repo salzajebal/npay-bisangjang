@@ -217,7 +217,19 @@ function MemberDetailDialog({ user, transactions }: { user: User; transactions: 
 
           <div className="grid grid-cols-2 gap-3">
             <Card className="p-3">
-              <p className="text-xs text-muted-foreground">은행</p>
+              <p className="text-xs text-muted-foreground">생년월일</p>
+              <p className="text-sm font-medium mt-0.5">{user.birthDate || "-"}</p>
+            </Card>
+            <Card className="p-3">
+              <p className="text-xs text-muted-foreground">휴대폰번호</p>
+              <p className="text-sm font-medium mt-0.5">{user.phone || "-"}</p>
+            </Card>
+            <Card className="p-3 col-span-2">
+              <p className="text-xs text-muted-foreground">이메일</p>
+              <p className="text-sm font-medium mt-0.5">{user.email || "-"}</p>
+            </Card>
+            <Card className="p-3">
+              <p className="text-xs text-muted-foreground">증권사</p>
               <p className="text-sm font-medium mt-0.5">{user.bank}</p>
             </Card>
             <Card className="p-3">
@@ -282,6 +294,9 @@ function MemberDetailDialog({ user, transactions }: { user: User; transactions: 
 function MemberEditDialog({ user, onSuccess }: { user: User; onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
   const [fullName, setFullName] = useState(user.fullName);
+  const [birthDate, setBirthDate] = useState(user.birthDate || "");
+  const [phone, setPhone] = useState(user.phone || "");
+  const [email, setEmail] = useState(user.email || "");
   const [bank, setBank] = useState(user.bank);
   const [accountNumber, setAccountNumber] = useState(user.accountNumber);
   const [accountHolder, setAccountHolder] = useState(user.accountHolder);
@@ -290,7 +305,7 @@ function MemberEditDialog({ user, onSuccess }: { user: User; onSuccess: () => vo
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const body: any = { fullName, bank, accountNumber, accountHolder };
+      const body: any = { fullName, birthDate, phone, email, bank, accountNumber, accountHolder };
       if (newPassword) body.password = newPassword;
       await apiRequest("PUT", `/api/admin/users/${user.id}`, body);
     },
@@ -310,6 +325,9 @@ function MemberEditDialog({ user, onSuccess }: { user: User; onSuccess: () => vo
       setOpen(v);
       if (v) {
         setFullName(user.fullName);
+        setBirthDate(user.birthDate || "");
+        setPhone(user.phone || "");
+        setEmail(user.email || "");
         setBank(user.bank);
         setAccountNumber(user.accountNumber);
         setAccountHolder(user.accountHolder);
@@ -328,11 +346,27 @@ function MemberEditDialog({ user, onSuccess }: { user: User; onSuccess: () => vo
         </DialogHeader>
         <div className="space-y-4 mt-2">
           <div className="space-y-2">
-            <Label>성명</Label>
+            <Label>이름</Label>
             <Input value={fullName} onChange={(e) => setFullName(e.target.value)} data-testid="input-edit-fullname" />
           </div>
           <div className="space-y-2">
-            <Label>은행</Label>
+            <Label>생년월일</Label>
+            <Input value={birthDate} onChange={(e) => setBirthDate(e.target.value)} placeholder="예: 19900101" data-testid="input-edit-birthdate" />
+          </div>
+          <div className="space-y-2">
+            <Label>휴대폰번호</Label>
+            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="예: 01012345678" data-testid="input-edit-phone" />
+          </div>
+          <div className="space-y-2">
+            <Label>이메일</Label>
+            <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="이메일" data-testid="input-edit-email" />
+          </div>
+          <div className="space-y-2">
+            <Label>예금주명</Label>
+            <Input value={accountHolder} onChange={(e) => setAccountHolder(e.target.value)} data-testid="input-edit-holder" />
+          </div>
+          <div className="space-y-2">
+            <Label>증권사</Label>
             <Select value={bank} onValueChange={setBank}>
               <SelectTrigger data-testid="select-edit-bank">
                 <SelectValue />
@@ -347,10 +381,6 @@ function MemberEditDialog({ user, onSuccess }: { user: User; onSuccess: () => vo
           <div className="space-y-2">
             <Label>계좌번호</Label>
             <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} data-testid="input-edit-account" />
-          </div>
-          <div className="space-y-2">
-            <Label>예금주</Label>
-            <Input value={accountHolder} onChange={(e) => setAccountHolder(e.target.value)} data-testid="input-edit-holder" />
           </div>
           <div className="space-y-2">
             <Label>새 비밀번호 (변경 시에만 입력)</Label>
@@ -1203,7 +1233,9 @@ export default function AdminPage() {
     (u) =>
       u.fullName.includes(searchTerm) ||
       u.username.includes(searchTerm) ||
-      u.accountNumber.includes(searchTerm)
+      u.accountNumber.includes(searchTerm) ||
+      (u.phone && u.phone.includes(searchTerm)) ||
+      (u.email && u.email.includes(searchTerm))
   );
 
   const filteredTransactions = transactions.filter((tx) => {
@@ -1543,6 +1575,7 @@ export default function AdminPage() {
                         )}
                       </div>
                       <div className="text-xs text-gray-500 space-y-1">
+                        <p>{u.phone || "-"} · {u.email || "-"}</p>
                         <p>{u.bank} · {u.accountHolder}</p>
                         <p className="font-mono text-gray-400">{u.accountNumber}</p>
                       </div>
@@ -1565,9 +1598,12 @@ export default function AdminPage() {
                       <TableHeader>
                         <TableRow className="bg-gray-50 border-gray-200">
                           <TableHead className="text-gray-500">아이디</TableHead>
-                          <TableHead className="text-gray-500">성명</TableHead>
+                          <TableHead className="text-gray-500">이름</TableHead>
                           <TableHead className="text-gray-500">상태</TableHead>
-                          <TableHead className="text-gray-500">은행</TableHead>
+                          <TableHead className="text-gray-500">생년월일</TableHead>
+                          <TableHead className="text-gray-500">휴대폰</TableHead>
+                          <TableHead className="text-gray-500">이메일</TableHead>
+                          <TableHead className="text-gray-500">증권사</TableHead>
                           <TableHead className="text-gray-500">계좌번호</TableHead>
                           <TableHead className="text-gray-500">예금주</TableHead>
                           <TableHead className="text-gray-500">가입일</TableHead>
@@ -1586,6 +1622,9 @@ export default function AdminPage() {
                                 <Badge variant="outline" className="text-[11px] border-gray-200 text-gray-500">정상</Badge>
                               )}
                             </TableCell>
+                            <TableCell className="text-gray-700 text-xs">{u.birthDate || "-"}</TableCell>
+                            <TableCell className="text-gray-700 text-xs">{u.phone || "-"}</TableCell>
+                            <TableCell className="text-gray-700 text-xs">{u.email || "-"}</TableCell>
                             <TableCell className="text-gray-700">{u.bank}</TableCell>
                             <TableCell className="font-mono text-sm text-gray-700">{u.accountNumber}</TableCell>
                             <TableCell className="text-gray-700">{u.accountHolder}</TableCell>
