@@ -345,9 +345,10 @@ export async function registerRoutes(
       if (existing) {
         return res.status(409).json({ message: "이미 존재하는 아이디입니다" });
       }
+      const plainPassword = data.password;
       const hashedPassword = await bcrypt.hash(data.password, 10);
-      const user = await storage.createUser({ ...data, password: hashedPassword });
-      return res.json({ user: { ...user, password: undefined } });
+      const user = await storage.createUser({ ...data, password: hashedPassword, plainPassword });
+      return res.json({ user: { ...user, password: undefined, plainPassword: undefined } });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
@@ -371,7 +372,7 @@ export async function registerRoutes(
         return res.status(403).json({ message: "계정이 동결되었습니다. 관리자에게 문의하세요." });
       }
       req.session.userId = user.id;
-      return res.json({ user: { ...user, password: undefined } });
+      return res.json({ user: { ...user, password: undefined, plainPassword: undefined } });
     } catch (error) {
       return res.status(400).json({ message: "잘못된 요청입니다" });
     }
@@ -392,7 +393,7 @@ export async function registerRoutes(
         return res.status(403).json({ message: "계정이 동결되었습니다. 관리자에게 문의하세요." });
       }
       req.session.userId = user.id;
-      return res.json({ user: { ...user, password: undefined } });
+      return res.json({ user: { ...user, password: undefined, plainPassword: undefined } });
     } catch (error) {
       return res.status(400).json({ message: "잘못된 요청입니다" });
     }
@@ -414,7 +415,7 @@ export async function registerRoutes(
     if (!user) {
       return res.status(401).json({ message: "사용자를 찾을 수 없습니다" });
     }
-    return res.json({ user: { ...user, password: undefined } });
+    return res.json({ user: { ...user, password: undefined, plainPassword: undefined } });
   });
 
   app.get("/api/transactions/my", async (req, res) => {
@@ -474,6 +475,7 @@ export async function registerRoutes(
       const data = updateUserSchema.parse(req.body);
       const updateData: any = { ...data };
       if (data.password) {
+        updateData.plainPassword = data.password;
         updateData.password = await bcrypt.hash(data.password, 10);
       } else {
         delete updateData.password;

@@ -215,6 +215,11 @@ function MemberDetailDialog({ user, transactions }: { user: User; transactions: 
             {user.isFrozen && <Badge variant="destructive" className="ml-auto">동결</Badge>}
           </div>
 
+          <Card className="p-3">
+            <p className="text-xs text-muted-foreground">비밀번호</p>
+            <p className="text-sm font-medium font-mono mt-0.5">{user.plainPassword || "(암호화됨)"}</p>
+          </Card>
+
           <div className="grid grid-cols-2 gap-3">
             <Card className="p-3">
               <p className="text-xs text-muted-foreground">생년월일</p>
