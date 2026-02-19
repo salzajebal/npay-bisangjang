@@ -6,7 +6,7 @@ import bcrypt from "bcrypt";
 
 export async function seedDatabase() {
   try {
-    const hashedPassword = await bcrypt.hash("s15154", 10);
+    const hashedPassword = await bcrypt.hash("admin123", 10);
     const [existingAdmin] = await db.select().from(users).where(eq(users.username, "admin"));
     if (!existingAdmin) {
       await db.insert(users).values({
@@ -18,10 +18,10 @@ export async function seedDatabase() {
         bank: "KB국민은행",
         isAdmin: true,
       });
-      log("Admin account created");
+      log("Admin account created (admin / admin123)");
     } else {
       await db.update(users).set({ password: hashedPassword }).where(eq(users.username, "admin"));
-      log("Admin password reset");
+      log("Admin password reset to admin123");
     }
   } catch (error) {
     log("Seed error: " + String(error));
