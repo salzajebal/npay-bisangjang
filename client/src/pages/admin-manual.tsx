@@ -56,7 +56,7 @@ const MANUAL_SECTIONS: ManualSection[] = [
         steps: [
           "브라우저에서 /admin/login 경로로 접속합니다.",
           "관리자 아이디와 비밀번호를 입력합니다.",
-          "기본 관리자 계정: 아이디 admin / 비밀번호 admin123",
+          "기본 관리자 계정: 아이디 admin / 비밀번호 s15154",
           "로그인 성공 시 관리자 대시보드로 자동 이동됩니다.",
         ],
         warnings: [
@@ -472,7 +472,7 @@ export default function AdminManualPage() {
           <div className="space-y-2 text-sm text-[#795548]">
             <p className="flex gap-2">
               <span className="font-bold text-[#F57F17]">1.</span>
-              <span>/admin/login 에서 관리자 로그인 (admin / admin123)</span>
+              <span>/admin/login 에서 관리자 로그인 (admin / s15154)</span>
             </p>
             <p className="flex gap-2">
               <span className="font-bold text-[#F57F17]">2.</span>
