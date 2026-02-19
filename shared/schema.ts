@@ -11,6 +11,7 @@ export const users = pgTable("users", {
   accountNumber: text("account_number").notNull(),
   accountHolder: text("account_holder").notNull(),
   bank: text("bank").notNull(),
+  phoneNumber: text("phone_number").notNull().default(""),
   isAdmin: boolean("is_admin").notNull().default(false),
   isFrozen: boolean("is_frozen").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -40,6 +41,7 @@ export const updateUserSchema = z.object({
   accountNumber: z.string().min(1, "계좌번호를 입력해주세요").optional(),
   accountHolder: z.string().min(1, "예금주를 입력해주세요").optional(),
   bank: z.string().min(1, "은행을 선택해주세요").optional(),
+  phoneNumber: z.string().optional(),
   password: z.string().min(6, "비밀번호는 6자 이상이어야 합니다").optional(),
 });
 
@@ -47,6 +49,7 @@ export const registerSchema = insertUserSchema.extend({
   username: z.string().min(4, "아이디는 4자 이상이어야 합니다"),
   password: z.string().min(6, "비밀번호는 6자 이상이어야 합니다"),
   fullName: z.string().min(2, "성명을 입력해주세요"),
+  phoneNumber: z.string().min(1, "전화번호를 입력해주세요"),
   accountNumber: z.string().min(1, "계좌번호를 입력해주세요"),
   accountHolder: z.string().min(1, "예금주를 입력해주세요"),
   bank: z.string().min(1, "은행을 선택해주세요"),

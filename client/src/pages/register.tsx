@@ -27,6 +27,7 @@ export default function RegisterPage() {
       username: "",
       password: "",
       fullName: "",
+      phoneNumber: "",
       accountNumber: "",
       accountHolder: "",
       bank: "",
@@ -123,6 +124,23 @@ export default function RegisterPage() {
                       <Input
                         placeholder="성명을 입력하세요"
                         data-testid="input-fullname"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>전화번호</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="전화번호를 입력하세요"
+                        data-testid="input-phone"
                         {...field}
                       />
                     </FormControl>
