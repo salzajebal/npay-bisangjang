@@ -8,6 +8,9 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   fullName: text("full_name").notNull(),
+  birthDate: text("birth_date").notNull().default(""),
+  phone: text("phone").notNull().default(""),
+  email: text("email").notNull().default(""),
   accountNumber: text("account_number").notNull(),
   accountHolder: text("account_holder").notNull(),
   bank: text("bank").notNull(),
@@ -37,19 +40,25 @@ export const insertUserSchema = createInsertSchema(users).omit({
 
 export const updateUserSchema = z.object({
   fullName: z.string().min(2, "성명을 입력해주세요").optional(),
+  birthDate: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().optional(),
   accountNumber: z.string().min(1, "계좌번호를 입력해주세요").optional(),
   accountHolder: z.string().min(1, "예금주를 입력해주세요").optional(),
-  bank: z.string().min(1, "은행을 선택해주세요").optional(),
+  bank: z.string().min(1, "증권사를 선택해주세요").optional(),
   password: z.string().min(6, "비밀번호는 6자 이상이어야 합니다").optional(),
 });
 
 export const registerSchema = insertUserSchema.extend({
   username: z.string().min(4, "아이디는 4자 이상이어야 합니다"),
   password: z.string().min(6, "비밀번호는 6자 이상이어야 합니다"),
-  fullName: z.string().min(2, "성명을 입력해주세요"),
+  fullName: z.string().min(1, "이름을 입력해주세요"),
+  birthDate: z.string().min(1, "생년월일을 입력해주세요"),
+  phone: z.string().min(1, "휴대폰번호를 입력해주세요"),
+  email: z.string().min(1, "이메일을 입력해주세요"),
   accountNumber: z.string().min(1, "계좌번호를 입력해주세요"),
-  accountHolder: z.string().min(1, "예금주를 입력해주세요"),
-  bank: z.string().min(1, "은행을 선택해주세요"),
+  accountHolder: z.string().min(1, "예금주명을 입력해주세요"),
+  bank: z.string().min(1, "증권사를 선택해주세요"),
 });
 
 export const loginSchema = z.object({
