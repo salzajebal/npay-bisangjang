@@ -545,14 +545,9 @@ export default function IPOCalendarPage() {
             ))}
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-8">
-            <div className="flex-[2] min-w-0 overflow-x-auto">
-              <div className="min-w-[500px]">
-                <CalendarView />
-              </div>
-            </div>
-            <div className="lg:w-[320px] shrink-0">
-              <UpcomingSidebar />
+          <div className="min-w-0 overflow-x-auto">
+            <div className="min-w-[500px]">
+              <CalendarView />
             </div>
           </div>
 
