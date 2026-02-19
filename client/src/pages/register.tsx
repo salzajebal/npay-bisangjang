@@ -2,7 +2,6 @@ import { Link, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -24,12 +23,15 @@ export default function RegisterPage() {
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
+      fullName: "",
       username: "",
       password: "",
-      fullName: "",
-      accountNumber: "",
+      birthDate: "",
+      phone: "",
+      email: "",
       accountHolder: "",
       bank: "",
+      accountNumber: "",
     },
   });
 
@@ -80,13 +82,30 @@ export default function RegisterPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>이름</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="이름을 입력하세요"
+                        data-testid="input-fullname"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>아이디</FormLabel>
+                    <FormLabel>회원아이디</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="아이디를 입력하세요 (4자 이상)"
+                        placeholder="회원아이디를 입력하세요 (4자 이상)"
                         data-testid="input-username"
                         {...field}
                       />
@@ -115,14 +134,66 @@ export default function RegisterPage() {
               />
               <FormField
                 control={form.control}
-                name="fullName"
+                name="birthDate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>성명</FormLabel>
+                    <FormLabel>생년월일</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="성명을 입력하세요"
-                        data-testid="input-fullname"
+                        placeholder="예: 19900101"
+                        data-testid="input-birthdate"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>휴대폰번호</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="예: 01012345678"
+                        data-testid="input-phone"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>이메일</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="이메일을 입력하세요"
+                        data-testid="input-email"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="accountHolder"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>예금주명</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="예금주명을 입력하세요"
+                        data-testid="input-account-holder"
                         {...field}
                       />
                     </FormControl>
@@ -159,28 +230,11 @@ export default function RegisterPage() {
                 name="accountNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>증권 계좌번호</FormLabel>
+                    <FormLabel>계좌번호</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="증권 계좌번호를 입력하세요"
                         data-testid="input-account-number"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="accountHolder"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>예금주</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="예금주명을 입력하세요"
-                        data-testid="input-account-holder"
                         {...field}
                       />
                     </FormControl>
