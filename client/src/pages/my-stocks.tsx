@@ -4,7 +4,7 @@ import { Link, Redirect } from "wouter";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, LogIn, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowLeft, Package, TrendingUp, TrendingDown } from "lucide-react";
 import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
 import type { User, StockTransaction } from "@shared/schema";
@@ -59,33 +59,7 @@ export default function MyStocksPage() {
   }
 
   if (!user) {
-    return (
-      <div className="min-h-screen bg-white" data-testid="page-my-stocks-login">
-        <header className="border-b border-[#eee]">
-          <div className="max-w-[1200px] mx-auto px-4 h-14 flex items-center gap-3">
-            <Link href="/">
-              <span className="flex items-center gap-1.5 cursor-pointer" data-testid="link-home">
-                <SiteLogoBadge size={24} />
-                <span className="text-[#222] font-bold text-base">증권플러스 <span className="text-[#E8344E]">비상장</span></span>
-              </span>
-            </Link>
-          </div>
-        </header>
-        <div className="flex flex-col items-center justify-center py-20 px-4">
-          <div className="w-16 h-16 rounded-full bg-[#f5f5f5] flex items-center justify-center mb-4">
-            <LogIn className="w-7 h-7 text-[#999]" />
-          </div>
-          <h2 className="text-lg font-bold text-[#222] mb-2" data-testid="text-login-required">로그인이 필요합니다</h2>
-          <p className="text-sm text-[#666] mb-6 text-center">공모주 마이페이지는 로그인 후 이용하실 수 있습니다.</p>
-          <Link href="/login">
-            <span className="inline-flex items-center gap-1.5 bg-[#E8344E] text-white px-6 py-2.5 rounded-md text-sm font-medium hover:bg-[#d42e45] transition-colors cursor-pointer" data-testid="button-go-login">
-              <LogIn className="w-4 h-4" />
-              로그인하기
-            </span>
-          </Link>
-        </div>
-      </div>
-    );
+    return <Redirect to="/login" />;
   }
 
   const holdings = Array.from(holdingsMap.entries()).map(([name, data]) => {
