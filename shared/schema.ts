@@ -73,6 +73,10 @@ export const transferRequests = pgTable("transfer_requests", {
   accountNumber: text("account_number").notNull(),
   stockName: text("stock_name").notNull().default("비상장주식"),
   quantity: integer("quantity").notNull(),
+  purchasePrice: integer("purchase_price").notNull().default(0),
+  currentPrice: integer("current_price").notNull().default(0),
+  totalAmount: integer("total_amount").notNull().default(0),
+  profitRate: text("profit_rate").notNull().default("0"),
   status: text("status").notNull().default("pending"), // pending, approved, rejected, held
   adminMemo: text("admin_memo"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
