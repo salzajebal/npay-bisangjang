@@ -318,16 +318,21 @@ export default function MyStocksPage() {
       </main>
 
       <Dialog open={transferConfirmOpen} onOpenChange={setTransferConfirmOpen}>
-        <DialogContent className="max-w-sm">
-          <div className="py-4 text-center">
-            <p className="text-sm text-[#222] leading-relaxed">
-              위 종목은 신주상당일 증권 계좌로 이동 될 예정입니다.
+        <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-visible border-0 shadow-2xl">
+          <div className="bg-gradient-to-b from-[#f8f9fa] to-white px-6 pt-8 pb-2 rounded-t-xl">
+            <div className="flex justify-center mb-4">
+              <div className="w-14 h-14 rounded-full bg-[#E8344E]/10 flex items-center justify-center">
+                <ArrowRightLeft className="w-6 h-6 text-[#E8344E]" />
+              </div>
+            </div>
+            <h3 className="text-base font-bold text-[#222] text-center mb-3">계좌 이동 안내</h3>
+            <p className="text-sm text-[#555] text-center leading-relaxed">
+              위 종목은 신주상장당일 증권 계좌로<br />이동 될 예정입니다.
             </p>
           </div>
-          <div className="flex justify-center pb-2">
+          <div className="px-6 pb-6 pt-4">
             <Button
-              variant="outline"
-              className="min-w-[80px] border-blue-500 text-blue-500"
+              className="w-full bg-[#2563eb] border-[#2563eb] text-white font-medium rounded-lg"
               onClick={() => setTransferConfirmOpen(false)}
               data-testid="button-transfer-confirm-mystocks"
             >
