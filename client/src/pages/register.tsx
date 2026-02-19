@@ -135,11 +135,11 @@ export default function RegisterPage() {
                 name="bank"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>은행</FormLabel>
+                    <FormLabel>증권사</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-bank">
-                          <SelectValue placeholder="은행을 선택하세요" />
+                          <SelectValue placeholder="증권사 선택" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -159,10 +159,10 @@ export default function RegisterPage() {
                 name="accountNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>계좌번호</FormLabel>
+                    <FormLabel>증권 계좌번호</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="계좌번호를 입력하세요"
+                        placeholder="증권 계좌번호를 입력하세요"
                         data-testid="input-account-number"
                         {...field}
                       />
@@ -179,7 +179,7 @@ export default function RegisterPage() {
                     <FormLabel>예금주</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="예금주를 입력하세요"
+                        placeholder="예금주명을 입력하세요"
                         data-testid="input-account-holder"
                         {...field}
                       />
