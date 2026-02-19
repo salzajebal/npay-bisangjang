@@ -4,7 +4,9 @@ import { Link, Redirect } from "wouter";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Package, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowLeft, Package, TrendingUp, TrendingDown, ArrowRightLeft } from "lucide-react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
 import type { User, StockTransaction } from "@shared/schema";
@@ -25,6 +27,7 @@ export default function MyStocksPage() {
   });
 
   const [priceData, setPriceData] = useState<Record<string, { currentPrice: number; changePercent: number }>>({});
+  const [transferConfirmOpen, setTransferConfirmOpen] = useState(false);
 
   const txList = (transactions || []);
   const inTx = txList.filter(tx => tx.type === "in");
@@ -234,6 +237,17 @@ export default function MyStocksPage() {
               </div>
             ))}
           </div>
+          <div className="mt-4 flex justify-center">
+            <Button
+              variant="outline"
+              className="gap-2 border-[#E8344E] text-[#E8344E]"
+              onClick={() => setTransferConfirmOpen(true)}
+              data-testid="button-transfer-from-mystocks"
+            >
+              <ArrowRightLeft className="w-4 h-4" />
+              내 계좌로 옮기기
+            </Button>
+          </div>
           </>
         )}
 
@@ -302,6 +316,26 @@ export default function MyStocksPage() {
           )}
         </div>
       </main>
+
+      <Dialog open={transferConfirmOpen} onOpenChange={setTransferConfirmOpen}>
+        <DialogContent className="max-w-sm">
+          <div className="py-4 text-center">
+            <p className="text-sm text-[#222] leading-relaxed">
+              위 종목은 신주상당일 증권 계좌로 이동 될 예정입니다.
+            </p>
+          </div>
+          <div className="flex justify-center pb-2">
+            <Button
+              variant="outline"
+              className="min-w-[80px] border-blue-500 text-blue-500"
+              onClick={() => setTransferConfirmOpen(false)}
+              data-testid="button-transfer-confirm-mystocks"
+            >
+              확인
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

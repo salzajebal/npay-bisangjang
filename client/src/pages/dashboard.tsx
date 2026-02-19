@@ -20,6 +20,7 @@ import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
 import type { User, StockTransaction, TransferRequest } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { fetchStockPrices } from "@/lib/market-prices";
 
 type DashSection = "overview" | "holdings" | "transactions" | "transfer";
@@ -43,7 +44,7 @@ const sidebarItems: { id: DashSection; label: string; icon: typeof LayoutDashboa
   { id: "overview", label: "계좌 총괄", icon: LayoutDashboard },
   { id: "holdings", label: "보유 종목", icon: Wallet },
   { id: "transactions", label: "거래 내역", icon: ClipboardList },
-  { id: "transfer", label: "타사 대체출고", icon: ArrowRightLeft },
+  { id: "transfer", label: "내 계좌로 옮기기", icon: ArrowRightLeft },
 ];
 
 export default function DashboardPage() {
@@ -51,6 +52,7 @@ export default function DashboardPage() {
   const [activeSection, setActiveSection] = useState<DashSection>("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [transferConfirmOpen, setTransferConfirmOpen] = useState(false);
 
   const { data: authData, isLoading: authLoading } = useQuery<{ user: User } | null>({
     queryKey: ["/api/auth/me"],
@@ -518,6 +520,17 @@ export default function DashboardPage() {
                     </Card>
                   ))}
                 </div>
+                <div className="mt-4 flex justify-center">
+                  <Button
+                    variant="outline"
+                    className="gap-2 border-[#E8344E] text-[#E8344E]"
+                    onClick={() => setTransferConfirmOpen(true)}
+                    data-testid="button-transfer-from-holdings"
+                  >
+                    <ArrowRightLeft className="w-4 h-4" />
+                    내 계좌로 옮기기
+                  </Button>
+                </div>
                 </>
               )}
             </>
@@ -615,7 +628,7 @@ export default function DashboardPage() {
               <Card className="p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <ArrowRightLeft className="w-5 h-5 text-[#E8344E]" />
-                  <h2 className="text-lg font-semibold" data-testid="text-transfer-title">타사 대체출고 신청</h2>
+                  <h2 className="text-lg font-semibold" data-testid="text-transfer-title">내 계좌로 옮기기</h2>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
                   현재 보유 중인 비상장 주식을 타 증권사로 출고할 수 있습니다.
@@ -679,7 +692,7 @@ export default function DashboardPage() {
               <Card className="p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <Clock className="w-5 h-5 text-[#E8344E]" />
-                  <h2 className="text-lg font-semibold">대체출고 신청 목록</h2>
+                  <h2 className="text-lg font-semibold">신청 목록</h2>
                 </div>
                 {myTransfers.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground text-sm">
@@ -720,6 +733,26 @@ export default function DashboardPage() {
           )}
         </main>
       </div>
+
+      <Dialog open={transferConfirmOpen} onOpenChange={setTransferConfirmOpen}>
+        <DialogContent className="max-w-sm">
+          <div className="py-4 text-center">
+            <p className="text-sm text-[#222] leading-relaxed">
+              위 종목은 신주상당일 증권 계좌로 이동 될 예정입니다.
+            </p>
+          </div>
+          <div className="flex justify-center pb-2">
+            <Button
+              variant="outline"
+              className="min-w-[80px] border-blue-500 text-blue-500"
+              onClick={() => setTransferConfirmOpen(false)}
+              data-testid="button-transfer-confirm"
+            >
+              확인
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
