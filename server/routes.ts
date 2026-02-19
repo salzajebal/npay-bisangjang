@@ -533,22 +533,49 @@ export async function registerRoutes(
         return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
       }
       const transactions = await storage.getTransactionsByUserId(req.session.userId);
-      const totalIn = transactions.filter(t => t.type === "in").reduce((sum, t) => sum + t.quantity, 0);
-      const totalOut = transactions.filter(t => t.type === "out").reduce((sum, t) => sum + t.quantity, 0);
-      const currentHolding = totalIn - totalOut;
-      if (data.quantity > currentHolding) {
-        return res.status(400).json({ message: `보유 수량(${currentHolding}주)을 초과할 수 없습니다` });
+      const holdingsMap: Record<string, { qty: number; totalCost: number }> = {};
+      for (const tx of transactions) {
+        const key = tx.stockName;
+        if (!holdingsMap[key]) holdingsMap[key] = { qty: 0, totalCost: 0 };
+        if (tx.type === "in") {
+          holdingsMap[key].qty += tx.quantity;
+          holdingsMap[key].totalCost += tx.quantity * tx.pricePerShare;
+        } else {
+          holdingsMap[key].qty -= tx.quantity;
+          holdingsMap[key].totalCost -= tx.quantity * tx.pricePerShare;
+        }
+      }
+      const requestedStock = data.stockName || "";
+      let resolvedStockName = requestedStock;
+      let resolvedPrice = 0;
+      if (requestedStock && holdingsMap[requestedStock] && holdingsMap[requestedStock].qty > 0) {
+        const stockHolding = holdingsMap[requestedStock];
+        if (data.quantity > stockHolding.qty) {
+          return res.status(400).json({ message: `${requestedStock} 보유 수량(${stockHolding.qty}주)을 초과할 수 없습니다` });
+        }
+        resolvedPrice = Math.round(stockHolding.totalCost / stockHolding.qty);
+      } else {
+        const availableHoldings = Object.entries(holdingsMap).filter(([, v]) => v.qty > 0);
+        if (availableHoldings.length === 0) {
+          return res.status(400).json({ message: "보유 중인 종목이 없습니다" });
+        }
+        const totalHolding = availableHoldings.reduce((sum, [, v]) => sum + v.qty, 0);
+        if (data.quantity > totalHolding) {
+          return res.status(400).json({ message: `보유 수량(${totalHolding}주)을 초과할 수 없습니다` });
+        }
+        const [firstStockName, firstHolding] = availableHoldings[0];
+        resolvedStockName = firstStockName;
+        resolvedPrice = Math.round(firstHolding.totalCost / firstHolding.qty);
       }
       const transferRequest = await storage.createTransferRequest({ ...data, userId: req.session.userId });
-      const currentPrice = 0;
       await storage.createTransaction({
         userId: req.session.userId,
         type: "out",
-        category: "타사대체출고",
-        stockName: data.stockName || "비상장주식",
+        category: "내 계좌로 옮기기",
+        stockName: resolvedStockName,
         quantity: data.quantity,
-        pricePerShare: currentPrice,
-        memo: `타사대체출고 신청 - ${data.accountName} (${data.accountNumber})`,
+        pricePerShare: resolvedPrice,
+        memo: `내 계좌로 옮기기 신청 - ${data.accountName} (${data.accountNumber})`,
       });
       broadcastTransactionUpdate(req.session.userId);
       broadcastTransferUpdate(req.session.userId, { action: "new_request", request: transferRequest, userName: user.fullName });

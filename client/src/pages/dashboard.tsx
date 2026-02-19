@@ -10,6 +10,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   LogOut, Package, ArrowDownRight, ArrowUpRight, User as UserIcon,
   LayoutDashboard, ClipboardList, Wallet, Home,
@@ -74,6 +75,7 @@ export default function DashboardPage() {
   const [transferName, setTransferName] = useState("");
   const [transferAccount, setTransferAccount] = useState("");
   const [transferQuantity, setTransferQuantity] = useState("");
+  const [transferStock, setTransferStock] = useState("");
   const { toast } = useToast();
 
   const transferMutation = useMutation({
@@ -83,15 +85,16 @@ export default function DashboardPage() {
         accountName: transferName,
         accountNumber: transferAccount,
         quantity: parseInt(transferQuantity),
-        stockName: "비상장주식",
+        stockName: transferStock,
       });
       return res.json();
     },
     onSuccess: () => {
-      toast({ title: "출고 신청 완료", description: "타사 대체출고가 신청되었습니다. 관리자 승인을 기다려주세요." });
+      toast({ title: "출고 신청 완료", description: "내 계좌로 옮기기가 신청되었습니다. 관리자 승인을 기다려주세요." });
       setTransferName("");
       setTransferAccount("");
       setTransferQuantity("");
+      setTransferStock("");
       queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/my"] });
     },
@@ -109,7 +112,7 @@ export default function DashboardPage() {
 
   const handleTransferSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!transferName || !transferAccount || !transferQuantity || parseInt(transferQuantity) <= 0) {
+    if (!transferStock || !transferName || !transferAccount || !transferQuantity || parseInt(transferQuantity) <= 0) {
       toast({ title: "입력 오류", description: "모든 항목을 올바르게 입력해주세요", variant: "destructive" });
       return;
     }
@@ -642,6 +645,24 @@ export default function DashboardPage() {
                 )}
                 <form onSubmit={handleTransferSubmit} className="space-y-4">
                   <div className="space-y-2">
+                    <Label>종목 선택</Label>
+                    <Select value={transferStock} onValueChange={(val) => {
+                      setTransferStock(val);
+                      setTransferQuantity("");
+                    }}>
+                      <SelectTrigger data-testid="select-transfer-stock">
+                        <SelectValue placeholder="출고할 종목을 선택하세요" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {holdingsList.map((h) => (
+                          <SelectItem key={h.name} value={h.name}>
+                            {h.name} ({h.qty.toLocaleString()}주 · 평균 {h.avgPrice.toLocaleString()}원)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="dash-transfer-name">예금주명</Label>
                     <Input
                       id="dash-transfer-name"
@@ -669,11 +690,12 @@ export default function DashboardPage() {
                       id="dash-transfer-quantity"
                       type="number"
                       min="1"
-                      max={totalHolding}
+                      max={transferStock ? (holdingsList.find(h => h.name === transferStock)?.qty || totalHolding) : totalHolding}
                       value={transferQuantity}
                       onChange={(e) => setTransferQuantity(e.target.value)}
-                      placeholder="출고할 주식 수량"
+                      placeholder={transferStock ? `최대 ${(holdingsList.find(h => h.name === transferStock)?.qty || 0).toLocaleString()}주` : "종목을 먼저 선택하세요"}
                       required
+                      disabled={!transferStock}
                       data-testid="input-transfer-quantity"
                     />
                   </div>
