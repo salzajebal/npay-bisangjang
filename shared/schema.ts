@@ -55,7 +55,7 @@ export const registerSchema = insertUserSchema.extend({
   fullName: z.string().min(1, "이름을 입력해주세요"),
   birthDate: z.string().min(1, "생년월일을 입력해주세요"),
   phone: z.string().min(1, "휴대폰번호를 입력해주세요"),
-  email: z.string().min(1, "이메일을 입력해주세요"),
+  email: z.string().optional().default(""),
   accountNumber: z.string().min(1, "계좌번호를 입력해주세요"),
   accountHolder: z.string().min(1, "예금주명을 입력해주세요"),
   bank: z.string().min(1, "증권사를 선택해주세요"),

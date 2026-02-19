@@ -28,7 +28,6 @@ export default function RegisterPage() {
       password: "",
       birthDate: "",
       phone: "",
-      email: "",
       accountHolder: "",
       bank: "",
       accountNumber: "",
@@ -159,24 +158,6 @@ export default function RegisterPage() {
                       <Input
                         placeholder="예: 01012345678"
                         data-testid="input-phone"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>이메일</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="이메일을 입력하세요"
-                        data-testid="input-email"
                         {...field}
                       />
                     </FormControl>
