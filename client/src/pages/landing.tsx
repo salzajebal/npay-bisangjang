@@ -1,13 +1,11 @@
 import { useEffect, useState, useRef } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import type { IpoStock } from "@shared/schema";
 import {
   Search,
   ChevronRight,
   ChevronLeft,
   MessageCircle,
-  Calendar,
   BookOpen,
   HelpCircle,
   Award,
@@ -21,7 +19,8 @@ import {
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { StockIcon } from "@/components/stock-icon";
 import { SiteLogoBadge } from "@/components/site-logo";
-import type { User as UserType } from "@shared/schema";
+import { fetchStockPrices } from "@/lib/market-prices";
+import type { User as UserType, StockTransaction } from "@shared/schema";
 
 const UNLISTED_STOCKS = [
   { name: "케이뱅크", code: "279570", price: 11600, change: -6.45, orders: 506, category: "일반", isIPO: true, marketCap: 52000, revenueGrowth: 18.5, ipoPrep: true },
@@ -71,13 +70,6 @@ const DISCUSSIONS = [
   { id: 4, user: "IPO분석가", avatar: "#E65100", time: "2시간 전", content: "빗썸 거래량이 지속적으로 증가하고 있어요. 코인 시장 상승과 맞물려서 좋은 흐름입니다.", tag: "빗썸" },
 ];
 
-const UPCOMING_IPOS = [
-  { name: "케이뱅크", dDay: 5, date: "02.20 예정", priceRange: "7,000 ~ 8,500원", competition: "198.53:1", label: "매수가능", status: "청약예정" as const },
-  { name: "에스팀", dDay: 8, date: "02.23 예정", priceRange: "7,000 ~ 8,500원", competition: "-", status: "청약예정" as const },
-  { name: "엑스비스", dDay: 8, date: "02.23 예정", priceRange: "10,100 ~ 11,500원", competition: "-", status: "청약예정" as const },
-  { name: "무신사", dDay: 0, date: "02.14 ~ 02.15", priceRange: "24,000 ~ 25,700원", competition: "312.7:1", label: "청약중", status: "청약진행중" as const },
-  { name: "두나무", dDay: 0, date: "02.13 ~ 02.16", priceRange: "280,000 ~ 310,000원", competition: "87.2:1", label: "청약중", status: "청약진행중" as const },
-];
 
 const HOT_ROOMS = [
   { name: "케이뱅크", tags: ["#IPO", "#은행"], count: 1284 },
@@ -614,104 +606,147 @@ function PopularDiscussions() {
   );
 }
 
-function UpcomingIPOs() {
-  const [activeIPOTab, setActiveIPOTab] = useState("청약예정");
-  const { data: apiStocks } = useQuery<IpoStock[]>({
-    queryKey: ["/api/ipo-stocks"],
+function MyHoldings() {
+  const { data: authData } = useQuery<{ user: UserType } | null>({
+    queryKey: ["/api/auth/me"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
-  const ipoList = (apiStocks && apiStocks.length > 0) ? apiStocks.map((s) => {
-    const start = new Date(s.startDate);
-    const end = new Date(s.endDate);
-    const now = new Date();
-    const dDay = Math.max(0, Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-    const isOngoing = now >= start && now <= end;
-    const formatDate = (d: Date) => `${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
-    return {
-      name: s.stockName,
-      dDay: isOngoing ? 0 : dDay,
-      date: isOngoing ? `${formatDate(start)} ~ ${formatDate(end)}` : `${formatDate(start)} 예정`,
-      priceRange: `${s.priceMin.toLocaleString()} ~ ${s.priceMax.toLocaleString()}원`,
-      competition: s.competitionRate || "-",
-      label: s.subscriptionStatus === "청약진행중" ? "청약중" : (dDay <= 3 ? "매수가능" : ""),
-      status: s.subscriptionStatus,
-    };
-  }) : UPCOMING_IPOS;
+  const { data: transactions } = useQuery<StockTransaction[]>({
+    queryKey: ["/api/transactions/my"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!authData?.user,
+  });
+
+  const [priceData, setPriceData] = useState<Record<string, { currentPrice: number; changePercent: number }>>({});
+
+  const txList = transactions || [];
+  const holdingsMap: Record<string, { qty: number; totalCost: number }> = {};
+  txList.forEach((tx) => {
+    const key = tx.stockName;
+    if (!holdingsMap[key]) holdingsMap[key] = { qty: 0, totalCost: 0 };
+    if (tx.type === "in") {
+      holdingsMap[key].qty += tx.quantity;
+      holdingsMap[key].totalCost += tx.quantity * tx.pricePerShare;
+    } else {
+      holdingsMap[key].qty -= tx.quantity;
+      holdingsMap[key].totalCost -= tx.quantity * tx.pricePerShare;
+    }
+  });
+
+  const holdingStockNames = Object.entries(holdingsMap).filter(([, v]) => v.qty > 0).map(([name]) => name);
+  const holdingStockNamesKey = JSON.stringify(holdingStockNames);
+
+  useEffect(() => {
+    if (holdingStockNames.length > 0) {
+      fetchStockPrices(holdingStockNames).then(setPriceData);
+    }
+  }, [holdingStockNamesKey]);
+
+  const holdingsList = Object.entries(holdingsMap)
+    .filter(([, v]) => v.qty > 0)
+    .map(([name, v]) => {
+      const avgPrice = Math.round(v.totalCost / v.qty);
+      const market = priceData[name] || { currentPrice: avgPrice, changePercent: 0 };
+      const currentPrice = market.currentPrice;
+      const evalAmount = v.qty * currentPrice;
+      const profitLoss = evalAmount - v.totalCost;
+      const profitPct = v.totalCost > 0 ? ((profitLoss / v.totalCost) * 100) : 0;
+      return { name, qty: v.qty, avgPrice, currentPrice, evalAmount, totalCost: v.totalCost, profitLoss, profitPct, changePercent: market.changePercent };
+    });
+
+  const totalEval = holdingsList.reduce((s, h) => s + h.evalAmount, 0);
+  const totalCost = holdingsList.reduce((s, h) => s + h.totalCost, 0);
+  const totalProfit = totalEval - totalCost;
+  const totalProfitPct = totalCost > 0 ? ((totalProfit / totalCost) * 100) : 0;
+
+  if (!authData?.user) {
+    return (
+      <div data-testid="section-my-holdings">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-bold text-[#222]">내 보유종목</h2>
+        </div>
+        <div className="border border-[#eee] rounded-lg p-6 text-center">
+          <div className="w-12 h-12 rounded-full bg-[#f5f5f5] flex items-center justify-center mx-auto mb-3">
+            <User className="w-6 h-6 text-[#ccc]" />
+          </div>
+          <p className="text-sm text-[#999] mb-3">로그인하면 보유종목을 확인할 수 있습니다</p>
+          <a
+            href="/login"
+            className="inline-flex items-center gap-1.5 text-sm text-white bg-[#E8344E] rounded-full px-5 py-2 hover:bg-[#d42e45] transition-colors"
+            data-testid="link-login-holdings"
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            로그인
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div id="ipos" data-testid="section-upcoming-ipos">
+    <div data-testid="section-my-holdings">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-base font-bold text-[#222]">다가오는 청약 종목</h2>
-        <a href="/ipo-calendar" className="text-xs text-[#E8344E] flex items-center gap-0.5 hover:underline" data-testid="link-ipo-calendar">
-          IPO 캘린더 보기 <ChevronRight className="w-3 h-3" />
+        <h2 className="text-base font-bold text-[#222]">내 보유종목</h2>
+        <a href="/dashboard" className="text-xs text-[#E8344E] flex items-center gap-0.5 hover:underline" data-testid="link-my-dashboard">
+          마이페이지 <ChevronRight className="w-3 h-3" />
         </a>
       </div>
 
-      <div className="flex items-center gap-0 border-b border-[#eee] mb-3">
-        <button
-          onClick={() => setActiveIPOTab("청약진행중")}
-          className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${
-            activeIPOTab === "청약진행중"
-              ? "border-[#E8344E] text-[#E8344E]"
-              : "border-transparent text-[#999]"
-          }`}
-          data-testid="tab-ipo-ongoing"
-        >
-          청약진행중
-          <span className="text-[10px] bg-[#E8344E] text-white rounded-full w-4 h-4 flex items-center justify-center leading-none">{ipoList.filter(i => i.status === "청약진행중").length}</span>
-        </button>
-        <button
-          onClick={() => setActiveIPOTab("청약예정")}
-          className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${
-            activeIPOTab === "청약예정"
-              ? "border-[#E8344E] text-[#E8344E]"
-              : "border-transparent text-[#999]"
-          }`}
-          data-testid="tab-ipo-upcoming"
-        >
-          청약예정
-          <span className="text-[10px] bg-[#E8344E] text-white rounded-full w-4 h-4 flex items-center justify-center leading-none">{ipoList.filter(i => i.status === "청약예정").length}</span>
-        </button>
-      </div>
-
-      <div className="space-y-3">
-        {ipoList.filter(ipo => ipo.status === activeIPOTab).length === 0 ? (
-          <div className="text-center py-8 text-sm text-[#999]">등록된 종목이 없습니다</div>
-        ) : ipoList.filter(ipo => ipo.status === activeIPOTab).map((ipo, i) => (
-          <div
-            key={i}
-            className="border border-[#eee] rounded-lg p-3.5 hover:border-[#ddd] transition-colors cursor-pointer"
-            data-testid={`card-ipo-${i}`}
-          >
-            <div className="flex items-center gap-2 mb-2.5">
-              <span className="text-[10px] font-bold text-[#E8344E] leading-none">{ipo.status === "청약진행중" ? "진행중" : `D-${ipo.dDay}`}</span>
-              <span className="text-xs text-[#999]">{ipo.date}</span>
+      {holdingsList.length === 0 ? (
+        <div className="border border-[#eee] rounded-lg p-6 text-center">
+          <p className="text-sm text-[#999] mb-1">보유 중인 종목이 없습니다</p>
+          <p className="text-xs text-[#ccc]">입고된 주식이 여기에 표시됩니다</p>
+        </div>
+      ) : (
+        <>
+          <div className="bg-[#f8f9fa] rounded-lg p-3.5 mb-3">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-[#999]">총 평가금액</span>
+              <span className={`text-xs font-bold tabular-nums ${totalProfit > 0 ? "text-[#f04452]" : totalProfit < 0 ? "text-[#3182f6]" : "text-[#666]"}`}>
+                {totalProfit > 0 ? "+" : ""}{totalProfitPct.toFixed(2)}%
+              </span>
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <StockIcon name={ipo.name} size={36} />
-                <div>
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className="text-sm font-bold text-[#222]">{ipo.name}</span>
-                    {ipo.label && (
-                      <span className="text-[10px] text-[#E8344E] font-medium">{ipo.label}</span>
-                    )}
+            <p className="text-lg font-bold text-[#222] tabular-nums">{totalEval.toLocaleString()}원</p>
+            <p className={`text-xs tabular-nums ${totalProfit > 0 ? "text-[#f04452]" : totalProfit < 0 ? "text-[#3182f6]" : "text-[#999]"}`}>
+              {totalProfit > 0 ? "+" : ""}{totalProfit.toLocaleString()}원
+            </p>
+          </div>
+
+          <div className="space-y-2.5">
+            {holdingsList.map((h) => (
+              <div
+                key={h.name}
+                className="border border-[#eee] rounded-lg p-3 hover:border-[#ddd] transition-colors cursor-pointer"
+                data-testid={`card-holding-${h.name}`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <StockIcon name={h.name} size={36} />
+                    <div>
+                      <span className="text-sm font-bold text-[#222]">{h.name}</span>
+                      <p className="text-xs text-[#999]">{h.qty.toLocaleString()}주 · 평균 {h.avgPrice.toLocaleString()}원</p>
+                    </div>
                   </div>
-                  <p className="text-xs text-[#666]">공모가 {ipo.priceRange}</p>
-                  <p className="text-xs text-[#999]">기관경쟁률 {ipo.competition}</p>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-[#222] tabular-nums">{h.currentPrice.toLocaleString()}원</p>
+                    <p className={`text-xs font-medium tabular-nums ${h.profitPct > 0 ? "text-[#f04452]" : h.profitPct < 0 ? "text-[#3182f6]" : "text-[#999]"}`}>
+                      {h.profitPct > 0 ? "+" : ""}{h.profitPct.toFixed(2)}%
+                      <span className="ml-1 text-[10px]">({h.profitLoss > 0 ? "+" : ""}{h.profitLoss.toLocaleString()}원)</span>
+                    </p>
+                  </div>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-[#ccc] shrink-0" />
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <div className="mt-4 text-center">
-        <a href="/ipo-calendar" className="inline-flex items-center gap-1 text-sm text-[#666] border border-[#eee] rounded-full px-5 py-2 hover:bg-[#fafafa] transition-colors" data-testid="link-more-ipos">
-          종목 더보기 <ChevronRight className="w-3.5 h-3.5" />
-        </a>
-      </div>
+          <div className="mt-4 text-center">
+            <a href="/dashboard" className="inline-flex items-center gap-1 text-sm text-[#666] border border-[#eee] rounded-full px-5 py-2 hover:bg-[#fafafa] transition-colors" data-testid="link-more-holdings">
+              상세보기 <ChevronRight className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -1038,7 +1073,7 @@ export default function TradePage() {
           </div>
 
           <aside className="w-full lg:w-[340px] shrink-0 space-y-8">
-            <UpcomingIPOs />
+            <MyHoldings />
             <Tips />
             <HotDiscussionRooms />
           </aside>
