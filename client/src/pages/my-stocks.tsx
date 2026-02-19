@@ -9,11 +9,15 @@ import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
 import type { User, StockTransaction } from "@shared/schema";
 import { fetchStockPrices } from "@/lib/market-prices";
+import { getQueryFn } from "@/lib/queryClient";
 
 export default function MyStocksPage() {
-  const { data: user, isLoading: userLoading } = useQuery<User | null>({
+  const { data: authData, isLoading: userLoading } = useQuery<{ user: User } | null>({
     queryKey: ["/api/auth/me"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
   });
+
+  const user = authData?.user ?? null;
 
   const { data: transactions, isLoading: txLoading } = useQuery<StockTransaction[]>({
     queryKey: ["/api/transactions/my"],
