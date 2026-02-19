@@ -725,16 +725,38 @@ export default function DashboardPage() {
                     {myTransfers.map((tr) => (
                       <div
                         key={tr.id}
-                        className="border rounded-md p-3 space-y-1"
+                        className="border rounded-md p-3 space-y-2"
                         data-testid={`transfer-item-${tr.id}`}
                       >
                         <div className="flex items-center justify-between gap-2 flex-wrap">
                           <div className="flex items-center gap-1.5">
                             <StockIcon name={tr.stockName} size={20} />
-                            <span className="font-medium text-sm">{tr.stockName} {tr.quantity}주</span>
+                            <span className="font-medium text-sm">{tr.stockName} {tr.quantity.toLocaleString()}주</span>
                           </div>
                           <TransferStatusBadge status={tr.status} />
                         </div>
+                        {tr.currentPrice > 0 && (
+                          <div className="bg-muted/50 rounded-md p-2 space-y-1">
+                            <div className="flex items-center justify-between gap-2 text-xs">
+                              <span className="text-muted-foreground">매입단가</span>
+                              <span className="font-mono tabular-nums">{tr.purchasePrice.toLocaleString()}원</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 text-xs">
+                              <span className="text-muted-foreground">현재시세</span>
+                              <span className="font-mono tabular-nums font-medium">{tr.currentPrice.toLocaleString()}원</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 text-xs">
+                              <span className="text-muted-foreground">수익률</span>
+                              <span className={`font-mono tabular-nums font-bold ${parseFloat(tr.profitRate) > 0 ? "text-red-500" : parseFloat(tr.profitRate) < 0 ? "text-blue-500" : ""}`}>
+                                {parseFloat(tr.profitRate) > 0 ? "+" : ""}{tr.profitRate}%
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 text-sm pt-1 border-t border-border/50">
+                              <span className="text-muted-foreground font-medium">평가금액</span>
+                              <span className="font-mono tabular-nums font-bold">{tr.totalAmount.toLocaleString()}원</span>
+                            </div>
+                          </div>
+                        )}
                         <div className="text-xs text-muted-foreground">
                           {tr.accountName} | {tr.accountNumber}
                         </div>

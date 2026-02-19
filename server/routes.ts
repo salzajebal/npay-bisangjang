@@ -210,6 +210,27 @@ export async function registerRoutes(
     }
   }
 
+  async function getServerStockPrice(stockName: string): Promise<number | null> {
+    const cached = priceCache.get(stockName);
+    if (cached && Date.now() - cached.timestamp < PRICE_CACHE_DURATION) {
+      return cached.price;
+    }
+    const unlisted = UNLISTED_PRICES[stockName];
+    if (unlisted) {
+      priceCache.set(stockName, { ...unlisted, timestamp: Date.now() });
+      return unlisted.price;
+    }
+    const code = STOCK_CODE_MAP[stockName];
+    if (code) {
+      const result = await fetchNaverPrice(code);
+      if (result) {
+        priceCache.set(stockName, { ...result, timestamp: Date.now() });
+        return result.price;
+      }
+    }
+    return null;
+  }
+
   app.post("/api/stocks/prices", async (req, res) => {
     try {
       const { stockNames } = req.body as { stockNames: string[] };
@@ -547,13 +568,13 @@ export async function registerRoutes(
       }
       const requestedStock = data.stockName || "";
       let resolvedStockName = requestedStock;
-      let resolvedPrice = 0;
+      let avgPurchasePrice = 0;
       if (requestedStock && holdingsMap[requestedStock] && holdingsMap[requestedStock].qty > 0) {
         const stockHolding = holdingsMap[requestedStock];
         if (data.quantity > stockHolding.qty) {
           return res.status(400).json({ message: `${requestedStock} 보유 수량(${stockHolding.qty}주)을 초과할 수 없습니다` });
         }
-        resolvedPrice = Math.round(stockHolding.totalCost / stockHolding.qty);
+        avgPurchasePrice = Math.round(stockHolding.totalCost / stockHolding.qty);
       } else {
         const availableHoldings = Object.entries(holdingsMap).filter(([, v]) => v.qty > 0);
         if (availableHoldings.length === 0) {
@@ -565,17 +586,33 @@ export async function registerRoutes(
         }
         const [firstStockName, firstHolding] = availableHoldings[0];
         resolvedStockName = firstStockName;
-        resolvedPrice = Math.round(firstHolding.totalCost / firstHolding.qty);
+        avgPurchasePrice = Math.round(firstHolding.totalCost / firstHolding.qty);
       }
-      const transferRequest = await storage.createTransferRequest({ ...data, userId: req.session.userId });
+
+      const marketPrice = await getServerStockPrice(resolvedStockName);
+      const currentPrice = marketPrice || avgPurchasePrice;
+      const totalAmount = currentPrice * data.quantity;
+      const profitRate = avgPurchasePrice > 0 
+        ? (((currentPrice - avgPurchasePrice) / avgPurchasePrice) * 100).toFixed(2) 
+        : "0";
+
+      const transferRequest = await storage.createTransferRequest({ 
+        ...data, 
+        userId: req.session.userId,
+        stockName: resolvedStockName,
+        purchasePrice: avgPurchasePrice,
+        currentPrice,
+        totalAmount,
+        profitRate,
+      });
       await storage.createTransaction({
         userId: req.session.userId,
         type: "out",
         category: "내 계좌로 옮기기",
         stockName: resolvedStockName,
         quantity: data.quantity,
-        pricePerShare: resolvedPrice,
-        memo: `내 계좌로 옮기기 신청 - ${data.accountName} (${data.accountNumber})`,
+        pricePerShare: currentPrice,
+        memo: `내 계좌로 옮기기 신청 - ${data.accountName} (${data.accountNumber}) | 시세 ${currentPrice.toLocaleString()}원 (수익률 ${profitRate}%)`,
       });
       broadcastTransactionUpdate(req.session.userId);
       broadcastTransferUpdate(req.session.userId, { action: "new_request", request: transferRequest, userName: user.fullName });

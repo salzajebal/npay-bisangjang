@@ -1836,6 +1836,28 @@ export default function AdminPage() {
                         <p className="text-sm font-medium text-gray-700">{getUserName(tr.userId)}</p>
                         <span className="text-sm text-gray-700 flex items-center gap-1.5"><StockIcon name={tr.stockName} size={18} />{tr.stockName} · {tr.quantity.toLocaleString()}주</span>
                       </div>
+                      {tr.currentPrice > 0 && (
+                        <div className="bg-gray-50 rounded p-2 space-y-0.5 text-xs">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-gray-500">매입단가</span>
+                            <span className="font-mono tabular-nums text-gray-600">{tr.purchasePrice.toLocaleString()}원</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-gray-500">현재시세</span>
+                            <span className="font-mono tabular-nums font-medium text-gray-700">{tr.currentPrice.toLocaleString()}원</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-gray-500">수익률</span>
+                            <span className={`font-mono tabular-nums font-bold ${parseFloat(tr.profitRate) > 0 ? "text-red-500" : parseFloat(tr.profitRate) < 0 ? "text-blue-500" : "text-gray-600"}`}>
+                              {parseFloat(tr.profitRate) > 0 ? "+" : ""}{tr.profitRate}%
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-200 text-sm">
+                            <span className="text-gray-500 font-medium">평가금액</span>
+                            <span className="font-mono tabular-nums font-bold text-gray-800">{tr.totalAmount.toLocaleString()}원</span>
+                          </div>
+                        </div>
+                      )}
                       <div className="text-xs text-gray-500 space-y-1">
                         <p>{tr.accountName} · <span className="font-mono text-gray-400">{tr.accountNumber}</span></p>
                         {tr.adminMemo && <p className="text-gray-400">{tr.adminMemo}</p>}
@@ -1885,10 +1907,14 @@ export default function AdminPage() {
                           <TableHead className="text-gray-500">신청 회원</TableHead>
                           <TableHead className="text-gray-500">종목</TableHead>
                           <TableHead className="text-right text-gray-500">수량</TableHead>
+                          <TableHead className="text-right text-gray-500">매입단가</TableHead>
+                          <TableHead className="text-right text-gray-500">현재시세</TableHead>
+                          <TableHead className="text-right text-gray-500">수익률</TableHead>
+                          <TableHead className="text-right text-gray-500">평가금액</TableHead>
                           <TableHead className="text-gray-500">예금주</TableHead>
                           <TableHead className="text-gray-500">계좌번호</TableHead>
                           <TableHead className="text-gray-500">신청일</TableHead>
-                          <TableHead className="text-gray-500">관리자 메모</TableHead>
+                          <TableHead className="text-gray-500">메모</TableHead>
                           <TableHead className="text-center text-gray-500">처리</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -1909,6 +1935,16 @@ export default function AdminPage() {
                               </div>
                             </TableCell>
                             <TableCell className="text-right font-mono tabular-nums text-gray-700">{tr.quantity.toLocaleString()}주</TableCell>
+                            <TableCell className="text-right font-mono tabular-nums text-gray-600 text-sm">{tr.purchasePrice > 0 ? `${tr.purchasePrice.toLocaleString()}원` : "-"}</TableCell>
+                            <TableCell className="text-right font-mono tabular-nums text-gray-700 text-sm font-medium">{tr.currentPrice > 0 ? `${tr.currentPrice.toLocaleString()}원` : "-"}</TableCell>
+                            <TableCell className="text-right">
+                              {tr.currentPrice > 0 ? (
+                                <span className={`font-mono tabular-nums text-sm font-bold ${parseFloat(tr.profitRate) > 0 ? "text-red-500" : parseFloat(tr.profitRate) < 0 ? "text-blue-500" : "text-gray-600"}`}>
+                                  {parseFloat(tr.profitRate) > 0 ? "+" : ""}{tr.profitRate}%
+                                </span>
+                              ) : "-"}
+                            </TableCell>
+                            <TableCell className="text-right font-mono tabular-nums text-gray-800 font-bold">{tr.totalAmount > 0 ? `${tr.totalAmount.toLocaleString()}원` : "-"}</TableCell>
                             <TableCell className="text-gray-700">{tr.accountName}</TableCell>
                             <TableCell className="font-mono text-sm text-gray-700">{tr.accountNumber}</TableCell>
                             <TableCell className="text-sm text-gray-400">
