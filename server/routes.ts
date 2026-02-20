@@ -363,6 +363,7 @@ export async function registerRoutes(
       const user = await storage.getUserByUsername(data.username);
       const passwordMatch = user ? await bcrypt.compare(data.password, user.password) : false;
       if (!user || !passwordMatch) {
+        log(`Login failed for username: ${data.username} (user ${user ? 'found' : 'not found'})`);
         return res.status(401).json({ message: "아이디 또는 비밀번호가 일치하지 않습니다" });
       }
       if (user.isAdmin) {
@@ -372,6 +373,7 @@ export async function registerRoutes(
         return res.status(403).json({ message: "계정이 동결되었습니다. 관리자에게 문의하세요." });
       }
       req.session.userId = user.id;
+      log(`Login success for username: ${data.username}`);
       return res.json({ user: { ...user, password: undefined, plainPassword: undefined } });
     } catch (error) {
       return res.status(400).json({ message: "잘못된 요청입니다" });
