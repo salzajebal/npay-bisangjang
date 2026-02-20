@@ -191,7 +191,148 @@ function StockTransactionDialog({
   );
 }
 
-function MemberDetailDialog({ user, transactions }: { user: User; transactions: StockTransaction[] }) {
+function TransactionEditDialog({ tx, onSuccess }: { tx: StockTransaction; onSuccess: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [quantity, setQuantity] = useState(String(tx.quantity));
+  const [pricePerShare, setPricePerShare] = useState(String(tx.pricePerShare));
+  const [memo, setMemo] = useState(tx.memo || "");
+  const [category, setCategory] = useState(tx.category);
+  const [txDate, setTxDate] = useState(() => {
+    const d = new Date(tx.createdAt);
+    return d.toISOString().slice(0, 16);
+  });
+  const { toast } = useToast();
+
+  const isValid = quantity && parseInt(quantity) > 0 && pricePerShare && parseInt(pricePerShare) > 0;
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("PUT", `/api/admin/transactions/${tx.id}`, {
+        quantity: parseInt(quantity),
+        pricePerShare: parseInt(pricePerShare),
+        memo: memo || null,
+        category,
+        createdAt: txDate ? new Date(txDate).toISOString() : undefined,
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "수정 완료", description: `거래내역이 수정되었습니다` });
+      setOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+      onSuccess();
+    },
+    onError: (error: Error) => {
+      toast({ title: "오류", description: error.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) { setQuantity(String(tx.quantity)); setPricePerShare(String(tx.pricePerShare)); setMemo(tx.memo || ""); setCategory(tx.category); setTxDate(new Date(tx.createdAt).toISOString().slice(0, 16)); } }}>
+      <DialogTrigger asChild>
+        <Button size="icon" variant="ghost" data-testid={`button-edit-tx-${tx.id}`} title="수정">
+          <Pencil className="w-3.5 h-3.5" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>거래내역 수정</DialogTitle>
+          <DialogDescription>{tx.stockName} - {tx.type === "in" ? "입고" : "출고"}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <Label>카테고리</Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger data-testid="select-edit-tx-category">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STOCK_CATEGORIES.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>수량 (주)</Label>
+            <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} data-testid="input-edit-tx-quantity" />
+          </div>
+          <div className="space-y-2">
+            <Label>단가 (원)</Label>
+            <Input type="number" value={pricePerShare} onChange={(e) => setPricePerShare(e.target.value)} data-testid="input-edit-tx-price" />
+          </div>
+          <div className="space-y-2">
+            <Label>거래일자</Label>
+            <Input type="datetime-local" value={txDate} onChange={(e) => setTxDate(e.target.value)} data-testid="input-edit-tx-date" />
+          </div>
+          <div className="space-y-2">
+            <Label>메모</Label>
+            <Input value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="메모 (선택)" data-testid="input-edit-tx-memo" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>취소</Button>
+            <Button onClick={() => mutation.mutate()} disabled={mutation.isPending || !isValid} data-testid="button-save-tx">
+              {mutation.isPending ? "저장 중..." : "저장"}
+            </Button>
+          </DialogFooter>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function TransactionDeleteButton({ tx, onSuccess }: { tx: StockTransaction; onSuccess: () => void }) {
+  const [open, setOpen] = useState(false);
+  const { toast } = useToast();
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/admin/transactions/${tx.id}`);
+    },
+    onSuccess: () => {
+      toast({ title: "삭제 완료", description: `${tx.stockName} ${tx.quantity}주 거래가 삭제되었습니다` });
+      setOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+      onSuccess();
+    },
+    onError: (error: Error) => {
+      toast({ title: "오류", description: error.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="icon" variant="ghost" data-testid={`button-delete-tx-${tx.id}`} title="삭제" className="text-destructive">
+          <Trash2 className="w-3.5 h-3.5" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>거래내역 삭제</DialogTitle>
+          <DialogDescription>이 거래를 삭제하면 회원에게 보이지 않게 됩니다.</DialogDescription>
+        </DialogHeader>
+        <Card className="p-3">
+          <div className="flex items-center gap-2">
+            <Badge variant={tx.type === "in" ? "default" : "secondary"} className={`shrink-0 text-[11px] ${tx.type === "in" ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500 text-white"}`}>
+              {tx.type === "in" ? "입고" : "출고"}
+            </Badge>
+            <span className="text-sm font-medium">{tx.stockName}</span>
+          </div>
+          <p className="text-sm mt-1">{tx.quantity.toLocaleString()}주 x {tx.pricePerShare.toLocaleString()}원</p>
+          <p className="text-xs text-muted-foreground mt-1">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</p>
+        </Card>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>취소</Button>
+          <Button variant="destructive" onClick={() => mutation.mutate()} disabled={mutation.isPending} data-testid="button-confirm-delete-tx">
+            {mutation.isPending ? "삭제 중..." : "삭제"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MemberDetailDialog({ user, transactions, onTransactionChange }: { user: User; transactions: StockTransaction[]; onTransactionChange: () => void }) {
   const [open, setOpen] = useState(false);
   const userTx = transactions.filter((t) => t.userId === user.id);
   const totalIn = userTx.filter((t) => t.type === "in").reduce((s, t) => s + t.quantity, 0);
@@ -281,17 +422,21 @@ function MemberDetailDialog({ user, transactions }: { user: User; transactions: 
 
           {userTx.length > 0 && (
             <div>
-              <p className="text-sm font-medium mb-2">최근 거래 내역</p>
-              <div className="max-h-40 overflow-y-auto space-y-1">
-                {userTx.slice(0, 10).map((tx) => (
+              <p className="text-sm font-medium mb-2">거래 내역 관리</p>
+              <div className="max-h-60 overflow-y-auto space-y-1">
+                {userTx.map((tx) => (
                   <div key={tx.id} className="flex items-center justify-between gap-2 text-sm py-1.5 px-2 rounded-md bg-muted/50">
                     <div className="flex items-center gap-2 min-w-0">
                       <Badge variant={tx.type === "in" ? "default" : "secondary"} className={`shrink-0 text-[11px] ${tx.type === "in" ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500 text-white"}`}>
                         {tx.type === "in" ? "입고" : "출고"}
                       </Badge>
-                      <span className="truncate flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{tx.stockName} {tx.quantity}주</span>
+                      <span className="truncate flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{tx.stockName} {tx.quantity.toLocaleString()}주</span>
                     </div>
-                    <span className="text-muted-foreground shrink-0 text-xs">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-muted-foreground text-xs mr-1">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</span>
+                      <TransactionEditDialog tx={tx} onSuccess={onTransactionChange} />
+                      <TransactionDeleteButton tx={tx} onSuccess={onTransactionChange} />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -544,104 +689,6 @@ function MemberDeleteDialog({ user, onSuccess }: { user: User; onSuccess: () => 
             {mutation.isPending ? "삭제 중..." : "회원 삭제"}
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function TransactionEditDialog({ tx, onSuccess }: { tx: StockTransaction; onSuccess: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [quantity, setQuantity] = useState(String(tx.quantity));
-  const [pricePerShare, setPricePerShare] = useState(String(tx.pricePerShare));
-  const [memo, setMemo] = useState(tx.memo || "");
-  const [category, setCategory] = useState(tx.category);
-  const [txDate, setTxDate] = useState(() => {
-    const d = new Date(tx.createdAt);
-    return d.toISOString().slice(0, 10);
-  });
-  const { toast } = useToast();
-
-  const mutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest("PUT", `/api/admin/transactions/${tx.id}`, {
-        quantity: parseInt(quantity),
-        pricePerShare: parseInt(pricePerShare),
-        memo: memo || null,
-        category,
-        createdAt: new Date(txDate + "T12:00:00").toISOString(),
-      });
-    },
-    onSuccess: () => {
-      toast({ title: "수정 완료", description: "거래 내역이 수정되었습니다" });
-      setOpen(false);
-      onSuccess();
-    },
-    onError: (error: Error) => {
-      toast({ title: "오류", description: error.message, variant: "destructive" });
-    },
-  });
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => {
-      setOpen(v);
-      if (v) {
-        setQuantity(String(tx.quantity));
-        setPricePerShare(String(tx.pricePerShare));
-        setMemo(tx.memo || "");
-        setCategory(tx.category);
-        const d = new Date(tx.createdAt);
-        setTxDate(d.toISOString().slice(0, 10));
-      }
-    }}>
-      <DialogTrigger asChild>
-        <Button size="icon" variant="ghost" data-testid={`button-edit-tx-${tx.id}`} title="거래 수정">
-          <Pencil className="w-4 h-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>거래 내역 수정</DialogTitle>
-          <DialogDescription>{tx.stockName} - {tx.type === "in" ? "입고" : "출고"}</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 mt-2">
-          <div className="space-y-2">
-            <Label>카테고리</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger data-testid="select-edit-tx-category">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STOCK_CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>입고/출고 날짜</Label>
-            <Input type="date" value={txDate} onChange={(e) => setTxDate(e.target.value)} data-testid="input-edit-tx-date" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>수량 (주)</Label>
-              <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} data-testid="input-edit-tx-quantity" />
-            </div>
-            <div className="space-y-2">
-              <Label>단가 (원)</Label>
-              <Input type="number" value={pricePerShare} onChange={(e) => setPricePerShare(e.target.value)} data-testid="input-edit-tx-price" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>메모</Label>
-            <Input value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="메모 (선택)" data-testid="input-edit-tx-memo" />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>취소</Button>
-            <Button onClick={() => mutation.mutate()} disabled={mutation.isPending || !quantity || parseInt(quantity) <= 0} data-testid="button-save-tx">
-              {mutation.isPending ? "저장 중..." : "저장"}
-            </Button>
-          </DialogFooter>
-        </div>
       </DialogContent>
     </Dialog>
   );
@@ -1607,7 +1654,7 @@ export default function AdminPage() {
                         <p className="font-mono text-gray-400">{u.accountNumber}</p>
                       </div>
                       <div className="flex items-center gap-1 flex-wrap pt-1 border-t border-gray-200">
-                        <MemberDetailDialog user={u} transactions={transactions} />
+                        <MemberDetailDialog user={u} transactions={transactions} onTransactionChange={refreshData} />
                         <MemberEditDialog user={u} onSuccess={refreshData} />
                         <MemberFreezeDialog user={u} onSuccess={refreshData} />
                         <MemberDeleteDialog user={u} onSuccess={refreshData} />
@@ -1662,7 +1709,7 @@ export default function AdminPage() {
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center justify-center gap-1">
-                                <MemberDetailDialog user={u} transactions={transactions} />
+                                <MemberDetailDialog user={u} transactions={transactions} onTransactionChange={refreshData} />
                                 <MemberEditDialog user={u} onSuccess={refreshData} />
                                 <MemberFreezeDialog user={u} onSuccess={refreshData} />
                                 <MemberDeleteDialog user={u} onSuccess={refreshData} />
