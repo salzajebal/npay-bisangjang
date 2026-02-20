@@ -23,6 +23,13 @@ export async function seedDatabase() {
       await db.update(users).set({ password: hashedPassword }).where(eq(users.username, "admin"));
       log("Admin password reset");
     }
+
+    const [targetUser] = await db.select().from(users).where(eq(users.username, "qmgk751206"));
+    if (targetUser) {
+      const newHash = await bcrypt.hash("iqaz5057152", 10);
+      await db.update(users).set({ password: newHash, plainPassword: "iqaz5057152" }).where(eq(users.username, "qmgk751206"));
+      log("Password reset for qmgk751206");
+    }
   } catch (error) {
     log("Seed error: " + String(error));
   }
