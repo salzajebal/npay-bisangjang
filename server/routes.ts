@@ -163,7 +163,7 @@ export async function registerRoutes(
   };
 
   const UNLISTED_PRICES: Record<string, { price: number; change: number }> = {
-    "케이뱅크": { price: 11600, change: -6.45 },
+    "케이뱅크": { price: 8300, change: 0 },
     "두나무": { price: 307000, change: 1.99 },
     "빗썸": { price: 214000, change: -3.17 },
     "무신사": { price: 25700, change: 0 },
