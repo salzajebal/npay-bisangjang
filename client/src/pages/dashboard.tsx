@@ -15,16 +15,17 @@ import {
   LogOut, Package, ArrowDownRight, ArrowUpRight, User as UserIcon,
   LayoutDashboard, ClipboardList, Wallet, Home,
   ChevronLeft, ChevronRight, MessageSquare, Menu, X, ArrowRightLeft,
-  Send, Clock, CheckCircle2, XCircle, PauseCircle,
+  Send, Clock, CheckCircle2, XCircle, PauseCircle, Settings,
 } from "lucide-react";
 import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
 import type { User, StockTransaction, TransferRequest } from "@shared/schema";
+import { KOREAN_BANKS } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { fetchStockPrices } from "@/lib/market-prices";
 
-type DashSection = "overview" | "holdings" | "transactions" | "transfer";
+type DashSection = "overview" | "holdings" | "transactions" | "transfer" | "profile";
 
 function TransferStatusBadge({ status }: { status: string }) {
   switch (status) {
@@ -46,6 +47,7 @@ const sidebarItems: { id: DashSection; label: string; icon: typeof LayoutDashboa
   { id: "holdings", label: "보유 종목", icon: Wallet },
   { id: "transactions", label: "거래 내역", icon: ClipboardList },
   { id: "transfer", label: "내 계좌로 옮기기", icon: ArrowRightLeft },
+  { id: "profile", label: "내 정보 수정", icon: Settings },
 ];
 
 export default function DashboardPage() {
@@ -775,6 +777,10 @@ export default function DashboardPage() {
               </Card>
             </div>
           )}
+
+          {activeSection === "profile" && (
+            <ProfileEditSection user={user} />
+          )}
         </main>
       </div>
 
@@ -803,5 +809,118 @@ export default function DashboardPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function ProfileEditSection({ user }: { user: User }) {
+  const { toast } = useToast();
+  const [fullName, setFullName] = useState(user.fullName);
+  const [phone, setPhone] = useState(user.phone || "");
+  const [bank, setBank] = useState(user.bank);
+  const [accountNumber, setAccountNumber] = useState(user.accountNumber);
+  const [accountHolder, setAccountHolder] = useState(user.accountHolder);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  useEffect(() => {
+    setFullName(user.fullName);
+    setPhone(user.phone || "");
+    setBank(user.bank);
+    setAccountNumber(user.accountNumber);
+    setAccountHolder(user.accountHolder);
+  }, [user]);
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const body: any = { fullName, phone, bank, accountNumber, accountHolder };
+      if (newPassword) {
+        if (newPassword !== confirmPassword) {
+          throw new Error("비밀번호가 일치하지 않습니다");
+        }
+        if (newPassword.length < 6) {
+          throw new Error("비밀번호는 6자 이상이어야 합니다");
+        }
+        body.password = newPassword;
+      }
+      await apiRequest("PUT", "/api/auth/profile", body);
+    },
+    onSuccess: () => {
+      toast({ title: "수정 완료", description: "회원정보가 수정되었습니다" });
+      setNewPassword("");
+      setConfirmPassword("");
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    },
+    onError: (err: any) => {
+      toast({ title: "수정 실패", description: err.message || "정보 수정에 실패했습니다", variant: "destructive" });
+    },
+  });
+
+  return (
+    <Card className="p-5">
+      <div className="flex items-center gap-2 mb-6">
+        <Settings className="w-5 h-5 text-[#E8344E]" />
+        <h2 className="text-lg font-semibold" data-testid="text-profile-title">내 정보 수정</h2>
+      </div>
+      <div className="space-y-4 max-w-lg">
+        <div className="space-y-2">
+          <Label>아이디</Label>
+          <Input value={user.username} disabled className="bg-muted/50" data-testid="input-profile-username" />
+          <p className="text-xs text-muted-foreground">아이디는 변경할 수 없습니다</p>
+        </div>
+        <div className="space-y-2">
+          <Label>이름</Label>
+          <Input value={fullName} onChange={(e) => setFullName(e.target.value)} data-testid="input-profile-fullname" />
+        </div>
+        <div className="space-y-2">
+          <Label>휴대폰번호</Label>
+          <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="01012345678" data-testid="input-profile-phone" />
+        </div>
+        <div className="space-y-2">
+          <Label>증권사</Label>
+          <Select value={bank} onValueChange={setBank}>
+            <SelectTrigger data-testid="select-profile-bank">
+              <SelectValue placeholder="증권사 선택" />
+            </SelectTrigger>
+            <SelectContent>
+              {KOREAN_BANKS.map((b) => (
+                <SelectItem key={b} value={b}>{b}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>예금주명</Label>
+          <Input value={accountHolder} onChange={(e) => setAccountHolder(e.target.value)} data-testid="input-profile-holder" />
+        </div>
+        <div className="space-y-2">
+          <Label>계좌번호</Label>
+          <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} data-testid="input-profile-account" />
+        </div>
+        <div className="border-t pt-4 mt-4">
+          <h3 className="text-sm font-medium mb-3">비밀번호 변경</h3>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label>새 비밀번호</Label>
+              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="변경 시에만 입력 (6자 이상)" data-testid="input-profile-password" />
+            </div>
+            <div className="space-y-2">
+              <Label>비밀번호 확인</Label>
+              <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="비밀번호를 다시 입력하세요" data-testid="input-profile-password-confirm" />
+            </div>
+            {newPassword && confirmPassword && newPassword !== confirmPassword && (
+              <p className="text-xs text-destructive">비밀번호가 일치하지 않습니다</p>
+            )}
+          </div>
+        </div>
+        <Button
+          className="w-full bg-[#E8344E] border-[#E8344E] mt-2"
+          onClick={() => mutation.mutate()}
+          disabled={mutation.isPending || !fullName || !accountNumber || !accountHolder || !bank || (!!newPassword && newPassword !== confirmPassword)}
+          data-testid="button-save-profile"
+        >
+          {mutation.isPending ? "저장 중..." : "정보 수정"}
+        </Button>
+      </div>
+    </Card>
   );
 }

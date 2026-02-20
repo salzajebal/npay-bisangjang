@@ -418,6 +418,32 @@ export async function registerRoutes(
     return res.json({ user: { ...user, password: undefined, plainPassword: undefined } });
   });
 
+  app.put("/api/auth/profile", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "로그인이 필요합니다" });
+    }
+    try {
+      const data = updateUserSchema.parse(req.body);
+      const updateData: any = { ...data };
+      if (data.password) {
+        updateData.plainPassword = data.password;
+        updateData.password = await bcrypt.hash(data.password, 10);
+      } else {
+        delete updateData.password;
+      }
+      const user = await storage.updateUser(req.session.userId, updateData);
+      if (!user) {
+        return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      }
+      return res.json({ user: { ...user, password: undefined, plainPassword: undefined } });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      return res.status(500).json({ message: "서버 오류가 발생했습니다" });
+    }
+  });
+
   app.get("/api/transactions/my", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ message: "로그인이 필요합니다" });
