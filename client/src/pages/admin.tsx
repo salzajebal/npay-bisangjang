@@ -55,6 +55,7 @@ function StockTransactionDialog({
   const [quantity, setQuantity] = useState("");
   const [pricePerShare, setPricePerShare] = useState("");
   const [memo, setMemo] = useState("");
+  const [txDate, setTxDate] = useState("");
   const { toast } = useToast();
 
   const filteredStocks = stockSearch.length > 0
@@ -71,6 +72,7 @@ function StockTransactionDialog({
         quantity: parseInt(quantity),
         pricePerShare: parseInt(pricePerShare),
         memo: memo || null,
+        createdAt: txDate || undefined,
       });
     },
     onSuccess: () => {
@@ -84,6 +86,7 @@ function StockTransactionDialog({
       setQuantity("");
       setPricePerShare("");
       setMemo("");
+      setTxDate("");
       onSuccess();
     },
     onError: (error: Error) => {
@@ -174,6 +177,10 @@ function StockTransactionDialog({
           <div className="space-y-2">
             <Label>메모</Label>
             <Input value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="메모 (선택)" data-testid="input-memo" />
+          </div>
+          <div className="space-y-2">
+            <Label>거래일자 (미입력 시 현재 시간)</Label>
+            <Input type="datetime-local" value={txDate} onChange={(e) => setTxDate(e.target.value)} data-testid="input-tx-date" />
           </div>
           <Button className="w-full" onClick={() => mutation.mutate()} disabled={mutation.isPending || !stockName || !quantity || parseInt(quantity) <= 0} data-testid="button-submit-transaction">
             {mutation.isPending ? "처리 중..." : type === "in" ? "입고 처리" : "출고 처리"}
@@ -388,8 +395,12 @@ function MemberEditDialog({ user, onSuccess }: { user: User; onSuccess: () => vo
             <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} data-testid="input-edit-account" />
           </div>
           <div className="space-y-2">
+            <Label>현재 비밀번호</Label>
+            <Input value={user.plainPassword || "(암호화됨)"} readOnly className="bg-gray-50 text-gray-600" data-testid="text-current-password" />
+          </div>
+          <div className="space-y-2">
             <Label>새 비밀번호 (변경 시에만 입력)</Label>
-            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="비밀번호 변경 시 입력" data-testid="input-edit-password" />
+            <Input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="비밀번호 변경 시 입력" data-testid="input-edit-password" />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>취소</Button>

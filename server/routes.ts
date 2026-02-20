@@ -476,8 +476,13 @@ export async function registerRoutes(
 
   app.post("/api/admin/transactions", requireAdmin, async (req, res) => {
     try {
-      const data = insertStockTransactionSchema.parse(req.body);
-      const transaction = await storage.createTransaction(data);
+      const { createdAt: customDate, ...rest } = req.body;
+      const data = insertStockTransactionSchema.parse(rest);
+      let transaction = await storage.createTransaction(data);
+      if (customDate) {
+        const updated = await storage.updateTransaction(transaction.id, { createdAt: new Date(customDate) });
+        if (updated) transaction = updated;
+      }
       broadcastTransactionUpdate(data.userId);
       return res.json(transaction);
     } catch (error) {
