@@ -543,12 +543,13 @@ export async function registerRoutes(
 
   app.put("/api/admin/transactions/:id", requireAdmin, async (req, res) => {
     try {
-      const { quantity, pricePerShare, memo, category } = req.body;
+      const { quantity, pricePerShare, memo, category, createdAt } = req.body;
       const updateData: any = {};
       if (quantity !== undefined) updateData.quantity = parseInt(quantity);
       if (pricePerShare !== undefined) updateData.pricePerShare = parseInt(pricePerShare);
       if (memo !== undefined) updateData.memo = memo;
       if (category !== undefined) updateData.category = category;
+      if (createdAt !== undefined) updateData.createdAt = new Date(createdAt);
       const tx = await storage.updateTransaction(req.params.id, updateData);
       if (!tx) {
         return res.status(404).json({ message: "거래를 찾을 수 없습니다" });

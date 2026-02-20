@@ -13,7 +13,7 @@ export interface IStorage {
   getTransactionsByUserId(userId: string): Promise<StockTransaction[]>;
   getAllTransactions(): Promise<StockTransaction[]>;
   createTransaction(tx: InsertStockTransaction): Promise<StockTransaction>;
-  updateTransaction(id: string, data: Partial<Pick<StockTransaction, "quantity" | "pricePerShare" | "memo" | "category">>): Promise<StockTransaction | undefined>;
+  updateTransaction(id: string, data: Partial<Pick<StockTransaction, "quantity" | "pricePerShare" | "memo" | "category" | "createdAt">>): Promise<StockTransaction | undefined>;
   deleteTransaction(id: string): Promise<void>;
   createTransferRequest(data: InsertTransferRequest): Promise<TransferRequest>;
   getTransferRequestsByUserId(userId: string): Promise<TransferRequest[]>;
@@ -83,7 +83,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(users).where(eq(users.id, id));
   }
 
-  async updateTransaction(id: string, data: Partial<Pick<StockTransaction, "quantity" | "pricePerShare" | "memo" | "category">>): Promise<StockTransaction | undefined> {
+  async updateTransaction(id: string, data: Partial<Pick<StockTransaction, "quantity" | "pricePerShare" | "memo" | "category" | "createdAt">>): Promise<StockTransaction | undefined> {
     const [tx] = await db.update(stockTransactions).set(data).where(eq(stockTransactions.id, id)).returning();
     return tx;
   }

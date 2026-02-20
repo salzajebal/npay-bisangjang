@@ -544,6 +544,10 @@ function TransactionEditDialog({ tx, onSuccess }: { tx: StockTransaction; onSucc
   const [pricePerShare, setPricePerShare] = useState(String(tx.pricePerShare));
   const [memo, setMemo] = useState(tx.memo || "");
   const [category, setCategory] = useState(tx.category);
+  const [txDate, setTxDate] = useState(() => {
+    const d = new Date(tx.createdAt);
+    return d.toISOString().slice(0, 10);
+  });
   const { toast } = useToast();
 
   const mutation = useMutation({
@@ -553,6 +557,7 @@ function TransactionEditDialog({ tx, onSuccess }: { tx: StockTransaction; onSucc
         pricePerShare: parseInt(pricePerShare),
         memo: memo || null,
         category,
+        createdAt: new Date(txDate + "T12:00:00").toISOString(),
       });
     },
     onSuccess: () => {
@@ -573,6 +578,8 @@ function TransactionEditDialog({ tx, onSuccess }: { tx: StockTransaction; onSucc
         setPricePerShare(String(tx.pricePerShare));
         setMemo(tx.memo || "");
         setCategory(tx.category);
+        const d = new Date(tx.createdAt);
+        setTxDate(d.toISOString().slice(0, 10));
       }
     }}>
       <DialogTrigger asChild>
@@ -598,6 +605,10 @@ function TransactionEditDialog({ tx, onSuccess }: { tx: StockTransaction; onSucc
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>입고/출고 날짜</Label>
+            <Input type="date" value={txDate} onChange={(e) => setTxDate(e.target.value)} data-testid="input-edit-tx-date" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
