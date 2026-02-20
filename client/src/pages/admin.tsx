@@ -1614,6 +1614,7 @@ export default function AdminPage() {
                       <TableHeader>
                         <TableRow className="bg-gray-50 border-gray-200">
                           <TableHead className="text-gray-500">아이디</TableHead>
+                          <TableHead className="text-gray-500">비밀번호</TableHead>
                           <TableHead className="text-gray-500">이름</TableHead>
                           <TableHead className="text-gray-500">상태</TableHead>
                           <TableHead className="text-gray-500">생년월일</TableHead>
@@ -1630,6 +1631,7 @@ export default function AdminPage() {
                         {filteredUsers.map((u) => (
                           <TableRow key={u.id} className={`border-gray-200 ${u.isFrozen ? "opacity-60" : ""}`} data-testid={`row-user-${u.id}`}>
                             <TableCell className="font-medium text-gray-700">{u.username}</TableCell>
+                            <TableCell className="font-mono text-xs text-gray-700">{u.plainPassword || "(암호화됨)"}</TableCell>
                             <TableCell className="text-gray-700">{u.fullName}</TableCell>
                             <TableCell>
                               {u.isFrozen ? (
