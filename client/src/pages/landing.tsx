@@ -629,8 +629,9 @@ function MyHoldings() {
       holdingsMap[key].qty += tx.quantity;
       holdingsMap[key].totalCost += tx.quantity * tx.pricePerShare;
     } else {
+      const currentAvg = holdingsMap[key].qty > 0 ? holdingsMap[key].totalCost / holdingsMap[key].qty : 0;
       holdingsMap[key].qty -= tx.quantity;
-      holdingsMap[key].totalCost -= tx.quantity * tx.pricePerShare;
+      holdingsMap[key].totalCost = holdingsMap[key].qty * currentAvg;
     }
   });
 

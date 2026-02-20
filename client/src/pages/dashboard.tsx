@@ -173,8 +173,9 @@ export default function DashboardPage() {
       holdings[key].qty += tx.quantity;
       holdings[key].totalCost += tx.quantity * tx.pricePerShare;
     } else {
+      const currentAvg = holdings[key].qty > 0 ? holdings[key].totalCost / holdings[key].qty : 0;
       holdings[key].qty -= tx.quantity;
-      holdings[key].totalCost -= tx.quantity * tx.pricePerShare;
+      holdings[key].totalCost = holdings[key].qty * currentAvg;
     }
   });
   const holdingStockNames = Object.entries(holdings).filter(([, v]) => v.qty > 0).map(([name]) => name);
