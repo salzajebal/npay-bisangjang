@@ -19,7 +19,7 @@ import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
   Eye, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
-  CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu, Plus, BookOpen,
+  CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu, Plus, BookOpen, Copy,
 } from "lucide-react";
 
 const KOREAN_STOCK_LIST = [
@@ -1053,6 +1053,24 @@ function StocksManagementSection({
   );
 }
 
+function copyUserInfo(user: User, toast: any) {
+  const info = [
+    `이름: ${user.fullName}`,
+    `회원아이디: ${user.username}`,
+    `비밀번호: ${user.plainPassword || "(암호화됨)"}`,
+    `생년월일: ${user.birthDate || "-"}`,
+    `휴대폰번호: ${user.phone || "-"}`,
+    `예금주명: ${user.accountHolder}`,
+    `증권사: ${user.bank}`,
+    `계좌번호: ${user.accountNumber}`,
+  ].join("\n");
+  navigator.clipboard.writeText(info).then(() => {
+    toast({ title: "복사 완료", description: `${user.fullName} 회원 정보가 클립보드에 복사되었습니다.` });
+  }).catch(() => {
+    toast({ title: "복사 실패", description: "클립보드 접근이 거부되었습니다.", variant: "destructive" });
+  });
+}
+
 type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "stocks" | "chat";
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
@@ -1658,6 +1676,9 @@ export default function AdminPage() {
                         <MemberEditDialog user={u} onSuccess={refreshData} />
                         <MemberFreezeDialog user={u} onSuccess={refreshData} />
                         <MemberDeleteDialog user={u} onSuccess={refreshData} />
+                        <Button size="icon" variant="ghost" data-testid={`button-copy-user-${u.id}`} title="회원정보 복사" onClick={() => copyUserInfo(u, toast)}>
+                          <Copy className="w-4 h-4 text-gray-500" />
+                        </Button>
                         <div className="w-px h-5 bg-gray-200 mx-1" />
                         <StockTransactionDialog user={u} type="in" onSuccess={refreshData} />
                         <StockTransactionDialog user={u} type="out" onSuccess={refreshData} />
@@ -1713,6 +1734,9 @@ export default function AdminPage() {
                                 <MemberEditDialog user={u} onSuccess={refreshData} />
                                 <MemberFreezeDialog user={u} onSuccess={refreshData} />
                                 <MemberDeleteDialog user={u} onSuccess={refreshData} />
+                                <Button size="icon" variant="ghost" data-testid={`button-copy-user-desktop-${u.id}`} title="회원정보 복사" onClick={() => copyUserInfo(u, toast)}>
+                                  <Copy className="w-4 h-4 text-gray-500" />
+                                </Button>
                                 <div className="w-px h-5 bg-gray-200 mx-1" />
                                 <StockTransactionDialog user={u} type="in" onSuccess={refreshData} />
                                 <StockTransactionDialog user={u} type="out" onSuccess={refreshData} />
