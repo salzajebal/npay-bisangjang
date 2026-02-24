@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Send, Clock, CheckCircle2, XCircle, PauseCircle, ArrowRightLeft } from "lucide-react";
 import { SiteLogoBadge } from "@/components/site-logo";
-import type { TransferRequest } from "@shared/schema";
+import type { TransferRequest, StockTransaction } from "@shared/schema";
 
 function TransferStatusBadge({ status }: { status: string }) {
   switch (status) {
@@ -36,6 +37,7 @@ export default function LoginPage() {
   const [transferName, setTransferName] = useState("");
   const [transferAccount, setTransferAccount] = useState("");
   const [transferQuantity, setTransferQuantity] = useState("");
+  const [transferStock, setTransferStock] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const { data: authData } = useQuery<{ user: any }>({
@@ -49,6 +51,25 @@ export default function LoginPage() {
     queryKey: ["/api/transfer-requests/my"],
     enabled: !!currentUser,
   });
+
+  const { data: myTransactions = [] } = useQuery<StockTransaction[]>({
+    queryKey: ["/api/transactions/my"],
+    enabled: !!currentUser,
+  });
+
+  const loginHoldings: { name: string; qty: number }[] = (() => {
+    const map: Record<string, number> = {};
+    myTransactions.forEach((tx) => {
+      if (!map[tx.stockName]) map[tx.stockName] = 0;
+      if (tx.type === "in") {
+        map[tx.stockName] += tx.quantity;
+      } else {
+        map[tx.stockName] -= tx.quantity;
+        if (map[tx.stockName] < 0) map[tx.stockName] = 0;
+      }
+    });
+    return Object.entries(map).filter(([, q]) => q > 0).map(([name, qty]) => ({ name, qty }));
+  })();
 
   const wsRef = useRef<WebSocket | null>(null);
   useEffect(() => {
@@ -111,7 +132,7 @@ export default function LoginPage() {
         accountName: transferName,
         accountNumber: transferAccount,
         quantity: parseInt(transferQuantity),
-        stockName: "비상장주식",
+        stockName: transferStock,
       });
       return res.json();
     },
@@ -120,6 +141,7 @@ export default function LoginPage() {
       setTransferName("");
       setTransferAccount("");
       setTransferQuantity("");
+      setTransferStock("");
       queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions/my"] });
     },
@@ -142,7 +164,7 @@ export default function LoginPage() {
 
   const handleTransferSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!transferName || !transferAccount || !transferQuantity || parseInt(transferQuantity) <= 0) {
+    if (!transferStock || !transferName || !transferAccount || !transferQuantity || parseInt(transferQuantity) <= 0) {
       toast({ title: "입력 오류", description: "모든 항목을 올바르게 입력해주세요", variant: "destructive" });
       return;
     }
@@ -226,6 +248,25 @@ export default function LoginPage() {
                 </p>
                 <form onSubmit={handleTransferSubmit} className="space-y-4">
                   <div className="space-y-2">
+                    <Label>종목 선택</Label>
+                    {loginHoldings.length > 0 ? (
+                      <Select value={transferStock} onValueChange={(val) => { setTransferStock(val); setTransferQuantity(""); }}>
+                        <SelectTrigger data-testid="select-login-transfer-stock">
+                          <SelectValue placeholder="출고할 종목을 선택하세요" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {loginHoldings.map((h) => (
+                            <SelectItem key={h.name} value={h.name}>
+                              {h.name} ({h.qty.toLocaleString()}주)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">보유 중인 종목이 없습니다</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="transfer-name">예금주명</Label>
                     <Input
                       id="transfer-name"
@@ -253,17 +294,19 @@ export default function LoginPage() {
                       id="transfer-quantity"
                       type="number"
                       min="1"
+                      max={transferStock ? (loginHoldings.find(h => h.name === transferStock)?.qty || 0) : undefined}
                       value={transferQuantity}
                       onChange={(e) => setTransferQuantity(e.target.value)}
-                      placeholder="출고할 주식 수량"
+                      placeholder={transferStock ? `최대 ${(loginHoldings.find(h => h.name === transferStock)?.qty || 0).toLocaleString()}주` : "종목을 먼저 선택하세요"}
                       required
+                      disabled={!transferStock}
                       data-testid="input-transfer-quantity"
                     />
                   </div>
                   <Button
                     type="submit"
                     className="w-full bg-[#E8344E] border-[#E8344E]"
-                    disabled={transferMutation.isPending}
+                    disabled={transferMutation.isPending || loginHoldings.length === 0 || !transferStock}
                     data-testid="button-submit-transfer"
                   >
                     <Send className="w-4 h-4 mr-2" />
