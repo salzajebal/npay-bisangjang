@@ -1084,9 +1084,28 @@ const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashbo
 
 export default function AdminPage() {
   const [, setLocation] = useLocation();
-  const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
+  const getHashSection = (): AdminSection => {
+    const hash = window.location.hash.replace("#", "");
+    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "stocks", "chat"];
+    return valid.includes(hash as AdminSection) ? (hash as AdminSection) : "dashboard";
+  };
+
+  const [activeSection, setActiveSectionState] = useState<AdminSection>(getHashSection());
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const setActiveSection = (section: AdminSection) => {
+    setActiveSectionState(section);
+    window.history.pushState(null, "", `#${section}`);
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setActiveSectionState(getHashSection());
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
@@ -1469,7 +1488,7 @@ export default function AdminPage() {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6" style={{ WebkitOverflowScrolling: "touch", overscrollBehavior: "contain" }}>
           {activeSection === "dashboard" && (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
