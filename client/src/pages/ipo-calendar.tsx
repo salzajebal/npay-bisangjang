@@ -29,35 +29,39 @@ const IPO_STATUS_LEGEND = [
 ];
 
 const CALENDAR_EVENTS = [
-  { name: "한패스", day: 2, endDay: 2, color: "#E8E8E8", status: "주관사선정" },
-  { name: "교보20호기업인수...", day: 2, endDay: 2, color: "#E8E8E8", status: "주관사선정" },
-  { name: "케이뱅크", day: 4, endDay: 6, color: "#D7C8E8", status: "공모청약" },
-  { name: "세미티에스", day: 5, endDay: 5, color: "#E8E8E8", status: "주관사선정" },
-  { name: "엑스비스", day: 6, endDay: 6, color: "#D7C8E8", status: "기술평가통과" },
-  { name: "케이뱅크", day: 9, endDay: 10, color: "#C8D8F0", status: "수요예측" },
-  { name: "엑스비스", day: 10, endDay: 13, color: "#D7C8E8", status: "기술평가통과" },
-  { name: "에스팀", day: 10, endDay: 13, color: "#D7C8E8", status: "기술평가통과" },
-  { name: "케이뱅크", day: 20, endDay: 20, color: "#FCDDE1", status: "상장" },
-  { name: "케이뱅크", day: 23, endDay: 23, color: "#C8D8F0", status: "배정" },
-  { name: "카나프테라퓨틱스", day: 23, endDay: 27, color: "#D7C8E8", status: "기술평가통과" },
-  { name: "에스팀", day: 23, endDay: 23, color: "#D7C8E8", status: "기술평가통과" },
-  { name: "엑스비스", day: 23, endDay: 23, color: "#D7C8E8", status: "기술평가통과" },
-  { name: "에스팀", day: 25, endDay: 25, color: "#D7C8E8", status: "공모청약" },
-  { name: "케이뱅크", day: 25, endDay: 25, color: "#E8E8E8", status: "환불" },
-  { name: "에스팀", day: 26, endDay: 26, color: "#D7C8E8", status: "기술평가통과" },
-  { name: "엑스비스", day: 26, endDay: 26, color: "#D7C8E8", status: "기술평가통과" },
-  { name: "엑스비스", day: 26, endDay: 26, color: "#E8E8E8", status: "주관사선정" },
-  { name: "아이엠바이오로직스", day: 27, endDay: 27, color: "#D7C8E8", status: "기술평가통과" },
+  { name: "카나프테라퓨틱스", day: 2, endDay: 6, color: "#D7C8E8", status: "수요예측" },
+  { name: "에스팀", day: 3, endDay: 4, color: "#FCDDE1", status: "공모청약" },
+  { name: "엑스비스", day: 3, endDay: 4, color: "#FCDDE1", status: "공모청약" },
+  { name: "에스팀", day: 5, endDay: 5, color: "#9E9E9E", status: "환불" },
+  { name: "엑스비스", day: 5, endDay: 5, color: "#9E9E9E", status: "환불" },
+  { name: "에스팀", day: 6, endDay: 6, color: "#8BC34A", status: "배정" },
+  { name: "엑스비스", day: 6, endDay: 6, color: "#8BC34A", status: "배정" },
+  { name: "카나프테라퓨틱스", day: 9, endDay: 10, color: "#FCDDE1", status: "공모청약" },
+  { name: "아이엠바이오로직스", day: 9, endDay: 13, color: "#D7C8E8", status: "수요예측" },
+  { name: "에스팀", day: 10, endDay: 10, color: "#1565C0", status: "상장" },
+  { name: "엑스비스", day: 11, endDay: 11, color: "#1565C0", status: "상장" },
+  { name: "카나프테라퓨틱스", day: 11, endDay: 11, color: "#9E9E9E", status: "환불" },
+  { name: "카나프테라퓨틱스", day: 12, endDay: 12, color: "#8BC34A", status: "배정" },
+  { name: "아이엠바이오로직스", day: 16, endDay: 17, color: "#FCDDE1", status: "공모청약" },
+  { name: "스카이랩스", day: 16, endDay: 20, color: "#E8E8E8", status: "심사청구" },
+  { name: "아이엠바이오로직스", day: 18, endDay: 18, color: "#9E9E9E", status: "환불" },
+  { name: "아이엠바이오로직스", day: 19, endDay: 19, color: "#8BC34A", status: "배정" },
+  { name: "카나프테라퓨틱스", day: 19, endDay: 19, color: "#1565C0", status: "상장" },
+  { name: "레메디", day: 23, endDay: 27, color: "#D7C8E8", status: "수요예측" },
+  { name: "코스모로보틱스", day: 23, endDay: 24, color: "#E8E8E8", status: "신고서제출" },
+  { name: "아이엠바이오로직스", day: 24, endDay: 24, color: "#1565C0", status: "상장" },
+  { name: "파워큐브세미", day: 25, endDay: 27, color: "#E8E8E8", status: "심사청구" },
+  { name: "리센스메디컬", day: 30, endDay: 31, color: "#D7C8E8", status: "수요예측" },
+  { name: "레메디", day: 30, endDay: 31, color: "#FCDDE1", status: "공모청약" },
 ];
 
 const UPCOMING_IPO_LIST = [
-  { name: "케이뱅크", dDay: 5, date: "02.20 예정", priceRange: "8,300원", competition: "198.53:1", label: "매수가능", status: "청약예정" },
-  { name: "에스팀", dDay: 8, date: "02.23 예정", priceRange: "7,000 ~ 8,500원", competition: "-", status: "청약예정" },
-  { name: "엑스비스", dDay: 8, date: "02.23 예정", priceRange: "10,100 ~ 11,500원", competition: "-", status: "청약예정" },
-  { name: "카나프테라퓨틱스", dDay: 18, date: "03.05 예정", priceRange: "16,000 ~ 20,000원", competition: "-", status: "청약예정" },
-  { name: "아이엠바이오로직스", dDay: 24, date: "03.11 예정", priceRange: "19,000 ~ 26,000원", competition: "-", status: "청약예정" },
-  { name: "무신사", dDay: 0, date: "02.14 ~ 02.15", priceRange: "24,000 ~ 25,700원", competition: "312.7:1", label: "청약중", status: "청약진행중" },
-  { name: "두나무", dDay: 0, date: "02.13 ~ 02.16", priceRange: "280,000 ~ 310,000원", competition: "87.2:1", label: "청약중", status: "청약진행중" },
+  { name: "에스팀", dDay: 0, date: "03.03 ~ 03.04", priceRange: "7,000 ~ 8,500원", competition: "412.3:1", label: "청약중", status: "청약진행중" },
+  { name: "엑스비스", dDay: 0, date: "03.03 ~ 03.04", priceRange: "10,100 ~ 11,500원", competition: "287.6:1", label: "청약중", status: "청약진행중" },
+  { name: "카나프테라퓨틱스", dDay: 3, date: "03.09 예정", priceRange: "16,000 ~ 20,000원", competition: "-", status: "청약예정" },
+  { name: "아이엠바이오로직스", dDay: 9, date: "03.16 예정", priceRange: "19,000 ~ 26,000원", competition: "-", status: "청약예정" },
+  { name: "레메디", dDay: 22, date: "03.30 예정", priceRange: "12,000 ~ 15,000원", competition: "-", status: "청약예정" },
+  { name: "리센스메디컬", dDay: 22, date: "03.30 예정", priceRange: "9,500 ~ 12,000원", competition: "-", status: "청약예정" },
 ];
 
 const TOP5_IPO_STOCKS = [
@@ -87,11 +91,11 @@ const FAQ_ITEMS = [
 ];
 
 const IPO_NEWS = [
-  { title: "'정밀 냉각기술 상업화' 리센스메디컬 수요예측", publisher: "매일경제", date: "2026.02.13" },
-  { title: "케이뱅크, PBR 1.38배…FI 부담 덜고 기업가치...", publisher: "블로터", date: "2026.02.13" },
-  { title: "'IPO 삼수생' 케이뱅크, 공모가 8300원 확정......", publisher: "파이낸셜뉴스", date: "2026.02.13" },
-  { title: "[싸이버로지텍 IPO] 유수홀딩스 배당 어드다", publisher: "더스탁(The Stock)", date: "2026.02.13" },
-  { title: "코스모로보틱스, 증권신고서 제출...코스닥 IPO...", publisher: "한국경제", date: "2026.02.13" },
+  { title: "에스팀·엑스비스 청약 마감, 경쟁률 400대 1 돌파", publisher: "매일경제", date: "2026.03.04" },
+  { title: "카나프테라퓨틱스, 수요예측 흥행…공모가 상단 확정", publisher: "블로터", date: "2026.03.03" },
+  { title: "케이뱅크, 상장 첫날 시초가 1만원 돌파", publisher: "파이낸셜뉴스", date: "2026.02.27" },
+  { title: "아이엠바이오로직스 수요예측 3월 시작…기관 관심 집중", publisher: "한국경제", date: "2026.03.02" },
+  { title: "레메디, 3월말 공모청약 앞두고 기업가치 재평가", publisher: "더스탁(The Stock)", date: "2026.03.01" },
 ];
 
 function CalendarView() {
@@ -101,6 +105,7 @@ function CalendarView() {
     [9, 10, 11, 12, 13],
     [16, 17, 18, 19, 20],
     [23, 24, 25, 26, 27],
+    [30, 31, 0, 0, 0],
   ];
 
   function getEventsForWeek(week: number[]) {
@@ -153,7 +158,7 @@ function CalendarView() {
             <div className="grid grid-cols-5">
               {week.map((day, di) => (
                 <div key={di} className="border-r border-[#e0e0e0] last:border-r-0 px-3 pt-2">
-                  <div className="text-[13px] text-[#555] text-right">{day}</div>
+                  <div className="text-[13px] text-[#555] text-right">{day > 0 ? day : ""}</div>
                 </div>
               ))}
             </div>
@@ -519,7 +524,7 @@ export default function IPOCalendarPage() {
         <div className="max-w-[1200px] mx-auto px-4 py-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-[#222]">2026년 2월</h2>
+              <h2 className="text-lg font-bold text-[#222]">2026년 3월</h2>
               <Info className="w-4 h-4 text-[#ccc]" />
             </div>
             <div className="flex items-center gap-1">
