@@ -1107,6 +1107,7 @@ export default function AdminPage() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
   const [searchTerm, setSearchTerm] = useState("");
+  const [txSearchTerm, setTxSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [selectedChatRoom, setSelectedChatRoom] = useState<string | null>(null);
@@ -1349,16 +1350,25 @@ export default function AdminPage() {
       (u.email && u.email.includes(searchTerm))
   );
 
-  const filteredTransactions = transactions.filter((tx) => {
-    if (filterCategory !== "all" && tx.category !== filterCategory) return false;
-    if (filterType !== "all" && tx.type !== filterType) return false;
-    return true;
-  });
-
   const getUserName = (userId: string) => {
     const u = (allUsers || []).find((u) => u.id === userId);
     return u ? u.fullName : "알 수 없음";
   };
+
+  const filteredTransactions = transactions.filter((tx) => {
+    if (filterCategory !== "all" && tx.category !== filterCategory) return false;
+    if (filterType !== "all" && tx.type !== filterType) return false;
+    if (txSearchTerm) {
+      const userName = getUserName(tx.userId);
+      const term = txSearchTerm;
+      if (
+        !userName.includes(term) &&
+        !tx.stockName.includes(term) &&
+        !(tx.memo && tx.memo.includes(term))
+      ) return false;
+    }
+    return true;
+  });
 
   const totalMembers = users.length;
   const frozenMembers = users.filter((u) => u.isFrozen).length;
@@ -1775,6 +1785,16 @@ export default function AdminPage() {
           {activeSection === "transactions" && (
             <>
               <div className="flex items-center gap-3 flex-wrap">
+                <div className="relative flex-1 min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="검색 (회원명, 종목명, 메모)"
+                    value={txSearchTerm}
+                    onChange={(e) => setTxSearchTerm(e.target.value)}
+                    className="pl-9 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
+                    data-testid="input-search-transactions"
+                  />
+                </div>
                 <Select value={filterType} onValueChange={setFilterType}>
                   <SelectTrigger className="w-[140px] bg-white border-gray-200 text-gray-700" data-testid="select-filter-type">
                     <SelectValue placeholder="유형" />
