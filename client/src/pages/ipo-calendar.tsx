@@ -29,6 +29,7 @@ const IPO_STATUS_LEGEND = [
 ];
 
 const CALENDAR_EVENTS = [
+  { name: "한패스", day: 2, endDay: 6, color: "#E8E8E8", status: "기술평가통과" },
   { name: "카나프테라퓨틱스", day: 2, endDay: 6, color: "#D7C8E8", status: "수요예측" },
   { name: "에스팀", day: 3, endDay: 4, color: "#FCDDE1", status: "공모청약" },
   { name: "엑스비스", day: 3, endDay: 4, color: "#FCDDE1", status: "공모청약" },
@@ -36,6 +37,7 @@ const CALENDAR_EVENTS = [
   { name: "엑스비스", day: 5, endDay: 5, color: "#9E9E9E", status: "환불" },
   { name: "에스팀", day: 6, endDay: 6, color: "#8BC34A", status: "배정" },
   { name: "엑스비스", day: 6, endDay: 6, color: "#8BC34A", status: "배정" },
+  { name: "한패스", day: 9, endDay: 13, color: "#D7C8E8", status: "심사청구" },
   { name: "카나프테라퓨틱스", day: 9, endDay: 10, color: "#FCDDE1", status: "공모청약" },
   { name: "아이엠바이오로직스", day: 9, endDay: 13, color: "#D7C8E8", status: "수요예측" },
   { name: "에스팀", day: 10, endDay: 10, color: "#1565C0", status: "상장" },
