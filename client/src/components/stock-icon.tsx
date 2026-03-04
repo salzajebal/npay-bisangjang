@@ -35,6 +35,8 @@ const STOCK_LOGOS: Record<string, { logo: string; bg: string }> = {
   "리센스메디컬": { logo: "https://static.ustockplus.com/logo/company/105.png", bg: "#1976D2" },
   "오톰": { logo: "https://static.ustockplus.com/logo/company/77025.png", bg: "#333333" },
   "넷마블몬스터": { logo: "https://static.ustockplus.com/logo/stock/214490.png", bg: "#333333" },
+  "한패스": { logo: "/logos/hanpass.png", bg: "#00B4D8" },
+  "아이엠바이오로직스": { logo: "/logos/imbiologics.png", bg: "#1976D2" },
   "비상장주식": { logo: "", bg: "#E8344E" },
 };
 
@@ -149,6 +151,8 @@ const STOCK_CODE_MAP: Record<string, string> = {
   "진원생명과학": "011000",
   "코리아센터": "290510",
   "브레인즈컴퍼니": "099390",
+  "한패스": "408470",
+  "아이엠바이오로직스": "493280",
 };
 
 const BRAND_COLORS: Record<string, string> = {
