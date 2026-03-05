@@ -184,8 +184,10 @@ export async function registerRoutes(
     "원스토어": { price: 15800, change: 0.64 },
     "클래스101": { price: 3200, change: -4.17 },
     "마이리얼트립": { price: 5500, change: 2.78 },
-    "카나프테라퓨틱스": { price: 12400, change: -1.59 },
+    "카나프테라퓨틱스": { price: 20000, change: 2.56 },
     "엑스비스": { price: 6800, change: 3.03 },
+    "한패스": { price: 19000, change: 1.07 },
+    "아이엠바이오로직스": { price: 26000, change: 3.17 },
   };
 
   const priceCache = new Map<string, { price: number; change: number; timestamp: number }>();
