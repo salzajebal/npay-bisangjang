@@ -26,7 +26,6 @@ export default function RegisterPage() {
       fullName: "",
       username: "",
       password: "",
-      birthDate: "",
       phone: "",
       accountHolder: "",
       bank: "",
@@ -124,23 +123,6 @@ export default function RegisterPage() {
                         type="password"
                         placeholder="비밀번호를 입력하세요 (6자 이상)"
                         data-testid="input-password"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="birthDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>생년월일</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="예: 19900101"
-                        data-testid="input-birthdate"
                         {...field}
                       />
                     </FormControl>

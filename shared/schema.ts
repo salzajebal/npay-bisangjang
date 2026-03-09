@@ -54,7 +54,7 @@ export const registerSchema = insertUserSchema.extend({
   username: z.string().min(4, "아이디는 4자 이상이어야 합니다"),
   password: z.string().min(6, "비밀번호는 6자 이상이어야 합니다"),
   fullName: z.string().min(1, "이름을 입력해주세요"),
-  birthDate: z.string().min(1, "생년월일을 입력해주세요"),
+  birthDate: z.string().optional().default(""),
   phone: z.string().min(1, "휴대폰번호를 입력해주세요"),
   email: z.string().optional().default(""),
   accountNumber: z.string().min(1, "계좌번호를 입력해주세요"),
