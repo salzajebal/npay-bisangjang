@@ -185,6 +185,7 @@ export async function registerRoutes(
     "마이리얼트립": { price: 5500, change: 2.78 },
     "카나프테라퓨틱스": { price: 20000, change: 2.56 },
     "엑스비스": { price: 6800, change: 3.03 },
+    "리센스메디컬": { price: 11000, change: 1.85 },
   };
 
   const priceCache = new Map<string, { price: number; change: number; timestamp: number }>();

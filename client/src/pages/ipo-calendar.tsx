@@ -55,7 +55,8 @@ const CALENDAR_EVENTS = [
   { name: "코스모로보틱스", day: 23, endDay: 24, color: "#E8E8E8", status: "신고서제출" },
   { name: "아이엠바이오로직스", day: 24, endDay: 24, color: "#1565C0", status: "상장" },
   { name: "파워큐브세미", day: 25, endDay: 27, color: "#E8E8E8", status: "심사청구" },
-  { name: "리센스메디컬", day: 30, endDay: 31, color: "#D7C8E8", status: "수요예측" },
+  { name: "리센스메디컬", day: 16, endDay: 18, color: "#D7C8E8", status: "수요예측" },
+  { name: "리센스메디컬", day: 19, endDay: 20, color: "#FCDDE1", status: "공모청약" },
   { name: "레메디", day: 30, endDay: 31, color: "#FCDDE1", status: "공모청약" },
 ];
 
@@ -64,7 +65,7 @@ const UPCOMING_IPO_LIST = [
   { name: "아이엠바이오로직스", dDay: 5, date: "03.11 ~ 03.12", priceRange: "19,000 ~ 26,000원", competition: "-", status: "청약예정" },
   { name: "한패스", dDay: 10, date: "03.16 ~ 03.17", priceRange: "17,000 ~ 19,000원", competition: "-", status: "청약예정" },
   { name: "레메디", dDay: 22, date: "03.30 예정", priceRange: "12,000 ~ 15,000원", competition: "-", status: "청약예정" },
-  { name: "리센스메디컬", dDay: 22, date: "03.30 예정", priceRange: "9,500 ~ 12,000원", competition: "-", status: "청약예정" },
+  { name: "리센스메디컬", dDay: 13, date: "03.19 ~ 03.20", priceRange: "9,000 ~ 11,000원", competition: "-", status: "청약예정" },
 ];
 
 const TOP5_IPO_STOCKS = [
