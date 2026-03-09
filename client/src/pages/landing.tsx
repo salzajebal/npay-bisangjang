@@ -23,7 +23,6 @@ import { fetchStockPrices } from "@/lib/market-prices";
 import type { User as UserType, StockTransaction } from "@shared/schema";
 
 const UNLISTED_STOCKS = [
-  { name: "케이뱅크", code: "279570", price: 11600, change: -6.45, orders: 506, category: "일반", isIPO: true, marketCap: 52000, revenueGrowth: 18.5, ipoPrep: true },
   { name: "두나무", code: "389930", price: 307000, change: 1.99, orders: 120, category: "일반", isIPO: false, marketCap: 98000, revenueGrowth: 42.3, ipoPrep: false },
   { name: "빗썸", code: "341650", price: 214000, change: -3.17, orders: 50, category: "일반", isIPO: false, marketCap: 35000, revenueGrowth: 31.2, ipoPrep: false },
   { name: "무신사", code: "458860", price: 25700, change: 0, orders: 128, category: "일반", isIPO: true, marketCap: 45000, revenueGrowth: 22.1, ipoPrep: true },
@@ -52,8 +51,8 @@ const EXPERT_REPORTS = [
 const THEME_TAGS = ["일반종목", "핀테크", "2차전지", "제약/바이오", "식품/딜리버리", "여행/숙박", "메타버스(VR·AR)", "전기차", "게임"];
 
 const THEME_COMPANIES: Record<string, { companies: string[]; extra: number; desc: string }> = {
-  "일반종목": { companies: ["두나무", "케이뱅크", "오톰", "빗썸", "야놀자"], extra: 18, desc: "일반투자자와 전문투자자 모두 거래 가능한 일반종목입니다." },
-  "핀테크": { companies: ["두나무", "빗썸", "케이뱅크", "토스"], extra: 12, desc: "금융과 기술의 융합, 핀테크 관련 비상장 종목입니다." },
+  "일반종목": { companies: ["두나무", "오톰", "빗썸", "야놀자"], extra: 18, desc: "일반투자자와 전문투자자 모두 거래 가능한 일반종목입니다." },
+  "핀테크": { companies: ["두나무", "빗썸", "토스"], extra: 12, desc: "금융과 기술의 융합, 핀테크 관련 비상장 종목입니다." },
   "2차전지": { companies: ["에너진", "케이솔루션"], extra: 8, desc: "2차전지 및 배터리 관련 비상장 종목입니다." },
   "제약/바이오": { companies: ["에임드바이오", "에스엠랩"], extra: 15, desc: "제약 및 바이오 관련 비상장 종목입니다." },
   "식품/딜리버리": { companies: ["컬리", "오아시스", "무신사"], extra: 7, desc: "식품 및 딜리버리 관련 비상장 종목입니다." },
@@ -64,7 +63,7 @@ const THEME_COMPANIES: Record<string, { companies: string[]; extra: number; desc
 };
 
 const DISCUSSIONS = [
-  { id: 1, user: "투자마스터", avatar: "#E8344E", time: "10분 전", content: "케이뱅크 IPO 일정이 다시 잡힌 것 같은데, 이번에는 확실할까요? 공모가 밴드가 궁금합니다.", tag: "케이뱅크" },
+  { id: 1, user: "투자마스터", avatar: "#E8344E", time: "10분 전", content: "카나프테라퓨틱스 공모 청약 시작했는데, 경쟁률이 어떻게 될지 기대됩니다. 공모가 밴드가 궁금합니다.", tag: "카나프테라퓨틱스" },
   { id: 2, user: "비상장전문가", avatar: "#1976D2", time: "32분 전", content: "두나무 실적 발표 이후 거래량이 확 늘었네요. 암호화폐 시장 회복과 함께 긍정적인 흐름입니다.", tag: "두나무" },
   { id: 3, user: "장기투자자", avatar: "#43A047", time: "1시간 전", content: "무신사 상장 준비 소식 들으셨나요? 패션 플랫폼 중에서는 독보적인 위치라 기대됩니다.", tag: "무신사" },
   { id: 4, user: "IPO분석가", avatar: "#E65100", time: "2시간 전", content: "빗썸 거래량이 지속적으로 증가하고 있어요. 코인 시장 상승과 맞물려서 좋은 흐름입니다.", tag: "빗썸" },
@@ -72,7 +71,7 @@ const DISCUSSIONS = [
 
 
 const HOT_ROOMS = [
-  { name: "케이뱅크", tags: ["#IPO", "#은행"], count: 1284 },
+  { name: "카나프테라퓨틱스", tags: ["#IPO", "#바이오"], count: 1284 },
   { name: "빗썸", tags: ["#암호화폐", "#거래소"], count: 956 },
   { name: "오톰", tags: ["#AI", "#로봇"], count: 743 },
   { name: "현대엔지니어링", tags: ["#건설", "#플랜트"], count: 621 },
@@ -448,7 +447,7 @@ function MajorNews() {
   });
 
   const fallbackNews = [
-    { title: "케이뱅크, IPO 재추진...올해 상반기 상장 목표", source: "한국경제", date: "2026.02.15", color: "#E8344E" },
+    { title: "카나프테라퓨틱스, 공모 청약 시작...바이오 IPO 관심 집중", source: "한국경제", date: "2026.03.05", color: "#E8344E" },
     { title: "두나무, 4분기 영업이익 전년비 120% 증가", source: "매일경제", date: "2026.02.14", color: "#333" },
     { title: "무신사, 해외 시장 진출 가속화...동남아 공략", source: "조선비즈", date: "2026.02.13", color: "#111" },
     { title: "비상장 주식 거래, 2026년 규제 변화 전망", source: "서울경제", date: "2026.02.12", color: "#1976D2" },
@@ -832,15 +831,15 @@ function Tips() {
 }
 
 const DISCUSSION_COMMENTS: Record<string, { user: string; text: string; time: string }[]> = {
-  "케이뱅크": [
-    { user: "투자왕김씨", text: "IPO 공모가 8300원이면 적정한 것 같은데, 다들 어떻게 생각하세요?", time: "방금 전" },
-    { user: "비상장고수", text: "기관경쟁률이 198:1이면 꽤 높은 편이죠. 긍정적으로 봅니다", time: "1분 전" },
-    { user: "주식초보", text: "PBR 1.38배면 은행주 중에서는 어떤 수준인가요?", time: "2분 전" },
-    { user: "장기투자자", text: "카카오뱅크 상장 때랑 비교하면 밸류에이션이 합리적이라고 봅니다", time: "3분 전" },
-    { user: "분석가A", text: "FI 지분 매각 이슈가 해소되면 주가 상승 여력 충분합니다", time: "5분 전" },
-    { user: "비상장매니아", text: "비상장에서 11,600원에 거래되고 있으니 공모가 대비 프리미엄이 있네요", time: "7분 전" },
-    { user: "공모주헌터", text: "이번에 꼭 청약 성공하고 싶네요. 증거금 얼마나 넣어야 할까요?", time: "8분 전" },
-    { user: "경제전문가", text: "올해 상반기 최대 IPO가 될 것 같습니다. 시장 관심도가 높아요", time: "10분 전" },
+  "카나프테라퓨틱스": [
+    { user: "바이오전문가", text: "공모가 밴드 16,000~20,000원이면 적정한 수준이라고 봅니다", time: "방금 전" },
+    { user: "IPO분석가", text: "신약 파이프라인이 탄탄해서 장기적으로 긍정적입니다", time: "1분 전" },
+    { user: "비상장고수", text: "바이오 섹터 IPO 중에서 올해 가장 기대되는 종목이에요", time: "2분 전" },
+    { user: "투자왕김씨", text: "수요예측 결과가 좋으면 공모가 상단 확정될 것 같습니다", time: "3분 전" },
+    { user: "장기투자자", text: "임상 진행 상황이 순조로워서 상장 후에도 기대해볼 만합니다", time: "5분 전" },
+    { user: "공모주헌터", text: "청약 증거금 준비해야겠네요. 경쟁률 높을 것 같아요", time: "7분 전" },
+    { user: "비상장매니아", text: "3월 17일 상장 예정이니까 일정 잘 체크해두세요", time: "8분 전" },
+    { user: "경제전문가", text: "바이오 IPO 시장이 활기를 띄고 있어서 좋은 타이밍입니다", time: "10분 전" },
   ],
   "빗썸": [
     { user: "코인투자자", text: "빗썸 IPO 소식 들으셨나요? 올해 안에 상장 추진한다던데", time: "방금 전" },

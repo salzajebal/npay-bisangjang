@@ -163,7 +163,6 @@ export async function registerRoutes(
   };
 
   const UNLISTED_PRICES: Record<string, { price: number; change: number }> = {
-    "케이뱅크": { price: 8300, change: 0 },
     "두나무": { price: 307000, change: 1.99 },
     "빗썸": { price: 214000, change: -3.17 },
     "무신사": { price: 25700, change: 0 },
@@ -322,7 +321,7 @@ export async function registerRoutes(
       if (news.length === 0) {
         const fallback = [
           { title: "[단독] 토스, 해외 코인 거래소 인수 검토...美 기관 플랫폼과 접촉", publisher: "한국경제", link: "#", publishedAt: "2026.02.13", color: "#E8344E" },
-          { title: "'IPO 삼수생' 케이뱅크, 공모가 8300원 확정...내달 5일 상장 예정", publisher: "파이낸셜뉴스", link: "#", publishedAt: "2026.02.13", color: "#333" },
+          { title: "카나프테라퓨틱스, 공모가 상단 20,000원 확정...3월 17일 상장 예정", publisher: "파이낸셜뉴스", link: "#", publishedAt: "2026.03.05", color: "#333" },
           { title: "놀유니버스, 부산관광공사·SM C&C와 '부산원아시아페스티벌' MOU 체결", publisher: "한국경제", link: "#", publishedAt: "2026.02.13", color: "#43A047" },
           { title: "빗썸 사업자 면허 갱신, 무기한 연기될 듯", publisher: "한국경제", link: "#", publishedAt: "2026.02.13", color: "#E65100" },
           { title: "네이버-두나무 결합, '대주주 지분 제한'에 막히나", publisher: "뉴시스", link: "#", publishedAt: "2026.02.13", color: "#5F0080" },

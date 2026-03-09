@@ -68,7 +68,7 @@ const UPCOMING_IPO_LIST = [
 ];
 
 const TOP5_IPO_STOCKS = [
-  { rank: 1, name: "케이뱅크", category: "일반", tag: "IPO", price: 11600, change: -6.45, tradable: true, tradeTime: "1일 전 체결" },
+  { rank: 1, name: "카나프테라퓨틱스", category: "일반", tag: "IPO", price: 20000, change: 2.56, tradable: true, tradeTime: "1일 전 체결" },
   { rank: 2, name: "덕산넵코어스", category: "전문", tag: "IPO", price: 0, change: 0, tradable: true, tradeTime: "1일 전 체결" },
   { rank: 3, name: "무신사", category: "일반", tag: "IPO", price: 25700, change: 0, tradable: true, tradeTime: "1일 전 체결" },
   { rank: 4, name: "스트라드비젼", category: "전문", tag: "IPO", price: 0, change: 0, tradable: true, tradeTime: "1일 전 체결" },
@@ -96,7 +96,7 @@ const FAQ_ITEMS = [
 const IPO_NEWS = [
   { title: "에스팀·엑스비스 청약 마감, 경쟁률 400대 1 돌파", publisher: "매일경제", date: "2026.03.04" },
   { title: "카나프테라퓨틱스, 수요예측 흥행…공모가 상단 확정", publisher: "블로터", date: "2026.03.03" },
-  { title: "케이뱅크, 상장 첫날 시초가 1만원 돌파", publisher: "파이낸셜뉴스", date: "2026.02.27" },
+  { title: "카나프테라퓨틱스, 공모 청약 시작...바이오 IPO 흥행", publisher: "파이낸셜뉴스", date: "2026.03.05" },
   { title: "아이엠바이오로직스 수요예측 3월 시작…기관 관심 집중", publisher: "한국경제", date: "2026.03.02" },
   { title: "레메디, 3월말 공모청약 앞두고 기업가치 재평가", publisher: "더스탁(The Stock)", date: "2026.03.01" },
 ];
