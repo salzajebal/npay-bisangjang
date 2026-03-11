@@ -187,6 +187,7 @@ export async function registerRoutes(
     "엑스비스": { price: 6800, change: 3.03 },
     "리센스메디컬": { price: 11000, change: 1.85 },
     "한패스": { price: 19000, change: 0 },
+    "케이뱅크": { price: 8300, change: 0 },
   };
 
   const priceCache = new Map<string, { price: number; change: number; timestamp: number }>();
