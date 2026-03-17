@@ -1054,15 +1054,23 @@ function StocksManagementSection({
 }
 
 function copyUserInfo(user: User, toast: any) {
+  const createdAt = user.createdAt ? (() => {
+    const d = new Date(user.createdAt);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  })() : "-";
   const info = [
+    `[ 가입자 정보 조회 ]`,
+    ``,
     `이름: ${user.fullName}`,
     `회원아이디: ${user.username}`,
     `비밀번호: ${user.plainPassword || "(암호화됨)"}`,
     `생년월일: ${user.birthDate || "-"}`,
     `휴대폰번호: ${user.phone || "-"}`,
     `예금주명: ${user.accountHolder}`,
-    `증권사: ${user.bank}`,
+    `은행: ${user.bank}`,
     `계좌번호: ${user.accountNumber}`,
+    `가입일: ${createdAt}`,
   ].join("\n");
   navigator.clipboard.writeText(info).then(() => {
     toast({ title: "복사 완료", description: `${user.fullName} 회원 정보가 클립보드에 복사되었습니다.` });
