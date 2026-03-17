@@ -67,6 +67,7 @@ const UPCOMING_IPO_LIST = [
   { name: "레메디", dDay: 22, date: "03.30 예정", priceRange: "12,000 ~ 15,000원", competition: "-", status: "청약예정" },
   { name: "리센스메디컬", dDay: 13, date: "03.19 ~ 03.20", priceRange: "9,000 ~ 11,000원", competition: "-", status: "청약예정" },
   { name: "채비0011T0", dDay: 25, date: "04.01 ~ 04.02", priceRange: "15,300원", competition: "-", status: "청약예정" },
+  { name: "코스모로보틱스", dDay: 33, date: "04.09 ~ 04.10", priceRange: "6,000원", competition: "-", status: "청약예정" },
 ];
 
 const TOP5_IPO_STOCKS = [
