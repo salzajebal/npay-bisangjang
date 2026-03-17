@@ -38,6 +38,7 @@ const STOCK_LOGOS: Record<string, { logo: string; bg: string }> = {
   "한패스": { logo: "/logos/hanpass.png", bg: "#00B4D8" },
   "아이엠바이오로직스": { logo: "/logos/imbiologics.png", bg: "#1976D2" },
   "비상장주식": { logo: "", bg: "#E8344E" },
+  "채비0011T0": { logo: "", bg: "#2E7D32" },
 };
 
 const STOCK_CODE_MAP: Record<string, string> = {
