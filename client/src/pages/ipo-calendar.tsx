@@ -63,9 +63,29 @@ const MARCH_CALENDAR_EVENTS = [
 ];
 
 const APRIL_CALENDAR_EVENTS = [
+  // Week 1 (Apr 1~3): 채비 청약, 레메디/리센스메디컬/인벤테라 마무리
   { name: "채비", day: 1, endDay: 2, color: "#FCDDE1", status: "공모청약" },
-  { name: "키움히어로제2호기업인수목적", day: 7, endDay: 8, color: "#FCDDE1", status: "공모청약" },
+  { name: "레메디", day: 1, endDay: 1, color: "#9E9E9E", status: "환불" },
+  { name: "레메디", day: 2, endDay: 2, color: "#8BC34A", status: "배정" },
+  { name: "리센스메디컬", day: 2, endDay: 2, color: "#1565C0", status: "상장" },
+  { name: "채비", day: 3, endDay: 3, color: "#9E9E9E", status: "환불" },
+  { name: "인벤테라", day: 3, endDay: 3, color: "#1565C0", status: "상장" },
+  // Week 2 (Apr 6~10): 키움히어로 청약, 채비 배정/상장, 코스모로보틱스 청약
+  { name: "신한제17호기업인수목적", day: 6, endDay: 6, color: "#1565C0", status: "상장" },
+  { name: "키움히어로제2호기업인수목적", day: 6, endDay: 7, color: "#FCDDE1", status: "공모청약" },
+  { name: "채비", day: 7, endDay: 7, color: "#8BC34A", status: "배정" },
+  { name: "교보20호기업인수목적", day: 8, endDay: 8, color: "#1565C0", status: "상장" },
+  { name: "레메디", day: 9, endDay: 9, color: "#1565C0", status: "상장" },
+  { name: "키움히어로제2호기업인수목적", day: 9, endDay: 9, color: "#9E9E9E", status: "환불" },
   { name: "코스모로보틱스", day: 9, endDay: 10, color: "#FCDDE1", status: "공모청약" },
+  { name: "채비", day: 10, endDay: 10, color: "#1565C0", status: "상장" },
+  { name: "키움히어로제2호기업인수목적", day: 10, endDay: 10, color: "#8BC34A", status: "배정" },
+  // Week 3 (Apr 13~17): 코스모로보틱스 환불/배정, 키움히어로 상장
+  { name: "코스모로보틱스", day: 14, endDay: 14, color: "#9E9E9E", status: "환불" },
+  { name: "코스모로보틱스", day: 15, endDay: 15, color: "#8BC34A", status: "배정" },
+  { name: "키움히어로제2호기업인수목적", day: 17, endDay: 17, color: "#1565C0", status: "상장" },
+  // Week 4 (Apr 20~24): 코스모로보틱스 상장
+  { name: "코스모로보틱스", day: 22, endDay: 22, color: "#1565C0", status: "상장" },
 ];
 
 const UPCOMING_IPO_LIST = [
