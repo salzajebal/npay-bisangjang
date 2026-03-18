@@ -39,7 +39,6 @@ const STOCK_LOGOS: Record<string, { logo: string; bg: string }> = {
   "아이엠바이오로직스": { logo: "/logos/imbiologics.png", bg: "#1976D2" },
   "비상장주식": { logo: "", bg: "#E8344E" },
   "채비0011T0": { logo: "", bg: "#2E7D32" },
-  "코스모로보틱스": { logo: "", bg: "#1565C0" },
 };
 
 const STOCK_CODE_MAP: Record<string, string> = {

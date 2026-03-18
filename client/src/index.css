@@ -302,4 +302,9 @@
   .animate-fade-in {
     animation: fadeIn 0.4s ease-out;
   }
+
+  [role="dialog"] {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
 }
