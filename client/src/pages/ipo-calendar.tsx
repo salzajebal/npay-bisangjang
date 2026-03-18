@@ -28,7 +28,7 @@ const IPO_STATUS_LEGEND = [
   { label: "배정", dot: "#8BC34A" },
 ];
 
-const CALENDAR_EVENTS = [
+const MARCH_CALENDAR_EVENTS = [
   { name: "카나프테라퓨틱스", day: 2, endDay: 4, color: "#D7C8E8", status: "수요예측" },
   { name: "에스팀", day: 3, endDay: 4, color: "#FCDDE1", status: "공모청약" },
   { name: "엑스비스", day: 3, endDay: 4, color: "#FCDDE1", status: "공모청약" },
@@ -51,31 +51,40 @@ const CALENDAR_EVENTS = [
   { name: "스카이랩스", day: 16, endDay: 20, color: "#E8E8E8", status: "심사청구" },
   { name: "한패스", day: 19, endDay: 19, color: "#9E9E9E", status: "환불" },
   { name: "한패스", day: 20, endDay: 20, color: "#8BC34A", status: "배정" },
-  { name: "레메디", day: 23, endDay: 27, color: "#D7C8E8", status: "수요예측" },
-  { name: "코스모로보틱스", day: 23, endDay: 24, color: "#E8E8E8", status: "신고서제출" },
-  { name: "아이엠바이오로직스", day: 24, endDay: 24, color: "#1565C0", status: "상장" },
-  { name: "파워큐브세미", day: 25, endDay: 27, color: "#E8E8E8", status: "심사청구" },
   { name: "리센스메디컬", day: 16, endDay: 18, color: "#D7C8E8", status: "수요예측" },
   { name: "리센스메디컬", day: 19, endDay: 20, color: "#FCDDE1", status: "공모청약" },
+  { name: "신한제17호기업인수목적", day: 19, endDay: 20, color: "#FCDDE1", status: "공모청약" },
+  { name: "레메디", day: 23, endDay: 27, color: "#D7C8E8", status: "수요예측" },
+  { name: "아이엠바이오로직스", day: 24, endDay: 24, color: "#1565C0", status: "상장" },
+  { name: "인벤테라", day: 23, endDay: 24, color: "#FCDDE1", status: "공모청약" },
+  { name: "교보20호기업인수목적", day: 25, endDay: 26, color: "#FCDDE1", status: "공모청약" },
+  { name: "파워큐브세미", day: 25, endDay: 27, color: "#E8E8E8", status: "심사청구" },
   { name: "레메디", day: 30, endDay: 31, color: "#FCDDE1", status: "공모청약" },
 ];
 
+const APRIL_CALENDAR_EVENTS = [
+  { name: "채비", day: 1, endDay: 2, color: "#FCDDE1", status: "공모청약" },
+  { name: "키움히어로제2호기업인수목적", day: 7, endDay: 8, color: "#FCDDE1", status: "공모청약" },
+  { name: "코스모로보틱스", day: 9, endDay: 10, color: "#FCDDE1", status: "공모청약" },
+];
+
 const UPCOMING_IPO_LIST = [
-  { name: "카나프테라퓨틱스", dDay: 0, date: "03.05 ~ 03.06", priceRange: "16,000 ~ 20,000원", competition: "-", label: "청약중", status: "청약진행중" },
-  { name: "아이엠바이오로직스", dDay: 5, date: "03.11 ~ 03.12", priceRange: "19,000 ~ 26,000원", competition: "-", status: "청약예정" },
-  { name: "한패스", dDay: 10, date: "03.16 ~ 03.17", priceRange: "17,000 ~ 19,000원", competition: "-", status: "청약예정" },
-  { name: "레메디", dDay: 22, date: "03.30 예정", priceRange: "12,000 ~ 15,000원", competition: "-", status: "청약예정" },
-  { name: "리센스메디컬", dDay: 13, date: "03.19 ~ 03.20", priceRange: "9,000 ~ 11,000원", competition: "-", status: "청약예정" },
-  { name: "채비0011T0", dDay: 25, date: "04.01 ~ 04.02", priceRange: "15,300원", competition: "-", status: "청약예정" },
-  { name: "코스모로보틱스", dDay: 33, date: "04.09 ~ 04.10", priceRange: "6,000원", competition: "-", status: "청약예정" },
+  { name: "리센스메디컬", dDay: 1, date: "03.19 ~ 03.20", priceRange: "11,000원", competition: "1352.63:1", status: "청약예정" },
+  { name: "신한제17호기업인수목적", dDay: 1, date: "03.19 ~ 03.20", priceRange: "2,000원", competition: "1343.8:1", status: "청약예정" },
+  { name: "인벤테라", dDay: 5, date: "03.23 예정", priceRange: "12,100 ~ 16,600원", competition: "-", status: "청약예정" },
+  { name: "교보20호기업인수목적", dDay: 5, date: "03.23 예정", priceRange: "2,000원", competition: "-", status: "청약예정" },
+  { name: "레메디", dDay: 12, date: "03.30 예정", priceRange: "12,000 ~ 15,000원", competition: "-", status: "청약예정" },
+  { name: "채비", dDay: 14, date: "04.01 ~ 04.02", priceRange: "12,300 ~ 15,300원", competition: "-", status: "청약예정" },
+  { name: "키움히어로제2호기업인수목적", dDay: 19, date: "04.06 예정", priceRange: "2,000원", competition: "-", status: "청약예정" },
+  { name: "코스모로보틱스", dDay: 22, date: "04.09 ~ 04.10", priceRange: "5,300 ~ 6,000원", competition: "-", status: "청약예정" },
 ];
 
 const TOP5_IPO_STOCKS = [
-  { rank: 1, name: "카나프테라퓨틱스", category: "일반", tag: "IPO", price: 20000, change: 2.56, tradable: true, tradeTime: "1일 전 체결" },
-  { rank: 2, name: "덕산넵코어스", category: "전문", tag: "IPO", price: 0, change: 0, tradable: true, tradeTime: "1일 전 체결" },
-  { rank: 3, name: "무신사", category: "일반", tag: "IPO", price: 25700, change: 0, tradable: true, tradeTime: "1일 전 체결" },
-  { rank: 4, name: "스트라드비젼", category: "전문", tag: "IPO", price: 0, change: 0, tradable: true, tradeTime: "1일 전 체결" },
-  { rank: 5, name: "레메디", category: "전문", tag: "IPO", price: 0, change: 0, tradable: true, tradeTime: "1일 전 체결" },
+  { rank: 1, name: "무신사", category: "일반", tag: "IPO", price: 24400, change: -0.41, tradable: true, tradeTime: "15분 전 체결" },
+  { rank: 2, name: "레몬헬스케어", category: "전문", tag: "IPO", price: 0, change: 0, tradable: true, tradeTime: "4시간 전 체결" },
+  { rank: 3, name: "스트라드비젼", category: "전문", tag: "IPO", price: 0, change: 0, tradable: true, tradeTime: "4시간 전 체결" },
+  { rank: 4, name: "덕산넵코어스", category: "전문", tag: "IPO", price: 0, change: 0, tradable: true, tradeTime: "1시간 전 체결" },
+  { rank: 5, name: "케이피항공산업", category: "전문", tag: "IPO", price: 0, change: 0, tradable: true, tradeTime: "44분 전 체결" },
 ];
 
 const IPO_PREP_STOCKS = [
@@ -104,21 +113,30 @@ const IPO_NEWS = [
   { title: "레메디, 3월말 공모청약 앞두고 기업가치 재평가", publisher: "더스탁(The Stock)", date: "2026.03.01" },
 ];
 
-function CalendarView() {
+function CalendarView({ month }: { month: number }) {
   const dayNames = ["월", "화", "수", "목", "금"];
-  const weekRows = [
+  const MARCH_WEEKS = [
     [2, 3, 4, 5, 6],
     [9, 10, 11, 12, 13],
     [16, 17, 18, 19, 20],
     [23, 24, 25, 26, 27],
     [30, 31, 0, 0, 0],
   ];
+  const APRIL_WEEKS = [
+    [0, 0, 1, 2, 3],
+    [6, 7, 8, 9, 10],
+    [13, 14, 15, 16, 17],
+    [20, 21, 22, 23, 24],
+    [27, 28, 29, 30, 0],
+  ];
+  const weekRows = month === 4 ? APRIL_WEEKS : MARCH_WEEKS;
+  const calendarEvents = month === 4 ? APRIL_CALENDAR_EVENTS : MARCH_CALENDAR_EVENTS;
 
   function getEventsForWeek(week: number[]) {
-    const weekEvents = CALENDAR_EVENTS.filter(e =>
-      week.some(d => d >= e.day && d <= e.endDay)
+    const weekEvents = calendarEvents.filter(e =>
+      week.some(d => d > 0 && d >= e.day && d <= e.endDay)
     );
-    const lanes: (typeof CALENDAR_EVENTS[0] | null)[][] = [];
+    const lanes: (typeof MARCH_CALENDAR_EVENTS[0] | null)[][] = [];
     weekEvents.forEach(ev => {
       const evStart = Math.max(ev.day, week[0]);
       const evEnd = Math.min(ev.endDay, week[week.length - 1]);
@@ -472,6 +490,7 @@ function FAQSection() {
 
 export default function IPOCalendarPage() {
   const [activePageTab, setActivePageTab] = useState<PageTab>("calendar");
+  const [calMonth, setCalMonth] = useState(3);
 
   return (
     <div className="min-h-screen bg-white" data-testid="page-ipo-calendar">
@@ -530,15 +549,29 @@ export default function IPOCalendarPage() {
         <div className="max-w-[1200px] mx-auto px-4 py-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-[#222]">2026년 3월</h2>
+              <h2 className="text-lg font-bold text-[#222]">2026년 {calMonth}월</h2>
               <Info className="w-4 h-4 text-[#ccc]" />
             </div>
             <div className="flex items-center gap-1">
-              <button className="px-2 py-1 rounded border border-[#eee] text-xs text-[#666]" data-testid="button-cal-prev">
+              <button
+                className="px-2 py-1 rounded border border-[#eee] text-xs text-[#666] disabled:opacity-40"
+                data-testid="button-cal-prev"
+                onClick={() => setCalMonth(m => Math.max(3, m - 1))}
+                disabled={calMonth === 3}
+              >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
-              <button className="px-3 py-1 rounded border border-[#eee] text-xs text-[#666]" data-testid="button-cal-today">오늘</button>
-              <button className="px-2 py-1 rounded border border-[#eee] text-xs text-[#666]" data-testid="button-cal-next">
+              <button
+                className="px-3 py-1 rounded border border-[#eee] text-xs text-[#666]"
+                data-testid="button-cal-today"
+                onClick={() => setCalMonth(3)}
+              >오늘</button>
+              <button
+                className="px-2 py-1 rounded border border-[#eee] text-xs text-[#666] disabled:opacity-40"
+                data-testid="button-cal-next"
+                onClick={() => setCalMonth(m => Math.min(4, m + 1))}
+                disabled={calMonth === 4}
+              >
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -558,7 +591,7 @@ export default function IPOCalendarPage() {
 
           <div className="min-w-0 overflow-x-auto">
             <div className="min-w-[500px]">
-              <CalendarView />
+              <CalendarView month={calMonth} />
             </div>
           </div>
 
