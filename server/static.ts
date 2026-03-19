@@ -19,6 +19,11 @@ export function serveStatic(app: Express) {
     const host = req.headers["x-forwarded-host"] || req.headers.host || "";
     const baseUrl = `${protocol}://${host}`;
     html = html.replace(/content="\/og-image\.png"/g, `content="${baseUrl}/og-image.png"`);
-    res.status(200).set({ "Content-Type": "text/html" }).end(html);
+    res.status(200).set({
+      "Content-Type": "text/html",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0",
+    }).end(html);
   });
 }

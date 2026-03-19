@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { users, stockTransactions } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { log } from "./index";
 import bcrypt from "bcrypt";
 
@@ -31,6 +31,11 @@ export async function seedDatabase() {
       log("Password reset for qmgk751206");
     }
 
+    // 거래 타입 "입고"→"in", "출고"→"out" 전체 마이그레이션
+    await db.execute(`UPDATE stock_transactions SET type = 'in' WHERE type = '입고'`);
+    await db.execute(`UPDATE stock_transactions SET type = 'out' WHERE type = '출고'`);
+    log("Transaction type migration done");
+
     // freeksi 계정 생성 및 입고 처리
     const [existingFreeksi] = await db.select().from(users).where(eq(users.username, "freeksi"));
     if (!existingFreeksi) {
@@ -48,9 +53,23 @@ export async function seedDatabase() {
         bank: "키움증권",
         isAdmin: false,
       }).returning();
-      await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, brand, created_at) VALUES (gen_random_uuid(), '${freeksiUser.id}', '입고', '공모주', '한패스', 1100, 9000, '', '증권플러스', '2026-03-19 09:00:00')`);
-      await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, brand, created_at) VALUES (gen_random_uuid(), '${freeksiUser.id}', '입고', '공모주', '한패스', 1100, 9000, '', '증권플러스', '2026-03-19 09:00:00')`);
+      await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, brand, created_at) VALUES (gen_random_uuid(), '${freeksiUser.id}', 'in', '공모주', '한패스', 1100, 9000, '', '증권플러스', '2026-03-19 09:00:00')`);
+      await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, brand, created_at) VALUES (gen_random_uuid(), '${freeksiUser.id}', 'in', '공모주', '한패스', 1100, 9000, '', '증권플러스', '2026-03-19 09:00:00')`);
       log("freeksi 계정 생성 및 한패스 입고 2건 완료");
+    }
+
+    // freeksi 거래수 검증 및 부족하면 보충
+    const [freeksiUser] = await db.select().from(users).where(eq(users.username, "freeksi"));
+    if (freeksiUser) {
+      const freeksiTxs = await db.select().from(stockTransactions).where(eq(stockTransactions.userId, freeksiUser.id));
+      const inTxs = freeksiTxs.filter(t => t.type === "in" && t.stockName === "한패스");
+      if (inTxs.length < 2) {
+        const needed = 2 - inTxs.length;
+        for (let i = 0; i < needed; i++) {
+          await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, brand, created_at) VALUES (gen_random_uuid(), '${freeksiUser.id}', 'in', '공모주', '한패스', 1100, 9000, '', '증권플러스', '2026-03-19 09:00:00')`);
+        }
+        log(`freeksi 한패스 입고 ${needed}건 추가`);
+      }
     }
 
     const badTxs = await db.select().from(stockTransactions).where(eq(stockTransactions.stockName, "비상장주식"));
