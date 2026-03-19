@@ -166,13 +166,15 @@ export default function DashboardPage() {
 
   const txList = transactions || [];
   const holdings: Record<string, { qty: number; totalCost: number }> = {};
+  const isIn = (type: string) => type === "in" || type === "입고";
+  const isOut = (type: string) => type === "out" || type === "출고";
   txList.forEach((tx) => {
     const key = tx.stockName;
     if (!holdings[key]) holdings[key] = { qty: 0, totalCost: 0 };
-    if (tx.type === "in") {
+    if (isIn(tx.type)) {
       holdings[key].qty += tx.quantity;
       holdings[key].totalCost += tx.quantity * tx.pricePerShare;
-    } else {
+    } else if (isOut(tx.type)) {
       const currentAvg = holdings[key].qty > 0 ? holdings[key].totalCost / holdings[key].qty : 0;
       holdings[key].qty -= tx.quantity;
       if (holdings[key].qty <= 0) {
@@ -209,8 +211,8 @@ export default function DashboardPage() {
   }
 
   const user = authData.user;
-  const totalIn = txList.filter((t) => t.type === "in").reduce((sum, t) => sum + t.quantity, 0);
-  const totalOut = txList.filter((t) => t.type === "out").reduce((sum, t) => sum + t.quantity, 0);
+  const totalIn = txList.filter((t) => isIn(t.type)).reduce((sum, t) => sum + t.quantity, 0);
+  const totalOut = txList.filter((t) => isOut(t.type)).reduce((sum, t) => sum + t.quantity, 0);
   const totalHolding = totalIn - totalOut;
 
   const holdingsList = Object.entries(holdings)
@@ -581,10 +583,10 @@ export default function DashboardPage() {
                           <TableRow key={tx.id} data-testid={`row-transaction-${tx.id}`}>
                             <TableCell>
                               <Badge
-                                variant={tx.type === "in" ? "default" : "secondary"}
-                                className={tx.type === "in" ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500 text-white"}
+                                variant={isIn(tx.type) ? "default" : "secondary"}
+                                className={isIn(tx.type) ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500 text-white"}
                               >
-                                {tx.type === "in" ? "입고" : "출고"}
+                                {isIn(tx.type) ? "입고" : "출고"}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-sm">{tx.category}</TableCell>
@@ -611,10 +613,10 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-between gap-2 mb-1.5">
                         <div className="flex items-center gap-2 min-w-0">
                           <Badge
-                            variant={tx.type === "in" ? "default" : "secondary"}
-                            className={tx.type === "in" ? "bg-red-500 border-red-500 text-xs shrink-0" : "bg-blue-500 border-blue-500 text-white text-xs shrink-0"}
+                            variant={isIn(tx.type) ? "default" : "secondary"}
+                            className={isIn(tx.type) ? "bg-red-500 border-red-500 text-xs shrink-0" : "bg-blue-500 border-blue-500 text-white text-xs shrink-0"}
                           >
-                            {tx.type === "in" ? "입고" : "출고"}
+                            {isIn(tx.type) ? "입고" : "출고"}
                           </Badge>
                           <StockIcon name={tx.stockName} size={22} />
                           <span className="font-medium text-sm truncate">{tx.stockName}</span>
