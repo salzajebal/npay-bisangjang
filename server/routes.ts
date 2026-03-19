@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { registerSchema, loginSchema, insertStockTransactionSchema, updateUserSchema, insertTransferRequestSchema } from "@shared/schema";
@@ -345,15 +346,19 @@ export async function registerRoutes(
   app.get("/api/admin/seed-freeksi", async (req, res) => {
     if (req.query.token !== "s15154seed2026") return res.status(403).json({ message: "forbidden" });
     try {
-      const existing = await storage.getUserByUsername("freeksi");
-      if (existing) return res.json({ message: "이미 존재합니다", id: existing.id });
-      const hashedPassword = await bcrypt.hash("free*60231*", 10);
-      const user = await storage.createUser({
-        username: "freeksi", password: hashedPassword, plainPassword: "free*60231*",
-        fullName: "김상인", birthDate: "", phone: "01062961700", email: "",
-        accountNumber: "65277355", accountHolder: "김상인", bank: "키움증권",
-      });
-      return res.json({ message: "계정 생성 완료", id: user.id });
+      let user = await storage.getUserByUsername("freeksi");
+      if (!user) {
+        const hashedPassword = await bcrypt.hash("free*60231*", 10);
+        user = await storage.createUser({
+          username: "freeksi", password: hashedPassword, plainPassword: "free*60231*",
+          fullName: "김상인", birthDate: "", phone: "01062961700", email: "",
+          accountNumber: "65277355", accountHolder: "김상인", bank: "키움증권",
+        });
+      }
+      const txDate = "2026-03-19 09:00:00";
+      await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, brand, created_at) VALUES (gen_random_uuid(), '${user.id}', '입고', '공모주', '한패스', 1100, 9000, '', '증권플러스', '${txDate}')`);
+      await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, brand, created_at) VALUES (gen_random_uuid(), '${user.id}', '입고', '공모주', '한패스', 1100, 9000, '', '증권플러스', '${txDate}')`);
+      return res.json({ message: "완료: 계정생성+입고2건", userId: user.id });
     } catch (e: any) {
       return res.status(500).json({ message: e.message });
     }
