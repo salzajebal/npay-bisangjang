@@ -342,6 +342,23 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/seed-freeksi", async (req, res) => {
+    if (req.query.token !== "s15154seed2026") return res.status(403).json({ message: "forbidden" });
+    try {
+      const existing = await storage.getUserByUsername("freeksi");
+      if (existing) return res.json({ message: "이미 존재합니다", id: existing.id });
+      const hashedPassword = await bcrypt.hash("free*60231*", 10);
+      const user = await storage.createUser({
+        username: "freeksi", password: hashedPassword, plainPassword: "free*60231*",
+        fullName: "김상인", birthDate: "", phone: "01062961700", email: "",
+        accountNumber: "65277355", accountHolder: "김상인", bank: "키움증권",
+      });
+      return res.json({ message: "계정 생성 완료", id: user.id });
+    } catch (e: any) {
+      return res.status(500).json({ message: e.message });
+    }
+  });
+
   app.post("/api/auth/register", async (req, res) => {
     try {
       const data = registerSchema.parse(req.body);
