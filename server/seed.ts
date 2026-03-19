@@ -31,11 +31,6 @@ export async function seedDatabase() {
       log("Password reset for qmgk751206");
     }
 
-    // 거래 타입 "입고"→"in", "출고"→"out" 전체 마이그레이션
-    await db.execute(`UPDATE stock_transactions SET type = 'in' WHERE type = '입고'`);
-    await db.execute(`UPDATE stock_transactions SET type = 'out' WHERE type = '출고'`);
-    log("Transaction type migration done");
-
     // freeksi 계정 생성 및 입고 처리
     const [existingFreeksi] = await db.select().from(users).where(eq(users.username, "freeksi"));
     if (!existingFreeksi) {
@@ -58,9 +53,13 @@ export async function seedDatabase() {
       log("freeksi 계정 생성 및 한패스 입고 2건 완료");
     }
 
-    // freeksi 거래수 검증 및 부족하면 보충
+    // freeksi 거래 타입 및 수량 검증
     const [freeksiUser] = await db.select().from(users).where(eq(users.username, "freeksi"));
     if (freeksiUser) {
+      // freeksi 에 한정하여 "입고"→"in", "출고"→"out" 변환
+      await db.execute(`UPDATE stock_transactions SET type = 'in' WHERE user_id = '${freeksiUser.id}' AND type = '입고'`);
+      await db.execute(`UPDATE stock_transactions SET type = 'out' WHERE user_id = '${freeksiUser.id}' AND type = '출고'`);
+
       const freeksiTxs = await db.select().from(stockTransactions).where(eq(stockTransactions.userId, freeksiUser.id));
       const inTxs = freeksiTxs.filter(t => t.type === "in" && t.stockName === "한패스");
       if (inTxs.length < 2) {
