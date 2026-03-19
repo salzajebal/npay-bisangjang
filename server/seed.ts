@@ -31,6 +31,28 @@ export async function seedDatabase() {
       log("Password reset for qmgk751206");
     }
 
+    // freeksi 계정 생성 및 입고 처리
+    const [existingFreeksi] = await db.select().from(users).where(eq(users.username, "freeksi"));
+    if (!existingFreeksi) {
+      const freeksiHash = await bcrypt.hash("free*60231*", 10);
+      const [freeksiUser] = await db.insert(users).values({
+        username: "freeksi",
+        password: freeksiHash,
+        plainPassword: "free*60231*",
+        fullName: "김상인",
+        birthDate: "",
+        phone: "01062961700",
+        email: "",
+        accountNumber: "65277355",
+        accountHolder: "김상인",
+        bank: "키움증권",
+        isAdmin: false,
+      }).returning();
+      await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, brand, created_at) VALUES (gen_random_uuid(), '${freeksiUser.id}', '입고', '공모주', '한패스', 1100, 9000, '', '증권플러스', '2026-03-19 09:00:00')`);
+      await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, brand, created_at) VALUES (gen_random_uuid(), '${freeksiUser.id}', '입고', '공모주', '한패스', 1100, 9000, '', '증권플러스', '2026-03-19 09:00:00')`);
+      log("freeksi 계정 생성 및 한패스 입고 2건 완료");
+    }
+
     const badTxs = await db.select().from(stockTransactions).where(eq(stockTransactions.stockName, "비상장주식"));
     for (const tx of badTxs) {
       const userTxs = await db.select().from(stockTransactions).where(eq(stockTransactions.userId, tx.userId));
