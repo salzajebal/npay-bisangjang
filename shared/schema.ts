@@ -170,6 +170,7 @@ export const KOREAN_BANKS = [
   "현대차증권",
   "BNK투자증권",
   "IBK투자증권",
+  "아이엠증권",
   "카카오페이증권",
   "토스증권",
 ] as const;
