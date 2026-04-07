@@ -14,6 +14,7 @@ import ChatPage from "@/pages/chat";
 import MyStocksPage from "@/pages/my-stocks";
 import IPOCalendarPage from "@/pages/ipo-calendar";
 import AdminManualPage from "@/pages/admin-manual";
+import TestAdminPage from "@/pages/test-admin";
 
 function Router() {
   return (
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/admin/manual" component={AdminManualPage} />
       <Route path="/admin/login" component={AdminLoginPage} />
       <Route path="/admin" component={AdminPage} />
+      <Route path="/test" component={TestAdminPage} />
       <Route path="/chat" component={ChatPage} />
       <Route component={NotFound} />
     </Switch>
