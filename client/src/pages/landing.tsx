@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
   Search,
@@ -286,6 +286,7 @@ function StockRankings() {
   const allStocks = useTickerPrices();
   const [activeTab, setActiveTab] = useState("일반종목");
   const displayStocks = getSortedStocks(allStocks, activeTab);
+  const [, navigate] = useLocation();
 
   const now = new Date();
   const timeStr = `${String(now.getFullYear()).slice(2)}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")} 기준`;
@@ -331,6 +332,7 @@ function StockRankings() {
         {displayStocks.map((stock) => (
           <div
             key={stock.code}
+            onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
             className="hidden sm:grid grid-cols-[40px_1fr_100px_80px_70px_50px] gap-0 px-4 py-3 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer items-center"
             data-testid={`row-stock-${stock.code}`}
           >
@@ -355,6 +357,7 @@ function StockRankings() {
         {displayStocks.map((stock) => (
           <div
             key={`m-${stock.code}`}
+            onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
             className="sm:hidden flex items-center gap-3 px-3 py-3 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer"
             data-testid={`row-stock-mobile-${stock.code}`}
           >
