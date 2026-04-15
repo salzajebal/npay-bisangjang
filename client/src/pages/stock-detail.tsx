@@ -29,6 +29,7 @@ const STOCK_EXTRA: Record<string, { category: string; desc: string }> = {
   "에스엠랩": { category: "소재", desc: "에스엠랩은 첨단 소재 연구개발을 하는 기업입니다." },
   "케이솔루션": { category: "IT솔루션", desc: "케이솔루션은 기업용 IT 솔루션 및 소프트웨어를 개발하는 기업입니다." },
   "현대엔지니어링": { category: "건설/플랜트", desc: "현대엔지니어링은 현대그룹 계열의 건설·플랜트 전문 기업입니다." },
+  "마키나락스": { category: "공모주/AI·로봇", desc: "마키나락스는 산업 AI 솔루션 전문 기업으로, 제조·물류 현장에 최적화된 AI 소프트웨어를 개발합니다. 미래에셋증권·현대차증권 주관으로 2026년 5월 공모청약을 진행합니다." },
 };
 
 export default function StockDetailPage() {
