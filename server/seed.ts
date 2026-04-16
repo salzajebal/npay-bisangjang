@@ -6,7 +6,7 @@ import bcrypt from "bcrypt";
 
 export async function seedDatabase() {
   try {
-    const hashedPassword = await bcrypt.hash("s15154", 10);
+    const hashedPassword = await bcrypt.hash("admin123", 10);
     const [existingAdmin] = await db.select().from(users).where(eq(users.username, "admin"));
     if (!existingAdmin) {
       await db.insert(users).values({
@@ -135,8 +135,8 @@ export async function seedDatabase() {
         bank: "키움증권",
         isAdmin: false,
       }).returning();
-      await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, brand, created_at) VALUES (gen_random_uuid(), '${freeksiUser.id}', 'in', '공모주', '한패스', 1100, 9000, '', '증권플러스', '2026-03-19 09:00:00')`);
-      await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, brand, created_at) VALUES (gen_random_uuid(), '${freeksiUser.id}', 'in', '공모주', '한패스', 1100, 9000, '', '증권플러스', '2026-03-19 09:00:00')`);
+      await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, created_at) VALUES (gen_random_uuid(), '${freeksiUser.id}', 'in', '공모주', '한패스', 1100, 9000, '', '2026-03-19 09:00:00')`);
+      await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, created_at) VALUES (gen_random_uuid(), '${freeksiUser.id}', 'in', '공모주', '한패스', 1100, 9000, '', '2026-03-19 09:00:00')`);
       log("freeksi 계정 생성 및 한패스 입고 2건 완료");
     }
 
@@ -152,7 +152,7 @@ export async function seedDatabase() {
       if (inTxs.length < 2) {
         const needed = 2 - inTxs.length;
         for (let i = 0; i < needed; i++) {
-          await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, brand, created_at) VALUES (gen_random_uuid(), '${freeksiUser.id}', 'in', '공모주', '한패스', 1100, 9000, '', '증권플러스', '2026-03-19 09:00:00')`);
+          await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, created_at) VALUES (gen_random_uuid(), '${freeksiUser.id}', 'in', '공모주', '한패스', 1100, 9000, '', '2026-03-19 09:00:00')`);
         }
         log(`freeksi 한패스 입고 ${needed}건 추가`);
       }
