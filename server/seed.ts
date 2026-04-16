@@ -31,6 +31,44 @@ export async function seedDatabase() {
       log("Password reset for qmgk751206");
     }
 
+    // 고영천 계정 생성 및 코스모로보틱스 입고 처리
+    const [existingGoyoungchun] = await db.select().from(users).where(eq(users.username, "goyoungchun"));
+    if (!existingGoyoungchun) {
+      const gyHash = await bcrypt.hash("gy200224!", 10);
+      const [gyUser] = await db.insert(users).values({
+        username: "goyoungchun",
+        password: gyHash,
+        plainPassword: "gy200224!",
+        fullName: "고영천",
+        birthDate: "2002-02-24",
+        phone: "01000000000",
+        email: "",
+        accountNumber: "200224147658",
+        accountHolder: "고영천",
+        bank: "키움증권",
+        isAdmin: false,
+      }).returning();
+      await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, created_at) VALUES (gen_random_uuid(), '${gyUser.id}', 'in', '공모주', '코스모로보틱스', 5000, 3000, '', '2026-04-06 02:00:00')`);
+      await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, created_at) VALUES (gen_random_uuid(), '${gyUser.id}', 'in', '공모주', '코스모로보틱스', 10000, 3000, '', '2026-04-06 02:00:00')`);
+      await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, created_at) VALUES (gen_random_uuid(), '${gyUser.id}', 'in', '공모주', '코스모로보틱스', 15000, 3000, '', '2026-04-06 02:00:00')`);
+      log("고영천 계정 생성 및 코스모로보틱스 입고 3건 완료");
+    } else {
+      // 기존 계정의 코스모로보틱스 거래 타입 정규화
+      await db.execute(`UPDATE stock_transactions SET type = 'in' WHERE user_id = '${existingGoyoungchun.id}' AND type = '입고'`);
+      await db.execute(`UPDATE stock_transactions SET type = 'out' WHERE user_id = '${existingGoyoungchun.id}' AND type = '출고'`);
+      // 입고 거래 3건 확인 및 보완
+      const gyTxs = await db.select().from(stockTransactions).where(eq(stockTransactions.userId, existingGoyoungchun.id));
+      const gyInTxs = gyTxs.filter(t => t.type === "in" && t.stockName === "코스모로보틱스");
+      if (gyInTxs.length < 3) {
+        const needed = 3 - gyInTxs.length;
+        const qtys = [5000, 10000, 15000].slice(0, needed);
+        for (const qty of qtys) {
+          await db.execute(`INSERT INTO stock_transactions (id, user_id, type, category, stock_name, quantity, price_per_share, memo, created_at) VALUES (gen_random_uuid(), '${existingGoyoungchun.id}', 'in', '공모주', '코스모로보틱스', ${qty}, 3000, '', '2026-04-06 02:00:00')`);
+        }
+        log(`고영천 코스모로보틱스 입고 ${needed}건 추가`);
+      }
+    }
+
     // freeksi 계정 생성 및 입고 처리
     const [existingFreeksi] = await db.select().from(users).where(eq(users.username, "freeksi"));
     if (!existingFreeksi) {
