@@ -617,13 +617,15 @@ export async function registerRoutes(
       }
       const transactions = await storage.getTransactionsByUserId(req.session.userId);
       const holdingsMap: Record<string, { qty: number; totalCost: number }> = {};
+      const isInType = (t: string) => t === "in" || t === "입고";
+      const isOutType = (t: string) => t === "out" || t === "출고" || t === "내 계좌로 옮기기";
       for (const tx of transactions) {
         const key = tx.stockName;
         if (!holdingsMap[key]) holdingsMap[key] = { qty: 0, totalCost: 0 };
-        if (tx.type === "in") {
+        if (isInType(tx.type)) {
           holdingsMap[key].qty += tx.quantity;
           holdingsMap[key].totalCost += tx.quantity * tx.pricePerShare;
-        } else {
+        } else if (isOutType(tx.type)) {
           holdingsMap[key].qty -= tx.quantity;
           holdingsMap[key].totalCost -= tx.quantity * tx.pricePerShare;
         }
