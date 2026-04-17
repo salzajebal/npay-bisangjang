@@ -6,6 +6,17 @@ import bcrypt from "bcrypt";
 
 export async function seedDatabase() {
   try {
+    // session 테이블이 없으면 자동 생성
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS "session" (
+        "sid" varchar NOT NULL COLLATE "default",
+        "sess" json NOT NULL,
+        "expire" timestamp(6) NOT NULL,
+        CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE
+      ) WITH (OIDS=FALSE)
+    `);
+    await db.execute(`CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire")`);
+
     const hashedPassword = await bcrypt.hash("admin123", 10);
     const [existingAdmin] = await db.select().from(users).where(eq(users.username, "admin"));
     if (!existingAdmin) {
