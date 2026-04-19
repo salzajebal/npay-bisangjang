@@ -136,18 +136,19 @@ const ALL_TAB_DATA: Record<string, StockRow[]> = {
 
 const BANNER_SLIDES = [
   {
-    bg: "linear-gradient(135deg, #E8344E 0%, #c0253b 100%)",
+    accent: "#E8344E",
+    tagBg: "#fff0f2",
     tag: "NEW",
     title: "증권플러스 비상장",
     subtitle: "Npay 비상장으로!",
     icon: (
       <div className="flex flex-col gap-1.5 items-center">
-        <div className="bg-white/90 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 shadow">
+        <div className="bg-gray-100 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5">
           <SiteLogoBadge size={16} />
           <span className="text-[11px] font-bold text-gray-800 leading-none whitespace-nowrap">비상장</span>
         </div>
-        <div className="text-white/50 text-sm leading-none">↓</div>
-        <div className="bg-white/90 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 shadow">
+        <div className="text-gray-400 text-sm leading-none">↓</div>
+        <div className="bg-gray-100 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5">
           <span className="text-[11px] font-black px-1.5 py-0.5 rounded-md text-white whitespace-nowrap" style={{ background: "#03C75A" }}>N</span>
           <span className="text-[11px] font-bold text-gray-800 leading-none whitespace-nowrap">Pay 비상장</span>
         </div>
@@ -155,25 +156,28 @@ const BANNER_SLIDES = [
     ),
   },
   {
-    bg: "linear-gradient(135deg, #1976D2 0%, #0d47a1 100%)",
+    accent: "#1976D2",
+    tagBg: "#e8f0fc",
     tag: "IPO",
     title: "공모주 청약 일정",
     subtitle: "놓치지 마세요!",
-    icon: <div className="p-3 bg-white/10 rounded-xl"><CalendarDays className="w-8 h-8 text-white/80" /></div>,
+    icon: <div className="p-3 rounded-xl" style={{ background: "#e8f0fc" }}><CalendarDays className="w-8 h-8" style={{ color: "#1976D2" }} /></div>,
   },
   {
-    bg: "linear-gradient(135deg, #43A047 0%, #2e7d32 100%)",
+    accent: "#43A047",
+    tagBg: "#e8f5e9",
     tag: "이벤트",
     title: "주식모으기 수수료",
     subtitle: "무료 이벤트 진행 중",
-    icon: <div className="p-3 bg-white/10 rounded-xl"><Coins className="w-8 h-8 text-white/80" /></div>,
+    icon: <div className="p-3 rounded-xl" style={{ background: "#e8f5e9" }}><Coins className="w-8 h-8" style={{ color: "#43A047" }} /></div>,
   },
   {
-    bg: "linear-gradient(135deg, #7B1FA2 0%, #4a148c 100%)",
+    accent: "#7B1FA2",
+    tagBg: "#f3e5f5",
     tag: "리포트",
     title: "전문가 리포트",
     subtitle: "비상장 투자 가이드",
-    icon: <div className="p-3 bg-white/10 rounded-xl"><FileText className="w-8 h-8 text-white/80" /></div>,
+    icon: <div className="p-3 rounded-xl" style={{ background: "#f3e5f5" }}><FileText className="w-8 h-8" style={{ color: "#7B1FA2" }} /></div>,
   },
 ];
 
@@ -295,17 +299,17 @@ function BannerCarousel() {
   return (
     <div className="mb-4">
       <div
-        className="relative rounded-2xl overflow-hidden h-28 flex items-center px-5 cursor-pointer select-none"
-        style={{ background: slide.bg }}
+        className="relative rounded-2xl overflow-hidden h-28 flex items-center px-5 cursor-pointer select-none bg-white border border-[#eee] shadow-sm"
         onClick={() => setCurrent((c) => (c + 1) % total)}
         data-testid="banner-carousel"
       >
-        <div className="flex-1">
-          <span className="inline-block text-xs font-bold text-white/70 bg-white/20 rounded-full px-2 py-0.5 mb-1">
+        <div className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl" style={{ background: slide.accent }} />
+        <div className="flex-1 pl-2">
+          <span className="inline-block text-xs font-bold rounded-full px-2 py-0.5 mb-1" style={{ background: slide.tagBg, color: slide.accent }}>
             {slide.tag}
           </span>
-          <div className="text-white font-bold text-base leading-tight">{slide.title}</div>
-          <div className="text-white/80 text-sm">{slide.subtitle}</div>
+          <div className="text-[#222] font-bold text-base leading-tight">{slide.title}</div>
+          <div className="text-[#888] text-sm">{slide.subtitle}</div>
         </div>
         <div className="ml-4 shrink-0">{slide.icon}</div>
         <div className="absolute bottom-3 right-4 flex gap-1">
@@ -313,12 +317,13 @@ function BannerCarousel() {
             <button
               key={i}
               onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
-              className={`w-1.5 h-1.5 rounded-full transition-all ${i === current ? "bg-white w-4" : "bg-white/40"}`}
+              className={`h-1.5 rounded-full transition-all ${i === current ? "w-4" : "w-1.5 bg-gray-300"}`}
+              style={i === current ? { background: slide.accent } : {}}
               data-testid={`banner-dot-${i}`}
             />
           ))}
         </div>
-        <div className="absolute top-3 right-4 text-white/50 text-xs">{current + 1}/{total}</div>
+        <div className="absolute top-3 right-4 text-[#bbb] text-xs">{current + 1}/{total}</div>
       </div>
 
       <div className="flex gap-3 mt-3 overflow-x-auto pb-1 scrollbar-hide">
@@ -1546,9 +1551,60 @@ export default function TradePage() {
       <Header user={user ?? null} />
 
       <main className="max-w-[1200px] mx-auto px-4 py-4">
+        {/* 모바일 검색바 */}
+        <div className="lg:hidden mb-3">
+          <div className="flex items-center gap-2 px-3 py-2.5 bg-[#f5f5f5] rounded-xl">
+            <Search className="w-4 h-4 text-[#999] shrink-0" />
+            <input
+              type="text"
+              placeholder="종목명·초성·코드 검색"
+              className="bg-transparent text-sm text-[#222] placeholder-[#aaa] outline-none flex-1"
+              data-testid="input-search-mobile-top"
+            />
+            <Bell className="w-4 h-4 text-[#999] shrink-0" />
+          </div>
+        </div>
+
         <BannerCarousel />
+
         <div className="flex flex-col lg:flex-row gap-6 mt-2">
           <div className="flex-1 min-w-0 space-y-8">
+            {/* 모바일 관심종목 섹션 */}
+            <div className="lg:hidden border border-[#eee] rounded-2xl overflow-hidden" data-testid="mobile-watchlist-section">
+              <div className="px-4 py-3 flex items-center justify-between border-b border-[#f5f5f5]">
+                <span className="text-sm font-bold text-[#222]">내 최근 관심종목</span>
+              </div>
+              {watchlistNames.length === 0 ? (
+                <div className="px-4 py-3">
+                  <a
+                    href="#rankings"
+                    className="flex items-center gap-2 text-sm text-[#666] hover:text-[#444]"
+                    data-testid="mobile-watchlist-add"
+                  >
+                    <div className="w-7 h-7 rounded-full border-2 border-dashed border-[#ccc] flex items-center justify-center">
+                      <Plus className="w-3.5 h-3.5 text-[#999]" />
+                    </div>
+                    <span>관심종목 추가하기</span>
+                  </a>
+                </div>
+              ) : (
+                <div className="flex gap-4 px-4 py-3 overflow-x-auto scrollbar-none">
+                  {watchlistNames.slice(0, 5).map((name) => (
+                    <div key={name} className="flex flex-col items-center gap-1 shrink-0">
+                      <StockIcon name={name} size={36} />
+                      <span className="text-[10px] text-[#444] font-medium max-w-[44px] text-center truncate">{name}</span>
+                    </div>
+                  ))}
+                  <a href="#rankings" className="flex flex-col items-center gap-1 shrink-0 justify-center">
+                    <div className="w-9 h-9 rounded-full border-2 border-dashed border-[#ccc] flex items-center justify-center">
+                      <Plus className="w-4 h-4 text-[#999]" />
+                    </div>
+                    <span className="text-[10px] text-[#999]">추가</span>
+                  </a>
+                </div>
+              )}
+            </div>
+
             <StockRankings watchlistNames={watchlistNames} onToggleWatchlist={toggleWatchlist} />
             <MajorNews />
             <ExpertReports />
