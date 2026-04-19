@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
@@ -30,22 +30,109 @@ import { SiteLogoBadge } from "@/components/site-logo";
 import { fetchStockPrices } from "@/lib/market-prices";
 import type { User as UserType, StockTransaction, Watchlist } from "@shared/schema";
 
-const UNLISTED_STOCKS = [
-  { name: "두나무", code: "389930", price: 307000, change: 1.99, orders: 120, category: "일반", isIPO: false, marketCap: 140000, revenueGrowth: 42.3, ipoPrep: false },
-  { name: "빗썸", code: "341650", price: 214000, change: -3.17, orders: 50, category: "일반", isIPO: false, marketCap: 35000, revenueGrowth: 31.2, ipoPrep: false },
-  { name: "무신사", code: "458860", price: 25700, change: 0, orders: 128, category: "일반", isIPO: true, marketCap: 45000, revenueGrowth: 22.1, ipoPrep: true },
-  { name: "오아시스", code: "370190", price: 9600, change: -6.8, orders: 65, category: "일반", isIPO: false, marketCap: 8500, revenueGrowth: -5.3, ipoPrep: false },
-  { name: "컬리", code: "408480", price: 20300, change: -1.46, orders: 49, category: "일반", isIPO: false, marketCap: 28000, revenueGrowth: 15.7, ipoPrep: false },
-  { name: "에스엠랩", code: "419350", price: 1280, change: 4.07, orders: 37, category: "일반", isIPO: false, marketCap: 3200, revenueGrowth: 67.8, ipoPrep: false },
-  { name: "야놀자", code: "350920", price: 26900, change: 0.37, orders: 54, category: "일반", isIPO: false, marketCap: 42000, revenueGrowth: 28.4, ipoPrep: false },
-  { name: "케이솔루션", code: "413490", price: 7650, change: 10.87, orders: 16, category: "일반", isIPO: false, marketCap: 5600, revenueGrowth: 85.2, ipoPrep: true },
-  { name: "에너진", code: "403680", price: 3560, change: 7.23, orders: 50, category: "일반", isIPO: false, marketCap: 4100, revenueGrowth: 53.6, ipoPrep: false },
-  { name: "오톰", code: "378160", price: 15200, change: 2.35, orders: 42, category: "일반", isIPO: false, marketCap: 12000, revenueGrowth: 35.1, ipoPrep: false },
-  { name: "현대엔지니어링", code: "064540", price: 68500, change: -0.87, orders: 28, category: "일반", isIPO: false, marketCap: 75000, revenueGrowth: 8.2, ipoPrep: true },
-  { name: "이브이알스튜디오", code: "379660", price: 4350, change: 12.41, orders: 31, category: "일반", isIPO: false, marketCap: 2800, revenueGrowth: 120.5, ipoPrep: false },
-  { name: "토스", code: "285240", price: 185000, change: 3.52, orders: 88, category: "일반", isIPO: false, marketCap: 130000, revenueGrowth: 45.8, ipoPrep: true },
-  { name: "에스팀", code: "414260", price: 7500, change: 5.63, orders: 22, category: "전문", isIPO: true, marketCap: 1800, revenueGrowth: 92.3, ipoPrep: true },
+type StockRow = {
+  name: string;
+  category: "일반" | "전문";
+  isIPO: boolean;
+  price: number | null;
+  change: number | null;
+  orders: number | null;
+  marketCapStr?: string;
+  ipoDate?: string;
+  reviewType?: string;
+  fiscalYear?: string;
+  revenueGrowthStr?: string;
+};
+
+const s = (name: string, cat: "일반"|"전문", ipo: boolean, price: number|null, change: number|null, orders: number|null): StockRow =>
+  ({ name, category: cat, isIPO: ipo, price, change, orders });
+
+const RANK_일반종목: StockRow[] = [
+  s("두나무", "일반", false, 298000, -0.67, 128),
+  s("무신사", "일반", true,  23700,  0,    82),
+  s("제이비케이랩", "일반", false, 6400, 0,  48),
+  s("야놀자", "일반", false, 22300, -10.8, 65),
+  s("에너진", "일반", false,  3080,  1.32, 29),
+  s("넷마블에프앤씨", "일반", false, 7750, -1.27, 9),
+  s("오아시스", "일반", false, 7200,  0,   38),
+  s("빗썸", "일반", false, 197000, 1.03, 38),
+  s("컬리", "일반", false, 18200, -0.55, 23),
+  s("케이솔루션", "일반", true, 14400, 2.13, 16),
 ];
+
+const RANK_거래많은: StockRow[] = [
+  s("두나무", "일반", false, 298000, -0.67, 128),
+  s("무신사", "일반", true,  23700,  0,    82),
+  s("제이비케이랩", "일반", false, 6400,  0,  48),
+  s("비바리퍼블리카", "전문", false, null, null, null),
+  s("에이치디현대삼호", "전문", false, null, null, null),
+  s("스트라드비전", "전문", true,  null, null, null),
+  s("아스트로젠", "전문", false, null, null, null),
+  s("케이피항공산업", "전문", true,  null, null, null),
+  s("덕산넵코어스", "전문", true,  null, null, null),
+  s("한국증권금융", "전문", false, null, null, null),
+];
+
+const RANK_상승률높은: StockRow[] = [
+  s("레메디", "전문", true,  null, null, null),
+  s("레몬헬스케어", "전문", true,  null, null, null),
+  s("노바셀테크놀로지", "전문", false, null, null, null),
+  s("아스트로젠", "전문", false, null, null, null),
+  s("마키나락스", "전문", true,  null, null, null),
+  s("케이피항공산업", "전문", true,  null, null, null),
+  s("현대엔지니어링", "전문", false, null, null, null),
+  s("리딩투자증권", "전문", false, null, null, null),
+  s("스트라드비전", "전문", true,  null, null, null),
+  s("재영텍", "전문", false, null, null, null),
+];
+
+const RANK_상장준비: StockRow[] = [
+  { ...s("와이즈플래닛컴퍼니", "전문", true,  null, null, null), ipoDate: "26.04.15", reviewType: "심사청구" },
+  { ...s("크리에이츠", "전문", true,  null, null, null),          ipoDate: "26.04.07", reviewType: "심사청구" },
+  { ...s("인텔리빅스", "전문", true,  null, null, null),          ipoDate: "26.03.24", reviewType: "심사청구" },
+  { ...s("케이솔루션", "일반", true,  null, null, null),          ipoDate: "26.02.12", reviewType: "심사청구" },
+  { ...s("스카이랩스", "전문", true,  null, null, null),          ipoDate: "26.01.30", reviewType: "심사청구" },
+  { ...s("레메디", "전문", true,  null, null, null),              ipoDate: "26.01.30", reviewType: "심사청구" },
+  { ...s("파워큐브세미", "전문", true, null, null, null),         ipoDate: "26.01.16", reviewType: "심사청구" },
+  { ...s("넥스트젠바이오사이언스", "전문", true, null, null, null), ipoDate: "25.12.23", reviewType: "심사청구" },
+  { ...s("빅웨이브로보틱스", "전문", true, null, null, null),     ipoDate: "25.12.16", reviewType: "심사청구" },
+  { ...s("메타넷엑스", "전문", true,  null, null, null),          ipoDate: "25.12.09", reviewType: "심사청구" },
+];
+
+const RANK_예상시총: StockRow[] = [
+  { ...s("비바리퍼블리카", "전문", false, null, null, null),      marketCapStr: "미제공" },
+  { ...s("두나무", "일반", false, 298000, -0.67, 128),            marketCapStr: "10조 3,924억" },
+  { ...s("에이치디현대삼호", "전문", false, null, null, null),    marketCapStr: "미제공" },
+  { ...s("현대오일뱅크", "전문", false, null, null, null),        marketCapStr: "미제공" },
+  { ...s("무신사", "일반", true, 23700, 0, 82),                   marketCapStr: "4조 8,262억" },
+  { ...s("교보생명보험", "전문", false, null, null, null),        marketCapStr: "미제공" },
+  { ...s("현대엔지니어링", "전문", false, null, null, null),      marketCapStr: "미제공" },
+  { ...s("카카오모빌리티", "전문", false, null, null, null),      marketCapStr: "미제공" },
+  { ...s("한국증권금융", "전문", false, null, null, null),        marketCapStr: "미제공" },
+  { ...s("야놀자", "일반", false, 22300, -10.8, 65),              marketCapStr: "2조 2,637억" },
+];
+
+const RANK_매출상승: StockRow[] = [
+  { ...s("에코크레이션", "전문", false, null, null, null),        fiscalYear: "2024년", revenueGrowthStr: "+4,596.8%" },
+  { ...s("에이엠에스티", "전문", false, null, null, null),        fiscalYear: "2025년", revenueGrowthStr: "+109.9%" },
+  { ...s("뱅크샐러드", "전문", false, null, null, null),          fiscalYear: "2025년", revenueGrowthStr: "+76.54%" },
+  { ...s("리딩투자증권", "전문", false, null, null, null),        fiscalYear: "2025년", revenueGrowthStr: "+56.42%" },
+  { ...s("케이솔루션", "일반", true,  null, null, null),          fiscalYear: "2025년", revenueGrowthStr: "+51.26%" },
+  { ...s("칸에스티엔", "전문", false, null, null, null),          fiscalYear: "2024년", revenueGrowthStr: "+45.71%" },
+  { ...s("인투코어테크놀로지", "전문", false, null, null, null),  fiscalYear: "2024년", revenueGrowthStr: "+43.8%" },
+  { ...s("에스엘엘중앙", "전문", false, null, null, null),        fiscalYear: "2025년", revenueGrowthStr: "+42.96%" },
+  { ...s("이피캠텍", "전문", false, null, null, null),            fiscalYear: "2025년", revenueGrowthStr: "+42.45%" },
+  { ...s("비바리퍼블리카", "전문", false, null, null, null),      fiscalYear: "2025년", revenueGrowthStr: "+37.98%" },
+];
+
+const ALL_TAB_DATA: Record<string, StockRow[]> = {
+  "일반종목": RANK_일반종목,
+  "거래많은": RANK_거래많은,
+  "상승률 높은": RANK_상승률높은,
+  "상장준비 시작": RANK_상장준비,
+  "예상시총 높은": RANK_예상시총,
+  "매출이 상승한": RANK_매출상승,
+};
 
 const BANNER_SLIDES = [
   {
@@ -146,56 +233,8 @@ const NAV_LINKS = [
   { label: "공모주 IPO 캘린더", href: "/ipo-calendar" },
 ];
 
-function useTickerPrices() {
-  const [stocks, setStocks] = useState(() =>
-    UNLISTED_STOCKS.map((s) => ({ ...s }))
-  );
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStocks((prev) =>
-        prev.map((s) => {
-          const base = UNLISTED_STOCKS.find((k) => k.code === s.code)!;
-          const fluctuation = (Math.random() - 0.5) * 0.04;
-          const newPrice = Math.round(base.price * (1 + fluctuation));
-          const baseOriginal = Math.round(base.price / (1 + base.change / 100));
-          const newChange = parseFloat((((newPrice - baseOriginal) / baseOriginal) * 100).toFixed(2));
-          return { ...s, price: newPrice, change: newChange };
-        })
-      );
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return stocks;
-}
-
-function getSortedStocks(stocks: typeof UNLISTED_STOCKS, tab: string) {
-  let sorted = [...stocks];
-  switch (tab) {
-    case "일반종목":
-      sorted = sorted.filter((s) => s.category === "일반").sort((a, b) => b.marketCap - a.marketCap);
-      break;
-    case "거래많은":
-      sorted.sort((a, b) => b.orders - a.orders);
-      break;
-    case "상승률 높은":
-      sorted.sort((a, b) => b.change - a.change);
-      break;
-    case "상장준비 시작":
-      sorted = sorted.filter((s) => s.ipoPrep || s.isIPO);
-      break;
-    case "예상시총 높은":
-      sorted.sort((a, b) => b.marketCap - a.marketCap);
-      break;
-    case "매출이 상승한":
-      sorted = sorted.filter((s) => s.revenueGrowth > 0).sort((a, b) => b.revenueGrowth - a.revenueGrowth);
-      break;
-    default:
-      sorted.sort((a, b) => b.marketCap - a.marketCap);
-      break;
-  }
-  return sorted.slice(0, 10).map((s, i) => ({ ...s, rank: i + 1 }));
+function getTabStocks(tab: string): StockRow[] {
+  return ALL_TAB_DATA[tab] ?? RANK_일반종목;
 }
 
 function useWatchlist(user: UserType | null) {
@@ -311,7 +350,14 @@ function WatchlistSection({
   onToggleWatchlist: (name: string) => void;
 }) {
   const [, setLocation] = useLocation();
-  const watchedStocks = UNLISTED_STOCKS.filter((s) => watchlistNames.includes(s.name));
+  const allTabStocks = Object.values(ALL_TAB_DATA).flat();
+  const seen = new Set<string>();
+  const uniqueStocks = allTabStocks.filter((s) => {
+    if (seen.has(s.name)) return false;
+    seen.add(s.name);
+    return true;
+  });
+  const watchedStocks = uniqueStocks.filter((s) => watchlistNames.includes(s.name));
 
   return (
     <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm" data-testid="watchlist-section">
@@ -351,10 +397,10 @@ function WatchlistSection({
               <StockIcon name={s.name} size={32} />
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-gray-900 truncate">{s.name}</div>
-                <div className="text-xs text-gray-400">{s.price.toLocaleString()}원</div>
+                <div className="text-xs text-gray-400">{s.price !== null ? `${s.price.toLocaleString()}원` : "미제공"}</div>
               </div>
-              <div className={`text-xs font-semibold ${s.change >= 0 ? "text-red-500" : "text-blue-500"}`}>
-                {s.change >= 0 ? "+" : ""}{s.change}%
+              <div className={`text-xs font-semibold ${s.change === null ? "text-gray-400" : s.change >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                {s.change === null ? "미제공" : `${s.change >= 0 ? "+" : ""}${s.change}%`}
               </div>
               <button
                 onClick={() => onToggleWatchlist(s.name)}
@@ -517,6 +563,143 @@ function Header({ user }: { user: UserType | null }) {
   );
 }
 
+function fmtPrice(price: number | null): string {
+  if (price === null) return "미제공";
+  return price.toLocaleString() + "원";
+}
+
+function fmtChange(change: number | null): { text: string; cls: string } {
+  if (change === null) return { text: "미제공", cls: "text-[#999]" };
+  if (change === 0) return { text: "0%", cls: "text-[#999]" };
+  return {
+    text: `${change > 0 ? "+" : ""}${change}%`,
+    cls: change > 0 ? "text-[#f04452]" : "text-[#3182f6]",
+  };
+}
+
+function fmtOrders(orders: number | null): string {
+  if (orders === null) return "미제공";
+  return orders + "건";
+}
+
+type ColDef = { label: string; right?: boolean; info?: boolean };
+
+function getColDefs(tab: string): ColDef[] {
+  switch (tab) {
+    case "상승률 높은":
+      return [
+        { label: "상승률", right: true, info: true },
+        { label: "전체주문", right: true },
+        { label: "구분", right: true },
+      ];
+    case "상장준비 시작":
+      return [
+        { label: "기준일자", right: true },
+        { label: "심사유형", right: true, info: true },
+        { label: "구분", right: true },
+      ];
+    case "예상시총 높은":
+      return [
+        { label: "예상시총", right: true, info: true },
+        { label: "전체주문", right: true },
+        { label: "구분", right: true },
+      ];
+    case "매출이 상승한":
+      return [
+        { label: "결산연도", right: true },
+        { label: "매출상승률", right: true, info: true },
+        { label: "구분", right: true },
+      ];
+    default:
+      return [
+        { label: "체결평균가", right: true, info: true },
+        { label: "등락률", right: true },
+        { label: "전체주문", right: true },
+        { label: "구분", right: true },
+      ];
+  }
+}
+
+function getCells(stock: StockRow, tab: string): ReactNode[] {
+  switch (tab) {
+    case "상승률 높은":
+      return [
+        <span className="text-[#999]">미제공</span>,
+        <span className="text-[#999]">미제공</span>,
+        <span className="text-[#666]">{stock.category}</span>,
+      ];
+    case "상장준비 시작":
+      return [
+        <span className="text-[#999] tabular-nums">{stock.ipoDate ?? "—"}</span>,
+        <span className="text-[#999]">{stock.reviewType ?? "—"}</span>,
+        <span className="text-[#666]">{stock.category}</span>,
+      ];
+    case "예상시총 높은": {
+      const capStr = stock.marketCapStr ?? "미제공";
+      const capCls = capStr === "미제공" ? "text-[#999]" : "text-[#222] font-medium";
+      return [
+        <span className={`tabular-nums ${capCls}`}>{capStr}</span>,
+        <span className={stock.orders !== null ? "text-[#666] tabular-nums" : "text-[#999]"}>{fmtOrders(stock.orders)}</span>,
+        <span className="text-[#666]">{stock.category}</span>,
+      ];
+    }
+    case "매출이 상승한":
+      return [
+        <span className="text-[#999] tabular-nums">{stock.fiscalYear ?? "—"}</span>,
+        <span className="text-[#f04452] font-medium tabular-nums">{stock.revenueGrowthStr ?? "—"}</span>,
+        <span className="text-[#666]">{stock.category}</span>,
+      ];
+    default: {
+      const ch = fmtChange(stock.change);
+      return [
+        <span className={stock.price !== null ? "text-[#222] font-medium tabular-nums" : "text-[#999]"}>{fmtPrice(stock.price)}</span>,
+        <span className={`tabular-nums font-medium ${ch.cls}`}>{ch.text}</span>,
+        <span className={stock.orders !== null ? "text-[#666] tabular-nums" : "text-[#999]"}>{fmtOrders(stock.orders)}</span>,
+        <span className="text-[#666]">{stock.category}</span>,
+      ];
+    }
+  }
+}
+
+function getMobileSub(stock: StockRow, tab: string): ReactNode {
+  switch (tab) {
+    case "상승률 높은":
+      return <span className="text-[11px] text-[#999]">상승률 미제공 · {stock.category}</span>;
+    case "상장준비 시작":
+      return <span className="text-[11px] text-[#999]">{stock.ipoDate ?? "—"} · {stock.reviewType} · {stock.category}</span>;
+    case "예상시총 높은":
+      return <span className="text-[11px] text-[#999]">{stock.marketCapStr ?? "미제공"} · {stock.category}</span>;
+    case "매출이 상승한":
+      return <span className="text-[11px] text-[#999]">{stock.fiscalYear} · {stock.category}</span>;
+    default:
+      return <span className="text-[11px] text-[#999]">{fmtOrders(stock.orders)} · {stock.category}</span>;
+  }
+}
+
+function getMobileRight(stock: StockRow, tab: string): ReactNode {
+  switch (tab) {
+    case "상승률 높은":
+      return <p className="text-sm text-[#999]">미제공</p>;
+    case "상장준비 시작":
+      return null;
+    case "예상시총 높은": {
+      const capStr = stock.marketCapStr ?? "미제공";
+      return <p className={`text-sm tabular-nums ${capStr === "미제공" ? "text-[#999]" : "text-[#222] font-medium"}`}>{capStr}</p>;
+    }
+    case "매출이 상승한":
+      return <p className="text-sm text-[#f04452] font-medium tabular-nums">{stock.revenueGrowthStr ?? "—"}</p>;
+    default: {
+      const ch = fmtChange(stock.change);
+      return (
+        <>
+          <p className={`text-sm font-medium tabular-nums ${stock.price !== null ? "text-[#222]" : "text-[#999]"}`}>{fmtPrice(stock.price)}</p>
+          <p className={`text-xs tabular-nums font-medium ${ch.cls}`}>{ch.text}</p>
+        </>
+      );
+    }
+  }
+}
+
 function StockRankings({
   watchlistNames,
   onToggleWatchlist,
@@ -524,13 +707,17 @@ function StockRankings({
   watchlistNames: string[];
   onToggleWatchlist: (name: string) => void;
 }) {
-  const allStocks = useTickerPrices();
   const [activeTab, setActiveTab] = useState("일반종목");
-  const displayStocks = getSortedStocks(allStocks, activeTab);
+  const displayStocks = getTabStocks(activeTab);
   const [, navigate] = useLocation();
+  const cols = getColDefs(activeTab);
 
   const now = new Date();
   const timeStr = `${String(now.getFullYear()).slice(2)}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")} 기준`;
+
+  const gridCols = cols.length === 4
+    ? "grid-cols-[40px_1fr_110px_80px_70px_44px_36px]"
+    : "grid-cols-[40px_1fr_130px_80px_70px_36px]";
 
   return (
     <section id="rankings" data-testid="section-stock-rankings">
@@ -551,7 +738,7 @@ function StockRankings({
             onClick={() => setActiveTab(tab)}
             className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
               activeTab === tab
-                ? "bg-[#E8344E] text-white"
+                ? "bg-[#333] text-white"
                 : "bg-[#f5f5f5] text-[#666] hover:bg-[#eee]"
             }`}
             data-testid={`tab-ranking-${tab}`}
@@ -561,27 +748,41 @@ function StockRankings({
         ))}
       </div>
 
+      {activeTab === "상승률 높은" && (
+        <div className="text-xs text-[#666] mb-2 flex items-center gap-1">
+          <span>3개월 전 대비</span>
+          <ChevronRight className="w-3 h-3" />
+        </div>
+      )}
+
       <div className="border border-[#eee] rounded-lg overflow-hidden">
-        <div className="hidden sm:grid grid-cols-[40px_1fr_100px_80px_70px_36px] gap-0 px-4 py-2.5 bg-[#fafafa] text-xs text-[#999] border-b border-[#eee]">
+        {/* Desktop header */}
+        <div className={`hidden sm:grid ${gridCols} gap-0 px-4 py-2.5 bg-[#fafafa] text-xs text-[#999] border-b border-[#eee]`}>
           <span></span>
-          <span>종목명</span>
-          <span className="text-right flex items-center justify-end gap-0.5">체결평균가 <span className="text-[10px]">&#9660;</span></span>
-          <span className="text-right">등락률</span>
-          <span className="text-right">전체주문</span>
+          <span className="font-medium">종목명</span>
+          {cols.map((col, i) => (
+            <span key={i} className={`${col.right ? "text-right" : ""} flex items-center ${col.right ? "justify-end" : ""} gap-0.5`}>
+              {col.label}
+              {col.info && <span className="text-[10px] ml-0.5">&#9660;</span>}
+            </span>
+          ))}
           <span></span>
         </div>
-        {displayStocks.map((stock) => {
+
+        {/* Desktop rows */}
+        {displayStocks.map((stock, idx) => {
           const starred = watchlistNames.includes(stock.name);
+          const cells = getCells(stock, activeTab);
           return (
             <div
-              key={stock.code}
-              className="hidden sm:grid grid-cols-[40px_1fr_100px_80px_70px_36px] gap-0 px-4 py-3 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors items-center group"
-              data-testid={`row-stock-${stock.code}`}
+              key={`d-${stock.name}-${idx}`}
+              className={`hidden sm:grid ${gridCols} gap-0 px-4 py-3 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors items-center`}
+              data-testid={`row-stock-${idx}`}
             >
               <span
                 className="text-sm text-[#999] font-medium cursor-pointer"
                 onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
-              >{stock.rank}</span>
+              >{idx + 1}</span>
               <div
                 className="flex items-center gap-2.5 cursor-pointer"
                 onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
@@ -590,28 +791,23 @@ function StockRankings({
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm font-medium text-[#222]">{stock.name}</span>
                   {stock.isIPO && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#E8344E] text-white font-medium leading-none">IPO</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded border border-[#ccc] text-[#999] font-medium leading-none">IPO</span>
                   )}
                 </div>
               </div>
-              <span
-                className="text-sm text-[#222] text-right tabular-nums font-medium cursor-pointer"
-                onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
-              >{stock.price.toLocaleString()}원</span>
-              <span
-                className={`text-sm text-right tabular-nums font-medium cursor-pointer ${stock.change > 0 ? "text-[#f04452]" : stock.change < 0 ? "text-[#3182f6]" : "text-[#999]"}`}
-                onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
-              >
-                {stock.change > 0 ? "+" : ""}{stock.change.toFixed(2)}%
-              </span>
-              <span
-                className="text-sm text-[#666] text-right tabular-nums cursor-pointer"
-                onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
-              >{stock.orders}건</span>
+              {cells.map((cell, ci) => (
+                <div
+                  key={ci}
+                  className="text-sm text-right cursor-pointer"
+                  onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
+                >
+                  {cell}
+                </div>
+              ))}
               <button
                 onClick={(e) => { e.stopPropagation(); onToggleWatchlist(stock.name); }}
                 className="flex items-center justify-end"
-                data-testid={`btn-star-${stock.code}`}
+                data-testid={`btn-star-${idx}`}
                 title={starred ? "관심종목 해제" : "관심종목 추가"}
               >
                 <Star
@@ -621,15 +817,17 @@ function StockRankings({
             </div>
           );
         })}
-        {displayStocks.map((stock) => {
+
+        {/* Mobile rows */}
+        {displayStocks.map((stock, idx) => {
           const starred = watchlistNames.includes(stock.name);
           return (
             <div
-              key={`m-${stock.code}`}
+              key={`m-${stock.name}-${idx}`}
               className="sm:hidden flex items-center gap-3 px-3 py-3 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors"
-              data-testid={`row-stock-mobile-${stock.code}`}
+              data-testid={`row-stock-mobile-${idx}`}
             >
-              <span className="text-xs text-[#999] font-medium w-5 shrink-0 text-center">{stock.rank}</span>
+              <span className="text-xs text-[#999] font-medium w-5 shrink-0 text-center">{idx + 1}</span>
               <div
                 className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
                 onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
@@ -639,22 +837,19 @@ function StockRankings({
                   <div className="flex items-center gap-1.5">
                     <span className="text-sm font-medium text-[#222] truncate">{stock.name}</span>
                     {stock.isIPO && (
-                      <span className="text-[10px] px-1 py-0.5 rounded bg-[#E8344E] text-white font-medium leading-none shrink-0">IPO</span>
+                      <span className="text-[10px] px-1 py-0.5 rounded border border-[#ccc] text-[#999] font-medium leading-none shrink-0">IPO</span>
                     )}
                   </div>
-                  <span className="text-[11px] text-[#999]">{stock.orders}건 · {stock.category}</span>
+                  {getMobileSub(stock, activeTab)}
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-sm font-medium text-[#222] tabular-nums">{stock.price.toLocaleString()}원</p>
-                  <p className={`text-xs tabular-nums font-medium ${stock.change > 0 ? "text-[#f04452]" : stock.change < 0 ? "text-[#3182f6]" : "text-[#999]"}`}>
-                    {stock.change > 0 ? "+" : ""}{stock.change.toFixed(2)}%
-                  </p>
+                  {getMobileRight(stock, activeTab)}
                 </div>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); onToggleWatchlist(stock.name); }}
                 className="shrink-0 p-1"
-                data-testid={`btn-star-mobile-${stock.code}`}
+                data-testid={`btn-star-mobile-${idx}`}
               >
                 <Star
                   className={`w-4 h-4 transition-colors ${starred ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}

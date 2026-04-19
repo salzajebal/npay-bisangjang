@@ -42,6 +42,13 @@ const STOCK_LOGOS: Record<string, { logo: string; bg: string }> = {
   "인벤테라": { logo: "https://static.ustockplus.com/admin/2025-09/ef2e1aca-f93b-4c6f-b63e-37a456f41b79.png", bg: "#1565C0" },
   "레몬헬스케어": { logo: "https://static.ustockplus.com/admin/2023-02/34fbfac8-37cc-4a4c-acf0-efae5edf08f2.png", bg: "#E8344E" },
   "케이피항공산업": { logo: "https://static.ustockplus.com/admin/2023-04/2e34a914-1d1c-4a8c-88dd-42351b3fc190.png", bg: "#1565C0" },
+  "스트라드비전": { logo: "https://static.ustockplus.com/logo/company/77183.png", bg: "#1976D2" },
+  "제이비케이랩": { logo: "https://static.ustockplus.com/logo/company/77418.png", bg: "#E8344E" },
+  "넷마블에프앤씨": { logo: "https://static.ustockplus.com/logo/stock/214490.png", bg: "#1A237E" },
+  "교보생명보험": { logo: "https://static.ustockplus.com/logo/company/1063.png", bg: "#E8344E" },
+  "현대오일뱅크": { logo: "https://static.ustockplus.com/admin/2023-01/d9602423-0b56-419f-8737-8d30c015e379.png", bg: "#003DA5" },
+  "한국증권금융": { logo: "https://static.ustockplus.com/logo/company/1065.png", bg: "#003DA5" },
+  "덕산넵코어스": { logo: "https://static.ustockplus.com/logo/company/77419.png", bg: "#1565C0" },
 };
 
 const STOCK_CODE_MAP: Record<string, string> = {
