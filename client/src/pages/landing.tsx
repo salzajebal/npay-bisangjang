@@ -53,28 +53,40 @@ const BANNER_SLIDES = [
     tag: "NEW",
     title: "증권플러스 비상장",
     subtitle: "Npay 비상장으로!",
-    icon: <TrendingUp className="w-8 h-8 text-white/80" />,
+    icon: (
+      <div className="flex flex-col gap-1.5 items-center">
+        <div className="bg-white/90 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 shadow">
+          <SiteLogoBadge size={16} />
+          <span className="text-[11px] font-bold text-gray-800 leading-none whitespace-nowrap">비상장</span>
+        </div>
+        <div className="text-white/50 text-sm leading-none">↓</div>
+        <div className="bg-white/90 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 shadow">
+          <span className="text-[11px] font-black px-1.5 py-0.5 rounded-md text-white whitespace-nowrap" style={{ background: "#03C75A" }}>N</span>
+          <span className="text-[11px] font-bold text-gray-800 leading-none whitespace-nowrap">Pay 비상장</span>
+        </div>
+      </div>
+    ),
   },
   {
     bg: "linear-gradient(135deg, #1976D2 0%, #0d47a1 100%)",
     tag: "IPO",
     title: "공모주 청약 일정",
     subtitle: "놓치지 마세요!",
-    icon: <CalendarDays className="w-8 h-8 text-white/80" />,
+    icon: <div className="p-3 bg-white/10 rounded-xl"><CalendarDays className="w-8 h-8 text-white/80" /></div>,
   },
   {
     bg: "linear-gradient(135deg, #43A047 0%, #2e7d32 100%)",
     tag: "이벤트",
     title: "주식모으기 수수료",
     subtitle: "무료 이벤트 진행 중",
-    icon: <Coins className="w-8 h-8 text-white/80" />,
+    icon: <div className="p-3 bg-white/10 rounded-xl"><Coins className="w-8 h-8 text-white/80" /></div>,
   },
   {
     bg: "linear-gradient(135deg, #7B1FA2 0%, #4a148c 100%)",
     tag: "리포트",
     title: "전문가 리포트",
     subtitle: "비상장 투자 가이드",
-    icon: <FileText className="w-8 h-8 text-white/80" />,
+    icon: <div className="p-3 bg-white/10 rounded-xl"><FileText className="w-8 h-8 text-white/80" /></div>,
   },
 ];
 
@@ -256,7 +268,7 @@ function BannerCarousel() {
           <div className="text-white font-bold text-base leading-tight">{slide.title}</div>
           <div className="text-white/80 text-sm">{slide.subtitle}</div>
         </div>
-        <div className="ml-4 p-3 bg-white/10 rounded-xl">{slide.icon}</div>
+        <div className="ml-4 shrink-0">{slide.icon}</div>
         <div className="absolute bottom-3 right-4 flex gap-1">
           {BANNER_SLIDES.map((_, i) => (
             <button
