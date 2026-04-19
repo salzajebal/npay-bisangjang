@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   Search,
   ChevronRight,
@@ -15,15 +15,23 @@ import {
   Menu,
   X,
   ExternalLink,
+  Star,
+  Bell,
+  Plus,
+  BarChart3,
+  CalendarDays,
+  FileText,
+  Coins,
+  TrendingUp,
 } from "lucide-react";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { StockIcon } from "@/components/stock-icon";
 import { SiteLogoBadge } from "@/components/site-logo";
 import { fetchStockPrices } from "@/lib/market-prices";
-import type { User as UserType, StockTransaction } from "@shared/schema";
+import type { User as UserType, StockTransaction, Watchlist } from "@shared/schema";
 
 const UNLISTED_STOCKS = [
-  { name: "두나무", code: "389930", price: 307000, change: 1.99, orders: 120, category: "일반", isIPO: false, marketCap: 98000, revenueGrowth: 42.3, ipoPrep: false },
+  { name: "두나무", code: "389930", price: 307000, change: 1.99, orders: 120, category: "일반", isIPO: false, marketCap: 140000, revenueGrowth: 42.3, ipoPrep: false },
   { name: "빗썸", code: "341650", price: 214000, change: -3.17, orders: 50, category: "일반", isIPO: false, marketCap: 35000, revenueGrowth: 31.2, ipoPrep: false },
   { name: "무신사", code: "458860", price: 25700, change: 0, orders: 128, category: "일반", isIPO: true, marketCap: 45000, revenueGrowth: 22.1, ipoPrep: true },
   { name: "오아시스", code: "370190", price: 9600, change: -6.8, orders: 65, category: "일반", isIPO: false, marketCap: 8500, revenueGrowth: -5.3, ipoPrep: false },
@@ -37,6 +45,45 @@ const UNLISTED_STOCKS = [
   { name: "이브이알스튜디오", code: "379660", price: 4350, change: 12.41, orders: 31, category: "일반", isIPO: false, marketCap: 2800, revenueGrowth: 120.5, ipoPrep: false },
   { name: "토스", code: "285240", price: 185000, change: 3.52, orders: 88, category: "일반", isIPO: false, marketCap: 130000, revenueGrowth: 45.8, ipoPrep: true },
   { name: "에스팀", code: "414260", price: 7500, change: 5.63, orders: 22, category: "전문", isIPO: true, marketCap: 1800, revenueGrowth: 92.3, ipoPrep: true },
+];
+
+const BANNER_SLIDES = [
+  {
+    bg: "linear-gradient(135deg, #E8344E 0%, #c0253b 100%)",
+    tag: "NEW",
+    title: "증권플러스 비상장",
+    subtitle: "Npay 비상장으로!",
+    icon: <TrendingUp className="w-8 h-8 text-white/80" />,
+  },
+  {
+    bg: "linear-gradient(135deg, #1976D2 0%, #0d47a1 100%)",
+    tag: "IPO",
+    title: "공모주 청약 일정",
+    subtitle: "놓치지 마세요!",
+    icon: <CalendarDays className="w-8 h-8 text-white/80" />,
+  },
+  {
+    bg: "linear-gradient(135deg, #43A047 0%, #2e7d32 100%)",
+    tag: "이벤트",
+    title: "주식모으기 수수료",
+    subtitle: "무료 이벤트 진행 중",
+    icon: <Coins className="w-8 h-8 text-white/80" />,
+  },
+  {
+    bg: "linear-gradient(135deg, #7B1FA2 0%, #4a148c 100%)",
+    tag: "리포트",
+    title: "전문가 리포트",
+    subtitle: "비상장 투자 가이드",
+    icon: <FileText className="w-8 h-8 text-white/80" />,
+  },
+];
+
+const QUICK_CATEGORIES = [
+  { label: "일반종목", icon: BarChart3, href: "#rankings" },
+  { label: "공모주", icon: TrendingUp, href: "#rankings" },
+  { label: "전문가리포트", icon: FileText, href: "#reports" },
+  { label: "IPO캘린더", icon: CalendarDays, href: "/ipo-calendar" },
+  { label: "테마", icon: Coins, href: "#themes" },
 ];
 
 const RANKING_TABS = ["일반종목", "거래많은", "상승률 높은", "상장준비 시작", "예상시총 높은", "매출이 상승한"];
@@ -114,6 +161,9 @@ function useTickerPrices() {
 function getSortedStocks(stocks: typeof UNLISTED_STOCKS, tab: string) {
   let sorted = [...stocks];
   switch (tab) {
+    case "일반종목":
+      sorted = sorted.filter((s) => s.category === "일반").sort((a, b) => b.marketCap - a.marketCap);
+      break;
     case "거래많은":
       sorted.sort((a, b) => b.orders - a.orders);
       break;
@@ -130,10 +180,183 @@ function getSortedStocks(stocks: typeof UNLISTED_STOCKS, tab: string) {
       sorted = sorted.filter((s) => s.revenueGrowth > 0).sort((a, b) => b.revenueGrowth - a.revenueGrowth);
       break;
     default:
-      sorted.sort((a, b) => b.orders - a.orders);
+      sorted.sort((a, b) => b.marketCap - a.marketCap);
       break;
   }
   return sorted.slice(0, 10).map((s, i) => ({ ...s, rank: i + 1 }));
+}
+
+function useWatchlist(user: UserType | null) {
+  const [localWatchlist, setLocalWatchlist] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("wl") || "[]"); } catch { return []; }
+  });
+
+  const { data: serverWatchlist, refetch } = useQuery<Watchlist[]>({
+    queryKey: ["/api/watchlist"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!user,
+  });
+
+  const addMutation = useMutation({
+    mutationFn: (stockName: string) => apiRequest("POST", "/api/watchlist", { stockName }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/watchlist"] }); },
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (stockName: string) => apiRequest("DELETE", `/api/watchlist/${encodeURIComponent(stockName)}`),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/watchlist"] }); },
+  });
+
+  const watchlistNames: string[] = user
+    ? (serverWatchlist || []).map((w) => w.stockName)
+    : localWatchlist;
+
+  const toggleWatchlist = (stockName: string) => {
+    if (user) {
+      if (watchlistNames.includes(stockName)) {
+        removeMutation.mutate(stockName);
+      } else {
+        addMutation.mutate(stockName);
+      }
+    } else {
+      const next = localWatchlist.includes(stockName)
+        ? localWatchlist.filter((n) => n !== stockName)
+        : [...localWatchlist, stockName];
+      setLocalWatchlist(next);
+      localStorage.setItem("wl", JSON.stringify(next));
+    }
+  };
+
+  return { watchlistNames, toggleWatchlist };
+}
+
+function BannerCarousel() {
+  const [current, setCurrent] = useState(0);
+  const total = BANNER_SLIDES.length;
+
+  useEffect(() => {
+    const t = setInterval(() => setCurrent((c) => (c + 1) % total), 3500);
+    return () => clearInterval(t);
+  }, [total]);
+
+  const slide = BANNER_SLIDES[current];
+
+  return (
+    <div className="mb-4">
+      <div
+        className="relative rounded-2xl overflow-hidden h-28 flex items-center px-5 cursor-pointer select-none"
+        style={{ background: slide.bg }}
+        onClick={() => setCurrent((c) => (c + 1) % total)}
+        data-testid="banner-carousel"
+      >
+        <div className="flex-1">
+          <span className="inline-block text-xs font-bold text-white/70 bg-white/20 rounded-full px-2 py-0.5 mb-1">
+            {slide.tag}
+          </span>
+          <div className="text-white font-bold text-base leading-tight">{slide.title}</div>
+          <div className="text-white/80 text-sm">{slide.subtitle}</div>
+        </div>
+        <div className="ml-4 p-3 bg-white/10 rounded-xl">{slide.icon}</div>
+        <div className="absolute bottom-3 right-4 flex gap-1">
+          {BANNER_SLIDES.map((_, i) => (
+            <button
+              key={i}
+              onClick={(e) => { e.stopPropagation(); setCurrent(i); }}
+              className={`w-1.5 h-1.5 rounded-full transition-all ${i === current ? "bg-white w-4" : "bg-white/40"}`}
+              data-testid={`banner-dot-${i}`}
+            />
+          ))}
+        </div>
+        <div className="absolute top-3 right-4 text-white/50 text-xs">{current + 1}/{total}</div>
+      </div>
+
+      <div className="flex gap-3 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+        {QUICK_CATEGORIES.map(({ label, icon: Icon, href }) => (
+          <a
+            key={label}
+            href={href}
+            className="flex flex-col items-center gap-1 min-w-[56px] group"
+            data-testid={`quick-cat-${label}`}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+              <Icon className="w-5 h-5 text-gray-600" />
+            </div>
+            <span className="text-[11px] text-gray-600 text-center leading-tight whitespace-nowrap">{label}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WatchlistSection({
+  user,
+  watchlistNames,
+  onToggleWatchlist,
+}: {
+  user: UserType | null;
+  watchlistNames: string[];
+  onToggleWatchlist: (name: string) => void;
+}) {
+  const [, setLocation] = useLocation();
+  const watchedStocks = UNLISTED_STOCKS.filter((s) => watchlistNames.includes(s.name));
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm" data-testid="watchlist-section">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
+        <div className="flex items-center gap-2">
+          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+          <span className="font-bold text-sm text-gray-900">내 관심종목</span>
+        </div>
+        <span className="text-xs text-gray-400">{watchlistNames.length}개</span>
+      </div>
+
+      {!user && (
+        <div className="px-4 py-5 text-center">
+          <Star className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+          <p className="text-sm text-gray-500 mb-3">로그인하면<br />관심종목을 확인할 수 있습니다</p>
+          <button
+            onClick={() => setLocation("/login")}
+            className="text-xs text-[#E8344E] font-semibold border border-[#E8344E] rounded-full px-4 py-1.5 hover:bg-[#E8344E] hover:text-white transition-colors"
+            data-testid="watchlist-login-btn"
+          >
+            로그인하기
+          </button>
+        </div>
+      )}
+
+      {user && watchedStocks.length === 0 && (
+        <div className="px-4 py-5 text-center">
+          <Star className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+          <p className="text-sm text-gray-400">관심종목이 없습니다<br />종목 옆 ★를 눌러 추가하세요</p>
+        </div>
+      )}
+
+      {user && watchedStocks.length > 0 && (
+        <div className="divide-y divide-gray-50">
+          {watchedStocks.map((s) => (
+            <div key={s.name} className="flex items-center gap-3 px-4 py-2.5" data-testid={`watchlist-item-${s.name}`}>
+              <StockIcon name={s.name} size={32} />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-gray-900 truncate">{s.name}</div>
+                <div className="text-xs text-gray-400">{s.price.toLocaleString()}원</div>
+              </div>
+              <div className={`text-xs font-semibold ${s.change >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                {s.change >= 0 ? "+" : ""}{s.change}%
+              </div>
+              <button
+                onClick={() => onToggleWatchlist(s.name)}
+                className="ml-1 text-yellow-400"
+                data-testid={`watchlist-remove-${s.name}`}
+              >
+                <Star className="w-4 h-4 fill-yellow-400" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function Header({ user }: { user: UserType | null }) {
@@ -282,7 +505,13 @@ function Header({ user }: { user: UserType | null }) {
   );
 }
 
-function StockRankings() {
+function StockRankings({
+  watchlistNames,
+  onToggleWatchlist,
+}: {
+  watchlistNames: string[];
+  onToggleWatchlist: (name: string) => void;
+}) {
   const allStocks = useTickerPrices();
   const [activeTab, setActiveTab] = useState("일반종목");
   const displayStocks = getSortedStocks(allStocks, activeTab);
@@ -299,7 +528,7 @@ function StockRankings() {
           <span className="text-xs text-[#999]">{timeStr}</span>
         </div>
         <a href="#" className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-rankings-all">
-          전체보기 <ChevronRight className="w-3.5 h-3.5" />
+          더보기 <ChevronRight className="w-3.5 h-3.5" />
         </a>
       </div>
 
@@ -321,65 +550,107 @@ function StockRankings() {
       </div>
 
       <div className="border border-[#eee] rounded-lg overflow-hidden">
-        <div className="hidden sm:grid grid-cols-[40px_1fr_100px_80px_70px_50px] gap-0 px-4 py-2.5 bg-[#fafafa] text-xs text-[#999] border-b border-[#eee]">
+        <div className="hidden sm:grid grid-cols-[40px_1fr_100px_80px_70px_36px] gap-0 px-4 py-2.5 bg-[#fafafa] text-xs text-[#999] border-b border-[#eee]">
           <span></span>
           <span>종목명</span>
           <span className="text-right flex items-center justify-end gap-0.5">체결평균가 <span className="text-[10px]">&#9660;</span></span>
           <span className="text-right">등락률</span>
           <span className="text-right">전체주문</span>
-          <span className="text-right">구분</span>
+          <span></span>
         </div>
-        {displayStocks.map((stock) => (
-          <div
-            key={stock.code}
-            onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
-            className="hidden sm:grid grid-cols-[40px_1fr_100px_80px_70px_50px] gap-0 px-4 py-3 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer items-center"
-            data-testid={`row-stock-${stock.code}`}
-          >
-            <span className="text-sm text-[#999] font-medium">{stock.rank}</span>
-            <div className="flex items-center gap-2.5">
-              <StockIcon name={stock.name} size={32} />
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-medium text-[#222]">{stock.name}</span>
-                {stock.isIPO && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#E8344E] text-white font-medium leading-none">IPO</span>
-                )}
+        {displayStocks.map((stock) => {
+          const starred = watchlistNames.includes(stock.name);
+          return (
+            <div
+              key={stock.code}
+              className="hidden sm:grid grid-cols-[40px_1fr_100px_80px_70px_36px] gap-0 px-4 py-3 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors items-center group"
+              data-testid={`row-stock-${stock.code}`}
+            >
+              <span
+                className="text-sm text-[#999] font-medium cursor-pointer"
+                onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
+              >{stock.rank}</span>
+              <div
+                className="flex items-center gap-2.5 cursor-pointer"
+                onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
+              >
+                <StockIcon name={stock.name} size={32} />
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-medium text-[#222]">{stock.name}</span>
+                  {stock.isIPO && (
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#E8344E] text-white font-medium leading-none">IPO</span>
+                  )}
+                </div>
               </div>
-            </div>
-            <span className="text-sm text-[#222] text-right tabular-nums font-medium">{stock.price.toLocaleString()}원</span>
-            <span className={`text-sm text-right tabular-nums font-medium ${stock.change > 0 ? "text-[#f04452]" : stock.change < 0 ? "text-[#3182f6]" : "text-[#999]"}`}>
-              {stock.change > 0 ? "+" : ""}{stock.change.toFixed(2)}%
-            </span>
-            <span className="text-sm text-[#666] text-right tabular-nums">{stock.orders}건</span>
-            <span className="text-xs text-[#999] text-right">{stock.category}</span>
-          </div>
-        ))}
-        {displayStocks.map((stock) => (
-          <div
-            key={`m-${stock.code}`}
-            onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
-            className="sm:hidden flex items-center gap-3 px-3 py-3 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer"
-            data-testid={`row-stock-mobile-${stock.code}`}
-          >
-            <span className="text-xs text-[#999] font-medium w-5 shrink-0 text-center">{stock.rank}</span>
-            <StockIcon name={stock.name} size={28} />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-medium text-[#222] truncate">{stock.name}</span>
-                {stock.isIPO && (
-                  <span className="text-[10px] px-1 py-0.5 rounded bg-[#E8344E] text-white font-medium leading-none shrink-0">IPO</span>
-                )}
-              </div>
-              <span className="text-[11px] text-[#999]">{stock.orders}건 · {stock.category}</span>
-            </div>
-            <div className="text-right shrink-0">
-              <p className="text-sm font-medium text-[#222] tabular-nums">{stock.price.toLocaleString()}원</p>
-              <p className={`text-xs tabular-nums font-medium ${stock.change > 0 ? "text-[#f04452]" : stock.change < 0 ? "text-[#3182f6]" : "text-[#999]"}`}>
+              <span
+                className="text-sm text-[#222] text-right tabular-nums font-medium cursor-pointer"
+                onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
+              >{stock.price.toLocaleString()}원</span>
+              <span
+                className={`text-sm text-right tabular-nums font-medium cursor-pointer ${stock.change > 0 ? "text-[#f04452]" : stock.change < 0 ? "text-[#3182f6]" : "text-[#999]"}`}
+                onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
+              >
                 {stock.change > 0 ? "+" : ""}{stock.change.toFixed(2)}%
-              </p>
+              </span>
+              <span
+                className="text-sm text-[#666] text-right tabular-nums cursor-pointer"
+                onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
+              >{stock.orders}건</span>
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleWatchlist(stock.name); }}
+                className="flex items-center justify-end"
+                data-testid={`btn-star-${stock.code}`}
+                title={starred ? "관심종목 해제" : "관심종목 추가"}
+              >
+                <Star
+                  className={`w-4 h-4 transition-colors ${starred ? "text-yellow-400 fill-yellow-400" : "text-gray-300 hover:text-yellow-300"}`}
+                />
+              </button>
             </div>
-          </div>
-        ))}
+          );
+        })}
+        {displayStocks.map((stock) => {
+          const starred = watchlistNames.includes(stock.name);
+          return (
+            <div
+              key={`m-${stock.code}`}
+              className="sm:hidden flex items-center gap-3 px-3 py-3 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors"
+              data-testid={`row-stock-mobile-${stock.code}`}
+            >
+              <span className="text-xs text-[#999] font-medium w-5 shrink-0 text-center">{stock.rank}</span>
+              <div
+                className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
+              >
+                <StockIcon name={stock.name} size={28} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-medium text-[#222] truncate">{stock.name}</span>
+                    {stock.isIPO && (
+                      <span className="text-[10px] px-1 py-0.5 rounded bg-[#E8344E] text-white font-medium leading-none shrink-0">IPO</span>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-[#999]">{stock.orders}건 · {stock.category}</span>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-sm font-medium text-[#222] tabular-nums">{stock.price.toLocaleString()}원</p>
+                  <p className={`text-xs tabular-nums font-medium ${stock.change > 0 ? "text-[#f04452]" : stock.change < 0 ? "text-[#3182f6]" : "text-[#999]"}`}>
+                    {stock.change > 0 ? "+" : ""}{stock.change.toFixed(2)}%
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleWatchlist(stock.name); }}
+                className="shrink-0 p-1"
+                data-testid={`btn-star-mobile-${stock.code}`}
+              >
+                <Star
+                  className={`w-4 h-4 transition-colors ${starred ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+                />
+              </button>
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -1061,21 +1332,25 @@ export default function TradePage() {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
+  const { watchlistNames, toggleWatchlist } = useWatchlist(user ?? null);
+
   return (
     <div className="min-h-screen bg-white" data-testid="page-landing">
       <Header user={user ?? null} />
 
       <main className="max-w-[1200px] mx-auto px-4 py-4">
-        <div className="flex flex-col lg:flex-row gap-6">
+        <BannerCarousel />
+        <div className="flex flex-col lg:flex-row gap-6 mt-2">
           <div className="flex-1 min-w-0 space-y-8">
-            <StockRankings />
+            <StockRankings watchlistNames={watchlistNames} onToggleWatchlist={toggleWatchlist} />
             <MajorNews />
             <ExpertReports />
             <ThemeStocks />
             <PopularDiscussions />
           </div>
 
-          <aside className="w-full lg:w-[340px] shrink-0 space-y-8">
+          <aside className="w-full lg:w-[340px] shrink-0 space-y-6">
+            <WatchlistSection user={user ?? null} watchlistNames={watchlistNames} onToggleWatchlist={toggleWatchlist} />
             <MyHoldings />
             <Tips />
             <HotDiscussionRooms />
@@ -1088,6 +1363,8 @@ export default function TradePage() {
       <style>{`
         .scrollbar-none::-webkit-scrollbar { display: none; }
         .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         html { scroll-behavior: smooth; }
         [id] { scroll-margin-top: 70px; }

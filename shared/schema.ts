@@ -128,6 +128,21 @@ export type ChatRoom = typeof chatRooms.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 
+export const watchlist = pgTable("watchlist", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  stockName: text("stock_name").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertWatchlistSchema = createInsertSchema(watchlist).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type Watchlist = typeof watchlist.$inferSelect;
+export type InsertWatchlist = z.infer<typeof insertWatchlistSchema>;
+
 export const ipoStocks = pgTable("ipo_stocks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   stockName: text("stock_name").notNull(),

@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks } from "@shared/schema";
+import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
 
@@ -33,6 +33,10 @@ export interface IStorage {
   createIpoStock(data: InsertIpoStock): Promise<IpoStock>;
   updateIpoStock(id: string, data: Partial<InsertIpoStock>): Promise<IpoStock | undefined>;
   deleteIpoStock(id: string): Promise<void>;
+  getWatchlist(userId: string): Promise<Watchlist[]>;
+  addToWatchlist(userId: string, stockName: string): Promise<Watchlist>;
+  removeFromWatchlist(userId: string, stockName: string): Promise<void>;
+  isInWatchlist(userId: string, stockName: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -181,6 +185,24 @@ export class DatabaseStorage implements IStorage {
 
   async deleteIpoStock(id: string): Promise<void> {
     await db.delete(ipoStocks).where(eq(ipoStocks.id, id));
+  }
+
+  async getWatchlist(userId: string): Promise<Watchlist[]> {
+    return db.select().from(watchlist).where(eq(watchlist.userId, userId)).orderBy(desc(watchlist.createdAt));
+  }
+
+  async addToWatchlist(userId: string, stockName: string): Promise<Watchlist> {
+    const [item] = await db.insert(watchlist).values({ userId, stockName }).returning();
+    return item;
+  }
+
+  async removeFromWatchlist(userId: string, stockName: string): Promise<void> {
+    await db.delete(watchlist).where(and(eq(watchlist.userId, userId), eq(watchlist.stockName, stockName)));
+  }
+
+  async isInWatchlist(userId: string, stockName: string): Promise<boolean> {
+    const [item] = await db.select().from(watchlist).where(and(eq(watchlist.userId, userId), eq(watchlist.stockName, stockName)));
+    return !!item;
   }
 }
 

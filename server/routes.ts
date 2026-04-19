@@ -775,6 +775,41 @@ export async function registerRoutes(
     }
   });
 
+  // Watchlist API routes
+  app.get("/api/watchlist", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ message: "로그인이 필요합니다" });
+    try {
+      const items = await storage.getWatchlist(req.session.userId);
+      return res.json(items);
+    } catch (error) {
+      return res.status(500).json({ message: "관심종목 조회 실패" });
+    }
+  });
+
+  app.post("/api/watchlist", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ message: "로그인이 필요합니다" });
+    try {
+      const { stockName } = req.body;
+      if (!stockName) return res.status(400).json({ message: "종목명을 입력해주세요" });
+      const already = await storage.isInWatchlist(req.session.userId, stockName);
+      if (already) return res.status(409).json({ message: "이미 추가된 종목입니다" });
+      const item = await storage.addToWatchlist(req.session.userId, stockName);
+      return res.json(item);
+    } catch (error) {
+      return res.status(500).json({ message: "관심종목 추가 실패" });
+    }
+  });
+
+  app.delete("/api/watchlist/:stockName", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ message: "로그인이 필요합니다" });
+    try {
+      await storage.removeFromWatchlist(req.session.userId, decodeURIComponent(req.params.stockName));
+      return res.json({ message: "삭제 완료" });
+    } catch (error) {
+      return res.status(500).json({ message: "관심종목 삭제 실패" });
+    }
+  });
+
   // Chat API routes
   app.post("/api/chat/rooms", async (req, res) => {
     if (!req.session.userId) {
