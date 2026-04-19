@@ -326,21 +326,6 @@ function BannerCarousel() {
         <div className="absolute top-3 right-4 text-[#bbb] text-xs">{current + 1}/{total}</div>
       </div>
 
-      <div className="flex gap-3 mt-3 overflow-x-auto pb-1 scrollbar-hide">
-        {QUICK_CATEGORIES.map(({ label, icon: Icon, href }) => (
-          <a
-            key={label}
-            href={href}
-            className="flex flex-col items-center gap-1 min-w-[56px] group"
-            data-testid={`quick-cat-${label}`}
-          >
-            <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center group-hover:bg-gray-200 transition-colors">
-              <Icon className="w-5 h-5 text-gray-600" />
-            </div>
-            <span className="text-[11px] text-gray-600 text-center leading-tight whitespace-nowrap">{label}</span>
-          </a>
-        ))}
-      </div>
     </div>
   );
 }
