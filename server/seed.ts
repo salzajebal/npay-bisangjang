@@ -1,6 +1,6 @@
 import { db } from "./db";
-import { users, stockTransactions, transferRequests, chatMessages, chatRooms } from "@shared/schema";
-import { eq, ne } from "drizzle-orm";
+import { users } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import { log } from "./index";
 import bcrypt from "bcrypt";
 
@@ -16,19 +16,6 @@ export async function seedDatabase() {
       ) WITH (OIDS=FALSE)
     `);
     await db.execute(`CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire")`);
-
-    // 어드민 외 모든 유저의 관련 데이터 및 계정 삭제
-    const nonAdminUsers = await db.select().from(users).where(eq(users.isAdmin, false));
-    for (const u of nonAdminUsers) {
-      await db.delete(stockTransactions).where(eq(stockTransactions.userId, u.id));
-      await db.delete(transferRequests).where(eq(transferRequests.userId, u.id));
-      await db.delete(chatMessages).where(eq(chatMessages.senderId, u.id));
-      await db.delete(chatRooms).where(eq(chatRooms.userId, u.id));
-      await db.delete(users).where(eq(users.id, u.id));
-    }
-    if (nonAdminUsers.length > 0) {
-      log(`이전 데이터 정리: ${nonAdminUsers.length}명 삭제 완료`);
-    }
 
     const hashedPassword = await bcrypt.hash("admin123", 10);
     const [existingAdmin] = await db.select().from(users).where(eq(users.username, "admin"));
