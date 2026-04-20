@@ -6,9 +6,6 @@ import {
   ChevronRight,
   ChevronLeft,
   MessageCircle,
-  BookOpen,
-  HelpCircle,
-  Award,
   LogIn,
   LogOut,
   User,
@@ -1235,7 +1232,7 @@ function Tips() {
 
   const tips = [
     {
-      icon: <Award className="w-5 h-5 text-[#E8344E]" />,
+      icon: <Search className="w-5 h-5 text-[#E8344E]" />,
       title: "이것만 따라하세요!",
       desc: "증권플러스 비상장 이용가이드",
       content: [
@@ -1247,7 +1244,7 @@ function Tips() {
       ],
     },
     {
-      icon: <HelpCircle className="w-5 h-5 text-[#1976D2]" />,
+      icon: <MessageCircle className="w-5 h-5 text-[#1976D2]" />,
       title: "비상장 거래, 궁금해요!",
       desc: "자주하는 질문",
       content: [
@@ -1258,7 +1255,7 @@ function Tips() {
       ],
     },
     {
-      icon: <BookOpen className="w-5 h-5 text-[#43A047]" />,
+      icon: <span className="text-[11px] font-black text-white bg-[#E8344E] rounded px-1 py-0.5 leading-none">101</span>,
       title: "꼭 알아야 할 비상장 기본상식!",
       desc: "비상장 주식 101",
       content: [
