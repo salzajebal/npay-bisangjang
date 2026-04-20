@@ -193,7 +193,7 @@ export default function RegisterPage() {
                 name="accountNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>계좌번호</FormLabel>
+                    <FormLabel>계좌번호 <span className="font-normal text-[#666]">(ISA 계좌번호가 아닌, 종합위탁 계좌번호를 입력해 주시기 바랍니다.)</span></FormLabel>
                     <FormControl>
                       <Input
                         placeholder="증권 계좌번호를 입력하세요"
