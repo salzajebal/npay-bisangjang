@@ -1,4 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+let dynamicLogos: Record<string, string> = {};
+let fetched = false;
+
+function fetchDynamicLogos() {
+  if (fetched) return;
+  fetched = true;
+  fetch("/api/stock-logos")
+    .then(r => r.json())
+    .then((data: { logos: Record<string, string> }) => {
+      dynamicLogos = data.logos || {};
+    })
+    .catch(() => {});
+}
 
 const STOCK_LOGOS: Record<string, { logo: string; bg: string }> = {
   "케이뱅크": { logo: "https://static.ustockplus.com/logo/stock/279570.png", bg: "#E8344E" },
@@ -31,9 +45,7 @@ const STOCK_LOGOS: Record<string, { logo: string; bg: string }> = {
   "원스토어": { logo: "https://static.ustockplus.com/logo/company/1105.png", bg: "#E8344E" },
   "지그재그": { logo: "https://static.ustockplus.com/logo/company/1427.png", bg: "#333333" },
   "클래스101": { logo: "https://static.ustockplus.com/logo/company/1428.png", bg: "#E8344E" },
-  "마이리얼트립": { logo: "https://static.ustockplus.com/logo/company/1430.png", bg: "#3182f6" },
   "리센스메디컬": { logo: "https://static.ustockplus.com/logo/company/105.png", bg: "#1976D2" },
-  "오톰": { logo: "https://static.ustockplus.com/logo/company/77025.png", bg: "#333333" },
   "넷마블몬스터": { logo: "https://static.ustockplus.com/logo/stock/214490.png", bg: "#333333" },
   "한패스": { logo: "/logos/hanpass.png", bg: "#00B4D8" },
   "아이엠바이오로직스": { logo: "/logos/imbiologics.png", bg: "#1976D2" },
@@ -43,12 +55,35 @@ const STOCK_LOGOS: Record<string, { logo: string; bg: string }> = {
   "레몬헬스케어": { logo: "https://static.ustockplus.com/admin/2023-02/34fbfac8-37cc-4a4c-acf0-efae5edf08f2.png", bg: "#E8344E" },
   "케이피항공산업": { logo: "https://static.ustockplus.com/admin/2023-04/2e34a914-1d1c-4a8c-88dd-42351b3fc190.png", bg: "#1565C0" },
   "스트라드비전": { logo: "https://static.ustockplus.com/logo/company/77183.png", bg: "#1976D2" },
-  "제이비케이랩": { logo: "", bg: "#E8344E" },
-  "넷마블에프앤씨": { logo: "", bg: "#1A237E" },
+  "제이비케이랩": { logo: "https://static.ustockplus.com/admin/2023-01/06aac63c-465d-433f-bc74-8ce6e484d613.png", bg: "#E8344E" },
+  "넷마블에프앤씨": { logo: "https://static.ustockplus.com/admin/2022-09/ef54387d-559d-45e9-85d1-1e11b5fbabb6.png", bg: "#1A237E" },
   "교보생명보험": { logo: "", bg: "#E8344E" },
   "현대오일뱅크": { logo: "", bg: "#003DA5" },
   "한국증권금융": { logo: "", bg: "#003DA5" },
-  "덕산넵코어스": { logo: "", bg: "#1565C0" },
+  "덕산넵코어스": { logo: "https://static.ustockplus.com/admin/2023-02/25286deb-ff39-4153-b084-eb5319a6f780.png", bg: "#1565C0" },
+  "씨제이올리브영": { logo: "https://static.ustockplus.com/admin/2023-03/fc909dc9-9e11-48cc-aa78-4b3f1ac94a28.png", bg: "#E8344E" },
+  "우아한형제들": { logo: "https://static.ustockplus.com/logo/company/635.png", bg: "#333333" },
+  "여기어때컴퍼니": { logo: "https://static.ustockplus.com/logo/company/84.png", bg: "#F37321" },
+  "비나우": { logo: "https://static.ustockplus.com/admin/2026-02/21e49c3d-1db8-47ec-87c8-4ce706042ffd.png", bg: "#333333" },
+  "이피캠텍": { logo: "https://static.ustockplus.com/logo/company/63941.png", bg: "#1976D2" },
+  "럭스로보": { logo: "https://static.ustockplus.com/logo/company/68870.png", bg: "#333333" },
+  "아데나소프트웨어": { logo: "https://static.ustockplus.com/logo/company/585.png", bg: "#1976D2" },
+  "토스페이먼츠": { logo: "https://static.ustockplus.com/logo/company/65969.png", bg: "#3182f6" },
+  "클레버": { logo: "https://static.ustockplus.com/admin/2023-02/3f9ce161-1e49-409e-a91d-abd090889f4b.png", bg: "#333333" },
+  "알바이오": { logo: "https://static.ustockplus.com/admin/2023-02/b14b6185-e4a5-4857-a639-1974c74d22e1.png", bg: "#E8344E" },
+  "솔젠트": { logo: "https://static.ustockplus.com/admin/2023-01/9d6b894c-47c8-45b1-8e25-9b379607b31c.png", bg: "#1976D2" },
+  "아이월드제약": { logo: "https://static.ustockplus.com/admin/2023-10/1dd57c7a-f1ae-4b65-997d-14b4c8372a46.png", bg: "#43A047" },
+  "엔지더블유": { logo: "https://static.ustockplus.com/logo/company/616.png", bg: "#333333" },
+  "꽃피는아침마을": { logo: "https://static.ustockplus.com/admin/2023-03/119c3b8a-5413-415d-9bd3-a33a8ed82ecd.png", bg: "#43A047" },
+  "이씨스": { logo: "https://static.ustockplus.com/admin/2023-02/f07cd183-39e2-463b-84f9-1ca566459d42.png", bg: "#1976D2" },
+  "나이스엘엠에스": { logo: "https://static.ustockplus.com/logo/company/602.png", bg: "#333333" },
+  "엑스엘게임즈": { logo: "https://static.ustockplus.com/logo/stock/225630.png", bg: "#333333" },
+  "플랜텍": { logo: "https://static.ustockplus.com/admin/2023-02/937f9e69-5d3a-4e89-9138-32445c61e7ba.png", bg: "#1976D2" },
+  "로우카본": { logo: "https://static.ustockplus.com/admin/2023-05/8be8db82-0cc6-42e7-b9fe-45243d236c78.png", bg: "#2E7D32" },
+  "그래핀스퀘어": { logo: "https://static.ustockplus.com/admin/2023-01/0686ffea-0f89-4f83-8bbc-b01e52ec04c7.png", bg: "#333333" },
+  "애자일소다": { logo: "https://static.ustockplus.com/admin/2023-02/8a839a3b-2c7f-46ca-8cf3-2aec138d2233.png", bg: "#1976D2" },
+  "오톰": { logo: "https://static.ustockplus.com/admin/2023-01/33d52156-7bff-43d1-896e-a9dd3b59d858.png", bg: "#333333" },
+  "마이리얼트립": { logo: "https://static.ustockplus.com/admin/2023-02/731a0e1d-48bf-46ef-a699-d10cbe743a9a.png", bg: "#3182f6" },
 };
 
 const STOCK_CODE_MAP: Record<string, string> = {
@@ -201,6 +236,8 @@ function getLogoUrl(name: string): string | null {
   const entry = STOCK_LOGOS[name];
   if (entry?.logo) return entry.logo;
 
+  if (dynamicLogos[name]) return dynamicLogos[name];
+
   const code = STOCK_CODE_MAP[name];
   if (code) {
     return `https://file.alphasquare.co.kr/media/images/stock_logo/kr/${code}.png`;
@@ -211,6 +248,14 @@ function getLogoUrl(name: string): string | null {
 
 export function StockIcon({ name, size = 32 }: { name: string; size?: number }) {
   const [imgError, setImgError] = useState(false);
+  const [, forceUpdate] = useState(0);
+  useEffect(() => {
+    fetchDynamicLogos();
+    if (!STOCK_LOGOS[name]?.logo && !dynamicLogos[name]) {
+      const timer = setTimeout(() => forceUpdate(n => n + 1), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [name]);
   const logoUrl = getLogoUrl(name);
   const bg = STOCK_LOGOS[name]?.bg || getBrandColor(name);
   const char = name.charAt(0);

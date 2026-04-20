@@ -974,5 +974,36 @@ export async function registerRoutes(
     });
   });
 
+  let logoCache: Record<string, string> = {};
+  let logoCacheTime = 0;
+
+  app.get("/api/stock-logos", async (req, res) => {
+    const now = Date.now();
+    if (now - logoCacheTime < 3600000 && Object.keys(logoCache).length > 0) {
+      return res.json({ logos: logoCache });
+    }
+    try {
+      const response = await fetch("https://www.ustockplus.com/", {
+        headers: { "User-Agent": "Mozilla/5.0", "Accept-Language": "ko-KR,ko;q=0.9" },
+        signal: AbortSignal.timeout(10000),
+      });
+      const html = await response.text();
+      const m = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
+      if (!m) return res.json({ logos: logoCache });
+      const data = JSON.parse(m[1]);
+      const text = JSON.stringify(data);
+      const matches = [...text.matchAll(/"name":"([^"]+)"[^}]{0,500}?"logoUrl":"([^"]+)"/g)];
+      const logos: Record<string, string> = {};
+      for (const [, name, url] of matches) {
+        if (name && url && !logos[name]) logos[name] = url;
+      }
+      logoCache = logos;
+      logoCacheTime = now;
+      res.json({ logos });
+    } catch (e) {
+      res.json({ logos: logoCache });
+    }
+  });
+
   return httpServer;
 }
