@@ -213,10 +213,12 @@ const THEME_COMPANIES: Record<string, { companies: string[]; extra: number; desc
 };
 
 const DISCUSSIONS = [
-  { id: 1, user: "투자마스터", avatar: "#E8344E", time: "10분 전", content: "카나프테라퓨틱스 공모 청약 시작했는데, 경쟁률이 어떻게 될지 기대됩니다. 공모가 밴드가 궁금합니다.", tag: "카나프테라퓨틱스" },
-  { id: 2, user: "비상장전문가", avatar: "#1976D2", time: "32분 전", content: "두나무 실적 발표 이후 거래량이 확 늘었네요. 암호화폐 시장 회복과 함께 긍정적인 흐름입니다.", tag: "두나무" },
-  { id: 3, user: "장기투자자", avatar: "#43A047", time: "1시간 전", content: "무신사 상장 준비 소식 들으셨나요? 패션 플랫폼 중에서는 독보적인 위치라 기대됩니다.", tag: "무신사" },
-  { id: 4, user: "IPO분석가", avatar: "#E65100", time: "2시간 전", content: "빗썸 거래량이 지속적으로 증가하고 있어요. 코인 시장 상승과 맞물려서 좋은 흐름입니다.", tag: "빗썸" },
+  { id: 1, user: "투자마스터", userType: "주주", avatar: "#E8344E", time: "10분 전", content: "카나프테라퓨틱스 공모 청약 시작했는데, 경쟁률이 어떻게 될지 기대됩니다.", tag: "카나프테라퓨틱스" },
+  { id: 2, user: "비상장전문가", userType: "일반", avatar: "#1976D2", time: "32분 전", content: "두나무 실적 발표 이후 거래량이 확 늘었네요. 암호화폐 시장 회복과 함께 긍정적인 흐름입니다.", tag: "두나무" },
+  { id: 3, user: "장기투자자", userType: "주주", avatar: "#43A047", time: "1시간 전", content: "무신사 상장 준비 소식 들으셨나요? 패션 플랫폼 중에서는 독보적인 위치라 기대됩니다.", tag: "무신사" },
+  { id: 4, user: "IPO분석가", userType: "일반", avatar: "#E65100", time: "2시간 전", content: "빗썸 거래량이 지속적으로 증가하고 있어요. 코인 시장 상승과 맞물려서 좋은 흐름입니다.", tag: "빗썸" },
+  { id: 5, user: "에스엠랩팬", userType: "주주", avatar: "#9C27B0", time: "3시간 전", content: "에스엠랩 최근 실적 발표가 기대 이상이었네요. 비상장 중에서 주목해야 할 종목입니다.", tag: "에스엠랩" },
+  { id: 6, user: "코람데오", userType: "일반", avatar: "#00695C", time: "4시간 전", content: "금요일 장 마감 후 에스엠랩 주가 흐름이 굉장히 좋았습니다. 다음 주도 기대해봅니다.", tag: "에스엠랩" },
 ];
 
 
@@ -1047,30 +1049,33 @@ function PopularDiscussions() {
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold text-[#222]">인기 토론</h2>
         <a href="#" className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-discussions-all">
-          전체보기 <ChevronRight className="w-3.5 h-3.5" />
+          더보기 <ChevronRight className="w-3.5 h-3.5" />
         </a>
       </div>
-      <div className="space-y-0 border border-[#eee] rounded-lg overflow-hidden">
+      <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
         {DISCUSSIONS.map((post) => (
           <div
             key={post.id}
-            className="px-4 py-3.5 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer"
-            data-testid={`row-discussion-${post.id}`}
+            className="min-w-[200px] max-w-[200px] border border-[#eee] rounded-xl p-4 flex flex-col justify-between gap-2 cursor-pointer hover:border-[#ddd] hover:bg-[#fafafa] transition-colors shrink-0"
+            data-testid={`card-discussion-${post.id}`}
           >
-            <div className="flex items-center gap-2 mb-2">
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-                style={{ backgroundColor: post.avatar }}
-              >
-                {post.user.charAt(0)}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] px-1.5 py-0.5 rounded font-medium"
+                  style={{
+                    backgroundColor: post.userType === "주주" ? "#FFF0F0" : "#F0F4FF",
+                    color: post.userType === "주주" ? "#E8344E" : "#1976D2",
+                  }}
+                >
+                  {post.userType}
+                </span>
+                <span className="text-[11px] text-[#bbb]">{post.time}</span>
               </div>
-              <span className="text-sm font-medium text-[#222]">{post.user}</span>
-              <span className="text-xs text-[#999]">{post.time}</span>
+              <p className="text-sm font-medium text-[#222] leading-snug line-clamp-3">{post.content}</p>
             </div>
-            <p className="text-sm text-[#444] leading-relaxed mb-2">{post.content}</p>
-            <div className="flex items-center gap-2">
-              <span className="text-xs px-2 py-0.5 bg-[#f5f5f5] rounded text-[#666]">{post.tag}</span>
-              <MessageCircle className="w-3.5 h-3.5 text-[#999]" />
+            <div className="flex items-center gap-1.5 pt-1 border-t border-[#f5f5f5]">
+              <span className="text-xs text-[#666]">{post.tag}</span>
+              <MessageCircle className="w-3 h-3 text-[#ccc] ml-auto" />
             </div>
           </div>
         ))}
