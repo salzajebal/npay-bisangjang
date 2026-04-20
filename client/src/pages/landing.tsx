@@ -932,7 +932,7 @@ function MajorNews() {
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold text-[#222]">주요 뉴스</h2>
         <a href="#" className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-news-all">
-          전체보기 <ChevronRight className="w-3.5 h-3.5" />
+          더보기 <ChevronRight className="w-3.5 h-3.5" />
         </a>
       </div>
       <div className="space-y-0 border border-[#eee] rounded-lg overflow-hidden">
@@ -966,7 +966,7 @@ function ExpertReports() {
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold text-[#222]">전문가 리포트</h2>
         <a href="#" className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-reports-all">
-          전체보기 <ChevronRight className="w-3.5 h-3.5" />
+          더보기 <ChevronRight className="w-3.5 h-3.5" />
         </a>
       </div>
       <div className="space-y-0 border border-[#eee] rounded-lg overflow-hidden">
@@ -998,6 +998,9 @@ function ThemeStocks() {
     <section id="themes" data-testid="section-theme-stocks">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold text-[#222]">테마별 종목</h2>
+        <a href="#" className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-themes-all">
+          더보기 <ChevronRight className="w-3.5 h-3.5" />
+        </a>
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-3 scrollbar-none">
@@ -1592,8 +1595,8 @@ export default function TradePage() {
 
             <StockRankings watchlistNames={watchlistNames} onToggleWatchlist={toggleWatchlist} />
             <MajorNews />
-            <ExpertReports />
             <ThemeStocks />
+            <ExpertReports />
             <PopularDiscussions />
           </div>
 
