@@ -115,7 +115,17 @@ export default function LoginPage() {
       if (error.message.includes("401")) {
         description = "아이디 또는 비밀번호가 일치하지 않습니다";
       } else if (error.message.includes("403")) {
-        description = "계정이 동결되었습니다. 관리자에게 문의하세요.";
+        try {
+          const bodyStr = error.message.replace(/^\d+:\s*/, "");
+          const body = JSON.parse(bodyStr);
+          if (body.code === "PENDING_APPROVAL") {
+            description = "가입 승인 대기 중입니다. 관리자 승인 후 로그인이 가능합니다.";
+          } else {
+            description = "계정이 동결되었습니다. 관리자에게 문의하세요.";
+          }
+        } catch {
+          description = "계정이 동결되었습니다. 관리자에게 문의하세요.";
+        }
       }
       toast({
         title: "로그인 실패",

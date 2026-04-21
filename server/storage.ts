@@ -7,6 +7,8 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
+  getPendingUsers(): Promise<User[]>;
+  approveUser(id: string): Promise<User | undefined>;
   updateUser(id: string, data: Partial<Pick<User, "fullName" | "accountNumber" | "accountHolder" | "bank" | "password" | "isFrozen">>): Promise<User | undefined>;
   deleteUser(id: string): Promise<void>;
   getTransaction(id: string): Promise<StockTransaction | undefined>;
@@ -57,6 +59,15 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return db.select().from(users);
+  }
+
+  async getPendingUsers(): Promise<User[]> {
+    return db.select().from(users).where(and(eq(users.isApproved, false), eq(users.isAdmin, false))).orderBy(desc(users.createdAt));
+  }
+
+  async approveUser(id: string): Promise<User | undefined> {
+    const [user] = await db.update(users).set({ isApproved: true }).where(eq(users.id, id)).returning();
+    return user;
   }
 
   async getTransaction(id: string): Promise<StockTransaction | undefined> {

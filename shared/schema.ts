@@ -17,6 +17,7 @@ export const users = pgTable("users", {
   bank: text("bank").notNull(),
   isAdmin: boolean("is_admin").notNull().default(false),
   isFrozen: boolean("is_frozen").notNull().default(false),
+  isApproved: boolean("is_approved").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -36,6 +37,7 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   isAdmin: true,
   isFrozen: true,
+  isApproved: true,
   createdAt: true,
 });
 

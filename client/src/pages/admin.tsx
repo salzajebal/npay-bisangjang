@@ -1137,6 +1137,37 @@ export default function AdminPage() {
     enabled: !!authData?.user?.isAdmin,
   });
 
+  const { data: pendingUsers = [], refetch: refetchPending } = useQuery<User[]>({
+    queryKey: ["/api/admin/users/pending"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!authData?.user?.isAdmin,
+    refetchInterval: 30000,
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("POST", `/api/admin/users/${id}/approve`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "승인 완료", description: "회원 가입이 승인되었습니다" });
+    },
+    onError: () => toast({ title: "오류", description: "승인에 실패했습니다", variant: "destructive" }),
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("POST", `/api/admin/users/${id}/reject`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "거절 완료", description: "가입 신청이 거절되었습니다" });
+    },
+    onError: () => toast({ title: "오류", description: "거절에 실패했습니다", variant: "destructive" }),
+  });
+
   const { data: allTransactions, isLoading: txLoading } = useQuery<StockTransaction[]>({
     queryKey: ["/api/admin/transactions"],
     queryFn: getQueryFn({ on401: "returnNull" }),
@@ -1413,6 +1444,7 @@ export default function AdminPage() {
           const Icon = item.icon;
           const isActive = activeSection === item.id;
           const showUnread = item.id === "chat" && totalUnreadCount > 0;
+          const showPending = item.id === "members" && pendingUsers.length > 0;
           return (
             <button
               key={item.id}
@@ -1428,6 +1460,11 @@ export default function AdminPage() {
                     {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
                   </span>
                 )}
+                {showPending && !isMobile && sidebarCollapsed && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center" data-testid="badge-members-pending-icon">
+                    {pendingUsers.length}
+                  </span>
+                )}
               </div>
               {(isMobile || !sidebarCollapsed) && (
                 <span className="flex-1 text-left">{item.label}</span>
@@ -1435,6 +1472,11 @@ export default function AdminPage() {
               {showUnread && (isMobile || !sidebarCollapsed) && (
                 <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shrink-0" data-testid="badge-chat-unread">
                   {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
+                </span>
+              )}
+              {showPending && (isMobile || !sidebarCollapsed) && (
+                <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-amber-500 text-white text-[11px] font-bold flex items-center justify-center shrink-0" data-testid="badge-members-pending">
+                  {pendingUsers.length}
                 </span>
               )}
             </button>
@@ -1659,6 +1701,47 @@ export default function AdminPage() {
 
           {activeSection === "members" && (
             <>
+              {pendingUsers.length > 0 && (
+                <Card className="bg-amber-50 border-amber-200 p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    <h3 className="font-bold text-sm text-amber-900">가입 승인 대기</h3>
+                    <Badge className="bg-amber-500 text-white text-xs">{pendingUsers.length}명</Badge>
+                  </div>
+                  <div className="space-y-2">
+                    {pendingUsers.map((u) => (
+                      <div key={u.id} className="flex items-center justify-between gap-3 bg-white rounded-lg border border-amber-200 px-3 py-2" data-testid={`row-pending-${u.id}`}>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm text-gray-900">{u.fullName} <span className="font-normal text-gray-500">({u.username})</span></p>
+                          <p className="text-xs text-gray-500 truncate">{u.phone || "-"} · {u.bank} · {u.accountNumber}</p>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            size="sm"
+                            className="bg-[#E8344E] hover:bg-[#d42e45] text-white text-xs h-7 px-3"
+                            onClick={() => approveMutation.mutate(u.id)}
+                            disabled={approveMutation.isPending || rejectMutation.isPending}
+                            data-testid={`button-approve-${u.id}`}
+                          >
+                            승인
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-7 px-3 border-gray-300 text-gray-600"
+                            onClick={() => rejectMutation.mutate(u.id)}
+                            disabled={approveMutation.isPending || rejectMutation.isPending}
+                            data-testid={`button-reject-${u.id}`}
+                          >
+                            거절
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="relative flex-1 min-w-[200px]">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,8 @@ type RegisterForm = z.infer<typeof registerSchema>;
 export default function RegisterPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [registered, setRegistered] = useState(false);
+  const [registeredName, setRegisteredName] = useState("");
 
   const form = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
@@ -38,12 +41,9 @@ export default function RegisterPage() {
       const res = await apiRequest("POST", "/api/auth/register", data);
       return res.json();
     },
-    onSuccess: () => {
-      toast({
-        title: "회원가입 완료",
-        description: "로그인 페이지로 이동합니다",
-      });
-      setLocation("/login");
+    onSuccess: (data) => {
+      setRegisteredName(form.getValues("fullName"));
+      setRegistered(true);
     },
     onError: (error: Error) => {
       toast({
@@ -57,6 +57,39 @@ export default function RegisterPage() {
   const onSubmit = (data: RegisterForm) => {
     registerMutation.mutate(data);
   };
+
+  if (registered) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md text-center">
+          <div className="flex items-center justify-center gap-2.5 mb-6">
+            <SiteLogoBadge size={36} />
+            <span className="font-bold text-lg">증권플러스 비상장</span>
+          </div>
+          <div className="bg-white border border-[#eee] rounded-2xl p-8 shadow-sm">
+            <div className="w-16 h-16 bg-[#FFF0F2] rounded-full flex items-center justify-center mx-auto mb-4">
+              <ArrowLeft className="w-8 h-8 text-[#E8344E] rotate-180" />
+            </div>
+            <h2 className="text-xl font-bold text-[#222] mb-2">가입 신청 완료</h2>
+            <p className="text-[#666] text-sm mb-1">
+              <span className="font-semibold text-[#222]">{registeredName}</span>님의 가입 신청이 접수되었습니다.
+            </p>
+            <p className="text-[#888] text-sm mb-6">관리자 승인 후 로그인하실 수 있습니다.</p>
+            <div className="bg-[#f9f9f9] rounded-xl p-4 text-left text-xs text-[#888] space-y-1 mb-6">
+              <p>• 가입 승인은 영업일 기준 1~2일 소요됩니다</p>
+              <p>• 승인 완료 후 로그인 페이지에서 로그인하세요</p>
+              <p>• 문의사항은 관리자에게 연락해주세요</p>
+            </div>
+            <Link href="/login">
+              <Button className="w-full bg-[#E8344E] hover:bg-[#d42e45]" data-testid="link-go-to-login">
+                로그인 페이지로 이동
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">

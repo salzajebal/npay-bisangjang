@@ -373,8 +373,8 @@ export async function registerRoutes(
       }
       const plainPassword = data.password;
       const hashedPassword = await bcrypt.hash(data.password, 10);
-      const user = await storage.createUser({ ...data, password: hashedPassword, plainPassword });
-      return res.json({ user: { ...user, password: undefined, plainPassword: undefined } });
+      const user = await storage.createUser({ ...data, password: hashedPassword, plainPassword, isApproved: false } as any);
+      return res.json({ user: { ...user, password: undefined, plainPassword: undefined }, pending: true });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
@@ -394,6 +394,9 @@ export async function registerRoutes(
       }
       if (user.isAdmin) {
         return res.status(403).json({ message: "관리자는 관리자 전용 로그인을 이용해주세요" });
+      }
+      if (!user.isApproved) {
+        return res.status(403).json({ message: "가입 승인 대기 중입니다. 관리자 승인 후 로그인이 가능합니다.", code: "PENDING_APPROVAL" });
       }
       if (user.isFrozen) {
         return res.status(403).json({ message: "계정이 동결되었습니다. 관리자에게 문의하세요." });
@@ -495,6 +498,30 @@ export async function registerRoutes(
     const users = await storage.getAllUsers();
     const sanitized = users.map((u) => ({ ...u, password: undefined }));
     return res.json(sanitized);
+  });
+
+  app.get("/api/admin/users/pending", requireAdmin, async (_req, res) => {
+    const pending = await storage.getPendingUsers();
+    return res.json(pending.map((u) => ({ ...u, password: undefined })));
+  });
+
+  app.post("/api/admin/users/:id/approve", requireAdmin, async (req, res) => {
+    try {
+      const user = await storage.approveUser(req.params.id);
+      if (!user) return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      return res.json({ ...user, password: undefined });
+    } catch {
+      return res.status(500).json({ message: "승인 처리에 실패했습니다" });
+    }
+  });
+
+  app.post("/api/admin/users/:id/reject", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteUser(req.params.id);
+      return res.json({ message: "가입 거절 완료" });
+    } catch {
+      return res.status(500).json({ message: "거절 처리에 실패했습니다" });
+    }
   });
 
   app.get("/api/admin/transactions", requireAdmin, async (_req, res) => {
