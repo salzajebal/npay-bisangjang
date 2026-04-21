@@ -49,13 +49,14 @@ export default function MyStocksPage() {
   }
 
   const stockNames = Array.from(holdingsMap.keys());
-  const stockNamesKey = JSON.stringify(stockNames);
+  const allTxStockNames = Array.from(new Set(txList.map(tx => tx.stockName)));
+  const allStockNamesKey = JSON.stringify(allTxStockNames);
 
   useEffect(() => {
-    if (stockNames.length > 0) {
-      fetchStockPrices(stockNames).then(setPriceData);
+    if (allTxStockNames.length > 0) {
+      fetchStockPrices(allTxStockNames).then(setPriceData);
     }
-  }, [stockNamesKey]);
+  }, [allStockNamesKey]);
 
   if (userLoading) {
     return (
@@ -264,7 +265,7 @@ export default function MyStocksPage() {
                     <TableHead className="text-xs text-[#666] font-medium">구분</TableHead>
                     <TableHead className="text-xs text-[#666] font-medium">종목명</TableHead>
                     <TableHead className="text-xs text-[#666] font-medium text-right">수량</TableHead>
-                    <TableHead className="text-xs text-[#666] font-medium text-right">단가</TableHead>
+                    <TableHead className="text-xs text-[#666] font-medium text-right">현재가</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -285,7 +286,7 @@ export default function MyStocksPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right text-sm text-[#222]">{tx.quantity.toLocaleString()}주</TableCell>
-                      <TableCell className="text-right text-sm text-[#222]">{tx.pricePerShare.toLocaleString()}원</TableCell>
+                      <TableCell className="text-right text-sm text-[#222]">{(priceData[tx.stockName]?.currentPrice ?? tx.pricePerShare).toLocaleString()}원</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -306,7 +307,7 @@ export default function MyStocksPage() {
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-sm text-[#222]">{tx.quantity.toLocaleString()}주</p>
-                    <p className="text-xs text-[#666]">{tx.pricePerShare.toLocaleString()}원</p>
+                    <p className="text-xs text-[#666]">{(priceData[tx.stockName]?.currentPrice ?? tx.pricePerShare).toLocaleString()}원</p>
                   </div>
                 </div>
               ))}
