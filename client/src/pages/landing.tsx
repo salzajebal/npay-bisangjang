@@ -5,6 +5,7 @@ import {
   Search,
   ChevronRight,
   ChevronLeft,
+  ArrowLeft,
   MessageCircle,
   LogIn,
   LogOut,
@@ -130,6 +131,31 @@ const ALL_TAB_DATA: Record<string, StockRow[]> = {
   "예상시총 높은": RANK_예상시총,
   "매출이 상승한": RANK_매출상승,
 };
+
+const STOCK_CODES: Record<string, string> = {
+  "채비": "0011T0", "두나무": "0020T0", "무신사": "0021T0", "제이비케이랩": "0030T0",
+  "야놀자": "0040T0", "에너진": "0050T0", "넷마블에프앤씨": "0060T0", "오아시스": "0070T0",
+  "빗썸": "0080T0", "컬리": "0090T0", "케이솔루션": "0100T0", "비바리퍼블리카": "0110T0",
+  "에이치디현대삼호": "0120T0", "스트라드비전": "0130T0", "아스트로젠": "0140T0",
+  "케이피항공산업": "0150T0", "덕산넵코어스": "0160T0", "한국증권금융": "0170T0",
+  "레메디": "0180T0", "레몬헬스케어": "0190T0", "노바셀테크놀로지": "0200T0",
+  "마키나락스": "0210T0", "현대엔지니어링": "0220T0", "리딩투자증권": "0230T0",
+  "재영텍": "0240T0", "와이즈플래닛컴퍼니": "0250T0", "크리에이츠": "0260T0",
+  "인텔리빅스": "0270T0", "스카이랩스": "0280T0", "파워큐브세미": "0290T0",
+  "넥스트젠바이오사이언스": "0300T0", "빅웨이브로보틱스": "0310T0", "메타넷엑스": "0320T0",
+  "현대오일뱅크": "0330T0", "교보생명보험": "0340T0", "카카오모빌리티": "0350T0",
+  "에코크레이션": "0360T0", "에이엠에스티": "0370T0", "뱅크샐러드": "0380T0",
+  "칸에스티엔": "0390T0", "인투코어테크놀로지": "0400T0", "에스엘엘중앙": "0410T0",
+  "이피캠텍": "0420T0", "카나프테라퓨틱스": "0430T0", "오톰": "0440T0",
+  "이브이알스튜디오": "0450T0", "에스엠랩": "0460T0", "에임드바이오": "0470T0",
+  "토스": "0480T0", "크래프톤": "0490T0", "넥슨게임즈": "0500T0",
+  "씨제이올리브영": "0510T0", "우아한형제들": "0520T0", "여기어때컴퍼니": "0530T0",
+  "비나우": "0540T0", "럭스로보": "0550T0", "직방": "0560T0", "쏘카": "0570T0",
+  "코스모로보틱스": "0580T0", "당근마켓": "0590T0", "클래스101": "0600T0",
+  "원스토어": "0610T0", "리디": "0620T0", "버킷플레이스": "0630T0",
+};
+
+const ALL_SEARCH_STOCKS = Object.entries(STOCK_CODES).map(([name, code]) => ({ name, code }));
 
 const BANNER_SLIDES = [
   {
@@ -406,7 +432,12 @@ function WatchlistSection({
   );
 }
 
-function Header({ user }: { user: UserType | null }) {
+function Header({ user, searchQuery, onSearchChange, onSearchFocus }: {
+  user: UserType | null;
+  searchQuery: string;
+  onSearchChange: (v: string) => void;
+  onSearchFocus: () => void;
+}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -430,10 +461,22 @@ function Header({ user }: { user: UserType | null }) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999]" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={e => onSearchChange(e.target.value)}
+                onFocus={onSearchFocus}
                 placeholder="종목명·초성·코드 검색"
-                className="w-full h-9 pl-9 pr-3 rounded-lg bg-[#f5f5f5] border-none text-sm text-[#222] placeholder-[#999] outline-none focus:ring-1 focus:ring-[#E8344E]"
+                className="w-full h-9 pl-9 pr-8 rounded-lg bg-[#f5f5f5] border-none text-sm text-[#222] placeholder-[#999] outline-none focus:ring-1 focus:ring-[#E8344E]"
                 data-testid="input-search"
               />
+              {searchQuery.length > 0 && (
+                <button
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2"
+                  onClick={() => onSearchChange("")}
+                  data-testid="button-search-clear"
+                >
+                  <X className="w-4 h-4 text-[#999]" />
+                </button>
+              )}
             </div>
           </div>
 
@@ -1535,29 +1578,112 @@ export default function TradePage() {
   });
 
   const { watchlistNames, toggleWatchlist } = useWatchlist(user ?? null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const mobileSearchRef = useRef<HTMLInputElement>(null);
+  const [, navigate] = useLocation();
+
+  const searchResults = searchQuery.trim().length > 0
+    ? ALL_SEARCH_STOCKS.filter(s => s.name.includes(searchQuery.trim()))
+    : [];
+
+  const exitSearch = () => {
+    setIsSearchMode(false);
+    setSearchQuery("");
+  };
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") exitSearch(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white" data-testid="page-landing">
-      <Header user={user ?? null} />
+      <Header
+        user={user ?? null}
+        searchQuery={searchQuery}
+        onSearchChange={(v) => { setSearchQuery(v); setIsSearchMode(true); }}
+        onSearchFocus={() => setIsSearchMode(true)}
+      />
 
       <main className="max-w-[1200px] mx-auto px-4 py-4">
         {/* 모바일 검색바 */}
         <div className="lg:hidden mb-3">
-          <div className="flex items-center gap-2 px-3 py-2.5 bg-[#f5f5f5] rounded-xl">
-            <Search className="w-4 h-4 text-[#999] shrink-0" />
-            <input
-              type="text"
-              placeholder="종목명·초성·코드 검색"
-              className="bg-transparent text-sm text-[#222] placeholder-[#aaa] outline-none flex-1"
-              data-testid="input-search-mobile-top"
-            />
-            <Bell className="w-4 h-4 text-[#999] shrink-0" />
-          </div>
+          {isSearchMode ? (
+            <div className="flex items-center gap-2">
+              <button onClick={exitSearch} className="shrink-0 p-1" data-testid="button-search-back">
+                <ArrowLeft className="w-5 h-5 text-[#222]" />
+              </button>
+              <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-[#f5f5f5] rounded-xl">
+                <Search className="w-4 h-4 text-[#999] shrink-0" />
+                <input
+                  ref={mobileSearchRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="종목명·초성·코드 검색"
+                  className="bg-transparent text-sm text-[#222] placeholder-[#aaa] outline-none flex-1"
+                  autoFocus
+                  data-testid="input-search-mobile-top"
+                />
+                {searchQuery.length > 0 && (
+                  <button onClick={() => setSearchQuery("")} className="shrink-0">
+                    <X className="w-4 h-4 text-[#999]" />
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div
+              className="flex items-center gap-2 px-3 py-2.5 bg-[#f5f5f5] rounded-xl cursor-text"
+              onClick={() => { setIsSearchMode(true); setTimeout(() => mobileSearchRef.current?.focus(), 50); }}
+            >
+              <Search className="w-4 h-4 text-[#999] shrink-0" />
+              <span className="text-sm text-[#aaa] flex-1" data-testid="input-search-mobile-top">종목명·초성·코드 검색</span>
+              <Bell className="w-4 h-4 text-[#999] shrink-0" />
+            </div>
+          )}
         </div>
 
-        <BannerCarousel />
+        {/* 검색 결과 */}
+        {isSearchMode && (
+          <div className="mt-2" data-testid="search-results">
+            {searchQuery.trim().length === 0 ? (
+              <p className="text-sm text-[#999] py-8 text-center">종목명을 입력하세요</p>
+            ) : searchResults.length === 0 ? (
+              <p className="text-sm text-[#999] py-8 text-center">
+                입력한 '<span className="text-[#222] font-medium">{searchQuery}</span>'에 대한 결과가 없습니다
+              </p>
+            ) : (
+              <>
+                <p className="text-xs text-[#999] mb-2 px-1">
+                  입력한 '<span className="text-[#222] font-medium">{searchQuery}</span>'에 대한 {searchResults.length}개 결과
+                </p>
+                <div className="divide-y divide-[#f5f5f5]">
+                  {searchResults.map(stock => (
+                    <button
+                      key={stock.code}
+                      className="w-full flex items-center gap-3 py-3 px-1 hover:bg-[#fafafa] transition-colors text-left"
+                      onClick={() => { navigate(`/stock/${encodeURIComponent(stock.name)}`); exitSearch(); }}
+                      data-testid={`search-result-${stock.code}`}
+                    >
+                      <StockIcon name={stock.name} size={36} />
+                      <div>
+                        <div className="text-sm font-semibold text-[#222]">{stock.name}</div>
+                        <div className="text-xs text-[#999]">{stock.code}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
-        <div className="flex flex-col lg:flex-row gap-6 mt-2">
+        {!isSearchMode && <BannerCarousel />}
+
+        <div className={`flex flex-col lg:flex-row gap-6 mt-2 ${isSearchMode ? "hidden" : ""}`}>
           <div className="flex-1 min-w-0 space-y-8">
             {/* 모바일 관심종목 섹션 */}
             <div className="lg:hidden border border-[#eee] rounded-2xl overflow-hidden" data-testid="mobile-watchlist-section">
