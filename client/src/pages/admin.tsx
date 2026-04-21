@@ -1149,17 +1149,6 @@ export default function AdminPage() {
     });
   };
 
-  useEffect(() => {
-    if (prevPendingCount.current === null) {
-      prevPendingCount.current = pendingUsers.length;
-      return;
-    }
-    if (pendingUsers.length > prevPendingCount.current && soundEnabled) {
-      playNotificationSound();
-    }
-    prevPendingCount.current = pendingUsers.length;
-  }, [pendingUsers.length]);
-
   const [searchTerm, setSearchTerm] = useState("");
   const [txSearchTerm, setTxSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -1189,6 +1178,17 @@ export default function AdminPage() {
     enabled: !!authData?.user?.isAdmin,
     refetchInterval: 30000,
   });
+
+  useEffect(() => {
+    if (prevPendingCount.current === null) {
+      prevPendingCount.current = pendingUsers.length;
+      return;
+    }
+    if (pendingUsers.length > prevPendingCount.current && soundEnabled) {
+      playNotificationSound();
+    }
+    prevPendingCount.current = pendingUsers.length;
+  }, [pendingUsers.length]);
 
   const approveMutation = useMutation({
     mutationFn: async (id: string) => {
