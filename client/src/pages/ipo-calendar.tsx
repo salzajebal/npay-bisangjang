@@ -16,13 +16,13 @@ import { getQueryFn } from "@/lib/queryClient";
 type PageTab = "calendar" | "pretrade" | "faq";
 
 const IPO_STATUS_LEGEND = [
-  { label: "주관사선정", dot: "#FFC107" },
+  { label: "주관사신청", dot: "#FFC107" },
   { label: "기술평가통과", dot: "#CE93D8" },
   { label: "심사청구", dot: "#E57373" },
   { label: "심사승인", dot: "#EF5350" },
   { label: "신고서제출", dot: "#EC407A" },
-  { label: "수요예측", dot: "#4CAF50" },
-  { label: "공모청약", dot: "#E53935" },
+  { label: "수요예측", dot: "#9C6FD6" },
+  { label: "공모청약", dot: "#E8344E" },
   { label: "상장", dot: "#1565C0" },
   { label: "환불", dot: "#9E9E9E" },
   { label: "배정", dot: "#8BC34A" },
@@ -65,29 +65,61 @@ const MARCH_CALENDAR_EVENTS = [
 ];
 
 const APRIL_CALENDAR_EVENTS = [
-  // Week 1 (Apr 1~3): 코스모로보틱스 수요예측, 채비 청약, 레메디/리센스메디컬/인벤테라 마무리
-  { name: "코스모로보틱스", day: 1, endDay: 3, color: "#D7C8E8", status: "수요예측" },
-  { name: "채비", day: 1, endDay: 2, color: "#FCDDE1", status: "공모청약" },
-  { name: "레메디", day: 1, endDay: 1, color: "#9E9E9E", status: "환불" },
-  { name: "레메디", day: 2, endDay: 2, color: "#8BC34A", status: "배정" },
-  { name: "리센스메디컬", day: 2, endDay: 2, color: "#1565C0", status: "상장" },
-  { name: "인벤테라", day: 3, endDay: 3, color: "#1565C0", status: "상장" },
-  // Week 2 (Apr 6~10): 채비 환불/배정, 키움히어로 청약, 코스모로보틱스 청약
-  { name: "신한제17호기업인수목적", day: 6, endDay: 6, color: "#1565C0", status: "상장" },
-  { name: "채비", day: 6, endDay: 6, color: "#9E9E9E", status: "환불" },
-  { name: "채비", day: 6, endDay: 6, color: "#8BC34A", status: "배정" },
-  { name: "키움히어로제2호기업인수목적", day: 6, endDay: 7, color: "#FCDDE1", status: "공모청약" },
-  { name: "교보20호기업인수목적", day: 8, endDay: 8, color: "#1565C0", status: "상장" },
-  { name: "레메디", day: 9, endDay: 9, color: "#1565C0", status: "상장" },
-  { name: "키움히어로제2호기업인수목적", day: 9, endDay: 9, color: "#9E9E9E", status: "환불" },
-  { name: "코스모로보틱스", day: 9, endDay: 10, color: "#FCDDE1", status: "공모청약" },
-  { name: "키움히어로제2호기업인수목적", day: 10, endDay: 10, color: "#8BC34A", status: "배정" },
-  // Week 3 (Apr 13~17): 코스모로보틱스 환불+배정 동일일, 키움히어로 상장
-  { name: "코스모로보틱스", day: 14, endDay: 14, color: "#9E9E9E", status: "환불" },
-  { name: "코스모로보틱스", day: 14, endDay: 14, color: "#8BC34A", status: "배정" },
-  { name: "키움히어로제2호기업인수목적", day: 17, endDay: 17, color: "#1565C0", status: "상장" },
-  // Week 4 (Apr 20~24): 코스모로보틱스 상장
-  { name: "코스모로보틱스", day: 22, endDay: 22, color: "#1565C0", status: "상장" },
+  // === 크로스월 (3월 30일=-2, 3월 31일=-1) ===
+  { name: "대신밸런스20호기업인수목적", day: -2, endDay: -2, color: "#D7C8E8", status: "수요예측" },
+  { name: "리센스메디컬", day: -1, endDay: -1, color: "#1565C0", status: "상장" },
+
+  // === 1주차: 4월 1~3일 ===
+  { name: "신한제17호기업인수목적", day: 1, endDay: 2, color: "#FCDDE1", status: "공모청약" },
+  { name: "인벤테라", day: 2, endDay: 2, color: "#E8E8E8", status: "심사청구" },
+  { name: "스트라드비젼", day: 2, endDay: 2, color: "#E8E8E8", status: "심사청구" },
+  { name: "저스틱", day: 2, endDay: 2, color: "#E8E8E8", status: "심사청구" },
+  { name: "쑴레드", day: 2, endDay: 2, color: "#E8E8E8", status: "심사청구" },
+  { name: "교보20호기업인수목적", day: 2, endDay: 3, color: "#FCDDE1", status: "공모청약" },
+  { name: "에이치엠지노믹스", day: 3, endDay: 3, color: "#E8E8E8", status: "심사청구" },
+
+  // === 2주차: 4월 6~10일 ===
+  { name: "키움히어로제2호기업인수목적", day: 6, endDay: 9, color: "#D7C8E8", status: "수요예측" },
+  { name: "크리에이츠", day: 6, endDay: 6, color: "#E8E8E8", status: "심사청구" },
+  { name: "파스피스스튜디오", day: 6, endDay: 7, color: "#E8E8E8", status: "심사청구" },
+  { name: "대신챌런스20호기업인수목적", day: 7, endDay: 8, color: "#D7C8E8", status: "수요예측" },
+  { name: "공토닉스", day: 8, endDay: 8, color: "#E8E8E8", status: "심사청구" },
+  { name: "스트라드비젼", day: 9, endDay: 9, color: "#E8E8E8", status: "심사청구" },
+  { name: "앤드립", day: 9, endDay: 9, color: "#E8E8E8", status: "심사청구" },
+  { name: "채비", day: 10, endDay: 13, color: "#FCDDE1", status: "공모청약" },
+  { name: "엠바디", day: 10, endDay: 10, color: "#E8E8E8", status: "심사청구" },
+
+  // === 3주차: 4월 13~17일 ===
+  { name: "메드인", day: 13, endDay: 13, color: "#E8E8E8", status: "심사청구" },
+  { name: "글로벌테크놀로지", day: 13, endDay: 13, color: "#E8E8E8", status: "심사청구" },
+  { name: "신한제18호기업인수목적", day: 14, endDay: 15, color: "#D7C8E8", status: "수요예측" },
+  { name: "키움히어로제2호기업인수목적", day: 14, endDay: 14, color: "#D7C8E8", status: "수요예측" },
+  { name: "와이즈돌래낸컴퍼니", day: 15, endDay: 15, color: "#E8E8E8", status: "심사청구" },
+  { name: "코스모로보틱스", day: 16, endDay: 17, color: "#D7C8E8", status: "수요예측" },
+  { name: "브릴스", day: 16, endDay: 16, color: "#E8E8E8", status: "심사청구" },
+  { name: "레몬헬스케어", day: 17, endDay: 17, color: "#E8E8E8", status: "심사청구" },
+  { name: "키움히어로제2호기업인수목적", day: 17, endDay: 17, color: "#9E9E9E", status: "환불" },
+  { name: "키움히어로제2호기업인수목적", day: 17, endDay: 17, color: "#8BC34A", status: "배정" },
+
+  // === 4주차: 4월 20~24일 ===
+  { name: "코스모로보틱스", day: 20, endDay: 21, color: "#FCDDE1", status: "공모청약" },
+  { name: "채비", day: 20, endDay: 20, color: "#FCDDE1", status: "공모청약" },
+  { name: "신한제18호기업인수목적", day: 20, endDay: 23, color: "#FCDDE1", status: "공모청약" },
+  { name: "쑴레드", day: 22, endDay: 22, color: "#FCDDE1", status: "공모청약" },
+  { name: "채비", day: 23, endDay: 23, color: "#9E9E9E", status: "환불" },
+  { name: "신한제18호기업인수목적", day: 23, endDay: 23, color: "#9E9E9E", status: "환불" },
+  { name: "신한제18호기업인수목적", day: 23, endDay: 23, color: "#8BC34A", status: "배정" },
+  { name: "키움히어로제2호기업인수목적", day: 23, endDay: 23, color: "#1565C0", status: "상장" },
+
+  // === 5주차: 4월 27~30일 ===
+  { name: "쑴레드", day: 27, endDay: 28, color: "#FCDDE1", status: "공모청약" },
+  { name: "코스모로보틱스", day: 27, endDay: 27, color: "#D7C8E8", status: "수요예측" },
+  { name: "스트라드비젼", day: 28, endDay: 28, color: "#E8E8E8", status: "심사청구" },
+  { name: "마키나락스", day: 28, endDay: 28, color: "#E8E8E8", status: "심사청구" },
+  { name: "채비", day: 29, endDay: 29, color: "#1565C0", status: "상장" },
+  { name: "코스모로보틱스", day: 30, endDay: 30, color: "#9E9E9E", status: "환불" },
+  { name: "코스모로보틱스", day: 30, endDay: 30, color: "#8BC34A", status: "배정" },
+  { name: "신한제18호기업인수목적", day: 30, endDay: 30, color: "#1565C0", status: "상장" },
 ];
 
 const UPCOMING_IPO_LIST = [
@@ -145,7 +177,7 @@ function CalendarView({ month }: { month: number }) {
     [30, 31, 0, 0, 0],
   ];
   const APRIL_WEEKS = [
-    [0, 0, 1, 2, 3],
+    [-2, -1, 1, 2, 3],
     [6, 7, 8, 9, 10],
     [13, 14, 15, 16, 17],
     [20, 21, 22, 23, 24],
@@ -155,13 +187,16 @@ function CalendarView({ month }: { month: number }) {
   const calendarEvents = month === 4 ? APRIL_CALENDAR_EVENTS : MARCH_CALENDAR_EVENTS;
 
   function getEventsForWeek(week: number[]) {
+    const validDays = week.filter(d => d !== 0);
+    const weekFirst = validDays[0];
+    const weekLast = validDays[validDays.length - 1];
     const weekEvents = calendarEvents.filter(e =>
-      week.some(d => d > 0 && d >= e.day && d <= e.endDay)
+      week.some(d => d !== 0 && d >= e.day && d <= e.endDay)
     );
     const lanes: (typeof MARCH_CALENDAR_EVENTS[0] | null)[][] = [];
     weekEvents.forEach(ev => {
-      const evStart = Math.max(ev.day, week[0]);
-      const evEnd = Math.min(ev.endDay, week[week.length - 1]);
+      const evStart = Math.max(ev.day, weekFirst);
+      const evEnd = Math.min(ev.endDay, weekLast);
       let placed = false;
       for (const lane of lanes) {
         let canPlace = true;
@@ -179,7 +214,7 @@ function CalendarView({ month }: { month: number }) {
         }
       }
       if (!placed) {
-        const newLane: (typeof CALENDAR_EVENTS[0] | null)[] = week.map(() => null);
+        const newLane: (typeof MARCH_CALENDAR_EVENTS[0] | null)[] = week.map(() => null);
         for (let d = evStart; d <= evEnd; d++) {
           const idx = week.indexOf(d);
           if (idx >= 0) newLane[idx] = ev;
@@ -204,7 +239,9 @@ function CalendarView({ month }: { month: number }) {
             <div className="grid grid-cols-5">
               {week.map((day, di) => (
                 <div key={di} className="border-r border-[#e0e0e0] last:border-r-0 px-3 pt-2">
-                  <div className="text-[13px] text-[#555] text-right">{day > 0 ? day : ""}</div>
+                  <div className={`text-[13px] text-right ${day < 0 ? "text-[#ccc]" : "text-[#555]"}`}>
+                    {day < 0 ? 32 + day : day > 0 ? day : ""}
+                  </div>
                 </div>
               ))}
             </div>
@@ -512,7 +549,7 @@ function FAQSection() {
 
 export default function IPOCalendarPage() {
   const [activePageTab, setActivePageTab] = useState<PageTab>("calendar");
-  const [calMonth, setCalMonth] = useState(3);
+  const [calMonth, setCalMonth] = useState(4);
 
   return (
     <div className="min-h-screen bg-white" data-testid="page-ipo-calendar">
@@ -586,7 +623,7 @@ export default function IPOCalendarPage() {
               <button
                 className="px-3 py-1 rounded border border-[#eee] text-xs text-[#666]"
                 data-testid="button-cal-today"
-                onClick={() => setCalMonth(3)}
+                onClick={() => setCalMonth(4)}
               >오늘</button>
               <button
                 className="px-2 py-1 rounded border border-[#eee] text-xs text-[#666] disabled:opacity-40"
