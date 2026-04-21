@@ -20,6 +20,7 @@ import {
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
   Eye, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
   CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu, Plus, BookOpen, Copy,
+  Bell, BellOff,
 } from "lucide-react";
 
 const KOREAN_STOCK_LIST = [
@@ -1101,6 +1102,10 @@ export default function AdminPage() {
   const [activeSection, setActiveSectionState] = useState<AdminSection>(getHashSection());
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
+    return localStorage.getItem("adminSoundEnabled") !== "false";
+  });
+  const prevPendingCount = useRef<number | null>(null);
 
   const setActiveSection = (section: AdminSection) => {
     setActiveSectionState(section);
@@ -1114,6 +1119,47 @@ export default function AdminPage() {
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
+
+  const playNotificationSound = () => {
+    try {
+      const ctx = new AudioContext();
+      const playBeep = (freq: number, start: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + start);
+        gain.gain.setValueAtTime(0.25, ctx.currentTime + start);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + duration);
+        osc.start(ctx.currentTime + start);
+        osc.stop(ctx.currentTime + start + duration);
+      };
+      playBeep(880, 0, 0.15);
+      playBeep(1100, 0.18, 0.15);
+      playBeep(1320, 0.36, 0.25);
+    } catch {}
+  };
+
+  const toggleSound = () => {
+    setSoundEnabled(prev => {
+      const next = !prev;
+      localStorage.setItem("adminSoundEnabled", String(next));
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (prevPendingCount.current === null) {
+      prevPendingCount.current = pendingUsers.length;
+      return;
+    }
+    if (pendingUsers.length > prevPendingCount.current && soundEnabled) {
+      playNotificationSound();
+    }
+    prevPendingCount.current = pendingUsers.length;
+  }, [pendingUsers.length]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [txSearchTerm, setTxSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -1707,6 +1753,19 @@ export default function AdminPage() {
                     <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                     <h3 className="font-bold text-sm text-amber-900">가입 승인 대기</h3>
                     <Badge className="bg-amber-500 text-white text-xs">{pendingUsers.length}명</Badge>
+                    <button
+                      onClick={toggleSound}
+                      className={`ml-auto flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border transition-colors ${
+                        soundEnabled
+                          ? "bg-amber-500 border-amber-500 text-white"
+                          : "bg-white border-amber-300 text-amber-600"
+                      }`}
+                      title={soundEnabled ? "알림 소리 켜짐" : "알림 소리 꺼짐"}
+                      data-testid="button-toggle-sound"
+                    >
+                      {soundEnabled ? <Bell className="w-3 h-3" /> : <BellOff className="w-3 h-3" />}
+                      {soundEnabled ? "소리 ON" : "소리 OFF"}
+                    </button>
                   </div>
                   <div className="space-y-2">
                     {pendingUsers.map((u) => (
@@ -1754,6 +1813,19 @@ export default function AdminPage() {
                   />
                 </div>
                 <Badge variant="outline" className="shrink-0 border-gray-200 text-gray-500">{filteredUsers.length}명</Badge>
+                <button
+                  onClick={toggleSound}
+                  className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+                    soundEnabled
+                      ? "bg-amber-50 border-amber-300 text-amber-700"
+                      : "bg-gray-50 border-gray-200 text-gray-400"
+                  }`}
+                  title={soundEnabled ? "가입 알림 소리 켜짐 (클릭 시 끄기)" : "가입 알림 소리 꺼짐 (클릭 시 켜기)"}
+                  data-testid="button-toggle-sound-bar"
+                >
+                  {soundEnabled ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
+                  가입알림 {soundEnabled ? "ON" : "OFF"}
+                </button>
               </div>
 
               {usersLoading ? (

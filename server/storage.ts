@@ -58,7 +58,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllUsers(): Promise<User[]> {
-    return db.select().from(users);
+    return db.select().from(users).orderBy(desc(users.createdAt));
   }
 
   async getPendingUsers(): Promise<User[]> {
