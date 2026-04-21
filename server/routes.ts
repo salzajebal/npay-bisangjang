@@ -189,7 +189,7 @@ export async function registerRoutes(
     "리센스메디컬": { price: 11000, change: 1.85 },
     "한패스": { price: 19000, change: 0 },
     "케이뱅크": { price: 8300, change: 0 },
-    "채비": { price: 15300, change: 0 },
+    "채비": { price: 12300, change: 0 },
     "코스모로보틱스": { price: 6000, change: 0 },
   };
 
