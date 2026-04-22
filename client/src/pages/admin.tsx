@@ -1105,7 +1105,9 @@ export default function AdminPage() {
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     return localStorage.getItem("adminSoundEnabled") !== "false";
   });
+  const [alertActive, setAlertActive] = useState(false);
   const prevPendingCount = useRef<number | null>(null);
+  const soundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const setActiveSection = (section: AdminSection) => {
     setActiveSectionState(section);
@@ -1145,8 +1147,23 @@ export default function AdminPage() {
     setSoundEnabled(prev => {
       const next = !prev;
       localStorage.setItem("adminSoundEnabled", String(next));
+      if (!next) {
+        setAlertActive(false);
+        if (soundIntervalRef.current) {
+          clearInterval(soundIntervalRef.current);
+          soundIntervalRef.current = null;
+        }
+      }
       return next;
     });
+  };
+
+  const dismissAlert = () => {
+    setAlertActive(false);
+    if (soundIntervalRef.current) {
+      clearInterval(soundIntervalRef.current);
+      soundIntervalRef.current = null;
+    }
   };
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -1185,10 +1202,33 @@ export default function AdminPage() {
       return;
     }
     if (pendingUsers.length > prevPendingCount.current && soundEnabled) {
-      playNotificationSound();
+      setAlertActive(true);
+    }
+    if (pendingUsers.length === 0) {
+      setAlertActive(false);
     }
     prevPendingCount.current = pendingUsers.length;
   }, [pendingUsers.length]);
+
+  useEffect(() => {
+    if (alertActive && soundEnabled) {
+      playNotificationSound();
+      soundIntervalRef.current = setInterval(() => {
+        playNotificationSound();
+      }, 4000);
+    } else {
+      if (soundIntervalRef.current) {
+        clearInterval(soundIntervalRef.current);
+        soundIntervalRef.current = null;
+      }
+    }
+    return () => {
+      if (soundIntervalRef.current) {
+        clearInterval(soundIntervalRef.current);
+        soundIntervalRef.current = null;
+      }
+    };
+  }, [alertActive, soundEnabled]);
 
   const approveMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -1748,11 +1788,20 @@ export default function AdminPage() {
           {activeSection === "members" && (
             <>
               {pendingUsers.length > 0 && (
-                <Card className="bg-amber-50 border-amber-200 p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <Card className={`border-amber-200 p-4 ${alertActive ? "bg-amber-100" : "bg-amber-50"}`}>
+                  <div className="flex items-center gap-2 mb-3 flex-wrap">
+                    <div className={`w-2 h-2 rounded-full bg-amber-500 ${alertActive ? "animate-ping" : "animate-pulse"}`} />
                     <h3 className="font-bold text-sm text-amber-900">가입 승인 대기</h3>
                     <Badge className="bg-amber-500 text-white text-xs">{pendingUsers.length}명</Badge>
+                    {alertActive && (
+                      <button
+                        onClick={dismissAlert}
+                        className="flex items-center gap-1 text-xs px-3 py-1 rounded-full bg-red-500 text-white font-bold animate-pulse border-0"
+                        data-testid="button-dismiss-alert"
+                      >
+                        🔔 알림 확인
+                      </button>
+                    )}
                     <button
                       onClick={toggleSound}
                       className={`ml-auto flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border transition-colors ${
