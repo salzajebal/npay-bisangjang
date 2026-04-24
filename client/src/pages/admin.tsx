@@ -1480,6 +1480,20 @@ export default function AdminPage() {
     return u ? u.fullName : "알 수 없음";
   };
 
+  const getUserHoldings = (userId: string) => {
+    const isIn = (t: string) => t === "in" || t === "입고";
+    const isOut = (t: string) => t === "out" || t === "출고" || t === "내 계좌로 옮기기";
+    const map: Record<string, number> = {};
+    for (const tx of transactions.filter((t) => t.userId === userId)) {
+      if (!map[tx.stockName]) map[tx.stockName] = 0;
+      if (isIn(tx.type)) map[tx.stockName] += tx.quantity;
+      else if (isOut(tx.type)) map[tx.stockName] -= tx.quantity;
+    }
+    return Object.entries(map)
+      .filter(([, qty]) => qty > 0)
+      .map(([name, qty]) => ({ name, qty }));
+  };
+
   const filteredTransactions = transactions.filter((tx) => {
     if (filterCategory !== "all" && tx.category !== filterCategory) return false;
     if (filterType !== "all" && tx.type !== filterType) return false;
@@ -1912,6 +1926,18 @@ export default function AdminPage() {
                         <p>{u.bank} · {u.accountHolder}</p>
                         <p className="font-mono text-gray-400">{u.accountNumber}</p>
                       </div>
+                      {(() => {
+                        const holdings = getUserHoldings(u.id);
+                        return holdings.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {holdings.map((h) => (
+                              <Badge key={h.name} variant="outline" className="text-[11px] border-blue-200 text-blue-700 bg-blue-50 font-medium">
+                                {h.name} {h.qty.toLocaleString()}주
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : null;
+                      })()}
                       <div className="flex items-center gap-1 flex-wrap pt-1 border-t border-gray-200">
                         <MemberDetailDialog user={u} transactions={transactions} onTransactionChange={refreshData} />
                         <MemberEditDialog user={u} onSuccess={refreshData} />
@@ -1944,6 +1970,7 @@ export default function AdminPage() {
                           <TableHead className="text-gray-500">계좌번호</TableHead>
                           <TableHead className="text-gray-500">예금주</TableHead>
                           <TableHead className="text-gray-500">가입일</TableHead>
+                          <TableHead className="text-gray-500">보유 종목</TableHead>
                           <TableHead className="text-center text-gray-500">관리</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -1968,6 +1995,19 @@ export default function AdminPage() {
                             <TableCell className="text-gray-700">{u.accountHolder}</TableCell>
                             <TableCell className="text-sm text-gray-400">
                               {new Date(u.createdAt).toLocaleDateString("ko-KR")}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1 min-w-[100px]">
+                                {getUserHoldings(u.id).length === 0 ? (
+                                  <span className="text-xs text-gray-400">-</span>
+                                ) : (
+                                  getUserHoldings(u.id).map((h) => (
+                                    <Badge key={h.name} variant="outline" className="text-[11px] border-blue-200 text-blue-700 bg-blue-50 font-medium whitespace-nowrap">
+                                      {h.name} {h.qty.toLocaleString()}주
+                                    </Badge>
+                                  ))
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center justify-center gap-1">
