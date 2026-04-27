@@ -287,9 +287,57 @@ function CalendarView({ month }: { month: number }) {
 
 function UpcomingSidebar() {
   const [activeTab, setActiveTab] = useState("청약예정");
-  const filtered = UPCOMING_IPO_LIST.filter(i => i.status === activeTab);
-  const upcomingCount = UPCOMING_IPO_LIST.filter(i => i.status === "청약예정").length;
-  const ongoingCount = UPCOMING_IPO_LIST.filter(i => i.status === "청약진행중").length;
+
+  const { data: ipoData, isLoading } = useQuery<{ data: { toBeIPOList: any[]; beingIPOList: any[]; toBeListingList: any[] } }>({
+    queryKey: ["/api/market/ipo-calendar"],
+    refetchInterval: 5 * 60 * 1000,
+  });
+
+  const fmtDate = (iso?: string) => {
+    if (!iso) return "";
+    try {
+      const d = new Date(iso);
+      return `${String(d.getMonth() + 1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`;
+    } catch { return iso; }
+  };
+
+  const fmtPrice = (min?: number, max?: number, final?: number) => {
+    if (final && final > 0) return `${final.toLocaleString()}원`;
+    if (min && max) return `${min.toLocaleString()} ~ ${max.toLocaleString()}원`;
+    if (min) return `${min.toLocaleString()}원`;
+    return "-";
+  };
+
+  const fmtDDay = (dateStr?: string) => {
+    if (!dateStr) return null;
+    try {
+      const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
+      return diff >= 0 ? `D-${diff}` : "완료";
+    } catch { return null; }
+  };
+
+  const fallbackUpcoming = UPCOMING_IPO_LIST.filter(i => i.status === "청약예정");
+  const fallbackOngoing = UPCOMING_IPO_LIST.filter(i => i.status === "청약진행중");
+
+  const apiUpcoming = (ipoData?.data?.toBeIPOList || []).map((ipo: any) => ({
+    name: ipo.koreanName,
+    dDay: fmtDDay(ipo.offeringStartAt),
+    date: `${fmtDate(ipo.offeringStartAt)} ~ ${fmtDate(ipo.offeringEndAt)}`,
+    priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice),
+    competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness}:1` : "-",
+  }));
+
+  const apiOngoing = (ipoData?.data?.beingIPOList || []).map((ipo: any) => ({
+    name: ipo.koreanName,
+    dDay: null,
+    date: `${fmtDate(ipo.offeringStartAt)} ~ ${fmtDate(ipo.offeringEndAt)}`,
+    priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice),
+    competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness}:1` : "-",
+  }));
+
+  const upcoming = apiUpcoming.length > 0 ? apiUpcoming : fallbackUpcoming.map(i => ({ ...i, dDay: `D-${i.dDay}` }));
+  const ongoing = apiOngoing.length > 0 ? apiOngoing : fallbackOngoing;
+  const filtered = activeTab === "청약예정" ? upcoming : ongoing;
 
   return (
     <div data-testid="upcoming-sidebar">
@@ -303,7 +351,7 @@ function UpcomingSidebar() {
           data-testid="tab-sidebar-ongoing"
         >
           청약진행중
-          {ongoingCount > 0 && <span className="text-[10px] bg-[#E8344E] text-white rounded-full w-4 h-4 flex items-center justify-center">{ongoingCount}</span>}
+          {ongoing.length > 0 && <span className="text-[10px] bg-[#E8344E] text-white rounded-full w-4 h-4 flex items-center justify-center">{ongoing.length}</span>}
         </button>
         <button
           onClick={() => setActiveTab("청약예정")}
@@ -313,36 +361,44 @@ function UpcomingSidebar() {
           data-testid="tab-sidebar-upcoming"
         >
           청약예정
-          <span className="text-[10px] bg-[#E8344E] text-white rounded-full w-4 h-4 flex items-center justify-center">{upcomingCount}</span>
+          <span className="text-[10px] bg-[#E8344E] text-white rounded-full w-4 h-4 flex items-center justify-center">{upcoming.length}</span>
         </button>
       </div>
-      <div className="space-y-3">
-        {filtered.map((ipo, i) => (
-          <div key={i} className="border border-[#eee] rounded-lg p-3 hover:border-[#ddd] transition-colors cursor-pointer" data-testid={`sidebar-ipo-${i}`}>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-bold text-[#E8344E]">{ipo.status === "청약진행중" ? "진행중" : `D-${ipo.dDay}`}</span>
-              <span className="text-[11px] text-[#999]">{ipo.date}</span>
+      {isLoading ? (
+        <div className="space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="border border-[#eee] rounded-lg p-3">
+              <div className="h-4 w-24 bg-gray-100 rounded animate-pulse mb-2" />
+              <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <StockIcon name={ipo.name} size={32} />
-                <div>
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <span className="text-sm font-bold text-[#222]">{ipo.name}</span>
-                    {ipo.label && <span className="text-[10px] text-[#E8344E] font-medium">{ipo.label}</span>}
-                  </div>
-                  <p className="text-[11px] text-[#666]">공모가 {ipo.priceRange}</p>
-                  <p className="text-[11px] text-[#999]">기관경쟁률 {ipo.competition}</p>
-                </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((ipo: any, i: number) => (
+            <div key={i} className="border border-[#eee] rounded-lg p-3 hover:border-[#ddd] transition-colors cursor-pointer" data-testid={`sidebar-ipo-${i}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs font-bold text-[#E8344E]">{ipo.dDay || "진행중"}</span>
+                <span className="text-[11px] text-[#999]">{ipo.date}</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-[#ccc] shrink-0" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <StockIcon name={ipo.name} size={32} />
+                  <div>
+                    <span className="text-sm font-bold text-[#222]">{ipo.name}</span>
+                    <p className="text-[11px] text-[#666]">공모가 {ipo.priceRange}</p>
+                    <p className="text-[11px] text-[#999]">기관경쟁률 {ipo.competition}</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#ccc] shrink-0" />
+              </div>
             </div>
-          </div>
-        ))}
-        {filtered.length === 0 && (
-          <p className="text-sm text-[#999] text-center py-6">해당 종목이 없습니다</p>
-        )}
-      </div>
+          ))}
+          {filtered.length === 0 && (
+            <p className="text-sm text-[#999] text-center py-6">해당 종목이 없습니다</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

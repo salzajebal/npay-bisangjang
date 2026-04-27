@@ -42,96 +42,6 @@ type StockRow = {
   revenueGrowthStr?: string;
 };
 
-const s = (name: string, cat: "일반"|"전문", ipo: boolean, price: number|null, change: number|null, orders: number|null): StockRow =>
-  ({ name, category: cat, isIPO: ipo, price, change, orders });
-
-const RANK_일반종목: StockRow[] = [
-  s("두나무", "일반", false, 298000, -0.67, 128),
-  s("무신사", "일반", true,  23700,  0,    82),
-  s("제이비케이랩", "일반", false, 6400, 0,  48),
-  s("야놀자", "일반", false, 22300, -10.8, 65),
-  s("에너진", "일반", false,  3080,  1.32, 29),
-  s("넷마블에프앤씨", "일반", false, 7750, -1.27, 9),
-  s("오아시스", "일반", false, 7200,  0,   38),
-  s("빗썸", "일반", false, 197000, 1.03, 38),
-  s("컬리", "일반", false, 18200, -0.55, 23),
-  s("케이솔루션", "일반", true, 14400, 2.13, 16),
-];
-
-const RANK_거래많은: StockRow[] = [
-  s("두나무", "일반", false, 298000, -0.67, 128),
-  s("무신사", "일반", true,  23700,  0,    82),
-  s("제이비케이랩", "일반", false, 6400,  0,  48),
-  s("비바리퍼블리카", "전문", false, null, null, null),
-  s("에이치디현대삼호", "전문", false, null, null, null),
-  s("스트라드비전", "전문", true,  null, null, null),
-  s("아스트로젠", "전문", false, null, null, null),
-  s("케이피항공산업", "전문", true,  null, null, null),
-  s("덕산넵코어스", "전문", true,  null, null, null),
-  s("한국증권금융", "전문", false, null, null, null),
-];
-
-const RANK_상승률높은: StockRow[] = [
-  s("레메디", "전문", true,  null, null, null),
-  s("레몬헬스케어", "전문", true,  null, null, null),
-  s("노바셀테크놀로지", "전문", false, null, null, null),
-  s("아스트로젠", "전문", false, null, null, null),
-  s("마키나락스", "전문", true,  null, null, null),
-  s("케이피항공산업", "전문", true,  null, null, null),
-  s("현대엔지니어링", "전문", false, null, null, null),
-  s("리딩투자증권", "전문", false, null, null, null),
-  s("스트라드비전", "전문", true,  null, null, null),
-  s("재영텍", "전문", false, null, null, null),
-];
-
-const RANK_상장준비: StockRow[] = [
-  { ...s("와이즈플래닛컴퍼니", "전문", true,  null, null, null), ipoDate: "26.04.15", reviewType: "심사청구" },
-  { ...s("크리에이츠", "전문", true,  null, null, null),          ipoDate: "26.04.07", reviewType: "심사청구" },
-  { ...s("인텔리빅스", "전문", true,  null, null, null),          ipoDate: "26.03.24", reviewType: "심사청구" },
-  { ...s("케이솔루션", "일반", true,  null, null, null),          ipoDate: "26.02.12", reviewType: "심사청구" },
-  { ...s("스카이랩스", "전문", true,  null, null, null),          ipoDate: "26.01.30", reviewType: "심사청구" },
-  { ...s("레메디", "전문", true,  null, null, null),              ipoDate: "26.01.30", reviewType: "심사청구" },
-  { ...s("파워큐브세미", "전문", true, null, null, null),         ipoDate: "26.01.16", reviewType: "심사청구" },
-  { ...s("넥스트젠바이오사이언스", "전문", true, null, null, null), ipoDate: "25.12.23", reviewType: "심사청구" },
-  { ...s("빅웨이브로보틱스", "전문", true, null, null, null),     ipoDate: "25.12.16", reviewType: "심사청구" },
-  { ...s("메타넷엑스", "전문", true,  null, null, null),          ipoDate: "25.12.09", reviewType: "심사청구" },
-];
-
-const RANK_예상시총: StockRow[] = [
-  { ...s("비바리퍼블리카", "전문", false, null, null, null),      marketCapStr: "미제공" },
-  { ...s("두나무", "일반", false, 298000, -0.67, 128),            marketCapStr: "10조 3,924억" },
-  { ...s("에이치디현대삼호", "전문", false, null, null, null),    marketCapStr: "미제공" },
-  { ...s("현대오일뱅크", "전문", false, null, null, null),        marketCapStr: "미제공" },
-  { ...s("무신사", "일반", true, 23700, 0, 82),                   marketCapStr: "4조 8,262억" },
-  { ...s("교보생명보험", "전문", false, null, null, null),        marketCapStr: "미제공" },
-  { ...s("현대엔지니어링", "전문", false, null, null, null),      marketCapStr: "미제공" },
-  { ...s("카카오모빌리티", "전문", false, null, null, null),      marketCapStr: "미제공" },
-  { ...s("한국증권금융", "전문", false, null, null, null),        marketCapStr: "미제공" },
-  { ...s("야놀자", "일반", false, 22300, -10.8, 65),              marketCapStr: "2조 2,637억" },
-];
-
-const RANK_매출상승: StockRow[] = [
-  { ...s("에코크레이션", "전문", false, null, null, null),        fiscalYear: "2024년", revenueGrowthStr: "+4,596.8%" },
-  { ...s("에이엠에스티", "전문", false, null, null, null),        fiscalYear: "2025년", revenueGrowthStr: "+109.9%" },
-  { ...s("뱅크샐러드", "전문", false, null, null, null),          fiscalYear: "2025년", revenueGrowthStr: "+76.54%" },
-  { ...s("리딩투자증권", "전문", false, null, null, null),        fiscalYear: "2025년", revenueGrowthStr: "+56.42%" },
-  { ...s("케이솔루션", "일반", true,  null, null, null),          fiscalYear: "2025년", revenueGrowthStr: "+51.26%" },
-  { ...s("칸에스티엔", "전문", false, null, null, null),          fiscalYear: "2024년", revenueGrowthStr: "+45.71%" },
-  { ...s("인투코어테크놀로지", "전문", false, null, null, null),  fiscalYear: "2024년", revenueGrowthStr: "+43.8%" },
-  { ...s("에스엘엘중앙", "전문", false, null, null, null),        fiscalYear: "2025년", revenueGrowthStr: "+42.96%" },
-  { ...s("이피캠텍", "전문", false, null, null, null),            fiscalYear: "2025년", revenueGrowthStr: "+42.45%" },
-  { ...s("비바리퍼블리카", "전문", false, null, null, null),      fiscalYear: "2025년", revenueGrowthStr: "+37.98%" },
-];
-
-const ALL_TAB_DATA: Record<string, StockRow[]> = {
-  "일반종목": RANK_일반종목,
-  "거래많은": RANK_거래많은,
-  "상승률 높은": RANK_상승률높은,
-  "상장준비 시작": RANK_상장준비,
-  "예상시총 높은": RANK_예상시총,
-  "매출이 상승한": RANK_매출상승,
-};
-
 const STOCK_CODES: Record<string, string> = {
   "채비": "0011T0", "두나무": "0020T0", "무신사": "0021T0", "제이비케이랩": "0030T0",
   "야놀자": "0040T0", "에너진": "0050T0", "넷마블에프앤씨": "0060T0", "오아시스": "0070T0",
@@ -214,45 +124,6 @@ const QUICK_CATEGORIES = [
 
 const RANKING_TABS = ["일반종목", "거래많은", "상승률 높은", "상장준비 시작", "예상시총 높은", "매출이 상승한"];
 
-const EXPERT_REPORTS = [
-  { title: "[앤스로픽] 3,500억 달러 기업 가치, AI 시장의 새로운 리더", author: "증권플러스 이영진", date: "2026.02.06", color: "#6B4CE6" },
-  { title: "[반도체·로봇] Korea Startup Scaleup Day", author: "증권플러스 이종욱", date: "2026.01.12", color: "#1976D2" },
-  { title: "[KT클라우드] 국내 대표 AI 인프라 기업", author: "증권플러스 최민하", date: "2025.12.12", color: "#E8344E" },
-  { title: "[에임드바이오] 스크리닝 기술로 키운 ADC 파이프라인의 가치", author: "증권플러스 서근희", date: "2025.11.25", color: "#43A047" },
-];
-
-const THEME_TAGS = ["일반종목", "핀테크", "2차전지", "제약/바이오", "식품/딜리버리", "여행/숙박", "메타버스(VR·AR)", "전기차", "게임"];
-
-const THEME_COMPANIES: Record<string, { companies: string[]; extra: number; desc: string }> = {
-  "일반종목": { companies: ["두나무", "오톰", "빗썸", "야놀자"], extra: 18, desc: "일반투자자와 전문투자자 모두 거래 가능한 일반종목입니다." },
-  "핀테크": { companies: ["두나무", "빗썸", "토스"], extra: 12, desc: "금융과 기술의 융합, 핀테크 관련 비상장 종목입니다." },
-  "2차전지": { companies: ["에너진", "케이솔루션"], extra: 8, desc: "2차전지 및 배터리 관련 비상장 종목입니다." },
-  "제약/바이오": { companies: ["에임드바이오", "에스엠랩"], extra: 15, desc: "제약 및 바이오 관련 비상장 종목입니다." },
-  "식품/딜리버리": { companies: ["컬리", "오아시스", "무신사"], extra: 7, desc: "식품 및 딜리버리 관련 비상장 종목입니다." },
-  "여행/숙박": { companies: ["야놀자"], extra: 5, desc: "여행 및 숙박 관련 비상장 종목입니다." },
-  "메타버스(VR·AR)": { companies: ["이브이알스튜디오"], extra: 6, desc: "메타버스, VR·AR 관련 비상장 종목입니다." },
-  "전기차": { companies: ["에너진"], extra: 4, desc: "전기차 관련 비상장 종목입니다." },
-  "게임": { companies: ["크래프톤", "넥슨게임즈"], extra: 9, desc: "게임 관련 비상장 종목입니다." },
-};
-
-const DISCUSSIONS = [
-  { id: 1, user: "투자마스터", userType: "주주", avatar: "#E8344E", time: "10분 전", content: "카나프테라퓨틱스 공모 청약 시작했는데, 경쟁률이 어떻게 될지 기대됩니다.", tag: "카나프테라퓨틱스" },
-  { id: 2, user: "비상장전문가", userType: "일반", avatar: "#1976D2", time: "32분 전", content: "두나무 실적 발표 이후 거래량이 확 늘었네요. 암호화폐 시장 회복과 함께 긍정적인 흐름입니다.", tag: "두나무" },
-  { id: 3, user: "장기투자자", userType: "주주", avatar: "#43A047", time: "1시간 전", content: "무신사 상장 준비 소식 들으셨나요? 패션 플랫폼 중에서는 독보적인 위치라 기대됩니다.", tag: "무신사" },
-  { id: 4, user: "IPO분석가", userType: "일반", avatar: "#E65100", time: "2시간 전", content: "빗썸 거래량이 지속적으로 증가하고 있어요. 코인 시장 상승과 맞물려서 좋은 흐름입니다.", tag: "빗썸" },
-  { id: 5, user: "에스엠랩팬", userType: "주주", avatar: "#9C27B0", time: "3시간 전", content: "에스엠랩 최근 실적 발표가 기대 이상이었네요. 비상장 중에서 주목해야 할 종목입니다.", tag: "에스엠랩" },
-  { id: 6, user: "코람데오", userType: "일반", avatar: "#00695C", time: "4시간 전", content: "금요일 장 마감 후 에스엠랩 주가 흐름이 굉장히 좋았습니다. 다음 주도 기대해봅니다.", tag: "에스엠랩" },
-];
-
-
-const HOT_ROOMS = [
-  { name: "카나프테라퓨틱스", tags: ["#IPO", "#바이오"], count: 1284 },
-  { name: "빗썸", tags: ["#암호화폐", "#거래소"], count: 956 },
-  { name: "오톰", tags: ["#AI", "#로봇"], count: 743 },
-  { name: "현대엔지니어링", tags: ["#건설", "#플랜트"], count: 621 },
-  { name: "이브이알스튜디오", tags: ["#VR", "#메타버스"], count: 512 },
-];
-
 const NAV_LINKS = [
   { label: "종목랭킹", href: "#rankings" },
   { label: "뉴스", href: "#news" },
@@ -261,10 +132,6 @@ const NAV_LINKS = [
   { label: "토론", href: "#discussions" },
   { label: "공모주 IPO 캘린더", href: "/ipo-calendar" },
 ];
-
-function getTabStocks(tab: string): StockRow[] {
-  return ALL_TAB_DATA[tab] ?? RANK_일반종목;
-}
 
 function useWatchlist(user: UserType | null) {
   const [localWatchlist, setLocalWatchlist] = useState<string[]>(() => {
@@ -365,14 +232,13 @@ function WatchlistSection({
   onToggleWatchlist: (name: string) => void;
 }) {
   const [, setLocation] = useLocation();
-  const allTabStocks = Object.values(ALL_TAB_DATA).flat();
-  const seen = new Set<string>();
-  const uniqueStocks = allTabStocks.filter((s) => {
-    if (seen.has(s.name)) return false;
-    seen.add(s.name);
-    return true;
-  });
-  const watchedStocks = uniqueStocks.filter((s) => watchlistNames.includes(s.name));
+  const [priceMap, setPriceMap] = useState<Record<string, { currentPrice: number; changePercent: number }>>({});
+  const watchlistKey = JSON.stringify(watchlistNames);
+  useEffect(() => {
+    if (watchlistNames.length > 0) {
+      fetchStockPrices(watchlistNames).then(setPriceMap);
+    }
+  }, [watchlistKey]);
 
   return (
     <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm" data-testid="watchlist-section">
@@ -398,34 +264,37 @@ function WatchlistSection({
         </div>
       )}
 
-      {user && watchedStocks.length === 0 && (
+      {user && watchlistNames.length === 0 && (
         <div className="px-4 py-5 text-center">
           <Star className="w-8 h-8 text-gray-200 mx-auto mb-2" />
           <p className="text-sm text-gray-400">관심종목이 없습니다<br />종목 옆 ★를 눌러 추가하세요</p>
         </div>
       )}
 
-      {user && watchedStocks.length > 0 && (
+      {user && watchlistNames.length > 0 && (
         <div className="divide-y divide-gray-50">
-          {watchedStocks.map((s) => (
-            <div key={s.name} className="flex items-center gap-3 px-4 py-2.5" data-testid={`watchlist-item-${s.name}`}>
-              <StockIcon name={s.name} size={32} />
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-gray-900 truncate">{s.name}</div>
-                <div className="text-xs text-gray-400">{s.price !== null ? `${s.price.toLocaleString()}원` : "미제공"}</div>
+          {watchlistNames.map((name) => {
+            const p = priceMap[name];
+            return (
+              <div key={name} className="flex items-center gap-3 px-4 py-2.5" data-testid={`watchlist-item-${name}`}>
+                <StockIcon name={name} size={32} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-gray-900 truncate">{name}</div>
+                  <div className="text-xs text-gray-400">{p ? `${p.currentPrice.toLocaleString()}원` : "미제공"}</div>
+                </div>
+                <div className={`text-xs font-semibold ${!p ? "text-gray-400" : p.changePercent >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                  {!p ? "미제공" : `${p.changePercent >= 0 ? "+" : ""}${p.changePercent.toFixed(2)}%`}
+                </div>
+                <button
+                  onClick={() => onToggleWatchlist(name)}
+                  className="ml-1 text-yellow-400"
+                  data-testid={`watchlist-remove-${name}`}
+                >
+                  <Star className="w-4 h-4 fill-yellow-400" />
+                </button>
               </div>
-              <div className={`text-xs font-semibold ${s.change === null ? "text-gray-400" : s.change >= 0 ? "text-red-500" : "text-blue-500"}`}>
-                {s.change === null ? "미제공" : `${s.change >= 0 ? "+" : ""}${s.change}%`}
-              </div>
-              <button
-                onClick={() => onToggleWatchlist(s.name)}
-                className="ml-1 text-yellow-400"
-                data-testid={`watchlist-remove-${s.name}`}
-              >
-                <Star className="w-4 h-4 fill-yellow-400" />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -732,6 +601,36 @@ function getMobileRight(stock: StockRow, tab: string): ReactNode {
   }
 }
 
+function fmtMarketCap(cap: number | null | undefined): string {
+  if (!cap || cap === 0) return "미제공";
+  const jo = Math.floor(cap / 1_000_000_000_000);
+  const eok = Math.floor((cap % 1_000_000_000_000) / 100_000_000);
+  if (jo > 0 && eok > 0) return `${jo}조 ${eok.toLocaleString()}억`;
+  if (jo > 0) return `${jo}조`;
+  return `${eok.toLocaleString()}억`;
+}
+
+function rowToStockRow(row: any, tab: string): StockRow {
+  const isIPO = tab === "상장준비 시작" || !!row.ipoDate || !!row.reviewType;
+  const category: "일반" | "전문" = row.type === "UNIFIED" ? "일반" : "전문";
+  const price = typeof row.currentPrice === "number" && row.currentPrice > 0 ? row.currentPrice : null;
+  const change = typeof row.changeRate === "number" ? row.changeRate : null;
+  const orders = typeof row.orderCount === "number" ? row.orderCount : null;
+  let ipoDateStr: string | undefined;
+  if (row.ipoDate) {
+    try {
+      const d = new Date(row.ipoDate);
+      ipoDateStr = `${String(d.getFullYear()).slice(2)}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+    } catch { ipoDateStr = row.ipoDate; }
+  }
+  const revenueGrowthStr = typeof row.salesRevenueGrowthRate === "number"
+    ? `${row.salesRevenueGrowthRate >= 0 ? "+" : ""}${row.salesRevenueGrowthRate.toFixed(2)}%`
+    : undefined;
+  const fiscalYear = row.fiscalYear ? `${row.fiscalYear}년` : undefined;
+  const marketCapStr = fmtMarketCap(row.estimatedMarketCap);
+  return { name: row.stockName, category, isIPO, price, change, orders, marketCapStr, ipoDate: ipoDateStr, reviewType: row.reviewType, fiscalYear, revenueGrowthStr };
+}
+
 function StockRankings({
   watchlistNames,
   onToggleWatchlist,
@@ -740,8 +639,27 @@ function StockRankings({
   onToggleWatchlist: (name: string) => void;
 }) {
   const [activeTab, setActiveTab] = useState("일반종목");
-  const displayStocks = getTabStocks(activeTab);
   const [, navigate] = useLocation();
+
+  const { data: rankingData, isLoading: rankingLoading } = useQuery<{ data: { type: string; name: string; rows: any[] }[] }>({
+    queryKey: ["/api/market/rankings"],
+    refetchInterval: 5 * 60 * 1000,
+  });
+
+  const rankGroups = rankingData?.data || [];
+  const seenNames = new Set<string>();
+  const uniqueGroups = rankGroups.filter(g => {
+    if (seenNames.has(g.name)) return false;
+    seenNames.add(g.name);
+    return true;
+  });
+  const availableTabs = uniqueGroups.length > 0
+    ? uniqueGroups.map(g => g.name)
+    : RANKING_TABS;
+
+  const activeGroup = uniqueGroups.find(g => g.name === activeTab);
+  const displayStocks: StockRow[] = (activeGroup?.rows || []).map(r => rowToStockRow(r, activeTab));
+
   const cols = getColDefs(activeTab);
 
   const now = new Date();
@@ -764,7 +682,7 @@ function StockRankings({
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-3 scrollbar-none">
-        {RANKING_TABS.map((tab) => (
+        {availableTabs.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -787,7 +705,20 @@ function StockRankings({
         </div>
       )}
 
-      <div className="border border-[#eee] rounded-lg overflow-hidden">
+      {rankingLoading && (
+        <div className="border border-[#eee] rounded-lg overflow-hidden">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-[#f5f5f5] last:border-b-0">
+              <div className="w-5 h-4 bg-gray-100 rounded animate-pulse" />
+              <div className="w-8 h-8 bg-gray-100 rounded-full animate-pulse" />
+              <div className="flex-1 h-4 bg-gray-100 rounded animate-pulse" />
+              <div className="w-20 h-4 bg-gray-100 rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!rankingLoading && <div className="border border-[#eee] rounded-lg overflow-hidden">
         {/* Desktop header */}
         <div className={`hidden sm:grid ${gridCols} gap-0 px-4 py-2.5 bg-[#fafafa] text-xs text-[#999] border-b border-[#eee]`}>
           <span></span>
@@ -890,7 +821,7 @@ function StockRankings({
             </div>
           );
         })}
-      </div>
+      </div>}
     </section>
   );
 }
@@ -1003,6 +934,26 @@ function MajorNews() {
 }
 
 function ExpertReports() {
+  const { data: reportsData, isLoading } = useQuery<{ data: { expertReportId: number; sourceProvider: string; reportCreator: string; title: string; preview?: string; createdAt?: string }[] }>({
+    queryKey: ["/api/market/expert-reports"],
+    refetchInterval: 5 * 60 * 1000,
+  });
+
+  const fallbackReports = [
+    { expertReportId: 1, sourceProvider: "삼성증권", reportCreator: "삼성증권 이영진", title: "[앤스로픽] 3,500억 달러 기업 가치, AI 시장의 새로운 리더" },
+    { expertReportId: 2, sourceProvider: "증권플러스", reportCreator: "증권플러스 이종욱", title: "[반도체·로봇] Korea Startup Scaleup Day" },
+    { expertReportId: 3, sourceProvider: "증권플러스", reportCreator: "증권플러스 최민하", title: "[KT클라우드] 국내 대표 AI 인프라 기업" },
+    { expertReportId: 4, sourceProvider: "증권플러스", reportCreator: "증권플러스 서근희", title: "[에임드바이오] 스크리닝 기술로 키운 ADC 파이프라인의 가치" },
+  ];
+
+  const reports = (reportsData?.data && reportsData.data.length > 0) ? reportsData.data : fallbackReports;
+
+  const fmtDate = (iso?: string) => {
+    if (!iso) return "";
+    try { const d = new Date(iso); return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`; }
+    catch { return ""; }
+  };
+
   return (
     <section id="reports" data-testid="section-expert-reports">
       <div className="flex items-center justify-between mb-3">
@@ -1011,30 +962,52 @@ function ExpertReports() {
           더보기 <ChevronRight className="w-3.5 h-3.5" />
         </a>
       </div>
-      <div className="space-y-0 border border-[#eee] rounded-lg overflow-hidden">
-        {EXPERT_REPORTS.map((report, i) => (
-          <div
-            key={i}
-            className="flex items-start gap-3 px-4 py-3.5 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer"
-            data-testid={`row-report-${i}`}
-          >
-            <div className="shrink-0 mt-0.5">
-              <SiteLogoBadge size={28} />
+      {isLoading ? (
+        <div className="border border-[#eee] rounded-lg overflow-hidden">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-4 py-3.5 border-b border-[#f5f5f5] last:border-b-0">
+              <div className="w-7 h-7 bg-gray-100 rounded-full animate-pulse shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" />
+                <div className="h-3 bg-gray-100 rounded animate-pulse w-1/3" />
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-[#222] leading-snug line-clamp-2">{report.title}</p>
-              <p className="text-xs text-[#999] mt-1">{report.author} · {report.date}</p>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-0 border border-[#eee] rounded-lg overflow-hidden">
+          {reports.slice(0, 5).map((report, i) => (
+            <div
+              key={report.expertReportId || i}
+              className="flex items-start gap-3 px-4 py-3.5 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer"
+              data-testid={`row-report-${i}`}
+            >
+              <div className="shrink-0 mt-0.5">
+                <SiteLogoBadge size={28} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-[#222] leading-snug line-clamp-2">{report.title}</p>
+                <p className="text-xs text-[#999] mt-1">{report.reportCreator || report.sourceProvider}{report.createdAt ? ` · ${fmtDate(report.createdAt)}` : ""}</p>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
 
 function ThemeStocks() {
-  const [activeTheme, setActiveTheme] = useState("일반종목");
-  const themeData = THEME_COMPANIES[activeTheme] || THEME_COMPANIES["일반종목"];
+  const [activeTheme, setActiveTheme] = useState<string | null>(null);
+
+  const { data: themesData, isLoading } = useQuery<{ data: { keywordId: number; keywordName: string; description: string; includedStocks: any[] }[] }>({
+    queryKey: ["/api/market/themes"],
+    refetchInterval: 5 * 60 * 1000,
+  });
+
+  const themes = themesData?.data || [];
+  const currentThemeName = activeTheme ?? themes[0]?.keywordName ?? "";
+  const currentTheme = themes.find(t => t.keywordName === currentThemeName) || themes[0];
 
   return (
     <section id="themes" data-testid="section-theme-stocks">
@@ -1045,45 +1018,70 @@ function ThemeStocks() {
         </a>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-3 scrollbar-none">
-        {THEME_TAGS.map((tag) => (
-          <button
-            key={tag}
-            onClick={() => setActiveTheme(tag)}
-            className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
-              activeTheme === tag
-                ? "bg-[#E8344E] text-white"
-                : "bg-gradient-to-r from-[#fff3e0] to-[#fff8e1] text-[#996600] border border-[#ffe0b2] hover:from-[#ffe0b2] hover:to-[#fff3e0]"
-            }`}
-            data-testid={`tab-theme-${tag}`}
-          >
-            # {tag}
-          </button>
-        ))}
-      </div>
-
-      <div className="border border-[#eee] rounded-lg p-4">
-        <p className="text-sm text-[#666] mb-3">{themeData.desc}</p>
-        <div className="flex items-center flex-wrap gap-2">
-          {themeData.companies.map((company) => (
-            <span
-              key={company}
-              className="px-3 py-1.5 bg-[#f5f5f5] rounded-full text-sm text-[#222] hover:bg-[#eee] cursor-pointer transition-colors"
-              data-testid={`tag-company-${company}`}
-            >
-              {company}
-            </span>
-          ))}
-          {themeData.extra > 0 && (
-            <span className="text-sm text-[#E8344E] font-medium">+{themeData.extra}개 기업</span>
-          )}
+      {isLoading ? (
+        <div className="flex gap-2 pb-3">
+          {[...Array(5)].map((_, i) => <div key={i} className="h-8 w-20 bg-gray-100 rounded-full animate-pulse" />)}
         </div>
-      </div>
+      ) : (
+        <div className="flex items-center gap-2 overflow-x-auto pb-3 scrollbar-none">
+          {themes.map((theme) => (
+            <button
+              key={theme.keywordId}
+              onClick={() => setActiveTheme(theme.keywordName)}
+              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
+                currentThemeName === theme.keywordName
+                  ? "bg-[#E8344E] text-white"
+                  : "bg-gradient-to-r from-[#fff3e0] to-[#fff8e1] text-[#996600] border border-[#ffe0b2] hover:from-[#ffe0b2] hover:to-[#fff3e0]"
+              }`}
+              data-testid={`tab-theme-${theme.keywordName}`}
+            >
+              # {theme.keywordName}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {currentTheme && (
+        <div className="border border-[#eee] rounded-lg p-4">
+          <p className="text-sm text-[#666] mb-3">{currentTheme.description}</p>
+          <div className="flex items-center flex-wrap gap-2">
+            {(currentTheme.includedStocks || []).slice(0, 6).map((stock: any) => (
+              <span
+                key={stock.code || stock.name}
+                className="px-3 py-1.5 bg-[#f5f5f5] rounded-full text-sm text-[#222] hover:bg-[#eee] cursor-pointer transition-colors"
+                data-testid={`tag-company-${stock.name}`}
+              >
+                {stock.name}
+              </span>
+            ))}
+            {(currentTheme.includedStocks || []).length > 6 && (
+              <span className="text-sm text-[#E8344E] font-medium">+{(currentTheme.includedStocks || []).length - 6}개 기업</span>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
 
 function PopularDiscussions() {
+  const { data: discussionsData, isLoading } = useQuery<{ data: { discussStocks: any[]; discussPosts: any[] } }>({
+    queryKey: ["/api/market/discussions"],
+    refetchInterval: 5 * 60 * 1000,
+  });
+
+  const posts = discussionsData?.data?.discussPosts || [];
+
+  const fallbackPosts = [
+    { id: 1, nickName: "투자마스터", body: "두나무 실적 발표 이후 거래량이 확 늘었네요. 긍정적인 흐름입니다.", stockName: "두나무" },
+    { id: 2, nickName: "비상장전문가", body: "무신사 상장 준비 소식 들으셨나요? 패션 플랫폼 중에서는 독보적입니다.", stockName: "무신사" },
+    { id: 3, nickName: "IPO분석가", body: "빗썸 거래량이 지속적으로 증가하고 있어요. 코인 시장 상승과 맞물려서 좋은 흐름입니다.", stockName: "빗썸" },
+    { id: 4, nickName: "장기투자자", body: "야놀자 여행 수요 증가로 실적 기대됩니다. 장기 보유 전략이 유효할 것 같습니다.", stockName: "야놀자" },
+    { id: 5, nickName: "에스엠랩팬", body: "에스엠랩 최근 실적 발표가 기대 이상이었네요. 비상장 중에서 주목해야 할 종목입니다.", stockName: "에스엠랩" },
+  ];
+
+  const displayPosts = posts.length > 0 ? posts : fallbackPosts;
+
   return (
     <section id="discussions" data-testid="section-popular-discussions">
       <div className="flex items-center justify-between mb-3">
@@ -1092,34 +1090,34 @@ function PopularDiscussions() {
           더보기 <ChevronRight className="w-3.5 h-3.5" />
         </a>
       </div>
-      <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
-        {DISCUSSIONS.map((post) => (
-          <div
-            key={post.id}
-            className="min-w-[200px] max-w-[200px] border border-[#eee] rounded-xl p-4 flex flex-col justify-between gap-2 cursor-pointer hover:border-[#ddd] hover:bg-[#fafafa] transition-colors shrink-0"
-            data-testid={`card-discussion-${post.id}`}
-          >
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] px-1.5 py-0.5 rounded font-medium"
-                  style={{
-                    backgroundColor: post.userType === "주주" ? "#FFF0F0" : "#F0F4FF",
-                    color: post.userType === "주주" ? "#E8344E" : "#1976D2",
-                  }}
-                >
-                  {post.userType}
-                </span>
-                <span className="text-[11px] text-[#bbb]">{post.time}</span>
+      {isLoading ? (
+        <div className="flex gap-3">
+          {[...Array(4)].map((_, i) => <div key={i} className="min-w-[200px] h-32 bg-gray-100 rounded-xl animate-pulse" />)}
+        </div>
+      ) : (
+        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+          {displayPosts.slice(0, 8).map((post: any, idx: number) => (
+            <div
+              key={post.id || idx}
+              className="min-w-[200px] max-w-[200px] border border-[#eee] rounded-xl p-4 flex flex-col justify-between gap-2 cursor-pointer hover:border-[#ddd] hover:bg-[#fafafa] transition-colors shrink-0"
+              data-testid={`card-discussion-${post.id || idx}`}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] px-1.5 py-0.5 rounded font-medium bg-[#FFF0F0] text-[#E8344E]">
+                    {post.nickName || "익명"}
+                  </span>
+                </div>
+                <p className="text-sm font-medium text-[#222] leading-snug line-clamp-3">{post.subject || post.body || ""}</p>
               </div>
-              <p className="text-sm font-medium text-[#222] leading-snug line-clamp-3">{post.content}</p>
+              <div className="flex items-center gap-1.5 pt-1 border-t border-[#f5f5f5]">
+                <span className="text-xs text-[#666]">{post.stockName || ""}</span>
+                <MessageCircle className="w-3 h-3 text-[#ccc] ml-auto" />
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 pt-1 border-t border-[#f5f5f5]">
-              <span className="text-xs text-[#666]">{post.tag}</span>
-              <MessageCircle className="w-3 h-3 text-[#ccc] ml-auto" />
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -1349,45 +1347,36 @@ function Tips() {
   );
 }
 
-const DISCUSSION_COMMENTS: Record<string, { user: string; text: string; time: string }[]> = {
-  "카나프테라퓨틱스": [
-    { user: "바이오전문가", text: "공모가 밴드 16,000~20,000원이면 적정한 수준이라고 봅니다", time: "방금 전" },
-    { user: "IPO분석가", text: "신약 파이프라인이 탄탄해서 장기적으로 긍정적입니다", time: "1분 전" },
-    { user: "비상장고수", text: "바이오 섹터 IPO 중에서 올해 가장 기대되는 종목이에요", time: "2분 전" },
-    { user: "투자왕김씨", text: "수요예측 결과가 좋으면 공모가 상단 확정될 것 같습니다", time: "3분 전" },
-    { user: "장기투자자", text: "임상 진행 상황이 순조로워서 상장 후에도 기대해볼 만합니다", time: "5분 전" },
-    { user: "공모주헌터", text: "청약 증거금 준비해야겠네요. 경쟁률 높을 것 같아요", time: "7분 전" },
-    { user: "비상장매니아", text: "3월 17일 상장 예정이니까 일정 잘 체크해두세요", time: "8분 전" },
-    { user: "경제전문가", text: "바이오 IPO 시장이 활기를 띄고 있어서 좋은 타이밍입니다", time: "10분 전" },
-  ],
-  "빗썸": [
-    { user: "코인투자자", text: "빗썸 IPO 소식 들으셨나요? 올해 안에 상장 추진한다던데", time: "방금 전" },
-    { user: "암호화폐분석", text: "거래소 수수료 수익이 안정적이라 밸류에이션 괜찮을 듯", time: "2분 전" },
-    { user: "디지털자산", text: "업비트랑 비교하면 시장점유율은 좀 밀리지만 성장성은 있죠", time: "4분 전" },
-    { user: "비상장투자", text: "현재 비상장 시장에서 거래가 활발한 편입니다", time: "6분 전" },
-    { user: "크립토매니아", text: "가상자산법 시행 이후 규제 환경이 개선되면 수혜 볼 수 있을 것 같아요", time: "9분 전" },
-  ],
-  "오톰": [
-    { user: "AI투자자", text: "로봇 AI 기술력은 인정하는데 수익화가 관건이죠", time: "방금 전" },
-    { user: "테크분석", text: "B2B 시장에서 레퍼런스가 쌓이고 있어서 기대됩니다", time: "3분 전" },
-    { user: "미래기술", text: "국내 로봇 기업 중에서 기술력 상위권이라고 봅니다", time: "5분 전" },
-  ],
-  "현대엔지니어링": [
-    { user: "건설주전문", text: "현대건설 자회사인데 분리상장 가능성이 있다고 보시나요?", time: "방금 전" },
-    { user: "플랜트분석", text: "해외 플랜트 수주가 늘어나고 있어서 실적 개선 기대", time: "4분 전" },
-    { user: "가치투자자", text: "비상장 가격 대비 자산가치가 저평가 되어있다고 생각합니다", time: "8분 전" },
-  ],
-  "이브이알스튜디오": [
-    { user: "VR매니아", text: "메타버스 시장이 다시 주목받으면서 기대감이 올라가고 있어요", time: "방금 전" },
-    { user: "IT분석가", text: "VR 콘텐츠 제작 기술력은 국내 최고 수준이라고 봅니다", time: "5분 전" },
-  ],
-};
 
 function HotDiscussionRooms() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [liveComments, setLiveComments] = useState<{ user: string; text: string; time: string }[]>([]);
   const commentsEndRef = useRef<HTMLDivElement>(null);
+
+  const { data: discussionsData } = useQuery<{ data: { discussStocks: any[]; discussPosts: any[] } }>({
+    queryKey: ["/api/market/discussions"],
+    refetchInterval: 5 * 60 * 1000,
+  });
+
+  const fallbackRooms = [
+    { name: "카나프테라퓨틱스", totalPostCount: 3842 },
+    { name: "빗썸", totalPostCount: 2913 },
+    { name: "두나무", totalPostCount: 1762 },
+    { name: "무신사", totalPostCount: 1144 },
+    { name: "현대엔지니어링", totalPostCount: 987 },
+  ];
+  const rooms: any[] = (discussionsData?.data?.discussStocks && discussionsData.data.discussStocks.length > 0)
+    ? discussionsData.data.discussStocks
+    : fallbackRooms;
+
+  const postsByStock: Record<string, any[]> = {};
+  (discussionsData?.data?.discussPosts || []).forEach((p: any) => {
+    if (p.stockName) {
+      if (!postsByStock[p.stockName]) postsByStock[p.stockName] = [];
+      postsByStock[p.stockName].push(p);
+    }
+  });
 
   const scroll = (dir: "left" | "right") => {
     if (scrollRef.current) {
@@ -1397,8 +1386,15 @@ function HotDiscussionRooms() {
 
   useEffect(() => {
     if (!selectedRoom) return;
-    const base = DISCUSSION_COMMENTS[selectedRoom] || [];
-    setLiveComments([...base]);
+    const apiPosts = (postsByStock[selectedRoom] || []).map((p: any) => ({
+      user: p.nickName || "익명",
+      text: p.body || p.subject || "",
+      time: "방금 전",
+    }));
+    setLiveComments(apiPosts.length > 0 ? apiPosts : [
+      { user: "비상장투자자", text: `${selectedRoom} 종목 어떻게 보시나요?`, time: "방금 전" },
+      { user: "시장분석가", text: "최근 거래량 추이가 긍정적입니다", time: "2분 전" },
+    ]);
 
     const extraComments = [
       { user: "실시간유저1", text: "저도 이 종목 관심있게 보고 있습니다!" },
@@ -1407,8 +1403,6 @@ function HotDiscussionRooms() {
       { user: "분석전문가", text: "현재 가격이면 진입 타이밍 괜찮아 보입니다" },
       { user: "비상장팬", text: "비상장 투자는 인내심이 중요하죠" },
       { user: "시장관찰자", text: "최근 거래량이 늘어나고 있어서 주목할 만합니다" },
-      { user: "주식연구원", text: "펀더멘탈 분석 결과 긍정적입니다" },
-      { user: "경제학도", text: "업종 전망도 밝은 편이라 기대됩니다" },
     ];
     let idx = 0;
     const interval = setInterval(() => {
@@ -1455,9 +1449,9 @@ function HotDiscussionRooms() {
       </div>
 
       <div ref={scrollRef} className="flex gap-3 overflow-x-auto scrollbar-none pb-1">
-        {HOT_ROOMS.map((room, i) => (
+        {rooms.map((room: any, i: number) => (
           <div
-            key={i}
+            key={room.name || i}
             onClick={() => setSelectedRoom(selectedRoom === room.name ? null : room.name)}
             className={`shrink-0 w-[160px] border rounded-lg p-3 transition-colors cursor-pointer ${
               selectedRoom === room.name ? "border-[#E8344E] bg-[#fef2f2]" : "border-[#eee] hover:border-[#ddd]"
@@ -1468,14 +1462,9 @@ function HotDiscussionRooms() {
               <StockIcon name={room.name} size={28} />
               <span className="text-sm font-medium text-[#222] truncate">{room.name}</span>
             </div>
-            <div className="flex flex-wrap gap-1 mb-2">
-              {room.tags.map((tag) => (
-                <span key={tag} className="text-[10px] text-[#E8344E] bg-[#fef2f2] px-1.5 py-0.5 rounded">{tag}</span>
-              ))}
-            </div>
             <div className="flex items-center gap-1 text-xs text-[#999]">
               <MessageCircle className="w-3 h-3" />
-              <span>{room.count.toLocaleString()}</span>
+              <span>{(room.totalPostCount || 0).toLocaleString()}</span>
             </div>
           </div>
         ))}

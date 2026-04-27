@@ -201,7 +201,21 @@ export async function registerRoutes(
   let ustockLiveCacheTime = 0;
   const USTOCK_CACHE_DURATION = 5 * 60 * 1000;
 
-  async function refreshUstockPrices(): Promise<void> {
+  // Market data caches
+  interface RankGroup { type: string; name: string; rows: any[] }
+  interface ThemeKeyword { keywordId: number; keywordName: string; keywordCode: string; description: string; includedStocks: any[] }
+  interface DiscussionData { discussStocks: any[]; discussPosts: any[] }
+  interface ExpertReport { expertReportId: number; sourceProvider: string; reportCreator: string; title: string; preview?: string; createdAt?: string }
+  interface IpoCalendarData { toBeIPOList: any[]; beingIPOList: any[]; toBeListingList: any[] }
+
+  let rankingCache: RankGroup[] = [];
+  let themeCache: ThemeKeyword[] = [];
+  let discussionCache: DiscussionData = { discussStocks: [], discussPosts: [] };
+  let expertReportCache: ExpertReport[] = [];
+  let ipoCalendarCache: IpoCalendarData = { toBeIPOList: [], beingIPOList: [], toBeListingList: [] };
+  let marketCacheTime = 0;
+
+  async function refreshAllUstockData(): Promise<void> {
     try {
       const resp = await fetch("https://www.ustockplus.com/", {
         headers: {
@@ -220,47 +234,138 @@ export async function registerRoutes(
       const json = html.slice(contentStart, contentEnd);
       const data = JSON.parse(json);
       const queries: any[] = data?.props?.pageProps?.dehydratedState?.queries || [];
-      // Extract all stock rank lists (query index 5 or any query with rows containing currentPrice)
+
       const seen = new Set<string>();
-      for (const q of queries) {
-        const qdata = q?.state?.data;
+
+      for (let qi = 0; qi < queries.length; qi++) {
+        const qdata = queries[qi]?.state?.data;
         if (!qdata) continue;
-        // qdata may be an array of rank groups, each with .rows
-        const groups = Array.isArray(qdata) ? qdata : [];
-        for (const group of groups) {
-          const rows: any[] = group?.rows || [];
-          for (const row of rows) {
-            const name: string = row?.stockName;
-            const price: number = row?.currentPrice;
-            const change: number = row?.changeRate;
+
+        // Q0: 토론 + 테마(featuredStockKeywords)
+        if (qdata?.featuredDiscussStocks !== undefined || qdata?.featuredStockKeywords !== undefined) {
+          // Discussions
+          const discussStocks: any[] = (qdata?.featuredDiscussStocks?.rows || []).map((row: any) => ({
+            name: row?.resource?.name,
+            code: row?.resource?.code,
+            totalPostCount: row?.resource?.totalPostCount,
+            currentPrice: row?.resource?.currentPrice,
+            changeRate: row?.resource?.currentChangeRate ?? row?.resource?.changeRate,
+            logoUrl: row?.resource?.logoUrl,
+          })).filter((r: any) => r.name);
+
+          const discussPosts: any[] = (qdata?.featuredDiscussPosts?.rows || []).map((row: any) => ({
+            id: row?.id,
+            stockName: row?.resource?.stockName,
+            nickName: row?.resource?.nickName,
+            subject: row?.resource?.subject,
+            body: row?.resource?.body,
+            createdAt: row?.resource?.createdAt,
+          })).filter((r: any) => r.id);
+
+          if (discussStocks.length > 0 || discussPosts.length > 0) {
+            discussionCache = { discussStocks, discussPosts };
+          }
+
+          // Themes
+          const keywords: any[] = qdata?.featuredStockKeywords || [];
+          if (keywords.length > 0) {
+            themeCache = keywords.map((k: any) => ({
+              keywordId: k.keywordId,
+              keywordName: k.keywordName,
+              keywordCode: k.keywordCode,
+              description: k.description,
+              includedStocks: (k.includedStocks || []).map((s: any) => ({
+                name: s.name,
+                code: s.code,
+                currentPrice: s.currentPrice,
+                changeRate: s.currentChangeRate ?? s.changeRate,
+                logoUrl: s.logoUrl,
+              })),
+            }));
+          }
+
+          // Also extract prices from discuss stocks
+          for (const row of (qdata?.featuredDiscussStocks?.rows || [])) {
+            const name: string = row?.resource?.name;
+            const price: number = row?.resource?.currentPrice;
+            const change: number = row?.resource?.currentChangeRate ?? row?.resource?.changeRate;
             if (name && typeof price === "number" && price > 0 && !seen.has(name)) {
               ustockLiveCache.set(name, { price, change: change ?? 0 });
               seen.add(name);
             }
           }
         }
-        // qdata may also have featuredDiscussStocks
-        const featured: any[] = qdata?.featuredDiscussStocks?.rows || [];
-        for (const row of featured) {
-          const name: string = row?.resource?.name;
-          const price: number = row?.resource?.currentPrice;
-          const change: number = row?.resource?.changeRate;
-          if (name && typeof price === "number" && price > 0 && !seen.has(name)) {
-            ustockLiveCache.set(name, { price, change: change ?? 0 });
-            seen.add(name);
+
+        // Q2: IPO 캘린더
+        if (qdata?.toBeIPOList !== undefined) {
+          ipoCalendarCache = {
+            toBeIPOList: qdata.toBeIPOList || [],
+            beingIPOList: qdata.beingIPOList || [],
+            toBeListingList: qdata.toBeListingList || [],
+          };
+        }
+
+        // Q4: 전문가 리포트
+        if (qdata?.rows !== undefined && !Array.isArray(qdata) && qdata?.rows?.[0]?.expertReportId !== undefined) {
+          expertReportCache = (qdata.rows || []).map((r: any) => ({
+            expertReportId: r.expertReportId,
+            sourceProvider: r.sourceProvider,
+            reportCreator: r.reportCreator,
+            title: r.title,
+            preview: r.preview,
+            createdAt: r.createdAt,
+          }));
+        }
+
+        // Q5: 종목 랭킹 (array of groups)
+        if (Array.isArray(qdata) && qdata[0]?.type && qdata[0]?.rows) {
+          rankingCache = qdata.map((group: any) => ({
+            type: group.type,
+            name: group.name,
+            rows: (group.rows || []).map((row: any) => ({
+              stockName: row.stockName,
+              stockCode: row.stockCode,
+              currentPrice: row.currentPrice,
+              changeRate: row.changeRate,
+              prevClosingPrice: row.prevClosingPrice,
+              estimatedMarketCap: row.estimatedMarketCap,
+              logoUrl: row.logoUrl,
+              rank: row.rank,
+              type: row.type,
+              ipoDate: row.ipoDate,
+              reviewType: row.reviewType,
+              salesRevenueGrowthRate: row.salesRevenueGrowthRate,
+              fiscalYear: row.fiscalYear,
+              orderCount: row.orderCount,
+            })),
+          }));
+
+          // Extract prices from ranking rows
+          for (const group of qdata) {
+            for (const row of (group?.rows || [])) {
+              const name: string = row?.stockName;
+              const price: number = row?.currentPrice;
+              const change: number = row?.changeRate;
+              if (name && typeof price === "number" && price > 0 && !seen.has(name)) {
+                ustockLiveCache.set(name, { price, change: change ?? 0 });
+                seen.add(name);
+              }
+            }
           }
         }
       }
+
       ustockLiveCacheTime = Date.now();
-      log(`UstockPlus prices refreshed: ${seen.size} stocks`);
+      marketCacheTime = Date.now();
+      log(`UstockPlus data refreshed: ${seen.size} stocks, ${rankingCache.length} rank groups, ${themeCache.length} themes, ${expertReportCache.length} reports`);
     } catch (err) {
-      log(`UstockPlus price refresh error: ${err}`);
+      log(`UstockPlus data refresh error: ${err}`);
     }
   }
 
   // Initial load + periodic refresh every 5 minutes
-  refreshUstockPrices();
-  setInterval(refreshUstockPrices, USTOCK_CACHE_DURATION);
+  refreshAllUstockData();
+  setInterval(refreshAllUstockData, USTOCK_CACHE_DURATION);
 
   async function fetchNaverPrice(stockCode: string): Promise<{ price: number; change: number } | null> {
     try {
@@ -372,6 +477,27 @@ export async function registerRoutes(
       lastUpdated: ustockLiveCacheTime ? new Date(ustockLiveCacheTime).toISOString() : null,
       stocks,
     });
+  });
+
+  // Market data endpoints (scraped from ustockplus.com)
+  app.get("/api/market/rankings", (_req, res) => {
+    res.json({ data: rankingCache, lastUpdated: marketCacheTime ? new Date(marketCacheTime).toISOString() : null });
+  });
+
+  app.get("/api/market/themes", (_req, res) => {
+    res.json({ data: themeCache, lastUpdated: marketCacheTime ? new Date(marketCacheTime).toISOString() : null });
+  });
+
+  app.get("/api/market/discussions", (_req, res) => {
+    res.json({ data: discussionCache, lastUpdated: marketCacheTime ? new Date(marketCacheTime).toISOString() : null });
+  });
+
+  app.get("/api/market/expert-reports", (_req, res) => {
+    res.json({ data: expertReportCache, lastUpdated: marketCacheTime ? new Date(marketCacheTime).toISOString() : null });
+  });
+
+  app.get("/api/market/ipo-calendar", (_req, res) => {
+    res.json({ data: ipoCalendarCache, lastUpdated: marketCacheTime ? new Date(marketCacheTime).toISOString() : null });
   });
 
   app.get("/api/stocks/news", async (_req, res) => {
