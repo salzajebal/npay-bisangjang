@@ -14,7 +14,8 @@ export interface IStorage {
   updateUserSiteGroup(id: string, siteGroup: string | null): Promise<User | undefined>;
   deleteUser(id: string): Promise<void>;
   getAllDomainGroups(): Promise<DomainGroup[]>;
-  upsertDomainGroup(domain: string, groupName: string): Promise<DomainGroup>;
+  upsertDomainGroup(domain: string, groupName: string, managerCode?: string | null): Promise<DomainGroup>;
+  getDomainGroup(domain: string): Promise<DomainGroup | undefined>;
   deleteDomainGroup(domain: string): Promise<void>;
   getTransaction(id: string): Promise<StockTransaction | undefined>;
   getTransactionsByUserId(userId: string): Promise<StockTransaction[]>;
@@ -115,11 +116,16 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(domainGroups).orderBy(domainGroups.domain);
   }
 
-  async upsertDomainGroup(domain: string, groupName: string): Promise<DomainGroup> {
+  async upsertDomainGroup(domain: string, groupName: string, managerCode?: string | null): Promise<DomainGroup> {
     const [result] = await db.insert(domainGroups)
-      .values({ domain, groupName })
-      .onConflictDoUpdate({ target: domainGroups.domain, set: { groupName } })
+      .values({ domain, groupName, managerCode: managerCode ?? null })
+      .onConflictDoUpdate({ target: domainGroups.domain, set: { groupName, managerCode: managerCode ?? null } })
       .returning();
+    return result;
+  }
+
+  async getDomainGroup(domain: string): Promise<DomainGroup | undefined> {
+    const [result] = await db.select().from(domainGroups).where(eq(domainGroups.domain, domain));
     return result;
   }
 

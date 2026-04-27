@@ -136,6 +136,7 @@ export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
 export const domainGroups = pgTable("domain_groups", {
   domain: text("domain").primaryKey(),
   groupName: text("group_name").notNull(),
+  managerCode: text("manager_code"),
 });
 
 export type DomainGroup = typeof domainGroups.$inferSelect;

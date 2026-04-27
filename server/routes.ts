@@ -734,7 +734,15 @@ export async function registerRoutes(
     try {
       const user = await storage.approveUser(req.params.id);
       if (!user) return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
-      return res.json({ ...user, password: undefined });
+      if (user.siteGroup && !user.managerCode) {
+        const domainGroup = await storage.getDomainGroup(user.siteGroup);
+        if (domainGroup?.managerCode) {
+          await storage.updateUserManagerCode(user.id, domainGroup.managerCode);
+          log(`Auto-assigned managerCode '${domainGroup.managerCode}' to user '${user.username}' via domain '${user.siteGroup}'`);
+        }
+      }
+      const updated = await storage.getUser(user.id);
+      return res.json({ ...updated, password: undefined });
     } catch {
       return res.status(500).json({ message: "승인 처리에 실패했습니다" });
     }
@@ -855,11 +863,11 @@ export async function registerRoutes(
   app.put("/api/admin/domain-groups/:domain", requireAdmin, async (req, res) => {
     try {
       const domain = decodeURIComponent(req.params.domain);
-      const { groupName } = req.body;
+      const { groupName, managerCode } = req.body;
       if (!groupName || typeof groupName !== "string" || groupName.trim() === "") {
         return res.status(400).json({ message: "그룹명을 입력해주세요" });
       }
-      const group = await storage.upsertDomainGroup(domain, groupName.trim());
+      const group = await storage.upsertDomainGroup(domain, groupName.trim(), managerCode?.trim() || null);
       return res.json(group);
     } catch (error) {
       return res.status(500).json({ message: "도메인 그룹 저장 실패" });

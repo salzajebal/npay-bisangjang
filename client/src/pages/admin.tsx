@@ -1230,6 +1230,7 @@ export default function AdminPage() {
   const [filterSiteGroup, setFilterSiteGroup] = useState<string>("all");
   const [newGroupDomain, setNewGroupDomain] = useState("");
   const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupManagerCode, setNewGroupManagerCode] = useState("");
   const [logSearchFilter, setLogSearchFilter] = useState("");
   const [txSearchTerm, setTxSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -2785,21 +2786,31 @@ export default function AdminPage() {
                 <Badge variant="outline" className="border-gray-200 text-gray-500">{domainGroupsList.length}개 등록</Badge>
               </div>
               <Card className="p-5 bg-white border-gray-200">
-                <p className="text-sm text-gray-500 mb-4">각 도메인에 표시할 그룹명을 설정합니다. 회원가입 시 접속한 도메인이 자동으로 기록됩니다.</p>
-                <div className="flex gap-2 mb-4">
+                <div className="flex items-start gap-2 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <Activity className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                  <p className="text-sm text-blue-700">도메인에 <strong>담당자 코드</strong>를 설정하면, 해당 도메인으로 가입한 회원이 <strong>승인될 때 자동으로</strong> 해당 코드가 배정됩니다.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4">
                   <Input
                     placeholder="도메인 (예: abc.com)"
                     value={newGroupDomain}
                     onChange={(e) => setNewGroupDomain(e.target.value)}
-                    className="bg-white border-gray-200 flex-1"
+                    className="bg-white border-gray-200"
                     data-testid="input-new-domain"
                   />
                   <Input
                     placeholder="그룹명 (예: A팀)"
                     value={newGroupName}
                     onChange={(e) => setNewGroupName(e.target.value)}
-                    className="bg-white border-gray-200 flex-1"
+                    className="bg-white border-gray-200"
                     data-testid="input-new-group-name"
+                  />
+                  <Input
+                    placeholder="담당자 코드 (선택)"
+                    value={newGroupManagerCode}
+                    onChange={(e) => setNewGroupManagerCode(e.target.value)}
+                    className="bg-white border-gray-200"
+                    data-testid="input-new-manager-code"
                   />
                   <Button
                     onClick={async () => {
@@ -2807,12 +2818,12 @@ export default function AdminPage() {
                         toast({ title: "입력 오류", description: "도메인과 그룹명을 모두 입력해주세요", variant: "destructive" });
                         return;
                       }
-                      await apiRequest("PUT", `/api/admin/domain-groups/${encodeURIComponent(newGroupDomain.trim())}`, { groupName: newGroupName.trim() });
-                      setNewGroupDomain(""); setNewGroupName("");
+                      await apiRequest("PUT", `/api/admin/domain-groups/${encodeURIComponent(newGroupDomain.trim())}`, { groupName: newGroupName.trim(), managerCode: newGroupManagerCode.trim() || null });
+                      setNewGroupDomain(""); setNewGroupName(""); setNewGroupManagerCode("");
                       refetchDomainGroups();
                       toast({ title: "저장 완료", description: "도메인 그룹이 저장되었습니다" });
                     }}
-                    className="bg-[#E8344E] border-[#E8344E] text-white shrink-0"
+                    className="bg-[#E8344E] border-[#E8344E] text-white"
                     data-testid="button-add-domain-group"
                   >
                     <Plus className="w-4 h-4 mr-1" /> 추가
@@ -2829,6 +2840,7 @@ export default function AdminPage() {
                       <TableRow className="bg-gray-50 border-gray-200">
                         <TableHead className="text-gray-500">도메인</TableHead>
                         <TableHead className="text-gray-500">그룹명</TableHead>
+                        <TableHead className="text-gray-500">담당자 코드</TableHead>
                         <TableHead className="text-gray-500">해당 회원 수</TableHead>
                         <TableHead className="text-center text-gray-500">삭제</TableHead>
                       </TableRow>
@@ -2841,6 +2853,15 @@ export default function AdminPage() {
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-sm font-medium">
                               {g.groupName}
                             </span>
+                          </TableCell>
+                          <TableCell>
+                            {g.managerCode ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200 text-sm font-mono font-medium">
+                                {g.managerCode}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 text-xs">미설정</span>
+                            )}
                           </TableCell>
                           <TableCell className="text-gray-500 text-sm">
                             {users.filter((u) => u.siteGroup === g.domain).length}명
