@@ -33,6 +33,7 @@ export default function RegisterPage() {
       accountHolder: "",
       bank: "",
       accountNumber: "",
+      managerCode: "",
     },
   });
 
@@ -209,6 +210,23 @@ export default function RegisterPage() {
                       <Input
                         placeholder="증권 계좌번호를 입력하세요"
                         data-testid="input-account-number"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="managerCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>담당자 코드 <span className="font-normal text-[#666]">(선택)</span></FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="담당자 코드가 있으면 입력하세요"
+                        data-testid="input-manager-code"
                         {...field}
                       />
                     </FormControl>

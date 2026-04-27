@@ -695,6 +695,63 @@ function MemberDeleteDialog({ user, onSuccess }: { user: User; onSuccess: () => 
   );
 }
 
+function ManagerCodeDialog({ user, onSuccess }: { user: User; onSuccess: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [code, setCode] = useState(user.managerCode || "");
+  const { toast } = useToast();
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("PATCH", `/api/admin/users/${user.id}/manager-code`, { managerCode: code });
+    },
+    onSuccess: () => {
+      toast({ title: "담당자 코드 변경", description: `${user.fullName}님의 담당자 코드가 변경되었습니다` });
+      setOpen(false);
+      onSuccess();
+    },
+    onError: (error: Error) => {
+      toast({ title: "오류", description: error.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) setCode(user.managerCode || ""); }}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" className="h-7 text-xs px-2 border-gray-200 text-gray-600" data-testid={`button-manager-code-${user.id}`} title="담당자 코드 설정">
+          담당자: {user.managerCode || <span className="text-gray-400">없음</span>}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>담당자 코드 설정</DialogTitle>
+          <DialogDescription>
+            {user.fullName}(@{user.username})님의 담당자 코드를 입력하세요. 비워두면 담당자 없음으로 처리됩니다.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2 mt-2">
+          <Label>담당자 코드</Label>
+          <Input
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="담당자 코드 (없으면 비워두세요)"
+            data-testid="input-manager-code-dialog"
+          />
+        </div>
+        <DialogFooter className="mt-4">
+          <Button variant="outline" onClick={() => setOpen(false)}>취소</Button>
+          <Button
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending}
+            data-testid="button-confirm-manager-code"
+          >
+            {mutation.isPending ? "저장 중..." : "저장"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function StocksManagementSection({
   ipoStocks,
   isLoading,
@@ -1167,6 +1224,7 @@ export default function AdminPage() {
   };
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterManager, setFilterManager] = useState<string>("all");
   const [txSearchTerm, setTxSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
@@ -1466,14 +1524,22 @@ export default function AdminPage() {
   const users = (allUsers || []).filter((u) => !u.isAdmin);
   const transactions = allTransactions || [];
 
-  const filteredUsers = users.filter(
-    (u) =>
+  const managerCodes = Array.from(new Set(
+    users.map((u) => u.managerCode).filter((c): c is string => !!c && c.trim() !== "")
+  )).sort();
+
+  const filteredUsers = users.filter((u) => {
+    const matchSearch =
       u.fullName.includes(searchTerm) ||
       u.username.includes(searchTerm) ||
       u.accountNumber.includes(searchTerm) ||
       (u.phone && u.phone.includes(searchTerm)) ||
-      (u.email && u.email.includes(searchTerm))
-  );
+      (u.email && u.email.includes(searchTerm));
+    if (!matchSearch) return false;
+    if (filterManager === "all") return true;
+    if (filterManager === "none") return !u.managerCode || u.managerCode.trim() === "";
+    return u.managerCode === filterManager;
+  });
 
   const getUserName = (userId: string) => {
     const u = (allUsers || []).find((u) => u.id === userId);
@@ -1875,6 +1941,18 @@ export default function AdminPage() {
                     data-testid="input-search-members"
                   />
                 </div>
+                <Select value={filterManager} onValueChange={setFilterManager}>
+                  <SelectTrigger className="w-[150px] bg-white border-gray-200 text-gray-700" data-testid="select-filter-manager">
+                    <SelectValue placeholder="담당자 필터" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">담당자 전체</SelectItem>
+                    <SelectItem value="none">담당자 없음</SelectItem>
+                    {managerCodes.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Badge variant="outline" className="shrink-0 border-gray-200 text-gray-500">{filteredUsers.length}명</Badge>
                 <button
                   onClick={toggleSound}
@@ -1925,6 +2003,9 @@ export default function AdminPage() {
                         <p>{u.phone || "-"} · {u.email || "-"}</p>
                         <p>{u.bank} · {u.accountHolder}</p>
                         <p className="font-mono text-gray-400">{u.accountNumber}</p>
+                        <div className="pt-0.5">
+                          <ManagerCodeDialog user={u} onSuccess={refreshData} />
+                        </div>
                       </div>
                       {(() => {
                         const holdings = getUserHoldings(u.id);
@@ -1963,6 +2044,7 @@ export default function AdminPage() {
                           <TableHead className="text-gray-500">비밀번호</TableHead>
                           <TableHead className="text-gray-500">이름</TableHead>
                           <TableHead className="text-gray-500">상태</TableHead>
+                          <TableHead className="text-gray-500">담당자</TableHead>
                           <TableHead className="text-gray-500">생년월일</TableHead>
                           <TableHead className="text-gray-500">휴대폰</TableHead>
                           <TableHead className="text-gray-500">이메일</TableHead>
@@ -1986,6 +2068,9 @@ export default function AdminPage() {
                               ) : (
                                 <Badge variant="outline" className="text-[11px] border-gray-200 text-gray-500">정상</Badge>
                               )}
+                            </TableCell>
+                            <TableCell>
+                              <ManagerCodeDialog user={u} onSuccess={refreshData} />
                             </TableCell>
                             <TableCell className="text-gray-700 text-xs">{u.birthDate || "-"}</TableCell>
                             <TableCell className="text-gray-700 text-xs">{u.phone || "-"}</TableCell>
