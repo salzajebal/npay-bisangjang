@@ -16,6 +16,7 @@ export const users = pgTable("users", {
   accountHolder: text("account_holder").notNull(),
   bank: text("bank").notNull(),
   managerCode: text("manager_code"),
+  siteGroup: text("site_group"),
   isAdmin: boolean("is_admin").notNull().default(false),
   isFrozen: boolean("is_frozen").notNull().default(false),
   isApproved: boolean("is_approved").notNull().default(true),
@@ -131,6 +132,13 @@ export type InsertTransferRequest = z.infer<typeof insertTransferRequestSchema>;
 export type ChatRoom = typeof chatRooms.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+
+export const domainGroups = pgTable("domain_groups", {
+  domain: text("domain").primaryKey(),
+  groupName: text("group_name").notNull(),
+});
+
+export type DomainGroup = typeof domainGroups.$inferSelect;
 
 export const watchlist = pgTable("watchlist", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

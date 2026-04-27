@@ -14,13 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { STOCK_CATEGORIES, KOREAN_BANKS } from "@shared/schema";
 import { StockIcon } from "@/components/stock-icon";
-import type { User, StockTransaction, TransferRequest, IpoStock } from "@shared/schema";
+import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup } from "@shared/schema";
 import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
   Eye, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
   CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu, Plus, BookOpen, Copy,
-  Bell, BellOff,
+  Bell, BellOff, Globe,
 } from "lucide-react";
 
 const KOREAN_STOCK_LIST = [
@@ -1137,7 +1137,7 @@ function copyUserInfo(user: User, toast: any) {
   });
 }
 
-type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "stocks" | "chat";
+type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "stocks" | "chat" | "groups";
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "대시보드", icon: LayoutDashboard },
@@ -1146,13 +1146,14 @@ const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashbo
   { id: "transfers", label: "대체출고 관리", icon: ArrowRightLeft },
   { id: "stocks", label: "종목 관리", icon: Package },
   { id: "chat", label: "1:1 상담", icon: MessageSquare },
+  { id: "groups", label: "도메인 그룹", icon: Globe },
 ];
 
 export default function AdminPage() {
   const [, setLocation] = useLocation();
   const getHashSection = (): AdminSection => {
     const hash = window.location.hash.replace("#", "");
-    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "stocks", "chat"];
+    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "stocks", "chat", "groups"];
     return valid.includes(hash as AdminSection) ? (hash as AdminSection) : "dashboard";
   };
 
@@ -1225,6 +1226,9 @@ export default function AdminPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterManager, setFilterManager] = useState<string>("all");
+  const [filterSiteGroup, setFilterSiteGroup] = useState<string>("all");
+  const [newGroupDomain, setNewGroupDomain] = useState("");
+  const [newGroupName, setNewGroupName] = useState("");
   const [txSearchTerm, setTxSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
@@ -1243,6 +1247,12 @@ export default function AdminPage() {
 
   const { data: allUsers, isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!authData?.user?.isAdmin,
+  });
+
+  const { data: domainGroupsList = [], refetch: refetchDomainGroups } = useQuery<DomainGroup[]>({
+    queryKey: ["/api/admin/domain-groups"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!authData?.user?.isAdmin,
   });
@@ -1528,6 +1538,16 @@ export default function AdminPage() {
     users.map((u) => u.managerCode).filter((c): c is string => !!c && c.trim() !== "")
   )).sort();
 
+  const getGroupLabel = (siteGroup: string | null | undefined): string => {
+    if (!siteGroup) return "";
+    const found = domainGroupsList.find((g) => g.domain === siteGroup);
+    return found ? found.groupName : siteGroup;
+  };
+
+  const uniqueSiteGroups = Array.from(new Set(
+    users.map((u) => u.siteGroup).filter((g): g is string => !!g && g.trim() !== "")
+  )).sort();
+
   const filteredUsers = users.filter((u) => {
     const matchSearch =
       u.fullName.includes(searchTerm) ||
@@ -1536,9 +1556,15 @@ export default function AdminPage() {
       (u.phone && u.phone.includes(searchTerm)) ||
       (u.email && u.email.includes(searchTerm));
     if (!matchSearch) return false;
-    if (filterManager === "all") return true;
-    if (filterManager === "none") return !u.managerCode || u.managerCode.trim() === "";
-    return u.managerCode === filterManager;
+    if (filterManager !== "all") {
+      if (filterManager === "none" && (u.managerCode && u.managerCode.trim() !== "")) return false;
+      if (filterManager !== "none" && u.managerCode !== filterManager) return false;
+    }
+    if (filterSiteGroup !== "all") {
+      if (filterSiteGroup === "none" && (u.siteGroup && u.siteGroup.trim() !== "")) return false;
+      if (filterSiteGroup !== "none" && u.siteGroup !== filterSiteGroup) return false;
+    }
+    return true;
   });
 
   const getUserName = (userId: string) => {
@@ -1953,6 +1979,19 @@ export default function AdminPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                <Select value={filterSiteGroup} onValueChange={setFilterSiteGroup}>
+                  <SelectTrigger className="w-[160px] bg-white border-gray-200 text-gray-700" data-testid="select-filter-site-group">
+                    <Globe className="w-3.5 h-3.5 mr-1.5 shrink-0" />
+                    <SelectValue placeholder="도메인 그룹" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체 도메인</SelectItem>
+                    <SelectItem value="none">미분류</SelectItem>
+                    {uniqueSiteGroups.map((g) => (
+                      <SelectItem key={g} value={g}>{getGroupLabel(g)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Badge variant="outline" className="shrink-0 border-gray-200 text-gray-500">{filteredUsers.length}명</Badge>
                 <button
                   onClick={toggleSound}
@@ -2045,6 +2084,7 @@ export default function AdminPage() {
                           <TableHead className="text-gray-500">이름</TableHead>
                           <TableHead className="text-gray-500">상태</TableHead>
                           <TableHead className="text-gray-500">담당자</TableHead>
+                          <TableHead className="text-gray-500">접속도메인</TableHead>
                           <TableHead className="text-gray-500">생년월일</TableHead>
                           <TableHead className="text-gray-500">휴대폰</TableHead>
                           <TableHead className="text-gray-500">이메일</TableHead>
@@ -2071,6 +2111,16 @@ export default function AdminPage() {
                             </TableCell>
                             <TableCell>
                               <ManagerCodeDialog user={u} onSuccess={refreshData} />
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {u.siteGroup ? (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[11px] whitespace-nowrap">
+                                  <Globe className="w-3 h-3" />
+                                  {getGroupLabel(u.siteGroup)}
+                                </span>
+                              ) : (
+                                <span className="text-gray-400 text-[11px]">미분류</span>
+                              )}
                             </TableCell>
                             <TableCell className="text-gray-700 text-xs">{u.birthDate || "-"}</TableCell>
                             <TableCell className="text-gray-700 text-xs">{u.phone || "-"}</TableCell>
@@ -2622,6 +2672,125 @@ export default function AdminPage() {
                   )}
                 </Card>
               </div>
+            </>
+          )}
+
+          {activeSection === "groups" && (
+            <>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-800">도메인 그룹 관리</h2>
+                <Badge variant="outline" className="border-gray-200 text-gray-500">{domainGroupsList.length}개 등록</Badge>
+              </div>
+              <Card className="p-5 bg-white border-gray-200">
+                <p className="text-sm text-gray-500 mb-4">각 도메인에 표시할 그룹명을 설정합니다. 회원가입 시 접속한 도메인이 자동으로 기록됩니다.</p>
+                <div className="flex gap-2 mb-4">
+                  <Input
+                    placeholder="도메인 (예: abc.com)"
+                    value={newGroupDomain}
+                    onChange={(e) => setNewGroupDomain(e.target.value)}
+                    className="bg-white border-gray-200 flex-1"
+                    data-testid="input-new-domain"
+                  />
+                  <Input
+                    placeholder="그룹명 (예: A팀)"
+                    value={newGroupName}
+                    onChange={(e) => setNewGroupName(e.target.value)}
+                    className="bg-white border-gray-200 flex-1"
+                    data-testid="input-new-group-name"
+                  />
+                  <Button
+                    onClick={async () => {
+                      if (!newGroupDomain.trim() || !newGroupName.trim()) {
+                        toast({ title: "입력 오류", description: "도메인과 그룹명을 모두 입력해주세요", variant: "destructive" });
+                        return;
+                      }
+                      await apiRequest("PUT", `/api/admin/domain-groups/${encodeURIComponent(newGroupDomain.trim())}`, { groupName: newGroupName.trim() });
+                      setNewGroupDomain(""); setNewGroupName("");
+                      refetchDomainGroups();
+                      toast({ title: "저장 완료", description: "도메인 그룹이 저장되었습니다" });
+                    }}
+                    className="bg-[#E8344E] border-[#E8344E] text-white shrink-0"
+                    data-testid="button-add-domain-group"
+                  >
+                    <Plus className="w-4 h-4 mr-1" /> 추가
+                  </Button>
+                </div>
+                {domainGroupsList.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400">
+                    <Globe className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">등록된 도메인 그룹이 없습니다</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gray-50 border-gray-200">
+                        <TableHead className="text-gray-500">도메인</TableHead>
+                        <TableHead className="text-gray-500">그룹명</TableHead>
+                        <TableHead className="text-gray-500">해당 회원 수</TableHead>
+                        <TableHead className="text-center text-gray-500">삭제</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {domainGroupsList.map((g) => (
+                        <TableRow key={g.domain} className="border-gray-200">
+                          <TableCell className="font-mono text-sm text-gray-700">{g.domain}</TableCell>
+                          <TableCell>
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-sm font-medium">
+                              {g.groupName}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-gray-500 text-sm">
+                            {users.filter((u) => u.siteGroup === g.domain).length}명
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Button
+                              size="icon" variant="ghost"
+                              onClick={async () => {
+                                await apiRequest("DELETE", `/api/admin/domain-groups/${encodeURIComponent(g.domain)}`);
+                                refetchDomainGroups();
+                                toast({ title: "삭제 완료" });
+                              }}
+                              data-testid={`button-delete-group-${g.domain}`}
+                            >
+                              <Trash2 className="w-4 h-4 text-gray-400" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </Card>
+
+              <Card className="p-5 bg-white border-gray-200">
+                <h3 className="text-sm font-bold text-gray-700 mb-3">도메인별 가입 현황</h3>
+                {uniqueSiteGroups.length === 0 ? (
+                  <p className="text-sm text-gray-400">아직 도메인 기록이 없습니다. 회원이 가입하면 자동으로 기록됩니다.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {uniqueSiteGroups.map((g) => (
+                      <div key={g} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                        <div className="flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-blue-400" />
+                          <span className="font-mono text-sm text-gray-700">{g}</span>
+                          {getGroupLabel(g) !== g && (
+                            <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-[11px]">{getGroupLabel(g)}</Badge>
+                          )}
+                        </div>
+                        <Badge variant="outline" className="border-gray-200 text-gray-500">
+                          {users.filter((u) => u.siteGroup === g).length}명
+                        </Badge>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-sm text-gray-400">미분류 (도메인 없음)</span>
+                      <Badge variant="outline" className="border-gray-200 text-gray-400">
+                        {users.filter((u) => !u.siteGroup).length}명
+                      </Badge>
+                    </div>
+                  </div>
+                )}
+              </Card>
             </>
           )}
         </main>

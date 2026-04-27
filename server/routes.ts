@@ -592,7 +592,9 @@ export async function registerRoutes(
       }
       const plainPassword = data.password;
       const hashedPassword = await bcrypt.hash(data.password, 10);
-      const user = await storage.createUser({ ...data, password: hashedPassword, plainPassword, isApproved: false } as any);
+      const host = (req.headers["x-forwarded-host"] as string) || (req.headers.host as string) || "";
+      const siteGroup = host.replace(/:\d+$/, "").toLowerCase() || null;
+      const user = await storage.createUser({ ...data, password: hashedPassword, plainPassword, isApproved: false, siteGroup } as any);
       return res.json({ user: { ...user, password: undefined, plainPassword: undefined }, pending: true });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -822,6 +824,51 @@ export async function registerRoutes(
       return res.json({ ...user, password: undefined });
     } catch (error) {
       return res.status(500).json({ message: "담당자 코드 변경에 실패했습니다" });
+    }
+  });
+
+  app.patch("/api/admin/users/:id/site-group", requireAdmin, async (req, res) => {
+    try {
+      const { siteGroup } = req.body;
+      const val = typeof siteGroup === "string" && siteGroup.trim() !== "" ? siteGroup.trim() : null;
+      const user = await storage.updateUserSiteGroup(req.params.id, val);
+      if (!user) return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      return res.json({ ...user, password: undefined });
+    } catch (error) {
+      return res.status(500).json({ message: "그룹 변경에 실패했습니다" });
+    }
+  });
+
+  app.get("/api/admin/domain-groups", requireAdmin, async (_req, res) => {
+    try {
+      const groups = await storage.getAllDomainGroups();
+      return res.json(groups);
+    } catch (error) {
+      return res.status(500).json({ message: "도메인 그룹 조회 실패" });
+    }
+  });
+
+  app.put("/api/admin/domain-groups/:domain", requireAdmin, async (req, res) => {
+    try {
+      const domain = decodeURIComponent(req.params.domain);
+      const { groupName } = req.body;
+      if (!groupName || typeof groupName !== "string" || groupName.trim() === "") {
+        return res.status(400).json({ message: "그룹명을 입력해주세요" });
+      }
+      const group = await storage.upsertDomainGroup(domain, groupName.trim());
+      return res.json(group);
+    } catch (error) {
+      return res.status(500).json({ message: "도메인 그룹 저장 실패" });
+    }
+  });
+
+  app.delete("/api/admin/domain-groups/:domain", requireAdmin, async (req, res) => {
+    try {
+      const domain = decodeURIComponent(req.params.domain);
+      await storage.deleteDomainGroup(domain);
+      return res.json({ message: "삭제 완료" });
+    } catch (error) {
+      return res.status(500).json({ message: "도메인 그룹 삭제 실패" });
     }
   });
 

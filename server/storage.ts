@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist } from "@shared/schema";
+import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
 
@@ -11,7 +11,11 @@ export interface IStorage {
   approveUser(id: string): Promise<User | undefined>;
   updateUser(id: string, data: Partial<Pick<User, "fullName" | "accountNumber" | "accountHolder" | "bank" | "password" | "isFrozen">>): Promise<User | undefined>;
   updateUserManagerCode(id: string, managerCode: string | null): Promise<User | undefined>;
+  updateUserSiteGroup(id: string, siteGroup: string | null): Promise<User | undefined>;
   deleteUser(id: string): Promise<void>;
+  getAllDomainGroups(): Promise<DomainGroup[]>;
+  upsertDomainGroup(domain: string, groupName: string): Promise<DomainGroup>;
+  deleteDomainGroup(domain: string): Promise<void>;
   getTransaction(id: string): Promise<StockTransaction | undefined>;
   getTransactionsByUserId(userId: string): Promise<StockTransaction[]>;
   getAllTransactions(): Promise<StockTransaction[]>;
@@ -97,6 +101,27 @@ export class DatabaseStorage implements IStorage {
   async updateUserManagerCode(id: string, managerCode: string | null): Promise<User | undefined> {
     const [user] = await db.update(users).set({ managerCode: managerCode || null }).where(eq(users.id, id)).returning();
     return user;
+  }
+
+  async updateUserSiteGroup(id: string, siteGroup: string | null): Promise<User | undefined> {
+    const [user] = await db.update(users).set({ siteGroup: siteGroup || null }).where(eq(users.id, id)).returning();
+    return user;
+  }
+
+  async getAllDomainGroups(): Promise<DomainGroup[]> {
+    return db.select().from(domainGroups).orderBy(domainGroups.domain);
+  }
+
+  async upsertDomainGroup(domain: string, groupName: string): Promise<DomainGroup> {
+    const [result] = await db.insert(domainGroups)
+      .values({ domain, groupName })
+      .onConflictDoUpdate({ target: domainGroups.domain, set: { groupName } })
+      .returning();
+    return result;
+  }
+
+  async deleteDomainGroup(domain: string): Promise<void> {
+    await db.delete(domainGroups).where(eq(domainGroups.domain, domain));
   }
 
   async deleteUser(id: string): Promise<void> {
