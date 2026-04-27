@@ -1099,9 +1099,31 @@ function PopularDiscussions() {
         <div className="flex gap-3">
           {[...Array(4)].map((_, i) => <div key={i} className="min-w-[200px] h-32 bg-gray-100 rounded-xl animate-pulse" />)}
         </div>
+      ) : showAll ? (
+        <div className="flex flex-col gap-2">
+          {displayPosts.map((post: any, idx: number) => (
+            <div
+              key={post.id || idx}
+              className="border border-[#eee] rounded-xl p-4 flex flex-col gap-2 cursor-pointer hover:border-[#ddd] hover:bg-[#fafafa] transition-colors"
+              data-testid={`card-discussion-${post.id || idx}`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] px-1.5 py-0.5 rounded font-medium bg-[#FFF0F0] text-[#E8344E]">
+                  {post.nickName || "익명"}
+                </span>
+                <span className="text-xs text-[#999]">{post.stockName || ""}</span>
+              </div>
+              <p className="text-sm font-medium text-[#222] leading-snug">{post.subject || post.body || ""}</p>
+              <div className="flex items-center gap-1 pt-1 border-t border-[#f5f5f5]">
+                <MessageCircle className="w-3 h-3 text-[#ccc]" />
+                <span className="text-xs text-[#bbb]">댓글</span>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
-          {(showAll ? displayPosts : displayPosts.slice(0, 4)).map((post: any, idx: number) => (
+          {displayPosts.slice(0, 4).map((post: any, idx: number) => (
             <div
               key={post.id || idx}
               className="min-w-[200px] max-w-[200px] border border-[#eee] rounded-xl p-4 flex flex-col justify-between gap-2 cursor-pointer hover:border-[#ddd] hover:bg-[#fafafa] transition-colors shrink-0"
