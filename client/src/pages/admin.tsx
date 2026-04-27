@@ -2891,27 +2891,62 @@ export default function AdminPage() {
                 {uniqueSiteGroups.length === 0 ? (
                   <p className="text-sm text-gray-400">아직 도메인 기록이 없습니다. 회원이 가입하면 자동으로 기록됩니다.</p>
                 ) : (
-                  <div className="space-y-2">
-                    {uniqueSiteGroups.map((g) => (
-                      <div key={g} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                        <div className="flex items-center gap-2">
-                          <Globe className="w-4 h-4 text-blue-400" />
-                          <span className="font-mono text-sm text-gray-700">{g}</span>
-                          {getGroupLabel(g) !== g && (
-                            <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-[11px]">{getGroupLabel(g)}</Badge>
+                  <div className="space-y-1">
+                    {[...uniqueSiteGroups, null].map((g) => {
+                      const domainUsers = g
+                        ? users.filter((u) => u.siteGroup === g)
+                        : users.filter((u) => !u.siteGroup);
+                      const label = g ? g : "미분류 (도메인 없음)";
+                      const groupName = g ? getGroupLabel(g) : null;
+                      const managerCode = g ? domainGroupsList.find((d) => d.domain === g)?.managerCode : null;
+                      return (
+                        <details key={g ?? "__none__"} className="group border border-gray-100 rounded-md overflow-hidden">
+                          <summary className="flex items-center justify-between px-3 py-2 cursor-pointer select-none hover:bg-gray-50 list-none">
+                            <div className="flex items-center gap-2">
+                              <Globe className="w-4 h-4 text-blue-400 shrink-0" />
+                              <span className="font-mono text-sm text-gray-700">{label}</span>
+                              {groupName && groupName !== g && (
+                                <Badge className="bg-blue-50 text-blue-700 border border-blue-200 text-[11px]">{groupName}</Badge>
+                              )}
+                              {managerCode && (
+                                <Badge className="bg-orange-50 text-orange-700 border border-orange-200 text-[11px]">{managerCode}</Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="border-gray-200 text-gray-500">{domainUsers.length}명</Badge>
+                              <ChevronRight className="w-4 h-4 text-gray-400 group-open:rotate-90 transition-transform" />
+                            </div>
+                          </summary>
+                          {domainUsers.length === 0 ? (
+                            <div className="px-4 py-3 text-xs text-gray-400 bg-gray-50">해당 도메인으로 가입한 회원이 없습니다</div>
+                          ) : (
+                            <div className="border-t border-gray-100 divide-y divide-gray-50">
+                              {domainUsers.map((u) => (
+                                <div key={u.id} className="flex items-center justify-between px-4 py-2 bg-gray-50 hover:bg-gray-100">
+                                  <div className="flex items-center gap-3">
+                                    <div>
+                                      <span className="text-sm font-medium text-gray-800">{u.username}</span>
+                                      {u.fullName && <span className="text-xs text-gray-400 ml-1">({u.fullName})</span>}
+                                    </div>
+                                    {u.managerCode && (
+                                      <span className="text-[11px] px-1.5 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200">{u.managerCode}</span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {u.isApproved ? (
+                                      <Badge className="bg-green-50 text-green-700 border border-green-200 text-[11px]">승인</Badge>
+                                    ) : (
+                                      <Badge className="bg-yellow-50 text-yellow-700 border border-yellow-200 text-[11px]">대기</Badge>
+                                    )}
+                                    {u.isFrozen && <Badge className="bg-blue-50 text-blue-700 border border-blue-200 text-[11px]">동결</Badge>}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           )}
-                        </div>
-                        <Badge variant="outline" className="border-gray-200 text-gray-500">
-                          {users.filter((u) => u.siteGroup === g).length}명
-                        </Badge>
-                      </div>
-                    ))}
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-sm text-gray-400">미분류 (도메인 없음)</span>
-                      <Badge variant="outline" className="border-gray-200 text-gray-400">
-                        {users.filter((u) => !u.siteGroup).length}명
-                      </Badge>
-                    </div>
+                        </details>
+                      );
+                    })}
                   </div>
                 )}
               </Card>
