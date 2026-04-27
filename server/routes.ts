@@ -196,6 +196,72 @@ export async function registerRoutes(
   const priceCache = new Map<string, { price: number; change: number; timestamp: number }>();
   const PRICE_CACHE_DURATION = 5 * 60 * 1000;
 
+  // Live price cache scraped from ustockplus.com homepage
+  const ustockLiveCache = new Map<string, { price: number; change: number }>();
+  let ustockLiveCacheTime = 0;
+  const USTOCK_CACHE_DURATION = 5 * 60 * 1000;
+
+  async function refreshUstockPrices(): Promise<void> {
+    try {
+      const resp = await fetch("https://www.ustockplus.com/", {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "Accept-Language": "ko-KR,ko;q=0.9",
+          "Accept": "text/html,application/xhtml+xml",
+        },
+        signal: AbortSignal.timeout(12000),
+      });
+      if (!resp.ok) return;
+      const html = await resp.text();
+      const startIdx = html.indexOf("__NEXT_DATA__");
+      if (startIdx < 0) return;
+      const contentStart = html.indexOf(">", startIdx) + 1;
+      const contentEnd = html.indexOf("</script>", contentStart);
+      const json = html.slice(contentStart, contentEnd);
+      const data = JSON.parse(json);
+      const queries: any[] = data?.props?.pageProps?.dehydratedState?.queries || [];
+      // Extract all stock rank lists (query index 5 or any query with rows containing currentPrice)
+      const seen = new Set<string>();
+      for (const q of queries) {
+        const qdata = q?.state?.data;
+        if (!qdata) continue;
+        // qdata may be an array of rank groups, each with .rows
+        const groups = Array.isArray(qdata) ? qdata : [];
+        for (const group of groups) {
+          const rows: any[] = group?.rows || [];
+          for (const row of rows) {
+            const name: string = row?.stockName;
+            const price: number = row?.currentPrice;
+            const change: number = row?.changeRate;
+            if (name && typeof price === "number" && price > 0 && !seen.has(name)) {
+              ustockLiveCache.set(name, { price, change: change ?? 0 });
+              seen.add(name);
+            }
+          }
+        }
+        // qdata may also have featuredDiscussStocks
+        const featured: any[] = qdata?.featuredDiscussStocks?.rows || [];
+        for (const row of featured) {
+          const name: string = row?.resource?.name;
+          const price: number = row?.resource?.currentPrice;
+          const change: number = row?.resource?.changeRate;
+          if (name && typeof price === "number" && price > 0 && !seen.has(name)) {
+            ustockLiveCache.set(name, { price, change: change ?? 0 });
+            seen.add(name);
+          }
+        }
+      }
+      ustockLiveCacheTime = Date.now();
+      log(`UstockPlus prices refreshed: ${seen.size} stocks`);
+    } catch (err) {
+      log(`UstockPlus price refresh error: ${err}`);
+    }
+  }
+
+  // Initial load + periodic refresh every 5 minutes
+  refreshUstockPrices();
+  setInterval(refreshUstockPrices, USTOCK_CACHE_DURATION);
+
   async function fetchNaverPrice(stockCode: string): Promise<{ price: number; change: number } | null> {
     try {
       const resp = await fetch(`https://m.stock.naver.com/api/stock/${stockCode}/basic`, {
@@ -219,6 +285,12 @@ export async function registerRoutes(
     const cached = priceCache.get(stockName);
     if (cached && Date.now() - cached.timestamp < PRICE_CACHE_DURATION) {
       return cached.price;
+    }
+    // Try live ustockplus data first
+    const live = ustockLiveCache.get(stockName);
+    if (live) {
+      priceCache.set(stockName, { ...live, timestamp: Date.now() });
+      return live.price;
     }
     const unlisted = UNLISTED_PRICES[stockName];
     if (unlisted) {
@@ -247,12 +319,22 @@ export async function registerRoutes(
       const fetchPromises: Promise<void>[] = [];
 
       for (const name of stockNames.slice(0, 50)) {
+        // Check short-term priceCache first
         const cached = priceCache.get(name);
         if (cached && Date.now() - cached.timestamp < PRICE_CACHE_DURATION) {
           results[name] = { currentPrice: cached.price, changePercent: cached.change };
           continue;
         }
 
+        // Check live ustockplus data
+        const live = ustockLiveCache.get(name);
+        if (live) {
+          results[name] = { currentPrice: live.price, changePercent: live.change };
+          priceCache.set(name, { ...live, timestamp: Date.now() });
+          continue;
+        }
+
+        // Fall back to hardcoded unlisted prices
         const unlisted = UNLISTED_PRICES[name];
         if (unlisted) {
           results[name] = { currentPrice: unlisted.price, changePercent: unlisted.change };
@@ -260,6 +342,7 @@ export async function registerRoutes(
           continue;
         }
 
+        // Try Naver API for listed stocks
         const code = STOCK_CODE_MAP[name];
         if (code) {
           fetchPromises.push(
@@ -279,6 +362,16 @@ export async function registerRoutes(
       log(`Stock prices error: ${error}`);
       return res.status(500).json({ message: "가격 정보를 가져올 수 없습니다" });
     }
+  });
+
+  // Expose endpoint to check live price cache status
+  app.get("/api/stocks/live-prices-status", async (_req, res) => {
+    const stocks = Object.fromEntries(ustockLiveCache.entries());
+    res.json({
+      count: ustockLiveCache.size,
+      lastUpdated: ustockLiveCacheTime ? new Date(ustockLiveCacheTime).toISOString() : null,
+      stocks,
+    });
   });
 
   app.get("/api/stocks/news", async (_req, res) => {
