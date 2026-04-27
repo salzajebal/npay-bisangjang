@@ -252,7 +252,7 @@ export default function DashboardPage() {
           </>
         )}
       </div>
-      <nav className="flex-1 py-3 px-2 space-y-1">
+      <nav className="flex-1 py-3 px-2 space-y-1 overflow-y-auto">
         {sidebarItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeSection === item.id;
@@ -802,7 +802,7 @@ export default function DashboardPage() {
             </div>
             <h3 className="text-base font-bold text-[#222] text-center mb-3">계좌 이동 안내</h3>
             <p className="text-sm text-[#555] text-center leading-relaxed">
-              위 종목은 신주상장당일 증권 계좌로<br />이동 될 예정입니다.
+              입고받으신 종목은 상장당일 연동되어있는 증권계좌로 이동 될 예정입니다
             </p>
           </div>
           <div className="px-6 pb-6 pt-4">

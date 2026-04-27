@@ -5,9 +5,11 @@ import { StockIcon } from "@/components/stock-icon";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, TrendingUp, TrendingDown, Minus, Calendar, Building2, BarChart3 } from "lucide-react";
+import { ChevronLeft, TrendingUp, TrendingDown, Minus, Calendar, Building2, BarChart3, ShoppingCart } from "lucide-react";
 import type { IpoStock } from "@shared/schema";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 const STOCK_EXTRA: Record<string, { category: string; desc: string }> = {
   "두나무": { category: "핀테크", desc: "두나무는 국내 최대 암호화폐 거래소 업비트를 운영하는 핀테크 기업입니다." },
@@ -36,6 +38,15 @@ export default function StockDetailPage() {
   const { name: encodedName } = useParams<{ name: string }>();
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState<"시세" | "IPO">("시세");
+  const { toast } = useToast();
+
+  const handleBuyClick = () => {
+    toast({
+      title: "매수 불가",
+      description: "현재 매수 가능한 수량이 없습니다. 담당자에게 문의해 주세요.",
+      variant: "destructive",
+    });
+  };
 
   const stockName = decodeURIComponent(encodedName || "");
 
@@ -114,6 +125,16 @@ export default function StockDetailPage() {
             {extra && (
               <p className="text-xs text-[#999] mt-3 leading-relaxed">{extra.desc}</p>
             )}
+            <div className="mt-4 flex gap-2">
+              <Button
+                onClick={handleBuyClick}
+                className="flex-1 bg-[#f04452] border-[#f04452] text-white font-bold hover:bg-[#d63a47]"
+                data-testid="button-buy"
+              >
+                <ShoppingCart className="w-4 h-4 mr-1.5" />
+                매수
+              </Button>
+            </div>
           </Card>
         ) : null}
 

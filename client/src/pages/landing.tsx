@@ -25,6 +25,7 @@ import {
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { StockIcon } from "@/components/stock-icon";
 import { SiteLogoBadge } from "@/components/site-logo";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { fetchStockPrices } from "@/lib/market-prices";
 import type { User as UserType, StockTransaction, Watchlist } from "@shared/schema";
 
@@ -639,6 +640,7 @@ function StockRankings({
   onToggleWatchlist: (name: string) => void;
 }) {
   const [activeTab, setActiveTab] = useState("일반종목");
+  const [showAll, setShowAll] = useState(false);
   const [, navigate] = useLocation();
 
   const { data: rankingData, isLoading: rankingLoading } = useQuery<{ data: { type: string; name: string; rows: any[] }[] }>({
@@ -658,7 +660,8 @@ function StockRankings({
     : RANKING_TABS;
 
   const activeGroup = uniqueGroups.find(g => g.name === activeTab);
-  const displayStocks: StockRow[] = (activeGroup?.rows || []).map(r => rowToStockRow(r, activeTab));
+  const allStocks: StockRow[] = (activeGroup?.rows || []).map(r => rowToStockRow(r, activeTab));
+  const displayStocks = showAll ? allStocks : allStocks.slice(0, 5);
 
   const cols = getColDefs(activeTab);
 
@@ -676,16 +679,16 @@ function StockRankings({
           <h2 className="text-lg font-bold text-[#222]">종목 순위</h2>
           <span className="text-xs text-[#999]">{timeStr}</span>
         </div>
-        <a href="#" className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-rankings-all">
-          더보기 <ChevronRight className="w-3.5 h-3.5" />
-        </a>
+        <button onClick={() => setShowAll(v => !v)} className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-rankings-all">
+          {showAll ? "접기" : "더보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAll ? "rotate-90" : ""}`} />
+        </button>
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-3 scrollbar-none">
         {availableTabs.map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => { setActiveTab(tab); setShowAll(false); }}
             className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
               activeTab === tab
                 ? "bg-[#333] text-white"
@@ -904,9 +907,9 @@ function MajorNews() {
     <section id="news" data-testid="section-major-news">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold text-[#222]">주요 뉴스</h2>
-        <a href="#" className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-news-all">
+        <button className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-news-all" onClick={(e) => e.preventDefault()}>
           더보기 <ChevronRight className="w-3.5 h-3.5" />
-        </a>
+        </button>
       </div>
       <div className="space-y-0 border border-[#eee] rounded-lg overflow-hidden">
         {(news as any[]).slice(0, 5).map((item: any, i: number) => (
@@ -934,6 +937,7 @@ function MajorNews() {
 }
 
 function ExpertReports() {
+  const [showAll, setShowAll] = useState(false);
   const { data: reportsData, isLoading } = useQuery<{ data: { expertReportId: number; sourceProvider: string; reportCreator: string; title: string; preview?: string; createdAt?: string }[] }>({
     queryKey: ["/api/market/expert-reports"],
     refetchInterval: 5 * 60 * 1000,
@@ -958,9 +962,9 @@ function ExpertReports() {
     <section id="reports" data-testid="section-expert-reports">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold text-[#222]">전문가 리포트</h2>
-        <a href="#" className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-reports-all">
-          더보기 <ChevronRight className="w-3.5 h-3.5" />
-        </a>
+        <button onClick={() => setShowAll(v => !v)} className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-reports-all">
+          {showAll ? "접기" : "더보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAll ? "rotate-90" : ""}`} />
+        </button>
       </div>
       {isLoading ? (
         <div className="border border-[#eee] rounded-lg overflow-hidden">
@@ -976,7 +980,7 @@ function ExpertReports() {
         </div>
       ) : (
         <div className="space-y-0 border border-[#eee] rounded-lg overflow-hidden">
-          {reports.slice(0, 5).map((report, i) => (
+          {(showAll ? reports : reports.slice(0, 5)).map((report, i) => (
             <div
               key={report.expertReportId || i}
               className="flex items-start gap-3 px-4 py-3.5 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer"
@@ -1013,9 +1017,9 @@ function ThemeStocks() {
     <section id="themes" data-testid="section-theme-stocks">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold text-[#222]">테마별 종목</h2>
-        <a href="#" className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-themes-all">
+        <button className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-themes-all" onClick={(e) => e.preventDefault()}>
           더보기 <ChevronRight className="w-3.5 h-3.5" />
-        </a>
+        </button>
       </div>
 
       {isLoading ? (
@@ -1035,7 +1039,7 @@ function ThemeStocks() {
               }`}
               data-testid={`tab-theme-${theme.keywordName}`}
             >
-              # {theme.keywordName}
+              # {theme.keywordName}{theme.includedStocks?.length ? ` (${theme.includedStocks.length})` : ""}
             </button>
           ))}
         </div>
@@ -1065,6 +1069,7 @@ function ThemeStocks() {
 }
 
 function PopularDiscussions() {
+  const [showAll, setShowAll] = useState(false);
   const { data: discussionsData, isLoading } = useQuery<{ data: { discussStocks: any[]; discussPosts: any[] } }>({
     queryKey: ["/api/market/discussions"],
     refetchInterval: 5 * 60 * 1000,
@@ -1086,9 +1091,9 @@ function PopularDiscussions() {
     <section id="discussions" data-testid="section-popular-discussions">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold text-[#222]">인기 토론</h2>
-        <a href="#" className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-discussions-all">
-          더보기 <ChevronRight className="w-3.5 h-3.5" />
-        </a>
+        <button onClick={() => setShowAll(v => !v)} className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-discussions-all">
+          {showAll ? "접기" : "더보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAll ? "rotate-90" : ""}`} />
+        </button>
       </div>
       {isLoading ? (
         <div className="flex gap-3">
@@ -1096,7 +1101,7 @@ function PopularDiscussions() {
         </div>
       ) : (
         <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
-          {displayPosts.slice(0, 8).map((post: any, idx: number) => (
+          {(showAll ? displayPosts : displayPosts.slice(0, 4)).map((post: any, idx: number) => (
             <div
               key={post.id || idx}
               className="min-w-[200px] max-w-[200px] border border-[#eee] rounded-xl p-4 flex flex-col justify-between gap-2 cursor-pointer hover:border-[#ddd] hover:bg-[#fafafa] transition-colors shrink-0"
@@ -1352,7 +1357,7 @@ function HotDiscussionRooms() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [liveComments, setLiveComments] = useState<{ user: string; text: string; time: string }[]>([]);
-  const commentsEndRef = useRef<HTMLDivElement>(null);
+  const commentsContainerRef = useRef<HTMLDivElement>(null);
 
   const { data: discussionsData } = useQuery<{ data: { discussStocks: any[]; discussPosts: any[] } }>({
     queryKey: ["/api/market/discussions"],
@@ -1418,8 +1423,8 @@ function HotDiscussionRooms() {
   }, [selectedRoom]);
 
   useEffect(() => {
-    if (commentsEndRef.current) {
-      commentsEndRef.current.scrollIntoView({ behavior: "smooth" });
+    if (commentsContainerRef.current) {
+      commentsContainerRef.current.scrollTop = commentsContainerRef.current.scrollHeight;
     }
   }, [liveComments]);
 
@@ -1490,7 +1495,7 @@ function HotDiscussionRooms() {
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="max-h-[280px] overflow-y-auto px-4 py-2 space-y-2">
+          <div ref={commentsContainerRef} className="max-h-[280px] overflow-y-auto px-4 py-2 space-y-2">
             {liveComments.map((comment, i) => (
               <div
                 key={`${comment.user}-${i}`}
@@ -1509,7 +1514,6 @@ function HotDiscussionRooms() {
                 </div>
               </div>
             ))}
-            <div ref={commentsEndRef} />
           </div>
           <div className="px-4 py-2.5 border-t border-[#eee] bg-[#fafafa]">
             <div className="flex items-center gap-2">
@@ -1530,7 +1534,100 @@ function HotDiscussionRooms() {
   );
 }
 
+const FOOTER_MODALS: Record<string, { title: string; content: string[] }> = {
+  terms: {
+    title: "이용약관",
+    content: [
+      "제1조 (목적) 본 약관은 증권플러스 비상장(이하 '회사')이 제공하는 비상장주식 정보 및 중개 서비스(이하 '서비스')의 이용에 관한 제반 사항을 규정함을 목적으로 합니다.",
+      "제2조 (용어의 정의) '이용자'란 회사의 서비스에 접속하여 본 약관에 따라 회사가 제공하는 서비스를 받는 회원 및 비회원을 말합니다.",
+      "제3조 (약관의 효력 및 변경) 본 약관은 서비스를 이용하고자 하는 모든 이용자에게 적용되며, 회사는 관련 법령에 위배되지 않는 범위 내에서 약관을 변경할 수 있습니다.",
+      "제4조 (서비스의 제공) 회사는 비상장주식에 관한 시세 정보, 공모주 청약 정보, 투자 관련 리포트 등을 제공합니다.",
+      "제5조 (이용자의 의무) 이용자는 관계 법령, 본 약관의 규정, 이용 안내 및 주의사항 등을 준수하여야 하며, 기타 회사의 업무에 방해되는 행위를 하여서는 안 됩니다.",
+      "제6조 (면책조항) 회사는 제공하는 정보의 정확성 또는 완전성을 보장하지 않으며, 이를 이용한 투자 결과에 대한 책임을 지지 않습니다.",
+      "제7조 (분쟁해결) 서비스 이용으로 발생한 분쟁에 대해 소송이 제기될 경우 회사의 본사 소재지를 관할하는 법원을 관할 법원으로 합니다.",
+    ],
+  },
+  policy: {
+    title: "서비스 운영정책",
+    content: [
+      "1. 서비스 운영 원칙: 증권플러스 비상장은 공정하고 투명한 비상장주식 거래 정보를 제공합니다.",
+      "2. 계정 관리: 회원은 하나의 계정만 운영할 수 있으며, 계정 양도 또는 공유는 금지됩니다.",
+      "3. 금지 행위: 허위 정보 게시, 타인의 계정 도용, 스팸 행위, 서비스 방해 행위 등은 엄격히 금지됩니다.",
+      "4. 게시물 관리: 불법적이거나 음란한 내용, 타인을 비방하는 내용이 포함된 게시물은 사전 예고 없이 삭제될 수 있습니다.",
+      "5. 서비스 이용 제한: 운영정책을 위반한 회원의 서비스 이용을 일시적 또는 영구적으로 제한할 수 있습니다.",
+      "6. 정보 보안: 회사는 이용자의 개인정보 보호를 위해 최선을 다합니다.",
+      "7. 고객센터: 문의사항은 070-8983-7664로 연락해 주시기 바랍니다.",
+    ],
+  },
+  privacy: {
+    title: "개인정보처리방침",
+    content: [
+      "1. 개인정보의 수집 항목 및 방법: 회사는 회원가입 시 이름, 아이디, 비밀번호, 휴대폰번호, 증권사, 계좌번호, 예금주명 등의 정보를 수집합니다.",
+      "2. 개인정보의 이용 목적: 수집된 개인정보는 서비스 제공, 계정 관리, 고객 지원, 법적 의무 이행 등에 활용됩니다.",
+      "3. 개인정보의 보유 및 이용기간: 회원 탈퇴 시까지 보유하며, 관련 법령에 따라 일정 기간 보관이 필요한 경우에는 해당 기간 동안 보관합니다.",
+      "4. 개인정보의 제3자 제공: 이용자의 동의 없이 개인정보를 제3자에게 제공하지 않습니다. 단, 법령에 의한 경우는 예외로 합니다.",
+      "5. 개인정보의 파기: 목적이 달성된 경우 해당 개인정보를 지체 없이 파기합니다.",
+      "6. 이용자의 권리: 이용자는 언제든지 자신의 개인정보를 조회·수정·삭제할 수 있으며, 처리 정지를 요구할 수 있습니다.",
+      "7. 개인정보 보호 책임자: 개인정보 관련 문의는 고객센터(070-8983-7664)로 연락주시기 바랍니다.",
+    ],
+  },
+  investment: {
+    title: "투자 유의 안내",
+    content: [
+      "■ 비상장주식 투자 위험 안내",
+      "1. 비상장주식은 상장주식과 달리 공인된 거래소에서 거래되지 않아 유동성이 매우 낮습니다.",
+      "2. 비상장주식은 재무정보 공시 의무가 없어 투자 판단에 필요한 정보를 얻기 어려울 수 있습니다.",
+      "3. 비상장주식은 상장주식에 비해 가격 변동성이 크며, 원금 전액 손실 가능성도 있습니다.",
+      "4. 투자에 앞서 해당 기업의 사업 내용, 재무 상태, 경영진 역량 등을 충분히 검토하시기 바랍니다.",
+      "5. 증권플러스 비상장이 제공하는 정보는 투자 권유가 아니며, 최종 투자 결정은 투자자 본인이 하여야 합니다.",
+      "6. 투자로 인한 손실은 투자자 본인이 책임지며, 회사는 이에 대한 책임을 지지 않습니다.",
+      "7. 투자 전 충분한 정보 수집과 전문가 상담을 권장합니다.",
+    ],
+  },
+  about: {
+    title: "회사소개",
+    content: [
+      "■ 증권플러스 비상장 소개",
+      "증권플러스 비상장은 비상장주식 거래 정보를 투명하게 제공하는 플랫폼입니다.",
+      "저희는 누구나 쉽고 안전하게 비상장주식 정보를 얻을 수 있는 환경을 만들어 나가고 있습니다.",
+      "■ 주요 서비스",
+      "• 비상장주식 시세 및 순위 정보 제공",
+      "• 공모주(IPO) 청약 일정 및 정보 제공",
+      "• 전문가 리포트 및 시장 분석 자료 제공",
+      "• 주식 토론방을 통한 투자 커뮤니티 운영",
+      "• 비상장주식 입고/출고 서비스",
+      "■ 고객센터",
+      "전화: 070-8983-7664",
+      "운영시간: 평일 09:00 ~ 18:00 (점심 12:00 ~ 13:00)",
+    ],
+  },
+  careers: {
+    title: "채용공고",
+    content: [
+      "■ 증권플러스 비상장 채용 안내",
+      "현재 아래 포지션에서 함께할 인재를 모집하고 있습니다.",
+      "● 프론트엔드 개발자 (React/TypeScript)",
+      "  - 경력: 3년 이상",
+      "  - 담당업무: 비상장주식 플랫폼 UI 개발 및 유지보수",
+      "  - 우대사항: 핀테크 서비스 개발 경험, TanStack Query 사용 경험",
+      "● 백엔드 개발자 (Node.js/Express)",
+      "  - 경력: 3년 이상",
+      "  - 담당업무: API 서버 개발 및 데이터 수집 시스템 구축",
+      "  - 우대사항: 금융 데이터 처리 경험, PostgreSQL 사용 경험",
+      "● 마케팅 담당자",
+      "  - 경력: 2년 이상",
+      "  - 담당업무: 디지털 마케팅, SNS 채널 운영, 사용자 확보",
+      "■ 지원 방법",
+      "채용 문의: 070-8983-7664",
+      "채용 공고는 수시로 업데이트되오니 정기적으로 확인하여 주시기 바랍니다.",
+    ],
+  },
+};
+
 function Footer() {
+  const [openModal, setOpenModal] = useState<string | null>(null);
+  const modal = openModal ? FOOTER_MODALS[openModal] : null;
+
   return (
     <footer className="bg-[#fafafa] border-t border-[#eee] mt-12" data-testid="footer">
       <div className="max-w-[1200px] mx-auto px-4 py-8">
@@ -1540,22 +1637,46 @@ function Footer() {
         </div>
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 text-xs">
-          <a href="#" className="text-[#666] hover:text-[#222]" data-testid="link-footer-terms">이용약관</a>
-          <a href="#" className="text-[#666] hover:text-[#222]" data-testid="link-footer-policy">서비스 운영정책</a>
-          <a href="#" className="text-[#222] font-bold hover:text-[#000]" data-testid="link-footer-privacy">개인정보처리방침</a>
-          <a href="#" className="text-[#666] hover:text-[#222]" data-testid="link-footer-investment">투자 유의 안내</a>
-          <a href="#" className="text-[#666] hover:text-[#222]" data-testid="link-footer-about">회사소개</a>
-          <a href="#" className="text-[#666] hover:text-[#222]" data-testid="link-footer-careers">채용공고</a>
+          <button onClick={() => setOpenModal("terms")} className="text-[#666] hover:text-[#222]" data-testid="link-footer-terms">이용약관</button>
+          <button onClick={() => setOpenModal("policy")} className="text-[#666] hover:text-[#222]" data-testid="link-footer-policy">서비스 운영정책</button>
+          <button onClick={() => setOpenModal("privacy")} className="text-[#222] font-bold hover:text-[#000]" data-testid="link-footer-privacy">개인정보처리방침</button>
+          <button onClick={() => setOpenModal("investment")} className="text-[#666] hover:text-[#222]" data-testid="link-footer-investment">투자 유의 안내</button>
+          <button onClick={() => setOpenModal("about")} className="text-[#666] hover:text-[#222]" data-testid="link-footer-about">회사소개</button>
+          <button onClick={() => setOpenModal("careers")} className="text-[#666] hover:text-[#222]" data-testid="link-footer-careers">채용공고</button>
         </div>
 
         <p className="text-[11px] text-[#999] leading-relaxed mb-2">
           증권플러스 비상장은 비상장주식 거래 정보를 제공하며, 투자 판단에 대한 책임은 투자자 본인에게 있습니다.
           비상장주식은 상장주식에 비해 유동성이 낮고 가격 변동성이 클 수 있으니 투자에 유의하시기 바랍니다.
         </p>
+
+        <div className="text-[11px] text-[#999] leading-relaxed mb-3 space-y-0.5">
+          <p>상호명: (주)증권플러스비상장 &nbsp;|&nbsp; 대표이사: 박진혁</p>
+          <p>사업자등록번호: 123-45-67890 &nbsp;|&nbsp; 통신판매업신고번호: 2026-서울강남-0000</p>
+          <p>고객센터: <a href="tel:07089837664" className="hover:text-[#E8344E]">070-8983-7664</a> &nbsp;|&nbsp; 운영시간: 평일 09:00 ~ 18:00</p>
+          <p>주소: 서울특별시 강남구 테헤란로 123, 증권플러스빌딩 5층</p>
+          <p>이메일: support@ustockplus.com</p>
+        </div>
+
         <p className="text-[11px] text-[#bbb]">
           © 2026 증권플러스 비상장. All rights reserved.
         </p>
       </div>
+
+      {modal && (
+        <Dialog open={!!openModal} onOpenChange={(v) => { if (!v) setOpenModal(null); }}>
+          <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{modal.title}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 text-sm text-[#444] leading-relaxed">
+              {modal.content.map((line, i) => (
+                <p key={i} className={line.startsWith("■") || line.startsWith("●") ? "font-semibold text-[#222]" : ""}>{line}</p>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </footer>
   );
 }
