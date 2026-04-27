@@ -140,6 +140,17 @@ export const domainGroups = pgTable("domain_groups", {
 
 export type DomainGroup = typeof domainGroups.$inferSelect;
 
+export const loginLogs = pgTable("login_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  ipAddress: text("ip_address"),
+  domain: text("domain"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type LoginLog = typeof loginLogs.$inferSelect;
+
 export const watchlist = pgTable("watchlist", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),

@@ -14,13 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { STOCK_CATEGORIES, KOREAN_BANKS } from "@shared/schema";
 import { StockIcon } from "@/components/stock-icon";
-import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup } from "@shared/schema";
+import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup, LoginLog } from "@shared/schema";
 import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
   Eye, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
   CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu, Plus, BookOpen, Copy,
-  Bell, BellOff, Globe,
+  Bell, BellOff, Globe, Activity,
 } from "lucide-react";
 
 const KOREAN_STOCK_LIST = [
@@ -1137,7 +1137,7 @@ function copyUserInfo(user: User, toast: any) {
   });
 }
 
-type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "stocks" | "chat" | "groups";
+type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "stocks" | "chat" | "groups" | "logs";
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "대시보드", icon: LayoutDashboard },
@@ -1147,13 +1147,14 @@ const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashbo
   { id: "stocks", label: "종목 관리", icon: Package },
   { id: "chat", label: "1:1 상담", icon: MessageSquare },
   { id: "groups", label: "도메인 그룹", icon: Globe },
+  { id: "logs", label: "접속 로그", icon: Activity },
 ];
 
 export default function AdminPage() {
   const [, setLocation] = useLocation();
   const getHashSection = (): AdminSection => {
     const hash = window.location.hash.replace("#", "");
-    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "stocks", "chat", "groups"];
+    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "stocks", "chat", "groups", "logs"];
     return valid.includes(hash as AdminSection) ? (hash as AdminSection) : "dashboard";
   };
 
@@ -1229,6 +1230,7 @@ export default function AdminPage() {
   const [filterSiteGroup, setFilterSiteGroup] = useState<string>("all");
   const [newGroupDomain, setNewGroupDomain] = useState("");
   const [newGroupName, setNewGroupName] = useState("");
+  const [logSearchFilter, setLogSearchFilter] = useState("");
   const [txSearchTerm, setTxSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
@@ -1255,6 +1257,13 @@ export default function AdminPage() {
     queryKey: ["/api/admin/domain-groups"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!authData?.user?.isAdmin,
+  });
+
+  const { data: loginLogsList = [], refetch: refetchLoginLogs } = useQuery<LoginLog[]>({
+    queryKey: ["/api/admin/login-logs"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!authData?.user?.isAdmin,
+    refetchInterval: 30000,
   });
 
   const { data: pendingUsers = [], refetch: refetchPending } = useQuery<User[]>({
@@ -2672,6 +2681,100 @@ export default function AdminPage() {
                   )}
                 </Card>
               </div>
+            </>
+          )}
+
+          {activeSection === "logs" && (
+            <>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-800">접속 로그</h2>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="border-gray-200 text-gray-500">{loginLogsList.length}건</Badge>
+                  <Button size="sm" variant="outline" className="border-gray-200 text-gray-600" onClick={() => refetchLoginLogs()} data-testid="button-refresh-logs">
+                    새로고침
+                  </Button>
+                </div>
+              </div>
+              <Card className="p-4 bg-white border-gray-200">
+                <div className="flex gap-2 mb-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder="아이디, IP, 도메인 검색..."
+                      value={logSearchFilter}
+                      onChange={(e) => setLogSearchFilter(e.target.value)}
+                      className="pl-9 bg-white border-gray-200"
+                      data-testid="input-log-search"
+                    />
+                  </div>
+                </div>
+                {loginLogsList.length === 0 ? (
+                  <div className="text-center py-10 text-gray-400">
+                    <Activity className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">접속 기록이 없습니다</p>
+                    <p className="text-xs mt-1">회원이 로그인하면 자동으로 기록됩니다</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50 border-gray-200">
+                          <TableHead className="text-gray-500">로그인 시간</TableHead>
+                          <TableHead className="text-gray-500">아이디</TableHead>
+                          <TableHead className="text-gray-500">IP 주소</TableHead>
+                          <TableHead className="text-gray-500">접속 도메인</TableHead>
+                          <TableHead className="text-gray-500">브라우저/OS</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {loginLogsList
+                          .filter((log) => {
+                            if (!logSearchFilter.trim()) return true;
+                            const q = logSearchFilter.toLowerCase();
+                            const u = users.find((u) => u.id === log.userId);
+                            return (
+                              (u?.username || "").toLowerCase().includes(q) ||
+                              (log.ipAddress || "").includes(q) ||
+                              (log.domain || "").toLowerCase().includes(q)
+                            );
+                          })
+                          .map((log) => {
+                            const u = users.find((u) => u.id === log.userId);
+                            const ua = log.userAgent || "";
+                            const browser = ua.includes("Chrome") ? "Chrome" : ua.includes("Firefox") ? "Firefox" : ua.includes("Safari") ? "Safari" : ua.includes("Edge") ? "Edge" : "기타";
+                            const os = ua.includes("Windows") ? "Windows" : ua.includes("Mac") ? "Mac" : ua.includes("iPhone") || ua.includes("iPad") ? "iOS" : ua.includes("Android") ? "Android" : "기타";
+                            return (
+                              <TableRow key={log.id} className="border-gray-200" data-testid={`log-row-${log.id}`}>
+                                <TableCell className="text-xs text-gray-600 whitespace-nowrap">
+                                  {new Date(log.createdAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
+                                </TableCell>
+                                <TableCell>
+                                  <span className="font-medium text-sm text-gray-800">{u?.username || log.userId}</span>
+                                  {u?.fullName && <span className="text-xs text-gray-400 ml-1">({u.fullName})</span>}
+                                </TableCell>
+                                <TableCell className="font-mono text-xs text-gray-600">{log.ipAddress || "-"}</TableCell>
+                                <TableCell className="text-xs">
+                                  {log.domain ? (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[11px]">
+                                      <Globe className="w-3 h-3" />
+                                      {log.domain}
+                                    </span>
+                                  ) : "-"}
+                                </TableCell>
+                                <TableCell className="text-xs text-gray-500">
+                                  <span className="inline-flex gap-1">
+                                    <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{browser}</span>
+                                    <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{os}</span>
+                                  </span>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </Card>
             </>
           )}
 

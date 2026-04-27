@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups } from "@shared/schema";
+import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, type LoginLog, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups, loginLogs } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
 
@@ -44,6 +44,9 @@ export interface IStorage {
   addToWatchlist(userId: string, stockName: string): Promise<Watchlist>;
   removeFromWatchlist(userId: string, stockName: string): Promise<void>;
   isInWatchlist(userId: string, stockName: string): Promise<boolean>;
+  createLoginLog(data: { userId: string; ipAddress?: string; domain?: string; userAgent?: string }): Promise<LoginLog>;
+  getLoginLogsByUserId(userId: string): Promise<LoginLog[]>;
+  getAllLoginLogs(): Promise<LoginLog[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -245,6 +248,19 @@ export class DatabaseStorage implements IStorage {
   async isInWatchlist(userId: string, stockName: string): Promise<boolean> {
     const [item] = await db.select().from(watchlist).where(and(eq(watchlist.userId, userId), eq(watchlist.stockName, stockName)));
     return !!item;
+  }
+
+  async createLoginLog(data: { userId: string; ipAddress?: string; domain?: string; userAgent?: string }): Promise<LoginLog> {
+    const [log] = await db.insert(loginLogs).values(data).returning();
+    return log;
+  }
+
+  async getLoginLogsByUserId(userId: string): Promise<LoginLog[]> {
+    return db.select().from(loginLogs).where(eq(loginLogs.userId, userId)).orderBy(desc(loginLogs.createdAt)).limit(50);
+  }
+
+  async getAllLoginLogs(): Promise<LoginLog[]> {
+    return db.select().from(loginLogs).orderBy(desc(loginLogs.createdAt)).limit(200);
   }
 }
 

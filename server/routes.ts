@@ -624,6 +624,10 @@ export async function registerRoutes(
       }
       req.session.userId = user.id;
       log(`Login success for username: ${data.username}`);
+      const ip = (req.headers["x-forwarded-for"] as string || req.socket.remoteAddress || "").split(",")[0].trim();
+      const domain = (req.headers["x-forwarded-host"] as string || req.headers.host || "").replace(/:\d+$/, "");
+      const userAgent = req.headers["user-agent"] || undefined;
+      storage.createLoginLog({ userId: user.id, ipAddress: ip || undefined, domain: domain || undefined, userAgent }).catch(() => {});
       return res.json({ user: { ...user, password: undefined, plainPassword: undefined } });
     } catch (error) {
       return res.status(400).json({ message: "잘못된 요청입니다" });
@@ -869,6 +873,24 @@ export async function registerRoutes(
       return res.json({ message: "삭제 완료" });
     } catch (error) {
       return res.status(500).json({ message: "도메인 그룹 삭제 실패" });
+    }
+  });
+
+  app.get("/api/admin/login-logs", requireAdmin, async (_req, res) => {
+    try {
+      const logs = await storage.getAllLoginLogs();
+      return res.json(logs);
+    } catch (error) {
+      return res.status(500).json({ message: "접속 로그 조회 실패" });
+    }
+  });
+
+  app.get("/api/admin/login-logs/:userId", requireAdmin, async (req, res) => {
+    try {
+      const logs = await storage.getLoginLogsByUserId(req.params.userId);
+      return res.json(logs);
+    } catch (error) {
+      return res.status(500).json({ message: "접속 로그 조회 실패" });
     }
   });
 
