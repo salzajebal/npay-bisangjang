@@ -980,7 +980,7 @@ function ExpertReports() {
         </div>
       ) : (
         <div className="space-y-0 border border-[#eee] rounded-lg overflow-hidden">
-          {(showAll ? reports : reports.slice(0, 5)).map((report, i) => (
+          {(showAll ? reports : reports.slice(0, 3)).map((report, i) => (
             <div
               key={report.expertReportId || i}
               className="flex items-start gap-3 px-4 py-3.5 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer"
@@ -1059,7 +1059,7 @@ function ThemeStocks() {
         <div className="border border-[#eee] rounded-lg p-4">
           <p className="text-sm text-[#666] mb-3">{currentTheme.description}</p>
           <div className="flex items-center flex-wrap gap-2">
-            {(showAllStocks ? currentTheme.includedStocks || [] : (currentTheme.includedStocks || []).slice(0, 6)).map((stock: any) => (
+            {(showAllStocks ? currentTheme.includedStocks || [] : (currentTheme.includedStocks || []).slice(0, 3)).map((stock: any) => (
               <span
                 key={stock.code || stock.name}
                 className="px-3 py-1.5 bg-[#f5f5f5] rounded-full text-sm text-[#222] hover:bg-[#eee] cursor-pointer transition-colors"
@@ -1068,12 +1068,12 @@ function ThemeStocks() {
                 {stock.name}
               </span>
             ))}
-            {!showAllStocks && (currentTheme.includedStocks || []).length > 6 && (
+            {!showAllStocks && (currentTheme.includedStocks || []).length > 3 && (
               <button
                 onClick={() => setShowAllStocks(true)}
                 className="text-sm text-[#E8344E] font-medium hover:underline"
               >
-                +{(currentTheme.includedStocks || []).length - 6}개 기업 더보기
+                +{(currentTheme.includedStocks || []).length - 3}개 기업 더보기
               </button>
             )}
           </div>
