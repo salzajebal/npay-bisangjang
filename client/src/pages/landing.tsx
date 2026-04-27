@@ -1003,6 +1003,7 @@ function ExpertReports() {
 
 function ThemeStocks() {
   const [activeTheme, setActiveTheme] = useState<string | null>(null);
+  const [showAllStocks, setShowAllStocks] = useState(false);
 
   const { data: themesData, isLoading } = useQuery<{ data: { keywordId: number; keywordName: string; description: string; includedStocks: any[] }[] }>({
     queryKey: ["/api/market/themes"],
@@ -1013,12 +1014,21 @@ function ThemeStocks() {
   const currentThemeName = activeTheme ?? themes[0]?.keywordName ?? "";
   const currentTheme = themes.find(t => t.keywordName === currentThemeName) || themes[0];
 
+  const handleThemeChange = (name: string) => {
+    setActiveTheme(name);
+    setShowAllStocks(false);
+  };
+
   return (
     <section id="themes" data-testid="section-theme-stocks">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-bold text-[#222]">테마별 종목</h2>
-        <button className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-themes-all" onClick={(e) => e.preventDefault()}>
-          더보기 <ChevronRight className="w-3.5 h-3.5" />
+        <button
+          className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]"
+          data-testid="link-themes-all"
+          onClick={() => setShowAllStocks(v => !v)}
+        >
+          {showAllStocks ? "접기" : "더보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAllStocks ? "rotate-90" : ""}`} />
         </button>
       </div>
 
@@ -1031,7 +1041,7 @@ function ThemeStocks() {
           {themes.map((theme) => (
             <button
               key={theme.keywordId}
-              onClick={() => setActiveTheme(theme.keywordName)}
+              onClick={() => handleThemeChange(theme.keywordName)}
               className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
                 currentThemeName === theme.keywordName
                   ? "bg-[#E8344E] text-white"
@@ -1049,7 +1059,7 @@ function ThemeStocks() {
         <div className="border border-[#eee] rounded-lg p-4">
           <p className="text-sm text-[#666] mb-3">{currentTheme.description}</p>
           <div className="flex items-center flex-wrap gap-2">
-            {(currentTheme.includedStocks || []).slice(0, 6).map((stock: any) => (
+            {(showAllStocks ? currentTheme.includedStocks || [] : (currentTheme.includedStocks || []).slice(0, 6)).map((stock: any) => (
               <span
                 key={stock.code || stock.name}
                 className="px-3 py-1.5 bg-[#f5f5f5] rounded-full text-sm text-[#222] hover:bg-[#eee] cursor-pointer transition-colors"
@@ -1058,8 +1068,13 @@ function ThemeStocks() {
                 {stock.name}
               </span>
             ))}
-            {(currentTheme.includedStocks || []).length > 6 && (
-              <span className="text-sm text-[#E8344E] font-medium">+{(currentTheme.includedStocks || []).length - 6}개 기업</span>
+            {!showAllStocks && (currentTheme.includedStocks || []).length > 6 && (
+              <button
+                onClick={() => setShowAllStocks(true)}
+                className="text-sm text-[#E8344E] font-medium hover:underline"
+              >
+                +{(currentTheme.includedStocks || []).length - 6}개 기업 더보기
+              </button>
             )}
           </div>
         </div>
