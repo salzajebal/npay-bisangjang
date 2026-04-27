@@ -2089,21 +2089,21 @@ export default function AdminPage() {
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-gray-50 border-gray-200">
-                          <TableHead className="text-gray-500">아이디</TableHead>
-                          <TableHead className="text-gray-500">비밀번호</TableHead>
-                          <TableHead className="text-gray-500">이름</TableHead>
-                          <TableHead className="text-gray-500">상태</TableHead>
-                          <TableHead className="text-gray-500">담당자</TableHead>
-                          <TableHead className="text-gray-500">접속도메인</TableHead>
-                          <TableHead className="text-gray-500">생년월일</TableHead>
-                          <TableHead className="text-gray-500">휴대폰</TableHead>
-                          <TableHead className="text-gray-500">이메일</TableHead>
-                          <TableHead className="text-gray-500">증권사</TableHead>
-                          <TableHead className="text-gray-500">계좌번호</TableHead>
-                          <TableHead className="text-gray-500">예금주</TableHead>
-                          <TableHead className="text-gray-500">가입일</TableHead>
-                          <TableHead className="text-gray-500">보유 종목</TableHead>
-                          <TableHead className="text-center text-gray-500">관리</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">아이디</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">비밀번호</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">이름</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">상태</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">담당자</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">접속도메인</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">생년월일</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">휴대폰</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">이메일</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">증권사</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">계좌번호</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">예금주</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">가입일</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">보유 종목</TableHead>
+                          <TableHead className="text-center text-gray-500 whitespace-nowrap">관리</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -2132,13 +2132,13 @@ export default function AdminPage() {
                                 <span className="text-gray-400 text-[11px]">미분류</span>
                               )}
                             </TableCell>
-                            <TableCell className="text-gray-700 text-xs">{u.birthDate || "-"}</TableCell>
-                            <TableCell className="text-gray-700 text-xs">{u.phone || "-"}</TableCell>
-                            <TableCell className="text-gray-700 text-xs">{u.email || "-"}</TableCell>
-                            <TableCell className="text-gray-700">{u.bank}</TableCell>
-                            <TableCell className="font-mono text-sm text-gray-700">{u.accountNumber}</TableCell>
-                            <TableCell className="text-gray-700">{u.accountHolder}</TableCell>
-                            <TableCell className="text-sm text-gray-400">
+                            <TableCell className="text-gray-700 text-xs whitespace-nowrap">{u.birthDate || "-"}</TableCell>
+                            <TableCell className="text-gray-700 text-xs whitespace-nowrap">{u.phone || "-"}</TableCell>
+                            <TableCell className="text-gray-700 text-xs whitespace-nowrap">{u.email || "-"}</TableCell>
+                            <TableCell className="text-gray-700 whitespace-nowrap">{u.bank}</TableCell>
+                            <TableCell className="font-mono text-sm text-gray-700 whitespace-nowrap">{u.accountNumber}</TableCell>
+                            <TableCell className="text-gray-700 whitespace-nowrap">{u.accountHolder}</TableCell>
+                            <TableCell className="text-sm text-gray-400 whitespace-nowrap">
                               {new Date(u.createdAt).toLocaleDateString("ko-KR")}
                             </TableCell>
                             <TableCell>
