@@ -1262,6 +1262,8 @@ export default function AdminPage() {
   const { data: authData, isLoading: authLoading } = useQuery<{ user: User } | null>({
     queryKey: ["/api/auth/me"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    refetchInterval: 60000,
+    staleTime: 30000,
   });
 
   const { data: allUsers, isLoading: usersLoading } = useQuery<User[]>({
