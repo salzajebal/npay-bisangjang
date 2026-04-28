@@ -77,6 +77,7 @@ export const transferRequests = pgTable("transfer_requests", {
   userId: varchar("user_id").notNull(),
   accountName: text("account_name").notNull(),
   accountNumber: text("account_number").notNull(),
+  brokerName: text("broker_name").notNull().default(""),
   stockName: text("stock_name").notNull().default("비상장주식"),
   quantity: integer("quantity").notNull(),
   purchasePrice: integer("purchase_price").notNull().default(0),

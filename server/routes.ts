@@ -1000,6 +1000,7 @@ export async function registerRoutes(
       const transferRequest = await storage.createTransferRequest({ 
         ...data, 
         userId: req.session.userId,
+        brokerName: user.bank || "",
         stockName: resolvedStockName,
         purchasePrice: avgPurchasePrice,
         currentPrice,

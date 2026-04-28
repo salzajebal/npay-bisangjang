@@ -789,7 +789,7 @@ export default function DashboardPage() {
                           </div>
                         )}
                         <div className="text-xs text-muted-foreground">
-                          {tr.accountName} | {tr.accountNumber}
+                          {tr.accountName} | {tr.brokerName ? `${tr.brokerName} ` : ""}{tr.accountNumber}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {new Date(tr.createdAt).toLocaleString("ko-KR")}

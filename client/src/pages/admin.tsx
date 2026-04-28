@@ -2440,7 +2440,7 @@ export default function AdminPage() {
                         </div>
                       )}
                       <div className="text-xs text-gray-500 space-y-1">
-                        <p>{tr.accountName} · <span className="font-mono text-gray-400">{tr.accountNumber}</span></p>
+                        <p>{tr.accountName} · {tr.brokerName && <span className="text-gray-600">{tr.brokerName} </span>}<span className="font-mono text-gray-400">{tr.accountNumber}</span></p>
                         {tr.adminMemo && <p className="text-gray-400">{tr.adminMemo}</p>}
                       </div>
                       <div className="flex items-center gap-1 flex-wrap pt-1 border-t border-gray-200">
@@ -2527,7 +2527,10 @@ export default function AdminPage() {
                             </TableCell>
                             <TableCell className="text-right font-mono tabular-nums text-gray-800 font-bold">{tr.totalAmount > 0 ? `${tr.totalAmount.toLocaleString()}원` : "-"}</TableCell>
                             <TableCell className="text-gray-700">{tr.accountName}</TableCell>
-                            <TableCell className="font-mono text-sm text-gray-700">{tr.accountNumber}</TableCell>
+                            <TableCell className="text-sm text-gray-700">
+                              {tr.brokerName && <span className="text-gray-500 mr-1">{tr.brokerName}</span>}
+                              <span className="font-mono">{tr.accountNumber}</span>
+                            </TableCell>
                             <TableCell className="text-sm text-gray-400">
                               {new Date(tr.createdAt).toLocaleDateString("ko-KR")}
                             </TableCell>
