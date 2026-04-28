@@ -1936,7 +1936,18 @@ export default function AdminPage() {
                     {pendingUsers.map((u) => (
                       <div key={u.id} className="flex items-center justify-between gap-3 bg-white rounded-lg border border-amber-200 px-3 py-2" data-testid={`row-pending-${u.id}`}>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm text-gray-900">{u.fullName} <span className="font-normal text-gray-500">({u.username})</span></p>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-sm text-gray-900">{u.fullName} <span className="font-normal text-gray-500">({u.username})</span></p>
+                            {u.siteGroup && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[11px] whitespace-nowrap">
+                                <Globe className="w-3 h-3" />
+                                {u.siteGroup}
+                                {getGroupLabel(u.siteGroup) !== u.siteGroup && (
+                                  <span className="text-blue-500">({getGroupLabel(u.siteGroup)})</span>
+                                )}
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-gray-500 truncate">{u.phone || "-"} · {u.bank} · {u.accountNumber}</p>
                         </div>
                         <div className="flex gap-1 shrink-0">
