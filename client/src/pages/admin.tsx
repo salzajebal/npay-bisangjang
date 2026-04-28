@@ -1164,9 +1164,13 @@ export default function AdminPage() {
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     return localStorage.getItem("adminSoundEnabled") !== "false";
   });
+  const [transferSoundEnabled, setTransferSoundEnabled] = useState<boolean>(() => {
+    return localStorage.getItem("adminTransferSoundEnabled") !== "false";
+  });
   const [alertActive, setAlertActive] = useState(false);
   const prevPendingCount = useRef<number | null>(null);
   const soundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const transferSoundEnabledRef = useRef(transferSoundEnabled);
 
   const setActiveSection = (section: AdminSection) => {
     setActiveSectionState(section);
@@ -1213,6 +1217,15 @@ export default function AdminPage() {
           soundIntervalRef.current = null;
         }
       }
+      return next;
+    });
+  };
+
+  const toggleTransferSound = () => {
+    setTransferSoundEnabled(prev => {
+      const next = !prev;
+      localStorage.setItem("adminTransferSoundEnabled", String(next));
+      transferSoundEnabledRef.current = next;
       return next;
     });
   };
@@ -1358,6 +1371,7 @@ export default function AdminPage() {
   });
 
   const totalUnreadCount = (chatRooms || []).reduce((sum: number, room: any) => sum + (room.unreadCount || 0), 0);
+  const pendingTransferCount = (allTransferRequests || []).filter(r => r.status === "pending").length;
 
   const createIpoStockMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -1473,9 +1487,9 @@ export default function AdminPage() {
           queryClient.invalidateQueries({ queryKey: ["/api/chat/rooms"] });
         }
         if (parsed.type === "transfer_update" && parsed.data?.action === "new_request") {
-          const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbsGMcBj+a2telezhJj+DYrGQ/RG2q3+OiXzZEgNThpGc/SF+W4NqkZz1Bd9bnpmk7Rme15NSmaT1ER9bn0apjNkhfvOnSrWI0R2bC8NCtVjRJZMXw1atXM0xnzvfXrFQ0TGXL9NitVTBMZc741qtU");
-          audio.volume = 0.5;
-          audio.play().catch(() => {});
+          if (transferSoundEnabledRef.current) {
+            playNotificationSound();
+          }
           toast({
             title: "새 대체출고 신청",
             description: `${parsed.data.userName || "회원"}님이 대체출고를 신청했습니다`,
@@ -1647,6 +1661,7 @@ export default function AdminPage() {
           const isActive = activeSection === item.id;
           const showUnread = item.id === "chat" && totalUnreadCount > 0;
           const showPending = item.id === "members" && pendingUsers.length > 0;
+          const showPendingTransfer = item.id === "transfers" && pendingTransferCount > 0;
           return (
             <button
               key={item.id}
@@ -1667,6 +1682,11 @@ export default function AdminPage() {
                     {pendingUsers.length}
                   </span>
                 )}
+                {showPendingTransfer && !isMobile && sidebarCollapsed && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center" data-testid="badge-transfers-pending-icon">
+                    {pendingTransferCount}
+                  </span>
+                )}
               </div>
               {(isMobile || !sidebarCollapsed) && (
                 <span className="flex-1 text-left">{item.label}</span>
@@ -1679,6 +1699,11 @@ export default function AdminPage() {
               {showPending && (isMobile || !sidebarCollapsed) && (
                 <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-amber-500 text-white text-[11px] font-bold flex items-center justify-center shrink-0" data-testid="badge-members-pending">
                   {pendingUsers.length}
+                </span>
+              )}
+              {showPendingTransfer && (isMobile || !sidebarCollapsed) && (
+                <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shrink-0" data-testid="badge-transfers-pending">
+                  {pendingTransferCount}
                 </span>
               )}
             </button>
@@ -2352,8 +2377,17 @@ export default function AdminPage() {
                   {(allTransferRequests || []).length}건
                 </Badge>
                 <Badge variant="outline" className="shrink-0 bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
-                  대기 {(allTransferRequests || []).filter(r => r.status === "pending").length}건
+                  대기 {pendingTransferCount}건
                 </Badge>
+                <button
+                  onClick={toggleTransferSound}
+                  className={`ml-auto flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors ${transferSoundEnabled ? "bg-[#E8344E]/10 text-[#E8344E] border-[#E8344E]/30" : "bg-gray-100 text-gray-400 border-gray-200"}`}
+                  title={transferSoundEnabled ? "대체출고 알림 소리 켜짐" : "대체출고 알림 소리 꺼짐"}
+                  data-testid="button-toggle-transfer-sound"
+                >
+                  {transferSoundEnabled ? <Bell className="w-3 h-3" /> : <BellOff className="w-3 h-3" />}
+                  <span>{transferSoundEnabled ? "알림 ON" : "알림 OFF"}</span>
+                </button>
               </div>
 
               {transfersLoading ? (
