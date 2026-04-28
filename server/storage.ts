@@ -134,6 +134,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(id: string): Promise<void> {
+    // 연관 데이터 전체 삭제 후 회원 삭제 (순서 중요)
+    await db.delete(loginLogs).where(eq(loginLogs.userId, id));
+    await db.delete(watchlist).where(eq(watchlist.userId, id));
+    await db.delete(transferRequests).where(eq(transferRequests.userId, id));
+    // 채팅방에 속한 메시지 먼저 삭제
+    const rooms = await db.select().from(chatRooms).where(eq(chatRooms.userId, id));
+    for (const room of rooms) {
+      await db.delete(chatMessages).where(eq(chatMessages.roomId, room.id));
+    }
+    await db.delete(chatRooms).where(eq(chatRooms.userId, id));
     await db.delete(stockTransactions).where(eq(stockTransactions.userId, id));
     await db.delete(users).where(eq(users.id, id));
   }
