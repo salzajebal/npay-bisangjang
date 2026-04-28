@@ -687,7 +687,7 @@ function MemberDeleteDialog({ user, onSuccess }: { user: User; onSuccess: () => 
           <Button
             variant="destructive"
             onClick={() => mutation.mutate()}
-            disabled={mutation.isPending || confirmText !== user.username}
+            disabled={mutation.isPending || confirmText.toLowerCase() !== user.username.toLowerCase()}
             data-testid="button-confirm-delete"
           >
             {mutation.isPending ? "삭제 중..." : "회원 삭제"}
