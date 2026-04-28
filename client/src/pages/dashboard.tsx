@@ -27,6 +27,9 @@ import { fetchStockPrices } from "@/lib/market-prices";
 
 type DashSection = "overview" | "holdings" | "transactions" | "transfer" | "profile";
 
+const formatPct = (n: number) =>
+  n.toLocaleString("ko-KR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 function TransferStatusBadge({ status }: { status: string }) {
   switch (status) {
     case "pending":
@@ -391,7 +394,7 @@ export default function DashboardPage() {
                       {totalProfit >= 0 ? "+" : ""}{totalProfit.toLocaleString()}원
                     </p>
                     <p className={`text-sm font-medium tabular-nums ${totalProfitPct >= 0 ? "text-red-500" : "text-blue-500"}`} data-testid="text-total-profit-pct">
-                      수익률 {totalProfitPct >= 0 ? "+" : ""}{totalProfitPct.toFixed(2)}%
+                      수익률 {totalProfitPct >= 0 ? "+" : ""}{formatPct(totalProfitPct)}%
                     </p>
                   </div>
                 </div>
@@ -475,7 +478,7 @@ export default function DashboardPage() {
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">평가손익</p>
                     <p className={`text-xl font-bold tabular-nums ${totalProfit >= 0 ? "text-red-500" : "text-blue-500"}`}>
-                      {totalProfit >= 0 ? "+" : ""}{totalProfit.toLocaleString()}원 ({totalProfitPct >= 0 ? "+" : ""}{totalProfitPct.toFixed(2)}%)
+                      {totalProfit >= 0 ? "+" : ""}{totalProfit.toLocaleString()}원 ({totalProfitPct >= 0 ? "+" : ""}{formatPct(totalProfitPct)}%)
                     </p>
                   </div>
                 </div>
@@ -520,7 +523,7 @@ export default function DashboardPage() {
                               {h.profitLoss >= 0 ? "+" : ""}{h.profitLoss.toLocaleString()}원
                             </TableCell>
                             <TableCell className={`text-right font-mono tabular-nums font-semibold ${h.profitPct >= 0 ? "text-red-500" : "text-blue-500"}`}>
-                              {h.profitPct >= 0 ? "+" : ""}{h.profitPct.toFixed(2)}%
+                              {h.profitPct >= 0 ? "+" : ""}{formatPct(h.profitPct)}%
                             </TableCell>
                           </TableRow>
                         ))}
@@ -538,7 +541,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="text-right shrink-0">
                           <span className={`text-sm font-semibold tabular-nums ${h.profitPct >= 0 ? "text-red-500" : "text-blue-500"}`}>
-                            {h.profitPct >= 0 ? "+" : ""}{h.profitPct.toFixed(2)}%
+                            {h.profitPct >= 0 ? "+" : ""}{formatPct(h.profitPct)}%
                           </span>
                           <p className={`text-xs tabular-nums ${h.profitLoss >= 0 ? "text-red-500" : "text-blue-500"}`}>
                             {h.profitLoss >= 0 ? "+" : ""}{h.profitLoss.toLocaleString()}원
@@ -779,7 +782,7 @@ export default function DashboardPage() {
                             <div className="flex items-center justify-between gap-2 text-xs">
                               <span className="text-muted-foreground">수익률</span>
                               <span className={`font-mono tabular-nums font-bold ${parseFloat(tr.profitRate) > 0 ? "text-red-500" : parseFloat(tr.profitRate) < 0 ? "text-blue-500" : ""}`}>
-                                {parseFloat(tr.profitRate) > 0 ? "+" : ""}{tr.profitRate}%
+                                {parseFloat(tr.profitRate) > 0 ? "+" : ""}{formatPct(parseFloat(tr.profitRate))}%
                               </span>
                             </div>
                             <div className="flex items-center justify-between gap-2 text-sm pt-1 border-t border-border/50">

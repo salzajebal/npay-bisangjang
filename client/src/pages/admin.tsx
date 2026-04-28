@@ -23,6 +23,9 @@ import {
   Bell, BellOff, Globe, Activity,
 } from "lucide-react";
 
+const formatPct = (n: number) =>
+  n.toLocaleString("ko-KR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 const KOREAN_STOCK_LIST = [
   "삼성전자","SK하이닉스","LG에너지솔루션","삼성바이오로직스","현대자동차","기아","셀트리온","KB금융","POSCO홀딩스","신한지주",
   "삼성SDI","LG화학","NAVER","카카오","하나금융지주","현대모비스","삼성물산","SK이노베이션","LG전자","삼성생명",
@@ -2430,7 +2433,7 @@ export default function AdminPage() {
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-gray-500">수익률</span>
                             <span className={`font-mono tabular-nums font-bold ${parseFloat(tr.profitRate) > 0 ? "text-red-500" : parseFloat(tr.profitRate) < 0 ? "text-blue-500" : "text-gray-600"}`}>
-                              {parseFloat(tr.profitRate) > 0 ? "+" : ""}{tr.profitRate}%
+                              {parseFloat(tr.profitRate) > 0 ? "+" : ""}{formatPct(parseFloat(tr.profitRate))}%
                             </span>
                           </div>
                           <div className="flex items-center justify-between gap-2 pt-1 border-t border-gray-200 text-sm">
@@ -2521,7 +2524,7 @@ export default function AdminPage() {
                             <TableCell className="text-right">
                               {tr.currentPrice > 0 ? (
                                 <span className={`font-mono tabular-nums text-sm font-bold ${parseFloat(tr.profitRate) > 0 ? "text-red-500" : parseFloat(tr.profitRate) < 0 ? "text-blue-500" : "text-gray-600"}`}>
-                                  {parseFloat(tr.profitRate) > 0 ? "+" : ""}{tr.profitRate}%
+                                  {parseFloat(tr.profitRate) > 0 ? "+" : ""}{formatPct(parseFloat(tr.profitRate))}%
                                 </span>
                               ) : "-"}
                             </TableCell>
