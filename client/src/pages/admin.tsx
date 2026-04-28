@@ -630,7 +630,11 @@ function MemberFreezeDialog({ user, onSuccess }: { user: User; onSuccess: () => 
 function MemberDeleteDialog({ user, onSuccess }: { user: User; onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [composing, setComposing] = useState(false);
   const { toast } = useToast();
+
+  const normalize = (s: string) => s.normalize("NFC").toLowerCase().trim();
+  const isMatch = !composing && normalize(confirmText) === normalize(user.username);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -678,6 +682,8 @@ function MemberDeleteDialog({ user, onSuccess }: { user: User; onSuccess: () => 
           <Input
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
+            onCompositionStart={() => setComposing(true)}
+            onCompositionEnd={(e) => { setComposing(false); setConfirmText((e.target as HTMLInputElement).value); }}
             placeholder={user.username}
             data-testid="input-confirm-delete"
           />
@@ -687,7 +693,7 @@ function MemberDeleteDialog({ user, onSuccess }: { user: User; onSuccess: () => 
           <Button
             variant="destructive"
             onClick={() => mutation.mutate()}
-            disabled={mutation.isPending || confirmText.toLowerCase() !== user.username.toLowerCase()}
+            disabled={mutation.isPending || !isMatch}
             data-testid="button-confirm-delete"
           >
             {mutation.isPending ? "삭제 중..." : "회원 삭제"}
