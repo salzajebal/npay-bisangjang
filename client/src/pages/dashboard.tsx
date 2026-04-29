@@ -95,7 +95,7 @@ export default function DashboardPage() {
       return res.json();
     },
     onSuccess: () => {
-      toast({ title: "출고 신청 완료", description: "내 계좌로 옮기기가 신청되었습니다. 관리자 승인을 기다려주세요." });
+      toast({ title: "신청 완료", description: "내 계좌로 옮기기 신청 접수가 완료 되었습니다. 연동된 증권계좌로 순차적으로 입고를 진행합니다." });
       setTransferName("");
       setTransferAccount("");
       setTransferQuantity("");

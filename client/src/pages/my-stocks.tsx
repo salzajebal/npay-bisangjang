@@ -1,9 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Link, Redirect } from "wouter";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ArrowLeft, Package, TrendingUp, TrendingDown, ArrowRightLeft } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -11,7 +14,8 @@ import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
 import type { User, StockTransaction } from "@shared/schema";
 import { fetchStockPrices } from "@/lib/market-prices";
-import { getQueryFn } from "@/lib/queryClient";
+import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function MyStocksPage() {
   const { data: authData, isLoading: userLoading } = useQuery<{ user: User } | null>({
@@ -28,6 +32,32 @@ export default function MyStocksPage() {
 
   const [priceData, setPriceData] = useState<Record<string, { currentPrice: number; changePercent: number }>>({});
   const [transferConfirmOpen, setTransferConfirmOpen] = useState(false);
+  const [transferStock, setTransferStock] = useState("");
+  const [transferQuantity, setTransferQuantity] = useState("");
+  const { toast } = useToast();
+
+  const transferMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/transfer-requests", {
+        userId: user!.id,
+        accountName: user!.accountHolder || user!.fullName || user!.username,
+        accountNumber: user!.accountNumber || "",
+        quantity: parseInt(transferQuantity),
+        stockName: transferStock,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "신청 완료", description: "내 계좌로 옮기기 신청 접수가 완료 되었습니다. 연동된 증권계좌로 순차적으로 입고를 진행합니다." });
+      setTransferConfirmOpen(false);
+      setTransferStock("");
+      setTransferQuantity("");
+      queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
+    },
+    onError: () => {
+      toast({ title: "신청 실패", description: "출고 신청에 실패했습니다. 다시 시도해주세요.", variant: "destructive" });
+    },
+  });
 
   const txList = (transactions || []);
   const inTx = txList.filter(tx => tx.type === "in");
@@ -317,7 +347,7 @@ export default function MyStocksPage() {
         </div>
       </main>
 
-      <Dialog open={transferConfirmOpen} onOpenChange={setTransferConfirmOpen}>
+      <Dialog open={transferConfirmOpen} onOpenChange={(v) => { if (!v) { setTransferStock(""); setTransferQuantity(""); } setTransferConfirmOpen(v); }}>
         <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-visible border-0 shadow-2xl">
           <div className="bg-gradient-to-b from-[#f8f9fa] to-white px-6 pt-8 pb-2 rounded-t-xl">
             <div className="flex justify-center mb-4">
@@ -325,19 +355,69 @@ export default function MyStocksPage() {
                 <ArrowRightLeft className="w-6 h-6 text-[#E8344E]" />
               </div>
             </div>
-            <h3 className="text-base font-bold text-[#222] text-center mb-3">계좌 이동 안내</h3>
-            <p className="text-sm text-[#555] text-center leading-relaxed">
-              입고받으신 종목은 상장당일 연동되어있는 증권계좌로 이동 될 예정입니다
-            </p>
+            <h3 className="text-base font-bold text-[#222] text-center mb-1">내 계좌로 옮기기</h3>
+            <p className="text-xs text-[#999] text-center mb-4">연동된 증권계좌로 출고 신청합니다</p>
           </div>
-          <div className="px-6 pb-6 pt-4">
-            <Button
-              className="w-full bg-[#2563eb] border-[#2563eb] text-white font-medium rounded-lg"
-              onClick={() => setTransferConfirmOpen(false)}
-              data-testid="button-transfer-confirm-mystocks"
-            >
-              확인
-            </Button>
+          <div className="px-6 pb-6 pt-2 space-y-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-[#555]">종목 선택</Label>
+              <Select value={transferStock} onValueChange={(v) => { setTransferStock(v); setTransferQuantity(""); }}>
+                <SelectTrigger data-testid="select-mystocks-transfer-stock">
+                  <SelectValue placeholder="출고할 종목을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {holdings.map((h) => (
+                    <SelectItem key={h.name} value={h.name}>
+                      {h.name} ({h.qty.toLocaleString()}주 보유)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-[#555]">출고 수량</Label>
+              <Input
+                type="number"
+                placeholder="수량을 입력하세요"
+                value={transferQuantity}
+                onChange={(e) => setTransferQuantity(e.target.value)}
+                min={1}
+                max={holdings.find(h => h.name === transferStock)?.qty ?? undefined}
+                data-testid="input-mystocks-transfer-quantity"
+              />
+              {transferStock && (
+                <p className="text-xs text-[#999]">최대 {(holdings.find(h => h.name === transferStock)?.qty ?? 0).toLocaleString()}주</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-[#555]">수령 계좌</Label>
+              <p className="text-sm text-[#333] bg-[#f8f9fa] rounded-md px-3 py-2">
+                {user.bank ? `${user.bank} ` : ""}{user.accountNumber || "계좌 정보 없음"}
+              </p>
+              {!user.accountNumber && (
+                <p className="text-xs text-[#E8344E]">내 정보에서 계좌번호를 먼저 등록해주세요</p>
+              )}
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button variant="outline" className="flex-1" onClick={() => setTransferConfirmOpen(false)} data-testid="button-mystocks-transfer-cancel">
+                취소
+              </Button>
+              <Button
+                className="flex-1 bg-[#E8344E] hover:bg-[#c9243d] text-white font-medium rounded-lg"
+                onClick={() => transferMutation.mutate()}
+                disabled={
+                  transferMutation.isPending ||
+                  !transferStock ||
+                  !transferQuantity ||
+                  parseInt(transferQuantity) <= 0 ||
+                  parseInt(transferQuantity) > (holdings.find(h => h.name === transferStock)?.qty ?? 0) ||
+                  !user.accountNumber
+                }
+                data-testid="button-transfer-confirm-mystocks"
+              >
+                {transferMutation.isPending ? "신청 중..." : "출고 신청"}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
