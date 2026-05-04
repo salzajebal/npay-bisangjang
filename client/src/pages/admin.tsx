@@ -1253,6 +1253,7 @@ export default function AdminPage() {
   const [newGroupDomain, setNewGroupDomain] = useState("");
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupManagerCode, setNewGroupManagerCode] = useState("");
+  const [newGroupRedirectUrl, setNewGroupRedirectUrl] = useState("");
   const [logSearchFilter, setLogSearchFilter] = useState("");
   const [txSearchTerm, setTxSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -2849,7 +2850,7 @@ export default function AdminPage() {
                   <Activity className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
                   <p className="text-sm text-blue-700">도메인에 <strong>담당자 코드</strong>를 설정하면, 해당 도메인으로 가입한 회원이 <strong>승인될 때 자동으로</strong> 해당 코드가 배정됩니다.</p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-4">
                   <Input
                     placeholder="도메인 (예: abc.com)"
                     value={newGroupDomain}
@@ -2871,14 +2872,21 @@ export default function AdminPage() {
                     className="bg-white border-gray-200"
                     data-testid="input-new-manager-code"
                   />
+                  <Input
+                    placeholder="이동 URL (예: https://new.com)"
+                    value={newGroupRedirectUrl}
+                    onChange={(e) => setNewGroupRedirectUrl(e.target.value)}
+                    className="bg-white border-gray-200"
+                    data-testid="input-new-redirect-url"
+                  />
                   <Button
                     onClick={async () => {
                       if (!newGroupDomain.trim() || !newGroupName.trim()) {
                         toast({ title: "입력 오류", description: "도메인과 그룹명을 모두 입력해주세요", variant: "destructive" });
                         return;
                       }
-                      await apiRequest("PUT", `/api/admin/domain-groups/${encodeURIComponent(newGroupDomain.trim())}`, { groupName: newGroupName.trim(), managerCode: newGroupManagerCode.trim() || null });
-                      setNewGroupDomain(""); setNewGroupName(""); setNewGroupManagerCode("");
+                      await apiRequest("PUT", `/api/admin/domain-groups/${encodeURIComponent(newGroupDomain.trim())}`, { groupName: newGroupName.trim(), managerCode: newGroupManagerCode.trim() || null, redirectUrl: newGroupRedirectUrl.trim() || null });
+                      setNewGroupDomain(""); setNewGroupName(""); setNewGroupManagerCode(""); setNewGroupRedirectUrl("");
                       refetchDomainGroups();
                       toast({ title: "저장 완료", description: "도메인 그룹이 저장되었습니다" });
                     }}
@@ -2900,6 +2908,7 @@ export default function AdminPage() {
                         <TableHead className="text-gray-500">도메인</TableHead>
                         <TableHead className="text-gray-500">그룹명</TableHead>
                         <TableHead className="text-gray-500">담당자 코드</TableHead>
+                        <TableHead className="text-gray-500">이동 URL</TableHead>
                         <TableHead className="text-gray-500">해당 회원 수</TableHead>
                         <TableHead className="text-center text-gray-500">삭제</TableHead>
                       </TableRow>
@@ -2918,6 +2927,15 @@ export default function AdminPage() {
                               <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200 text-sm font-mono font-medium">
                                 {g.managerCode}
                               </span>
+                            ) : (
+                              <span className="text-gray-400 text-xs">미설정</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm max-w-[180px]">
+                            {g.redirectUrl ? (
+                              <a href={g.redirectUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline truncate block" title={g.redirectUrl}>
+                                {g.redirectUrl}
+                              </a>
                             ) : (
                               <span className="text-gray-400 text-xs">미설정</span>
                             )}

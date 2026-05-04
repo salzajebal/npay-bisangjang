@@ -16,6 +16,27 @@ import IPOCalendarPage from "@/pages/ipo-calendar";
 import AdminManualPage from "@/pages/admin-manual";
 import TestAdminPage from "@/pages/test-admin";
 import StockDetailPage from "@/pages/stock-detail";
+import { useEffect, useState } from "react";
+
+function DomainRedirectGuard({ children }: { children: React.ReactNode }) {
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/domain-redirect", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.redirectUrl) {
+          window.location.href = data.redirectUrl;
+        } else {
+          setChecked(true);
+        }
+      })
+      .catch(() => setChecked(true));
+  }, []);
+
+  if (!checked) return null;
+  return <>{children}</>;
+}
 
 function Router() {
   return (
@@ -42,7 +63,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        <DomainRedirectGuard>
+          <Router />
+        </DomainRedirectGuard>
       </TooltipProvider>
     </QueryClientProvider>
   );

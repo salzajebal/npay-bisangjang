@@ -877,14 +877,25 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/domain-redirect", async (req, res) => {
+    try {
+      const domain = (req.headers["x-forwarded-host"] as string || req.headers.host || "").replace(/:\d+$/, "");
+      if (!domain) return res.json({ redirectUrl: null });
+      const group = await storage.getDomainGroup(domain);
+      return res.json({ redirectUrl: group?.redirectUrl || null });
+    } catch {
+      return res.json({ redirectUrl: null });
+    }
+  });
+
   app.put("/api/admin/domain-groups/:domain", requireAdmin, async (req, res) => {
     try {
       const domain = decodeURIComponent(req.params.domain);
-      const { groupName, managerCode } = req.body;
+      const { groupName, managerCode, redirectUrl } = req.body;
       if (!groupName || typeof groupName !== "string" || groupName.trim() === "") {
         return res.status(400).json({ message: "그룹명을 입력해주세요" });
       }
-      const group = await storage.upsertDomainGroup(domain, groupName.trim(), managerCode?.trim() || null);
+      const group = await storage.upsertDomainGroup(domain, groupName.trim(), managerCode?.trim() || null, redirectUrl?.trim() || null);
       return res.json(group);
     } catch (error) {
       return res.status(500).json({ message: "도메인 그룹 저장 실패" });

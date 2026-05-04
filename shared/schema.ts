@@ -138,6 +138,7 @@ export const domainGroups = pgTable("domain_groups", {
   domain: text("domain").primaryKey(),
   groupName: text("group_name").notNull(),
   managerCode: text("manager_code"),
+  redirectUrl: text("redirect_url"),
 });
 
 export type DomainGroup = typeof domainGroups.$inferSelect;

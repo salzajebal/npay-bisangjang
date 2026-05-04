@@ -116,10 +116,10 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(domainGroups).orderBy(domainGroups.domain);
   }
 
-  async upsertDomainGroup(domain: string, groupName: string, managerCode?: string | null): Promise<DomainGroup> {
+  async upsertDomainGroup(domain: string, groupName: string, managerCode?: string | null, redirectUrl?: string | null): Promise<DomainGroup> {
     const [result] = await db.insert(domainGroups)
-      .values({ domain, groupName, managerCode: managerCode ?? null })
-      .onConflictDoUpdate({ target: domainGroups.domain, set: { groupName, managerCode: managerCode ?? null } })
+      .values({ domain, groupName, managerCode: managerCode ?? null, redirectUrl: redirectUrl ?? null })
+      .onConflictDoUpdate({ target: domainGroups.domain, set: { groupName, managerCode: managerCode ?? null, redirectUrl: redirectUrl ?? null } })
       .returning();
     return result;
   }
