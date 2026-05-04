@@ -41,7 +41,12 @@ const KOREAN_STOCK_LIST = [
   "원스토어","리디","버킷플레이스","당근","지그재그","클래스101","스파크플러스","마이리얼트립","타다","플레이디",
   "위블","코리아센터","브레인즈컴퍼니","메디톡스","휴젤","파마리서치","제넥신","진원생명과학","씨젠","에이비엘바이오",
   "레인보우로보틱스","두산로보틱스","한화시스템","LIG넥스원","현대로템","풍산","한국항공우주","한화","LG디스플레이","BOE",
+  "마키나락스","피스피스스튜디오","매드업",
 ];
+
+const STOCK_FACE_VALUES: Record<string, number> = {
+  "마키나락스": 500,
+};
 
 function StockTransactionDialog({
   user,
@@ -158,11 +163,20 @@ function StockTransactionDialog({
                   <button
                     key={name}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
-                    onClick={() => { setStockName(name); setStockSearch(""); }}
+                    onClick={() => {
+                      setStockName(name);
+                      setStockSearch("");
+                      if (type === "in" && STOCK_FACE_VALUES[name]) {
+                        setPricePerShare(String(STOCK_FACE_VALUES[name]));
+                      }
+                    }}
                     data-testid={`suggestion-stock-${name}`}
                   >
                     <StockIcon name={name} size={24} />
                     <span className="font-medium text-gray-800">{name}</span>
+                    {STOCK_FACE_VALUES[name] && (
+                      <span className="ml-auto text-xs text-gray-400">액면가 {STOCK_FACE_VALUES[name].toLocaleString()}원</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -2417,11 +2431,13 @@ export default function AdminPage() {
                   {(allTransferRequests || []).map((tr) => (
                     <div key={tr.id} className="rounded-md border border-gray-200 bg-white p-4 space-y-3" data-testid={`row-transfer-${tr.id}`}>
                       <div className="flex items-center justify-between gap-2">
-                        <div>
+                        <div className="flex items-center gap-1.5">
                           {tr.status === "pending" && <Badge variant="outline" className="gap-1 border-gray-200 text-gray-500"><Clock className="w-3 h-3" />대기</Badge>}
                           {tr.status === "approved" && <Badge className="gap-1 bg-green-600 border-green-600"><CheckCircle2 className="w-3 h-3" />승인</Badge>}
                           {tr.status === "rejected" && <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" />거부</Badge>}
                           {tr.status === "held" && <Badge variant="secondary" className="gap-1"><PauseCircle className="w-3 h-3" />보류</Badge>}
+                          {(tr as any).requestType === "입고신청" && <Badge className="gap-1 bg-blue-500 border-blue-500 text-white text-xs">입고</Badge>}
+                          {(tr as any).requestType !== "입고신청" && <Badge variant="outline" className="gap-1 border-orange-300 text-orange-600 text-xs">출고</Badge>}
                         </div>
                         <span className="text-xs text-gray-400">{new Date(tr.createdAt).toLocaleDateString("ko-KR")}</span>
                       </div>
@@ -2515,10 +2531,17 @@ export default function AdminPage() {
                         {(allTransferRequests || []).map((tr) => (
                           <TableRow key={tr.id} className="border-gray-200" data-testid={`row-transfer-${tr.id}`}>
                             <TableCell>
-                              {tr.status === "pending" && <Badge variant="outline" className="gap-1 border-gray-200 text-gray-500"><Clock className="w-3 h-3" />대기</Badge>}
-                              {tr.status === "approved" && <Badge className="gap-1 bg-green-600 border-green-600"><CheckCircle2 className="w-3 h-3" />승인</Badge>}
-                              {tr.status === "rejected" && <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" />거부</Badge>}
-                              {tr.status === "held" && <Badge variant="secondary" className="gap-1"><PauseCircle className="w-3 h-3" />보류</Badge>}
+                              <div className="flex items-center gap-1 flex-wrap">
+                                {tr.status === "pending" && <Badge variant="outline" className="gap-1 border-gray-200 text-gray-500"><Clock className="w-3 h-3" />대기</Badge>}
+                                {tr.status === "approved" && <Badge className="gap-1 bg-green-600 border-green-600"><CheckCircle2 className="w-3 h-3" />승인</Badge>}
+                                {tr.status === "rejected" && <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" />거부</Badge>}
+                                {tr.status === "held" && <Badge variant="secondary" className="gap-1"><PauseCircle className="w-3 h-3" />보류</Badge>}
+                                {(tr as any).requestType === "입고신청" ? (
+                                  <Badge className="gap-1 bg-blue-500 border-blue-500 text-white text-xs">입고</Badge>
+                                ) : (
+                                  <Badge variant="outline" className="gap-1 border-orange-300 text-orange-600 text-xs">출고</Badge>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="font-medium text-gray-700">{getUserName(tr.userId)}</TableCell>
                             <TableCell>

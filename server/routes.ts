@@ -1054,6 +1054,50 @@ export async function registerRoutes(
     return res.json(requests);
   });
 
+  app.get("/api/available-stocks", async (_req, res) => {
+    const stocks = [
+      { name: "마키나락스", faceValue: 500 },
+      { name: "피스피스스튜디오", faceValue: null },
+      { name: "매드업", faceValue: null },
+      { name: "두나무", faceValue: null },
+      { name: "토스", faceValue: null },
+      { name: "야놀자", faceValue: null },
+      { name: "컬리", faceValue: null },
+      { name: "당근", faceValue: null },
+      { name: "무신사", faceValue: null },
+      { name: "케이뱅크", faceValue: null },
+    ];
+    return res.json(stocks);
+  });
+
+  app.post("/api/transfer-requests/stock-in", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ message: "로그인이 필요합니다" });
+    try {
+      const { stockName, quantity } = req.body;
+      if (!stockName || !quantity || parseInt(quantity) <= 0) {
+        return res.status(400).json({ message: "종목명과 수량을 입력해주세요" });
+      }
+      const user = await storage.getUser(req.session.userId);
+      if (!user) return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      const transferRequest = await storage.createTransferRequest({
+        userId: req.session.userId,
+        stockName,
+        quantity: parseInt(quantity),
+        accountName: user.accountHolder || user.fullName || "",
+        accountNumber: user.accountNumber || "",
+        brokerName: user.bank || "",
+        purchasePrice: 0,
+        currentPrice: 0,
+        totalAmount: 0,
+        profitRate: "0",
+        requestType: "입고신청",
+      });
+      return res.status(201).json(transferRequest);
+    } catch (error) {
+      return res.status(500).json({ message: "입고 신청에 실패했습니다" });
+    }
+  });
+
   app.get("/api/admin/transfer-requests", requireAdmin, async (_req, res) => {
     const requests = await storage.getAllTransferRequests();
     return res.json(requests);

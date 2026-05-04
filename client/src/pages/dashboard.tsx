@@ -83,6 +83,31 @@ export default function DashboardPage() {
   const [transferAccount, setTransferAccount] = useState(() => authData?.user?.accountNumber || "");
   const [transferQuantity, setTransferQuantity] = useState("");
   const [transferStock, setTransferStock] = useState("");
+  const [stockInStock, setStockInStock] = useState("");
+  const [stockInQuantity, setStockInQuantity] = useState("");
+
+  const { data: availableStocks = [] } = useQuery<{ name: string; faceValue: number | null }[]>({
+    queryKey: ["/api/available-stocks"],
+    enabled: !!authData?.user,
+  });
+
+  const stockInMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/transfer-requests/stock-in", {
+        stockName: stockInStock,
+        quantity: parseInt(stockInQuantity),
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "입고 신청 완료", description: `${stockInStock} ${parseInt(stockInQuantity).toLocaleString()}주 입고 신청이 접수되었습니다.` });
+      setStockInStock("");
+      setStockInQuantity("");
+      queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
+    },
+    onError: (err: Error) => {
+      toast({ title: "신청 실패", description: err.message, variant: "destructive" });
+    },
+  });
   const { toast } = useToast();
 
   const transferMutation = useMutation({
@@ -688,6 +713,55 @@ export default function DashboardPage() {
 
           {activeSection === "transfer" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+
+              {/* 입고 신청 카드 */}
+              <Card className="p-5 order-3 lg:order-3">
+                <div className="flex items-center gap-2 mb-4">
+                  <ArrowDownRight className="w-5 h-5 text-blue-500" />
+                  <h2 className="text-lg font-semibold">입고 신청</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  입고받을 종목을 선택하고 수량을 입력하면 관리자가 처리해드립니다.
+                </p>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>종목 선택</Label>
+                    <Select value={stockInStock} onValueChange={setStockInStock}>
+                      <SelectTrigger data-testid="select-stockin-stock">
+                        <SelectValue placeholder="입고받을 종목을 선택하세요" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableStocks.map((s) => (
+                          <SelectItem key={s.name} value={s.name}>
+                            {s.name}{s.faceValue ? ` (액면가 ${s.faceValue.toLocaleString()}원)` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>수량 (주)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={stockInQuantity}
+                      onChange={(e) => setStockInQuantity(e.target.value)}
+                      placeholder="입고 수량을 입력하세요"
+                      data-testid="input-stockin-quantity"
+                    />
+                  </div>
+                  <Button
+                    className="w-full bg-blue-500 hover:bg-blue-600 border-blue-500"
+                    disabled={stockInMutation.isPending || !stockInStock || !stockInQuantity || parseInt(stockInQuantity) <= 0}
+                    onClick={() => stockInMutation.mutate()}
+                    data-testid="button-submit-stockin"
+                  >
+                    <ArrowDownRight className="w-4 h-4 mr-2" />
+                    {stockInMutation.isPending ? "신청 중..." : "입고 신청"}
+                  </Button>
+                </div>
+              </Card>
+
               <Card className="p-5 order-2 lg:order-1">
                 <div className="flex items-center gap-2 mb-4">
                   <ArrowRightLeft className="w-5 h-5 text-[#E8344E]" />

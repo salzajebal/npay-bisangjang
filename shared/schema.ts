@@ -86,6 +86,7 @@ export const transferRequests = pgTable("transfer_requests", {
   profitRate: text("profit_rate").notNull().default("0"),
   status: text("status").notNull().default("pending"), // pending, approved, rejected, held
   adminMemo: text("admin_memo"),
+  requestType: text("request_type").notNull().default("출고신청"), // 출고신청, 입고신청
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
