@@ -77,8 +77,8 @@ export default function DashboardPage() {
     enabled: !!authData?.user,
   });
 
-  const [transferName, setTransferName] = useState("");
-  const [transferAccount, setTransferAccount] = useState("");
+  const [transferName, setTransferName] = useState(() => authData?.user?.accountHolder || authData?.user?.fullName || "");
+  const [transferAccount, setTransferAccount] = useState(() => authData?.user?.accountNumber || "");
   const [transferQuantity, setTransferQuantity] = useState("");
   const [transferStock, setTransferStock] = useState("");
   const { toast } = useToast();
@@ -690,7 +690,7 @@ export default function DashboardPage() {
                       <SelectContent>
                         {holdingsList.map((h) => (
                           <SelectItem key={h.name} value={h.name}>
-                            {h.name} ({h.qty.toLocaleString()}주 · 평균 {h.avgPrice.toLocaleString()}원)
+                            {h.name} ({h.qty.toLocaleString()}주 · 액면가 {h.avgPrice.toLocaleString()}원)
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -701,9 +701,10 @@ export default function DashboardPage() {
                     <Input
                       id="dash-transfer-name"
                       value={transferName}
-                      onChange={(e) => setTransferName(e.target.value)}
-                      placeholder="출고 받을 계좌 예금주명"
-                      required
+                      readOnly
+                      disabled
+                      className="bg-muted/50 cursor-not-allowed"
+                      placeholder="회원가입 시 입력한 이름"
                       data-testid="input-transfer-name"
                     />
                   </div>
@@ -712,9 +713,10 @@ export default function DashboardPage() {
                     <Input
                       id="dash-transfer-account"
                       value={transferAccount}
-                      onChange={(e) => setTransferAccount(e.target.value)}
-                      placeholder="출고 받을 증권사 계좌번호"
-                      required
+                      readOnly
+                      disabled
+                      className="bg-muted/50 cursor-not-allowed"
+                      placeholder="회원가입 시 입력한 계좌번호"
                       data-testid="input-transfer-account"
                     />
                   </div>

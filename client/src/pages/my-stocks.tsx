@@ -368,7 +368,7 @@ export default function MyStocksPage() {
                 <SelectContent>
                   {holdings.map((h) => (
                     <SelectItem key={h.name} value={h.name}>
-                      {h.name} ({h.qty.toLocaleString()}주 보유)
+                      {h.name} ({h.qty.toLocaleString()}주 · 액면가 {h.avgPrice.toLocaleString()}원)
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -390,10 +390,26 @@ export default function MyStocksPage() {
               )}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-[#555]">수령 계좌</Label>
-              <p className="text-sm text-[#333] bg-[#f8f9fa] rounded-md px-3 py-2">
-                {user.bank ? `${user.bank} ` : ""}{user.accountNumber || "계좌 정보 없음"}
-              </p>
+              <Label className="text-xs text-[#555]">예금주명</Label>
+              <Input
+                value={user.accountHolder || user.fullName || ""}
+                readOnly
+                disabled
+                className="bg-muted/50 cursor-not-allowed text-sm"
+                placeholder="회원가입 시 입력한 이름"
+                data-testid="input-mystocks-transfer-name"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-[#555]">계좌번호</Label>
+              <Input
+                value={user.accountNumber || ""}
+                readOnly
+                disabled
+                className="bg-muted/50 cursor-not-allowed text-sm"
+                placeholder="회원가입 시 입력한 계좌번호"
+                data-testid="input-mystocks-transfer-account"
+              />
               {!user.accountNumber && (
                 <p className="text-xs text-[#E8344E]">내 정보에서 계좌번호를 먼저 등록해주세요</p>
               )}
