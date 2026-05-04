@@ -400,7 +400,7 @@ export default function MyStocksPage() {
                   )}
                   <p className="text-xs text-[#999]">
                     {tr.status === "approved"
-                      ? "승인 처리 되었습니다. 등록 된 계좌로 상장 당일 순차적으로 이동 될 예정입니다"
+                      ? <strong className="font-bold text-[#555]">승인 처리 되었습니다. 등록 된 계좌로 상장 당일 순차적으로 이동 될 예정입니다</strong>
                       : <strong className="font-bold text-[#555]">대금결제는 담당 자문회사를 통해 납부해주시면 됩니다.</strong>}
                   </p>
                   <p className="text-xs text-[#bbb]">{new Date(tr.createdAt).toLocaleString("ko-KR")}</p>
