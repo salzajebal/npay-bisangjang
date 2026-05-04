@@ -165,10 +165,6 @@ export default function MyStocksPage() {
               <p className="text-xs text-[#999] mb-1">총 평가금액</p>
               <p className="text-lg font-bold text-[#222]" data-testid="text-total-value">{totalEval.toLocaleString()}원</p>
             </div>
-            <div>
-              <p className="text-xs text-[#999] mb-1">총 매입금액</p>
-              <p className="text-lg font-bold text-[#222]" data-testid="text-total-cost">{totalCost.toLocaleString()}원</p>
-            </div>
           </div>
           <div className="flex items-center gap-3 pt-3 border-t border-[#eee]">
             <div>
@@ -204,7 +200,7 @@ export default function MyStocksPage() {
                   <TableHead className="text-xs text-[#666] font-medium">종목명</TableHead>
                   <TableHead className="text-xs text-[#666] font-medium text-center">카테고리</TableHead>
                   <TableHead className="text-xs text-[#666] font-medium text-right">보유수량</TableHead>
-                  <TableHead className="text-xs text-[#666] font-medium text-right">평균단가</TableHead>
+                  <TableHead className="text-xs text-[#666] font-medium text-right">액면가</TableHead>
                   <TableHead className="text-xs text-[#666] font-medium text-right">현재가</TableHead>
                   <TableHead className="text-xs text-[#666] font-medium text-right">평가금액</TableHead>
                   <TableHead className="text-xs text-[#666] font-medium text-right">평가손익</TableHead>
@@ -261,7 +257,7 @@ export default function MyStocksPage() {
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                   <div className="flex justify-between"><span className="text-[#999]">보유수량</span><span className="text-[#222] tabular-nums">{h.qty.toLocaleString()}주</span></div>
                   <div className="flex justify-between"><span className="text-[#999]">현재가</span><span className="text-[#222] tabular-nums">{h.currentPrice.toLocaleString()}원</span></div>
-                  <div className="flex justify-between"><span className="text-[#999]">평균단가</span><span className="text-[#222] tabular-nums">{h.avgPrice.toLocaleString()}원</span></div>
+                  <div className="flex justify-between"><span className="text-[#999]">액면가</span><span className="text-[#222] tabular-nums">{h.avgPrice.toLocaleString()}원</span></div>
                   <div className="flex justify-between"><span className="text-[#999]">평가금액</span><span className="text-[#222] tabular-nums">{h.evalAmount.toLocaleString()}원</span></div>
                 </div>
               </div>
