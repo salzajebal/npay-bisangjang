@@ -325,8 +325,8 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {mobileSidebarOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
+      {isMobileDevice && mobileSidebarOpen && (
+        <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileSidebarOpen(false)} />
           <aside className="absolute left-0 top-0 bottom-0 w-64 bg-background border-r flex flex-col z-10">
             {sidebarContent(true)}
@@ -334,16 +334,20 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <aside className={`hidden md:flex ${sidebarCollapsed ? "w-16" : "w-60"} border-r bg-muted/30 flex-col transition-all duration-200 shrink-0`}>
-        {sidebarContent(false)}
-      </aside>
+      {!isMobileDevice && (
+        <aside className={`flex ${sidebarCollapsed ? "w-16" : "w-60"} border-r bg-muted/30 flex-col transition-all duration-200 shrink-0`}>
+          {sidebarContent(false)}
+        </aside>
+      )}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header className="h-14 border-b bg-background flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 shrink-0">
           <div className="flex items-center gap-2">
-            <button onClick={() => setMobileSidebarOpen(true)} className="md:hidden p-1" data-testid="button-mobile-menu">
-              <Menu className="w-5 h-5" />
-            </button>
+            {isMobileDevice && (
+              <button onClick={() => setMobileSidebarOpen(true)} className="p-1" data-testid="button-mobile-menu">
+                <Menu className="w-5 h-5" />
+              </button>
+            )}
             <h1 className="font-bold text-base sm:text-lg" data-testid="text-dashboard-title">
               {sidebarItems.find((i) => i.id === activeSection)?.label}
             </h1>
