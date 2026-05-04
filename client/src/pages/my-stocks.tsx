@@ -7,12 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Package, TrendingUp, TrendingDown, ArrowRightLeft } from "lucide-react";
+import { ArrowLeft, Package, TrendingUp, TrendingDown, ArrowRightLeft, Clock, CheckCircle2, XCircle, PauseCircle } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
-import type { User, StockTransaction } from "@shared/schema";
+import type { User, StockTransaction, TransferRequest } from "@shared/schema";
 import { fetchStockPrices } from "@/lib/market-prices";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +27,11 @@ export default function MyStocksPage() {
 
   const { data: transactions, isLoading: txLoading } = useQuery<StockTransaction[]>({
     queryKey: ["/api/transactions/my"],
+    enabled: !!user,
+  });
+
+  const { data: myTransfers = [] } = useQuery<TransferRequest[]>({
+    queryKey: ["/api/transfer-requests/my"],
     enabled: !!user,
   });
 
@@ -339,6 +344,72 @@ export default function MyStocksPage() {
               ))}
             </div>
             </>
+          )}
+        </div>
+
+        <div className="mt-8 border-t border-[#eee] pt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="w-4 h-4 text-[#E8344E]" />
+            <h2 className="text-base font-bold text-[#222]">출고 신청 목록</h2>
+          </div>
+          {myTransfers.length === 0 ? (
+            <p className="text-sm text-[#999]" data-testid="text-no-transfers">출고 신청 내역이 없습니다</p>
+          ) : (
+            <div className="space-y-3">
+              {myTransfers.map((tr) => (
+                <div key={tr.id} className="border border-[#eee] rounded-lg p-4 space-y-2" data-testid={`transfer-card-${tr.id}`}>
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <StockIcon name={tr.stockName} size={22} />
+                      <span className="font-medium text-sm text-[#222]">{tr.stockName} {tr.quantity.toLocaleString()}주</span>
+                    </div>
+                    {tr.status === "pending" && (
+                      <Badge variant="secondary" className="gap-1 text-xs"><Clock className="w-3 h-3" />대기중</Badge>
+                    )}
+                    {tr.status === "approved" && (
+                      <Badge className="gap-1 text-xs bg-[#00a878] hover:bg-[#00a878]"><CheckCircle2 className="w-3 h-3" />승인</Badge>
+                    )}
+                    {tr.status === "rejected" && (
+                      <Badge variant="destructive" className="gap-1 text-xs"><XCircle className="w-3 h-3" />반려</Badge>
+                    )}
+                    {tr.status === "held" && (
+                      <Badge variant="secondary" className="gap-1 text-xs"><PauseCircle className="w-3 h-3" />보류</Badge>
+                    )}
+                  </div>
+                  {tr.currentPrice > 0 && (
+                    <div className="bg-[#f8f9fa] rounded-md p-2 space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-[#999]">매입단가</span>
+                        <span className="tabular-nums">{tr.purchasePrice.toLocaleString()}원</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-[#999]">현재시세</span>
+                        <span className="tabular-nums font-medium">{tr.currentPrice.toLocaleString()}원</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-[#999]">수익률</span>
+                        <span className={`tabular-nums font-bold ${parseFloat(tr.profitRate) > 0 ? "text-[#f04452]" : parseFloat(tr.profitRate) < 0 ? "text-[#3182f6]" : ""}`}>
+                          {parseFloat(tr.profitRate) > 0 ? "+" : ""}{parseFloat(tr.profitRate).toFixed(2)}%
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm pt-1 border-t border-[#eee]">
+                        <span className="text-[#999] font-medium">평가금액</span>
+                        <span className="tabular-nums font-bold">{tr.totalAmount.toLocaleString()}원</span>
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-xs text-[#999]">
+                    {tr.status === "approved"
+                      ? "승인 처리 되었습니다. 등록 된 계좌로 상장 당일 순차적으로 이동 될 예정입니다"
+                      : "대금 결재는 담당 자문회사를 통해 납부해주시면 됩니다."}
+                  </p>
+                  <p className="text-xs text-[#bbb]">{new Date(tr.createdAt).toLocaleString("ko-KR")}</p>
+                  {tr.adminMemo && (
+                    <p className="text-xs text-[#999] bg-[#f8f9fa] rounded p-1.5">관리자 메모: {tr.adminMemo}</p>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </main>
