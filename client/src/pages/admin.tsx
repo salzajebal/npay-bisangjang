@@ -1268,7 +1268,7 @@ export default function AdminPage() {
   const [newGroupDomain, setNewGroupDomain] = useState("");
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupManagerCode, setNewGroupManagerCode] = useState("");
-  const [newGroupRedirectUrl, setNewGroupRedirectUrl] = useState("");
+  const shareLink = typeof window !== "undefined" ? window.location.origin + "/go" : "/go";
   const [logSearchFilter, setLogSearchFilter] = useState("");
   const [txSearchTerm, setTxSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
@@ -2847,20 +2847,63 @@ export default function AdminPage() {
                 </Badge>
               </div>
 
-              {/* 설명 안내 */}
-              <Card className="p-4 bg-blue-50 border-blue-200">
-                <div className="flex items-start gap-3">
-                  <ShieldAlert className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-blue-800">도메인 자동 대체 작동 방식</p>
-                    <p className="text-sm text-blue-700">사용자가 사이트에 접속하면 <strong>1번 도메인부터 순서대로 연결을 테스트</strong>합니다. 응답이 없거나 차단된 도메인은 자동으로 건너뛰고 <strong>다음 도메인으로 즉시 이동</strong>합니다. 모든 도메인이 응답 없을 경우 현재 사이트를 유지합니다.</p>
-                    <ul className="text-xs text-blue-600 list-disc list-inside mt-1 space-y-0.5">
-                      <li>각 도메인 연결 테스트 timeout: <strong>4초</strong></li>
-                      <li>비활성화된 도메인은 건너뜁니다</li>
-                      <li>순서를 ↑↓ 버튼으로 변경하면 즉시 반영됩니다</li>
-                    </ul>
+              {/* 작동 방식 설명 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="p-4 bg-blue-50 border-blue-200">
+                  <div className="flex items-start gap-3">
+                    <ShieldAlert className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-blue-800">자동 대피 (Service Worker)</p>
+                      <p className="text-sm text-blue-700">한 번이라도 방문한 사용자는 현재 도메인이 완전히 차단되어도 브라우저가 자동으로 살아있는 도메인으로 이동합니다.</p>
+                      <ul className="text-xs text-blue-600 list-disc list-inside mt-1 space-y-0.5">
+                        <li>사이트 방문 시 브라우저에 자동 설치</li>
+                        <li>도메인 목록 변경 시 다음 방문에 자동 갱신</li>
+                        <li>DNS 오류 포함 모든 네트워크 실패에 대응</li>
+                      </ul>
+                    </div>
                   </div>
+                </Card>
+                <Card className="p-4 bg-green-50 border-green-200">
+                  <div className="flex items-start gap-3">
+                    <Activity className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-green-800">공유 링크 (/go)</p>
+                      <p className="text-sm text-green-700">아래 공유 링크는 항상 살아있는 도메인 중 첫 번째로 자동 이동합니다. 신규 사용자에게 이 링크를 배포하세요.</p>
+                      <ul className="text-xs text-green-600 list-disc list-inside mt-1 space-y-0.5">
+                        <li>서버가 살아있는 도메인을 실시간 확인</li>
+                        <li>우선순위 순서대로 자동 선택</li>
+                        <li>도메인 변경 시 링크 주소 변경 불필요</li>
+                      </ul>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* 공유 링크 */}
+              <Card className="p-4 bg-white border-gray-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <ExternalLink className="w-4 h-4 text-[#E8344E]" />
+                  <h3 className="text-sm font-bold text-gray-700">사용자 공유 링크</h3>
+                  <Badge className="bg-green-50 text-green-700 border border-green-200 text-[10px]">항상 작동</Badge>
                 </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 font-mono text-sm text-gray-800 truncate select-all">
+                    {shareLink}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-gray-200 shrink-0"
+                    onClick={() => {
+                      navigator.clipboard.writeText(shareLink);
+                      toast({ title: "복사 완료", description: "링크가 클립보드에 복사되었습니다" });
+                    }}
+                    data-testid="button-copy-share-link"
+                  >
+                    <Copy className="w-4 h-4 mr-1" /> 복사
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">이 링크를 카카오톡, 문자 등으로 사용자에게 배포하세요. 도메인이 변경되어도 링크는 바뀌지 않습니다.</p>
               </Card>
 
               {/* 새 도메인 추가 */}
@@ -3237,21 +3280,14 @@ export default function AdminPage() {
                     className="bg-white border-gray-200"
                     data-testid="input-new-manager-code"
                   />
-                  <Input
-                    placeholder="이동 URL (예: https://new.com)"
-                    value={newGroupRedirectUrl}
-                    onChange={(e) => setNewGroupRedirectUrl(e.target.value)}
-                    className="bg-white border-gray-200"
-                    data-testid="input-new-redirect-url"
-                  />
                   <Button
                     onClick={async () => {
                       if (!newGroupDomain.trim() || !newGroupName.trim()) {
                         toast({ title: "입력 오류", description: "도메인과 그룹명을 모두 입력해주세요", variant: "destructive" });
                         return;
                       }
-                      await apiRequest("PUT", `/api/admin/domain-groups/${encodeURIComponent(newGroupDomain.trim())}`, { groupName: newGroupName.trim(), managerCode: newGroupManagerCode.trim() || null, redirectUrl: newGroupRedirectUrl.trim() || null });
-                      setNewGroupDomain(""); setNewGroupName(""); setNewGroupManagerCode(""); setNewGroupRedirectUrl("");
+                      await apiRequest("PUT", `/api/admin/domain-groups/${encodeURIComponent(newGroupDomain.trim())}`, { groupName: newGroupName.trim(), managerCode: newGroupManagerCode.trim() || null });
+                      setNewGroupDomain(""); setNewGroupName(""); setNewGroupManagerCode("");
                       refetchDomainGroups();
                       toast({ title: "저장 완료", description: "도메인 그룹이 저장되었습니다" });
                     }}
@@ -3273,7 +3309,6 @@ export default function AdminPage() {
                         <TableHead className="text-gray-500">도메인</TableHead>
                         <TableHead className="text-gray-500">그룹명</TableHead>
                         <TableHead className="text-gray-500">담당자 코드</TableHead>
-                        <TableHead className="text-gray-500">이동 URL</TableHead>
                         <TableHead className="text-gray-500">해당 회원 수</TableHead>
                         <TableHead className="text-center text-gray-500">삭제</TableHead>
                       </TableRow>
@@ -3292,15 +3327,6 @@ export default function AdminPage() {
                               <span className="inline-flex items-center px-2 py-0.5 rounded bg-orange-50 text-orange-700 border border-orange-200 text-sm font-mono font-medium">
                                 {g.managerCode}
                               </span>
-                            ) : (
-                              <span className="text-gray-400 text-xs">미설정</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-sm max-w-[180px]">
-                            {g.redirectUrl ? (
-                              <a href={g.redirectUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline truncate block" title={g.redirectUrl}>
-                                {g.redirectUrl}
-                              </a>
                             ) : (
                               <span className="text-gray-400 text-xs">미설정</span>
                             )}

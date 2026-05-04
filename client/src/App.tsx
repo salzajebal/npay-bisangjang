@@ -16,45 +16,32 @@ import IPOCalendarPage from "@/pages/ipo-calendar";
 import AdminManualPage from "@/pages/admin-manual";
 import TestAdminPage from "@/pages/test-admin";
 import StockDetailPage from "@/pages/stock-detail";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
-type FallbackUrl = { id: string; url: string; label: string; priority: number; isActive: boolean };
-
-async function tryUrl(url: string, timeoutMs = 4000): Promise<boolean> {
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    await fetch(url, { signal: controller.signal, mode: "no-cors", cache: "no-store" });
-    clearTimeout(timer);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function DomainRedirectGuard({ children }: { children: React.ReactNode }) {
-  const [checked, setChecked] = useState(false);
-
+function ServiceWorkerProvider() {
   useEffect(() => {
-    fetch("/api/domain-redirect", { credentials: "include" })
-      .then((r) => r.json())
-      .then(async (data: { urls?: FallbackUrl[] }) => {
-        const urls = data?.urls ?? [];
-        if (urls.length === 0) { setChecked(true); return; }
-        for (const entry of urls) {
-          const alive = await tryUrl(entry.url);
-          if (alive) {
-            window.location.href = entry.url;
-            return;
-          }
-        }
-        setChecked(true);
+    if (!("serviceWorker" in navigator)) return;
+
+    navigator.serviceWorker
+      .register("/sw.js", { scope: "/" })
+      .then((registration) => {
+        fetch("/api/domain-redirect", { credentials: "include" })
+          .then((r) => r.json())
+          .then((data) => {
+            const target =
+              registration.active ||
+              registration.installing ||
+              registration.waiting;
+            if (target) {
+              target.postMessage({ type: "UPDATE_FALLBACK_CACHE", payload: data });
+            }
+          })
+          .catch(() => {});
       })
-      .catch(() => setChecked(true));
+      .catch(() => {});
   }, []);
 
-  if (!checked) return null;
-  return <>{children}</>;
+  return null;
 }
 
 function Router() {
@@ -82,9 +69,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <DomainRedirectGuard>
-          <Router />
-        </DomainRedirectGuard>
+        <ServiceWorkerProvider />
+        <Router />
       </TooltipProvider>
     </QueryClientProvider>
   );
