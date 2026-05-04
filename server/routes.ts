@@ -877,14 +877,78 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/domain-redirect", async (req, res) => {
+  app.get("/api/domain-redirect", async (_req, res) => {
     try {
-      const domain = (req.headers["x-forwarded-host"] as string || req.headers.host || "").replace(/:\d+$/, "");
-      if (!domain) return res.json({ redirectUrl: null });
-      const group = await storage.getDomainGroup(domain);
-      return res.json({ redirectUrl: group?.redirectUrl || null });
+      const urls = await storage.getActiveFallbackUrls();
+      return res.json({ urls });
     } catch {
-      return res.json({ redirectUrl: null });
+      return res.json({ urls: [] });
+    }
+  });
+
+  app.get("/api/admin/domain-fallbacks", requireAdmin, async (_req, res) => {
+    try {
+      const urls = await storage.getAllFallbackUrls();
+      return res.json(urls);
+    } catch {
+      return res.status(500).json({ message: "조회 실패" });
+    }
+  });
+
+  app.post("/api/admin/domain-fallbacks", requireAdmin, async (req, res) => {
+    try {
+      const { url, label, priority, isActive } = req.body;
+      if (!url || typeof url !== "string" || !url.trim()) {
+        return res.status(400).json({ message: "URL을 입력해주세요" });
+      }
+      const allUrls = await storage.getAllFallbackUrls();
+      const nextPriority = priority ?? (allUrls.length + 1);
+      const item = await storage.createFallbackUrl({
+        url: url.trim(),
+        label: (label ?? "").trim(),
+        priority: nextPriority,
+        isActive: isActive ?? true,
+      });
+      return res.status(201).json(item);
+    } catch {
+      return res.status(500).json({ message: "저장 실패" });
+    }
+  });
+
+  app.patch("/api/admin/domain-fallbacks/reorder", requireAdmin, async (req, res) => {
+    try {
+      const { ids } = req.body;
+      if (!Array.isArray(ids)) return res.status(400).json({ message: "ids 배열이 필요합니다" });
+      await storage.reorderFallbackUrls(ids);
+      return res.json({ message: "순서 저장 완료" });
+    } catch {
+      return res.status(500).json({ message: "순서 저장 실패" });
+    }
+  });
+
+  app.patch("/api/admin/domain-fallbacks/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { url, label, priority, isActive } = req.body;
+      const item = await storage.updateFallbackUrl(id, {
+        ...(url !== undefined && { url: url.trim() }),
+        ...(label !== undefined && { label: label.trim() }),
+        ...(priority !== undefined && { priority }),
+        ...(isActive !== undefined && { isActive }),
+      });
+      if (!item) return res.status(404).json({ message: "항목을 찾을 수 없습니다" });
+      return res.json(item);
+    } catch {
+      return res.status(500).json({ message: "업데이트 실패" });
+    }
+  });
+
+  app.delete("/api/admin/domain-fallbacks/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteFallbackUrl(req.params.id);
+      return res.json({ message: "삭제 완료" });
+    } catch {
+      return res.status(500).json({ message: "삭제 실패" });
     }
   });
 

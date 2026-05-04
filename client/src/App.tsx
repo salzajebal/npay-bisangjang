@@ -18,18 +18,37 @@ import TestAdminPage from "@/pages/test-admin";
 import StockDetailPage from "@/pages/stock-detail";
 import { useEffect, useState } from "react";
 
+type FallbackUrl = { id: string; url: string; label: string; priority: number; isActive: boolean };
+
+async function tryUrl(url: string, timeoutMs = 4000): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    await fetch(url, { signal: controller.signal, mode: "no-cors", cache: "no-store" });
+    clearTimeout(timer);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function DomainRedirectGuard({ children }: { children: React.ReactNode }) {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     fetch("/api/domain-redirect", { credentials: "include" })
       .then((r) => r.json())
-      .then((data) => {
-        if (data?.redirectUrl) {
-          window.location.href = data.redirectUrl;
-        } else {
-          setChecked(true);
+      .then(async (data: { urls?: FallbackUrl[] }) => {
+        const urls = data?.urls ?? [];
+        if (urls.length === 0) { setChecked(true); return; }
+        for (const entry of urls) {
+          const alive = await tryUrl(entry.url);
+          if (alive) {
+            window.location.href = entry.url;
+            return;
+          }
         }
+        setChecked(true);
       })
       .catch(() => setChecked(true));
   }, []);

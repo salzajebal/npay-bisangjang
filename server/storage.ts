@@ -1,6 +1,6 @@
-import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, type LoginLog, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups, loginLogs } from "@shared/schema";
+import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, type LoginLog, type DomainFallbackUrl, type InsertDomainFallbackUrl, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups, loginLogs, domainFallbackUrls } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, asc } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -48,6 +48,12 @@ export interface IStorage {
   createLoginLog(data: { userId: string; ipAddress?: string; domain?: string; userAgent?: string }): Promise<LoginLog>;
   getLoginLogsByUserId(userId: string): Promise<LoginLog[]>;
   getAllLoginLogs(): Promise<LoginLog[]>;
+  getAllFallbackUrls(): Promise<DomainFallbackUrl[]>;
+  getActiveFallbackUrls(): Promise<DomainFallbackUrl[]>;
+  createFallbackUrl(data: InsertDomainFallbackUrl): Promise<DomainFallbackUrl>;
+  updateFallbackUrl(id: string, data: Partial<Pick<DomainFallbackUrl, "url" | "label" | "priority" | "isActive">>): Promise<DomainFallbackUrl | undefined>;
+  deleteFallbackUrl(id: string): Promise<void>;
+  reorderFallbackUrls(ids: string[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -277,6 +283,36 @@ export class DatabaseStorage implements IStorage {
 
   async getAllLoginLogs(): Promise<LoginLog[]> {
     return db.select().from(loginLogs).orderBy(desc(loginLogs.createdAt)).limit(200);
+  }
+
+  async getAllFallbackUrls(): Promise<DomainFallbackUrl[]> {
+    return db.select().from(domainFallbackUrls).orderBy(asc(domainFallbackUrls.priority), asc(domainFallbackUrls.createdAt));
+  }
+
+  async getActiveFallbackUrls(): Promise<DomainFallbackUrl[]> {
+    return db.select().from(domainFallbackUrls)
+      .where(eq(domainFallbackUrls.isActive, true))
+      .orderBy(asc(domainFallbackUrls.priority), asc(domainFallbackUrls.createdAt));
+  }
+
+  async createFallbackUrl(data: InsertDomainFallbackUrl): Promise<DomainFallbackUrl> {
+    const [item] = await db.insert(domainFallbackUrls).values(data).returning();
+    return item;
+  }
+
+  async updateFallbackUrl(id: string, data: Partial<Pick<DomainFallbackUrl, "url" | "label" | "priority" | "isActive">>): Promise<DomainFallbackUrl | undefined> {
+    const [item] = await db.update(domainFallbackUrls).set(data).where(eq(domainFallbackUrls.id, id)).returning();
+    return item;
+  }
+
+  async deleteFallbackUrl(id: string): Promise<void> {
+    await db.delete(domainFallbackUrls).where(eq(domainFallbackUrls.id, id));
+  }
+
+  async reorderFallbackUrls(ids: string[]): Promise<void> {
+    for (let i = 0; i < ids.length; i++) {
+      await db.update(domainFallbackUrls).set({ priority: i + 1 }).where(eq(domainFallbackUrls.id, ids[i]));
+    }
   }
 }
 

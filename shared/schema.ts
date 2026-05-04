@@ -144,6 +144,23 @@ export const domainGroups = pgTable("domain_groups", {
 
 export type DomainGroup = typeof domainGroups.$inferSelect;
 
+export const domainFallbackUrls = pgTable("domain_fallback_urls", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  url: text("url").notNull(),
+  label: text("label").notNull().default(""),
+  priority: integer("priority").notNull().default(1),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertDomainFallbackUrlSchema = createInsertSchema(domainFallbackUrls).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type DomainFallbackUrl = typeof domainFallbackUrls.$inferSelect;
+export type InsertDomainFallbackUrl = z.infer<typeof insertDomainFallbackUrlSchema>;
+
 export const loginLogs = pgTable("login_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),

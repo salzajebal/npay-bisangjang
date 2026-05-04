@@ -14,13 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { STOCK_CATEGORIES, KOREAN_BANKS } from "@shared/schema";
 import { StockIcon } from "@/components/stock-icon";
-import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup, LoginLog } from "@shared/schema";
+import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup, LoginLog, DomainFallbackUrl } from "@shared/schema";
 import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
   Eye, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
   CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu, Plus, BookOpen, Copy,
-  Bell, BellOff, Globe, Activity,
+  Bell, BellOff, Globe, Activity, ShieldAlert, GripVertical, ExternalLink, ToggleLeft, ToggleRight, Loader2,
 } from "lucide-react";
 
 const formatPct = (n: number) =>
@@ -1160,7 +1160,7 @@ function copyUserInfo(user: User, toast: any) {
   });
 }
 
-type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "stocks" | "chat" | "groups" | "logs";
+type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "stocks" | "chat" | "groups" | "fallbacks" | "logs";
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "대시보드", icon: LayoutDashboard },
@@ -1170,6 +1170,7 @@ const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashbo
   { id: "stocks", label: "종목 관리", icon: Package },
   { id: "chat", label: "1:1 상담", icon: MessageSquare },
   { id: "groups", label: "도메인 그룹", icon: Globe },
+  { id: "fallbacks", label: "도메인 대체", icon: ShieldAlert },
   { id: "logs", label: "접속 로그", icon: Activity },
 ];
 
@@ -1177,7 +1178,7 @@ export default function AdminPage() {
   const [, setLocation] = useLocation();
   const getHashSection = (): AdminSection => {
     const hash = window.location.hash.replace("#", "");
-    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "stocks", "chat", "groups", "logs"];
+    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "stocks", "chat", "groups", "fallbacks", "logs"];
     return valid.includes(hash as AdminSection) ? (hash as AdminSection) : "dashboard";
   };
 
@@ -1298,6 +1299,72 @@ export default function AdminPage() {
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!authData?.user?.isAdmin,
   });
+
+  const { data: fallbackUrls = [], refetch: refetchFallbacks } = useQuery<DomainFallbackUrl[]>({
+    queryKey: ["/api/admin/domain-fallbacks"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!authData?.user?.isAdmin,
+  });
+
+  const [newFbUrl, setNewFbUrl] = useState("");
+  const [newFbLabel, setNewFbLabel] = useState("");
+  const [editFbId, setEditFbId] = useState<string | null>(null);
+  const [editFbUrl, setEditFbUrl] = useState("");
+  const [editFbLabel, setEditFbLabel] = useState("");
+  const [testingId, setTestingId] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<Record<string, boolean | null>>({});
+
+  const addFallbackMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/admin/domain-fallbacks", { url: newFbUrl.trim(), label: newFbLabel.trim() }),
+    onSuccess: () => { setNewFbUrl(""); setNewFbLabel(""); refetchFallbacks(); toast({ title: "추가 완료", description: "대체 도메인이 추가되었습니다." }); },
+    onError: (e: Error) => toast({ title: "추가 실패", description: e.message, variant: "destructive" }),
+  });
+
+  const updateFallbackMutation = useMutation({
+    mutationFn: (data: { id: string; url: string; label: string }) =>
+      apiRequest("PATCH", `/api/admin/domain-fallbacks/${data.id}`, { url: data.url, label: data.label }),
+    onSuccess: () => { setEditFbId(null); refetchFallbacks(); toast({ title: "수정 완료" }); },
+    onError: (e: Error) => toast({ title: "수정 실패", description: e.message, variant: "destructive" }),
+  });
+
+  const toggleFallbackMutation = useMutation({
+    mutationFn: (data: { id: string; isActive: boolean }) =>
+      apiRequest("PATCH", `/api/admin/domain-fallbacks/${data.id}`, { isActive: data.isActive }),
+    onSuccess: () => { refetchFallbacks(); },
+  });
+
+  const deleteFallbackMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/domain-fallbacks/${id}`),
+    onSuccess: () => { refetchFallbacks(); toast({ title: "삭제 완료" }); },
+  });
+
+  const moveFallback = async (id: string, direction: "up" | "down") => {
+    const sorted = [...fallbackUrls].sort((a, b) => a.priority - b.priority);
+    const idx = sorted.findIndex((f) => f.id === id);
+    if (direction === "up" && idx <= 0) return;
+    if (direction === "down" && idx >= sorted.length - 1) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    const newOrder = [...sorted];
+    [newOrder[idx], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[idx]];
+    await apiRequest("PATCH", "/api/admin/domain-fallbacks/reorder", { ids: newOrder.map((f) => f.id) });
+    refetchFallbacks();
+  };
+
+  const testFallbackUrl = async (id: string, url: string) => {
+    setTestingId(id);
+    setTestResults((prev) => ({ ...prev, [id]: null }));
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5000);
+      await fetch(url, { signal: controller.signal, mode: "no-cors", cache: "no-store" });
+      clearTimeout(timer);
+      setTestResults((prev) => ({ ...prev, [id]: true }));
+    } catch {
+      setTestResults((prev) => ({ ...prev, [id]: false }));
+    } finally {
+      setTestingId(null);
+    }
+  };
 
   const { data: loginLogsList = [], refetch: refetchLoginLogs } = useQuery<LoginLog[]>({
     queryKey: ["/api/admin/login-logs"],
@@ -2765,6 +2832,281 @@ export default function AdminPage() {
                   )}
                 </Card>
               </div>
+            </>
+          )}
+
+          {activeSection === "fallbacks" && (
+            <>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="w-5 h-5 text-[#E8344E]" />
+                  <h2 className="text-lg font-bold text-gray-800">도메인 대체 설정</h2>
+                </div>
+                <Badge variant="outline" className="border-gray-200 text-gray-500">
+                  {fallbackUrls.length}개 등록 / 활성 {fallbackUrls.filter((f) => f.isActive).length}개
+                </Badge>
+              </div>
+
+              {/* 설명 안내 */}
+              <Card className="p-4 bg-blue-50 border-blue-200">
+                <div className="flex items-start gap-3">
+                  <ShieldAlert className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-blue-800">도메인 자동 대체 작동 방식</p>
+                    <p className="text-sm text-blue-700">사용자가 사이트에 접속하면 <strong>1번 도메인부터 순서대로 연결을 테스트</strong>합니다. 응답이 없거나 차단된 도메인은 자동으로 건너뛰고 <strong>다음 도메인으로 즉시 이동</strong>합니다. 모든 도메인이 응답 없을 경우 현재 사이트를 유지합니다.</p>
+                    <ul className="text-xs text-blue-600 list-disc list-inside mt-1 space-y-0.5">
+                      <li>각 도메인 연결 테스트 timeout: <strong>4초</strong></li>
+                      <li>비활성화된 도메인은 건너뜁니다</li>
+                      <li>순서를 ↑↓ 버튼으로 변경하면 즉시 반영됩니다</li>
+                    </ul>
+                  </div>
+                </div>
+              </Card>
+
+              {/* 새 도메인 추가 */}
+              <Card className="p-5 bg-white border-gray-200">
+                <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                  <Plus className="w-4 h-4" /> 대체 도메인 추가
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div className="md:col-span-2">
+                    <Label className="text-xs text-gray-500 mb-1 block">도메인 URL <span className="text-red-500">*</span></Label>
+                    <Input
+                      placeholder="https://example.com"
+                      value={newFbUrl}
+                      onChange={(e) => setNewFbUrl(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter" && newFbUrl.trim()) addFallbackMutation.mutate(); }}
+                      className="bg-white border-gray-200 font-mono text-sm"
+                      data-testid="input-new-fallback-url"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500 mb-1 block">이름 (선택)</Label>
+                    <Input
+                      placeholder="예: 백업 도메인 1"
+                      value={newFbLabel}
+                      onChange={(e) => setNewFbLabel(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter" && newFbUrl.trim()) addFallbackMutation.mutate(); }}
+                      className="bg-white border-gray-200 text-sm"
+                      data-testid="input-new-fallback-label"
+                    />
+                  </div>
+                </div>
+                <Button
+                  className="mt-3 bg-[#E8344E] border-[#E8344E] text-white"
+                  disabled={!newFbUrl.trim() || addFallbackMutation.isPending}
+                  onClick={() => addFallbackMutation.mutate()}
+                  data-testid="button-add-fallback"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  {addFallbackMutation.isPending ? "추가 중..." : "도메인 추가"}
+                </Button>
+              </Card>
+
+              {/* 도메인 목록 */}
+              <Card className="p-5 bg-white border-gray-200">
+                <h3 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+                  <GripVertical className="w-4 h-4 text-gray-400" /> 대체 도메인 순서 ({fallbackUrls.length}개)
+                </h3>
+                {fallbackUrls.length === 0 ? (
+                  <div className="text-center py-12">
+                    <ShieldAlert className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p className="text-gray-400 font-medium">등록된 대체 도메인이 없습니다</p>
+                    <p className="text-xs text-gray-400 mt-1">위 폼에서 도메인을 추가해주세요</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {[...fallbackUrls].sort((a, b) => a.priority - b.priority).map((fb, idx, arr) => (
+                      <div
+                        key={fb.id}
+                        className={`rounded-lg border p-4 transition-all ${fb.isActive ? "bg-white border-gray-200" : "bg-gray-50 border-gray-100 opacity-60"}`}
+                        data-testid={`row-fallback-${fb.id}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          {/* 순위 번호 */}
+                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${idx === 0 ? "bg-[#E8344E] text-white" : idx === 1 ? "bg-orange-400 text-white" : "bg-gray-200 text-gray-600"}`}>
+                            {idx + 1}
+                          </div>
+
+                          {/* 내용 */}
+                          <div className="flex-1 min-w-0">
+                            {editFbId === fb.id ? (
+                              <div className="space-y-2">
+                                <Input
+                                  value={editFbUrl}
+                                  onChange={(e) => setEditFbUrl(e.target.value)}
+                                  placeholder="https://example.com"
+                                  className="text-sm font-mono border-gray-300"
+                                  data-testid={`input-edit-fallback-url-${fb.id}`}
+                                />
+                                <Input
+                                  value={editFbLabel}
+                                  onChange={(e) => setEditFbLabel(e.target.value)}
+                                  placeholder="이름 (선택)"
+                                  className="text-sm border-gray-300"
+                                  data-testid={`input-edit-fallback-label-${fb.id}`}
+                                />
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    className="bg-green-600 border-green-600 text-xs"
+                                    disabled={updateFallbackMutation.isPending}
+                                    onClick={() => updateFallbackMutation.mutate({ id: fb.id, url: editFbUrl, label: editFbLabel })}
+                                    data-testid={`button-save-fallback-${fb.id}`}
+                                  >
+                                    <Save className="w-3 h-3 mr-1" /> 저장
+                                  </Button>
+                                  <Button size="sm" variant="ghost" className="text-xs" onClick={() => setEditFbId(null)}>
+                                    <X className="w-3 h-3 mr-1" /> 취소
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {fb.label && (
+                                    <span className="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded">{fb.label}</span>
+                                  )}
+                                  {fb.isActive ? (
+                                    <Badge className="text-[10px] bg-green-50 text-green-700 border border-green-200">활성</Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="text-[10px] text-gray-400 border-gray-200">비활성</Badge>
+                                  )}
+                                  {idx === 0 && fb.isActive && (
+                                    <Badge className="text-[10px] bg-[#E8344E]/10 text-[#E8344E] border border-[#E8344E]/30">현재 사용 중</Badge>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                  <a
+                                    href={fb.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm font-mono text-blue-600 hover:underline truncate"
+                                    title={fb.url}
+                                  >
+                                    {fb.url}
+                                  </a>
+                                  <ExternalLink className="w-3 h-3 text-blue-400 shrink-0" />
+                                </div>
+                                {/* 연결 테스트 결과 */}
+                                {testResults[fb.id] !== undefined && (
+                                  <div className={`text-xs mt-1 flex items-center gap-1 font-medium ${testResults[fb.id] === true ? "text-green-600" : testResults[fb.id] === false ? "text-red-500" : "text-gray-400"}`}>
+                                    {testResults[fb.id] === true && <><CheckCircle2 className="w-3 h-3" /> 연결 성공 — 도메인이 정상 응답합니다</>}
+                                    {testResults[fb.id] === false && <><XCircle className="w-3 h-3" /> 연결 실패 — 도메인이 응답하지 않습니다 (차단 또는 오프라인)</>}
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+
+                          {/* 액션 버튼 */}
+                          {editFbId !== fb.id && (
+                            <div className="flex flex-col items-end gap-1.5 shrink-0">
+                              {/* 순서 이동 */}
+                              <div className="flex gap-1">
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="w-7 h-7 border-gray-200"
+                                  disabled={idx === 0}
+                                  onClick={() => moveFallback(fb.id, "up")}
+                                  title="순서 올리기"
+                                  data-testid={`button-move-up-${fb.id}`}
+                                >
+                                  <ArrowUpRight className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="w-7 h-7 border-gray-200"
+                                  disabled={idx === arr.length - 1}
+                                  onClick={() => moveFallback(fb.id, "down")}
+                                  title="순서 내리기"
+                                  data-testid={`button-move-down-${fb.id}`}
+                                >
+                                  <ArrowDownRight className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              {/* 기능 버튼들 */}
+                              <div className="flex gap-1">
+                                {/* 연결 테스트 */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs border-gray-200 h-7 px-2"
+                                  disabled={testingId === fb.id}
+                                  onClick={() => testFallbackUrl(fb.id, fb.url)}
+                                  data-testid={`button-test-${fb.id}`}
+                                >
+                                  {testingId === fb.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "테스트"}
+                                </Button>
+                                {/* 수정 */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs border-gray-200 h-7 px-2"
+                                  onClick={() => { setEditFbId(fb.id); setEditFbUrl(fb.url); setEditFbLabel(fb.label); }}
+                                  data-testid={`button-edit-fallback-${fb.id}`}
+                                >
+                                  <Pencil className="w-3 h-3" />
+                                </Button>
+                                {/* 활성/비활성 */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className={`text-xs h-7 px-2 ${fb.isActive ? "border-green-300 text-green-700" : "border-gray-200 text-gray-400"}`}
+                                  onClick={() => toggleFallbackMutation.mutate({ id: fb.id, isActive: !fb.isActive })}
+                                  title={fb.isActive ? "비활성화" : "활성화"}
+                                  data-testid={`button-toggle-fallback-${fb.id}`}
+                                >
+                                  {fb.isActive ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                                </Button>
+                                {/* 삭제 */}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs border-red-200 text-red-500 h-7 px-2 hover:bg-red-50"
+                                  onClick={() => deleteFallbackMutation.mutate(fb.id)}
+                                  disabled={deleteFallbackMutation.isPending}
+                                  data-testid={`button-delete-fallback-${fb.id}`}
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+
+              {/* 흐름 시각화 */}
+              {fallbackUrls.length > 0 && (
+                <Card className="p-5 bg-white border-gray-200">
+                  <h3 className="text-sm font-bold text-gray-700 mb-4">자동 이동 흐름</h3>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-100 text-sm text-gray-600 font-medium">
+                      👤 사용자 접속
+                    </div>
+                    {[...fallbackUrls].sort((a, b) => a.priority - b.priority).map((fb, idx) => (
+                      <div key={fb.id} className="flex items-center gap-2">
+                        <span className="text-gray-400 text-xs">→</span>
+                        <div className={`px-3 py-2 rounded-lg border text-xs font-mono max-w-[160px] truncate ${fb.isActive ? "bg-white border-gray-300 text-gray-700" : "bg-gray-50 border-gray-200 text-gray-400 line-through"}`} title={fb.url}>
+                          <span className={`font-bold mr-1 ${idx === 0 ? "text-[#E8344E]" : "text-gray-400"}`}>{idx + 1}.</span>
+                          {fb.label || fb.url.replace(/^https?:\/\//, "")}
+                        </div>
+                        {!fb.isActive && <span className="text-[10px] text-gray-400">(비활성)</span>}
+                      </div>
+                    ))}
+                    <span className="text-gray-400 text-xs">→</span>
+                    <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-100 text-sm text-gray-500">
+                      모두 실패 시 현재 유지
+                    </div>
+                  </div>
+                </Card>
+              )}
             </>
           )}
 
