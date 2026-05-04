@@ -1275,9 +1275,10 @@ function MyHoldings() {
 
           <div className="space-y-2.5">
             {holdingsList.map((h) => (
-              <div
+              <a
                 key={h.name}
-                className="border border-[#eee] rounded-lg p-3 hover:border-[#ddd] transition-colors cursor-pointer"
+                href="/my-stocks"
+                className="border border-[#eee] rounded-lg p-3 hover:border-[#ddd] transition-colors cursor-pointer block"
                 data-testid={`card-holding-${h.name}`}
               >
                 <div className="flex items-center justify-between">
@@ -1296,16 +1297,70 @@ function MyHoldings() {
                     </p>
                   </div>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
 
           <div className="mt-4 text-center">
-            <a href="/dashboard" className="inline-flex items-center gap-1 text-sm text-[#666] border border-[#eee] rounded-full px-5 py-2 hover:bg-[#fafafa] transition-colors" data-testid="link-more-holdings">
+            <a href="/my-stocks" className="inline-flex items-center gap-1 text-sm text-[#666] border border-[#eee] rounded-full px-5 py-2 hover:bg-[#fafafa] transition-colors" data-testid="link-more-holdings">
               상세보기 <ChevronRight className="w-3.5 h-3.5" />
             </a>
           </div>
         </>
+      )}
+    </div>
+  );
+}
+
+function MobileHoldingsSection() {
+  const { data: authData } = useQuery<{ user: UserType } | null>({
+    queryKey: ["/api/auth/me"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+  const { data: transactions } = useQuery<StockTransaction[]>({
+    queryKey: ["/api/transactions/my"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!authData?.user,
+  });
+
+  const holdingsMap: Record<string, number> = {};
+  (transactions || []).forEach((tx) => {
+    if (!holdingsMap[tx.stockName]) holdingsMap[tx.stockName] = 0;
+    holdingsMap[tx.stockName] += tx.type === "in" ? tx.quantity : -tx.quantity;
+  });
+  const holdingNames = Object.entries(holdingsMap).filter(([, q]) => q > 0).map(([name]) => name);
+
+  return (
+    <div className="lg:hidden border border-[#eee] rounded-2xl overflow-hidden" data-testid="mobile-holdings-section">
+      <div className="px-4 py-3 flex items-center justify-between border-b border-[#f5f5f5]">
+        <span className="text-sm font-bold text-[#222]">내 보유종목</span>
+        {authData?.user && (
+          <a href="/my-stocks" className="text-xs text-[#E8344E] flex items-center gap-0.5 hover:underline">
+            전체보기 <ChevronRight className="w-3 h-3" />
+          </a>
+        )}
+      </div>
+      {!authData?.user ? (
+        <div className="px-4 py-4 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-[#f5f5f5] flex items-center justify-center shrink-0">
+            <User className="w-4 h-4 text-[#ccc]" />
+          </div>
+          <p className="text-sm text-[#999] flex-1">로그인하면 보유종목을 확인할 수 있습니다</p>
+          <a href="/login" className="text-xs text-white bg-[#E8344E] rounded-full px-3 py-1.5 shrink-0">로그인</a>
+        </div>
+      ) : holdingNames.length === 0 ? (
+        <div className="px-4 py-4">
+          <p className="text-sm text-[#999]">보유 중인 종목이 없습니다</p>
+        </div>
+      ) : (
+        <div className="flex gap-4 px-4 py-3 overflow-x-auto scrollbar-none">
+          {holdingNames.slice(0, 6).map((name) => (
+            <a key={name} href="/my-stocks" className="flex flex-col items-center gap-1 shrink-0">
+              <StockIcon name={name} size={36} />
+              <span className="text-[10px] text-[#444] font-medium max-w-[44px] text-center truncate">{name}</span>
+            </a>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -1833,41 +1888,8 @@ export default function TradePage() {
 
         <div className={`flex flex-col lg:flex-row gap-6 mt-2 ${isSearchMode ? "hidden" : ""}`}>
           <div className="flex-1 min-w-0 space-y-8">
-            {/* 모바일 관심종목 섹션 */}
-            <div className="lg:hidden border border-[#eee] rounded-2xl overflow-hidden" data-testid="mobile-watchlist-section">
-              <div className="px-4 py-3 flex items-center justify-between border-b border-[#f5f5f5]">
-                <span className="text-sm font-bold text-[#222]">내 최근 관심종목</span>
-              </div>
-              {watchlistNames.length === 0 ? (
-                <div className="px-4 py-3">
-                  <a
-                    href="#rankings"
-                    className="flex items-center gap-2 text-sm text-[#666] hover:text-[#444]"
-                    data-testid="mobile-watchlist-add"
-                  >
-                    <div className="w-7 h-7 rounded-full border-2 border-dashed border-[#ccc] flex items-center justify-center">
-                      <Plus className="w-3.5 h-3.5 text-[#999]" />
-                    </div>
-                    <span>관심종목 추가하기</span>
-                  </a>
-                </div>
-              ) : (
-                <div className="flex gap-4 px-4 py-3 overflow-x-auto scrollbar-none">
-                  {watchlistNames.slice(0, 5).map((name) => (
-                    <div key={name} className="flex flex-col items-center gap-1 shrink-0">
-                      <StockIcon name={name} size={36} />
-                      <span className="text-[10px] text-[#444] font-medium max-w-[44px] text-center truncate">{name}</span>
-                    </div>
-                  ))}
-                  <a href="#rankings" className="flex flex-col items-center gap-1 shrink-0 justify-center">
-                    <div className="w-9 h-9 rounded-full border-2 border-dashed border-[#ccc] flex items-center justify-center">
-                      <Plus className="w-4 h-4 text-[#999]" />
-                    </div>
-                    <span className="text-[10px] text-[#999]">추가</span>
-                  </a>
-                </div>
-              )}
-            </div>
+            {/* 모바일 보유종목 섹션 */}
+            <MobileHoldingsSection />
 
             <StockRankings watchlistNames={watchlistNames} onToggleWatchlist={toggleWatchlist} />
             <MajorNews />
