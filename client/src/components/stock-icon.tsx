@@ -15,7 +15,7 @@ function fetchDynamicLogos() {
 }
 
 const STOCK_LOGOS: Record<string, { logo: string; bg: string }> = {
-  "마키나락스": { logo: "https://static.ustockplus.com/logo/company/66224.png", bg: "#1A237E" },
+  "마키나락스": { logo: "/logos/makinarocks.png", bg: "#111111" },
   "피스피스스튜디오": { logo: "https://static.ustockplus.com/admin/2026-01/ca30c94f-34fd-4138-af85-c4ed71156691.png", bg: "#111111" },
   "케이뱅크": { logo: "https://static.ustockplus.com/logo/stock/279570.png", bg: "#E8344E" },
   "두나무": { logo: "https://static.ustockplus.com/admin/2023-01/2d2f17bd-097c-4011-931f-6c73c7b7b694.png", bg: "#333333" },
