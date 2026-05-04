@@ -445,7 +445,19 @@ export default function DashboardPage() {
               </div>
 
               <Card className="p-5">
-                <h3 className="text-sm text-muted-foreground mb-3">내 정보</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm text-muted-foreground">내 정보</h3>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5 text-xs border-[#E8344E] text-[#E8344E] hover:bg-[#E8344E]/10"
+                    onClick={() => setActiveSection("profile")}
+                    data-testid="button-goto-profile"
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                    내 정보 수정
+                  </Button>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>
                     <span className="text-muted-foreground">아이디</span>
