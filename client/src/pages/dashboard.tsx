@@ -794,7 +794,7 @@ export default function DashboardPage() {
                           </div>
                         )}
                         <div className="text-xs text-muted-foreground">
-                          {tr.accountName} | {tr.brokerName ? `${tr.brokerName} ` : ""}{tr.accountNumber}
+                          대금 결재는 담당 자문회사를 통해 납부해주시면 됩니다.
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {new Date(tr.createdAt).toLocaleString("ko-KR")}
