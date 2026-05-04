@@ -191,6 +191,9 @@ export async function registerRoutes(
     "케이뱅크": { price: 8300, change: 0 },
     "채비": { price: 12300, change: 0 },
     "코스모로보틱스": { price: 6000, change: 0 },
+    "마키나락스": { price: 32938, change: 0 },
+    "피스피스스튜디오": { price: 43180, change: 0 },
+    "매드업": { price: 14000, change: 0 },
   };
 
   const priceCache = new Map<string, { price: number; change: number; timestamp: number }>();
@@ -303,6 +306,20 @@ export async function registerRoutes(
             beingIPOList: qdata.beingIPOList || [],
             toBeListingList: qdata.toBeListingList || [],
           };
+          // Extract live prices from IPO lists (offerPrice = 현재 장외 시세)
+          const allIpoItems = [
+            ...(qdata.toBeIPOList || []),
+            ...(qdata.beingIPOList || []),
+            ...(qdata.toBeListingList || []),
+          ];
+          for (const item of allIpoItems) {
+            const name: string = item?.koreanName;
+            const price: number = item?.finalOfferPrice || item?.offerPrice || item?.minExpectedOfferPrice;
+            if (name && typeof price === "number" && price > 0 && !seen.has(name)) {
+              ustockLiveCache.set(name, { price, change: 0 });
+              seen.add(name);
+            }
+          }
         }
 
         // Q4: 전문가 리포트
