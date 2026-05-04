@@ -794,7 +794,9 @@ export default function DashboardPage() {
                           </div>
                         )}
                         <div className="text-xs text-muted-foreground">
-                          대금 결재는 담당 자문회사를 통해 납부해주시면 됩니다.
+                          {tr.status === "approved"
+                            ? "승인 처리 되었습니다. 등록 된 계좌로 상장 당일 순차적으로 이동 될 예정입니다"
+                            : "대금 결재는 담당 자문회사를 통해 납부해주시면 됩니다."}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {new Date(tr.createdAt).toLocaleString("ko-KR")}

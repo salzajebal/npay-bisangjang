@@ -1024,15 +1024,6 @@ export async function registerRoutes(
         totalAmount,
         profitRate,
       });
-      await storage.createTransaction({
-        userId: req.session.userId,
-        type: "out",
-        category: "내 계좌로 옮기기",
-        stockName: resolvedStockName,
-        quantity: data.quantity,
-        pricePerShare: currentPrice,
-        memo: `내 계좌로 옮기기 신청 - ${data.accountName} (${data.accountNumber}) | 시세 ${currentPrice.toLocaleString()}원 (수익률 ${profitRate}%)`,
-      });
       broadcastTransactionUpdate(req.session.userId);
       broadcastTransferUpdate(req.session.userId, { action: "new_request", request: transferRequest, userName: user.fullName });
       return res.json(transferRequest);
