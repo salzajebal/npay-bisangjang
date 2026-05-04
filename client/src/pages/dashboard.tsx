@@ -828,7 +828,7 @@ export default function DashboardPage() {
             </div>
             <h3 className="text-base font-bold text-[#222] text-center mb-3">계좌 이동 안내</h3>
             <p className="text-sm text-[#555] text-center leading-relaxed">
-              입고받으신 종목은 상장당일 연동되어있는 증권계좌로 이동 될 예정입니다
+              출고 신청 접수 되었습니다. 담당자문회사 승인 후 등록계좌로 이동 될 예정입니다
             </p>
           </div>
           <div className="px-6 pb-6 pt-4">
