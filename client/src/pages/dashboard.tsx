@@ -662,7 +662,7 @@ export default function DashboardPage() {
 
           {activeSection === "transfer" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              <Card className="p-5">
+              <Card className="p-5 order-2 lg:order-1">
                 <div className="flex items-center gap-2 mb-4">
                   <ArrowRightLeft className="w-5 h-5 text-[#E8344E]" />
                   <h2 className="text-lg font-semibold" data-testid="text-transfer-title">내 계좌로 옮기기</h2>
@@ -747,7 +747,7 @@ export default function DashboardPage() {
                 </form>
               </Card>
 
-              <Card className="p-5">
+              <Card className="p-5 order-1 lg:order-2">
                 <div className="flex items-center gap-2 mb-4">
                   <Clock className="w-5 h-5 text-[#E8344E]" />
                   <h2 className="text-lg font-semibold">신청 목록</h2>
