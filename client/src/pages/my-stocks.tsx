@@ -364,7 +364,7 @@ export default function MyStocksPage() {
                       <span className="font-medium text-sm text-[#222]">{tr.stockName} {tr.quantity.toLocaleString()}주</span>
                     </div>
                     {tr.status === "pending" && (
-                      <Badge variant="secondary" className="gap-1 text-xs"><Clock className="w-3 h-3" />대기중</Badge>
+                      <Badge variant="secondary" className="gap-1 text-xs"><Clock className="w-3 h-3" />결제대기중</Badge>
                     )}
                     {tr.status === "approved" && (
                       <Badge className="gap-1 text-xs bg-[#00a878] hover:bg-[#00a878]"><CheckCircle2 className="w-3 h-3" />승인</Badge>
@@ -401,7 +401,7 @@ export default function MyStocksPage() {
                   <p className="text-xs text-[#999]">
                     {tr.status === "approved"
                       ? "승인 처리 되었습니다. 등록 된 계좌로 상장 당일 순차적으로 이동 될 예정입니다"
-                      : "대금 결재는 담당 자문회사를 통해 납부해주시면 됩니다."}
+                      : <strong className="font-bold text-[#555]">대금결제는 담당 자문회사를 통해 납부해주시면 됩니다.</strong>}
                   </p>
                   <p className="text-xs text-[#bbb]">{new Date(tr.createdAt).toLocaleString("ko-KR")}</p>
                   {tr.adminMemo && (
