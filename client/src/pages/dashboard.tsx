@@ -22,6 +22,7 @@ import { StockIcon } from "@/components/stock-icon";
 import type { User, StockTransaction, TransferRequest } from "@shared/schema";
 import { KOREAN_BANKS } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { fetchStockPrices } from "@/lib/market-prices";
 
@@ -55,6 +56,7 @@ const sidebarItems: { id: DashSection; label: string; icon: typeof LayoutDashboa
 
 export default function DashboardPage() {
   const [, setLocation] = useLocation();
+  const isMobileDevice = useIsMobile();
   const [activeSection, setActiveSection] = useState<DashSection>("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -346,18 +348,21 @@ export default function DashboardPage() {
               {sidebarItems.find((i) => i.id === activeSection)?.label}
             </h1>
           </div>
-          <button
-            onClick={() => setActiveSection("profile")}
-            className={`md:hidden p-2 rounded-md transition-colors ${activeSection === "profile" ? "text-[#E8344E]" : "text-muted-foreground"}`}
-            data-testid="button-mobile-profile"
-            aria-label="내 정보 수정"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
+          {isMobileDevice && (
+            <button
+              onClick={() => setActiveSection("profile")}
+              className={`p-2 rounded-md transition-colors ${activeSection === "profile" ? "text-[#E8344E]" : "text-muted-foreground"}`}
+              data-testid="button-mobile-profile"
+              aria-label="내 정보 수정"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          )}
         </header>
 
         {/* 모바일 하단 탭 바 (4개) */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t flex items-stretch" data-testid="mobile-bottom-nav">
+        {isMobileDevice && (
+        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t flex items-stretch" data-testid="mobile-bottom-nav">
           {sidebarItems.filter(item => item.id !== "profile").map((item) => {
             const Icon = item.icon;
             const isActive = activeSection === item.id;
@@ -376,6 +381,7 @@ export default function DashboardPage() {
             );
           })}
         </nav>
+        )}
 
         <main className="flex-1 overflow-y-auto p-3 sm:p-6 pb-20 md:pb-6 space-y-4 sm:space-y-6">
           {activeSection === "overview" && (
