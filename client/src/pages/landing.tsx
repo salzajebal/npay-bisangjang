@@ -1899,7 +1899,6 @@ export default function TradePage() {
           </div>
 
           <aside className="w-full lg:w-[340px] shrink-0 space-y-6">
-            <WatchlistSection user={user ?? null} watchlistNames={watchlistNames} onToggleWatchlist={toggleWatchlist} />
             <MyHoldings />
             <Tips />
             <HotDiscussionRooms />
