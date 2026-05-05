@@ -191,7 +191,7 @@ export async function registerRoutes(
     "케이뱅크": { price: 8300, change: 0 },
     "채비": { price: 12300, change: 0 },
     "코스모로보틱스": { price: 6000, change: 0 },
-    "마키나락스": { price: 32938, change: 0 },
+    "마키나락스": { price: 12500, change: 0 },
     "피스피스스튜디오": { price: 43180, change: 0 },
     "매드업": { price: 14000, change: 0 },
   };
