@@ -1248,7 +1248,7 @@ function MyHoldings() {
     <div data-testid="section-my-holdings">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-base font-bold text-[#222]">내 보유종목</h2>
-        <a href="/dashboard" className="text-xs text-[#E8344E] flex items-center gap-0.5 hover:underline" data-testid="link-my-dashboard">
+        <a href="/my-stocks" className="text-xs text-[#E8344E] flex items-center gap-0.5 hover:underline" data-testid="link-my-dashboard">
           마이페이지 <ChevronRight className="w-3 h-3" />
         </a>
       </div>
