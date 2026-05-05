@@ -163,6 +163,11 @@ export async function registerRoutes(
     "진원생명과학": "011000", "코리아센터": "290510", "브레인즈컴퍼니": "099390",
   };
 
+  // Admin-set price overrides — always takes priority over live scrape or any fallback
+  const PRICE_OVERRIDES: Record<string, { price: number; change: number }> = {
+    "마키나락스": { price: 12500, change: 0 },
+  };
+
   const UNLISTED_PRICES: Record<string, { price: number; change: number }> = {
     "두나무": { price: 307000, change: 1.99 },
     "빗썸": { price: 214000, change: -3.17 },
@@ -404,6 +409,10 @@ export async function registerRoutes(
   }
 
   async function getServerStockPrice(stockName: string): Promise<number | null> {
+    // Admin overrides always win
+    const override = PRICE_OVERRIDES[stockName];
+    if (override) return override.price;
+
     const cached = priceCache.get(stockName);
     if (cached && Date.now() - cached.timestamp < PRICE_CACHE_DURATION) {
       return cached.price;
@@ -441,6 +450,13 @@ export async function registerRoutes(
       const fetchPromises: Promise<void>[] = [];
 
       for (const name of stockNames.slice(0, 50)) {
+        // Admin overrides always win — checked before cache or live data
+        const override = PRICE_OVERRIDES[name];
+        if (override) {
+          results[name] = { currentPrice: override.price, changePercent: override.change };
+          continue;
+        }
+
         // Check short-term priceCache first
         const cached = priceCache.get(name);
         if (cached && Date.now() - cached.timestamp < PRICE_CACHE_DURATION) {
