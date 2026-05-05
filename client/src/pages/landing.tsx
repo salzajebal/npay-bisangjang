@@ -1898,7 +1898,7 @@ export default function TradePage() {
             <PopularDiscussions />
           </div>
 
-          <aside className="w-full lg:w-[340px] shrink-0 space-y-6">
+          <aside className="hidden lg:flex lg:flex-col lg:w-[340px] shrink-0 space-y-6">
             <MyHoldings />
             <Tips />
             <HotDiscussionRooms />
