@@ -1191,6 +1191,8 @@ export default function AdminPage() {
   const [transferSoundEnabled, setTransferSoundEnabled] = useState<boolean>(() => {
     return localStorage.getItem("adminTransferSoundEnabled") !== "false";
   });
+  const [transferTab, setTransferTab] = useState<"all" | "pending" | "approved" | "rejected" | "held">("all");
+  const [transferSearch, setTransferSearch] = useState("");
   const [alertActive, setAlertActive] = useState(false);
   const prevPendingCount = useRef<number | null>(null);
   const soundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -1465,6 +1467,12 @@ export default function AdminPage() {
 
   const totalUnreadCount = (chatRooms || []).reduce((sum: number, room: any) => sum + (room.unreadCount || 0), 0);
   const pendingTransferCount = (allTransferRequests || []).filter(r => r.status === "pending").length;
+  const filteredTransfers = (allTransferRequests || []).filter((tr) => {
+    const matchTab = transferTab === "all" || tr.status === transferTab;
+    const name = getUserName(tr.userId).toLowerCase();
+    const matchSearch = transferSearch.trim() === "" || name.includes(transferSearch.trim().toLowerCase());
+    return matchTab && matchSearch;
+  });
 
   const createIpoStockMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -2465,37 +2473,70 @@ export default function AdminPage() {
 
           {activeSection === "transfers" && (
             <>
-              <div className="flex items-center gap-3 flex-wrap">
-                <Badge variant="outline" className="shrink-0 border-gray-200 text-gray-500">
-                  {(allTransferRequests || []).length}건
-                </Badge>
-                <Badge variant="outline" className="shrink-0 bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
-                  대기 {pendingTransferCount}건
-                </Badge>
-                <button
-                  onClick={toggleTransferSound}
-                  className={`ml-auto flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors ${transferSoundEnabled ? "bg-[#E8344E]/10 text-[#E8344E] border-[#E8344E]/30" : "bg-gray-100 text-gray-400 border-gray-200"}`}
-                  title={transferSoundEnabled ? "대체출고 알림 소리 켜짐" : "대체출고 알림 소리 꺼짐"}
-                  data-testid="button-toggle-transfer-sound"
-                >
-                  {transferSoundEnabled ? <Bell className="w-3 h-3" /> : <BellOff className="w-3 h-3" />}
-                  <span>{transferSoundEnabled ? "알림 ON" : "알림 OFF"}</span>
-                </button>
+              {/* 탭 + 검색 */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {(["all","pending","approved","held","rejected"] as const).map((tab) => {
+                    const labels: Record<string, string> = { all: "전체", pending: "대기", approved: "승인", rejected: "거부", held: "보류" };
+                    const counts: Record<string, number> = {
+                      all: (allTransferRequests || []).length,
+                      pending: (allTransferRequests || []).filter(t => t.status === "pending").length,
+                      approved: (allTransferRequests || []).filter(t => t.status === "approved").length,
+                      rejected: (allTransferRequests || []).filter(t => t.status === "rejected").length,
+                      held: (allTransferRequests || []).filter(t => t.status === "held").length,
+                    };
+                    const active = transferTab === tab;
+                    return (
+                      <button
+                        key={tab}
+                        onClick={() => setTransferTab(tab)}
+                        className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${active ? "bg-[#E8344E] text-white border-[#E8344E]" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"}`}
+                        data-testid={`tab-transfer-${tab}`}
+                      >
+                        {labels[tab]}
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${active ? "bg-white/20" : "bg-gray-100 text-gray-400"}`}>
+                          {counts[tab]}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  <button
+                    onClick={toggleTransferSound}
+                    className={`ml-auto flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors ${transferSoundEnabled ? "bg-[#E8344E]/10 text-[#E8344E] border-[#E8344E]/30" : "bg-gray-100 text-gray-400 border-gray-200"}`}
+                    title={transferSoundEnabled ? "대체출고 알림 소리 켜짐" : "대체출고 알림 소리 꺼짐"}
+                    data-testid="button-toggle-transfer-sound"
+                  >
+                    {transferSoundEnabled ? <Bell className="w-3 h-3" /> : <BellOff className="w-3 h-3" />}
+                    <span>{transferSoundEnabled ? "알림 ON" : "알림 OFF"}</span>
+                  </button>
+                </div>
+                {/* 회원 검색 */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="회원 이름으로 검색..."
+                    value={transferSearch}
+                    onChange={(e) => setTransferSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#E8344E]/30 focus:border-[#E8344E]"
+                    data-testid="input-transfer-search"
+                  />
+                </div>
               </div>
 
               {transfersLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full bg-gray-200" />)}
                 </div>
-              ) : (allTransferRequests || []).length === 0 ? (
+              ) : filteredTransfers.length === 0 ? (
                 <Card className="p-12 text-center bg-white border-gray-200">
                   <ArrowRightLeft className="w-10 h-10 mx-auto mb-3 opacity-30 text-gray-400" />
-                  <p className="font-medium text-gray-500">대체출고 신청 내역이 없습니다</p>
+                  <p className="font-medium text-gray-500">{transferSearch ? "검색 결과가 없습니다" : "해당 항목이 없습니다"}</p>
                 </Card>
               ) : (
                 <>
                 <div className="md:hidden space-y-3">
-                  {(allTransferRequests || []).map((tr) => (
+                  {filteredTransfers.map((tr) => (
                     <div key={tr.id} className="rounded-md border border-gray-200 bg-white p-4 space-y-3" data-testid={`row-transfer-${tr.id}`}>
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5">
@@ -2595,7 +2636,7 @@ export default function AdminPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {(allTransferRequests || []).map((tr) => (
+                        {filteredTransfers.map((tr) => (
                           <TableRow key={tr.id} className="border-gray-200" data-testid={`row-transfer-${tr.id}`}>
                             <TableCell>
                               <div className="flex items-center gap-1 flex-wrap">
