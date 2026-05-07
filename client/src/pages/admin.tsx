@@ -1479,12 +1479,6 @@ export default function AdminPage() {
 
   const totalUnreadCount = (chatRooms || []).reduce((sum: number, room: any) => sum + (room.unreadCount || 0), 0);
   const pendingTransferCount = (allTransferRequests || []).filter(r => r.status === "pending").length;
-  const filteredTransfers = (allTransferRequests || []).filter((tr) => {
-    const matchTab = transferTab === "all" || tr.status === transferTab;
-    const name = getUserName(tr.userId).toLowerCase();
-    const matchSearch = transferSearch.trim() === "" || name.includes(transferSearch.trim().toLowerCase());
-    return matchTab && matchSearch;
-  });
 
   const createIpoStockMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -1708,6 +1702,13 @@ export default function AdminPage() {
     const u = (allUsers || []).find((u) => u.id === userId);
     return u ? u.fullName : "알 수 없음";
   };
+
+  const filteredTransfers = (allTransferRequests || []).filter((tr) => {
+    const matchTab = transferTab === "all" || tr.status === transferTab;
+    const name = getUserName(tr.userId).toLowerCase();
+    const matchSearch = transferSearch.trim() === "" || name.includes(transferSearch.trim().toLowerCase());
+    return matchTab && matchSearch;
+  });
 
   const getUserHoldings = (userId: string) => {
     const isIn = (t: string) => t === "in" || t === "입고";
