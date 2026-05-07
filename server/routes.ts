@@ -790,6 +790,16 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/users/:id/hold", requireAdmin, async (req, res) => {
+    try {
+      const user = await storage.updateUser(req.params.id, { isFrozen: true });
+      if (!user) return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      return res.json({ message: "보류 처리 완료" });
+    } catch {
+      return res.status(500).json({ message: "보류 처리에 실패했습니다" });
+    }
+  });
+
   app.get("/api/admin/transactions", requireAdmin, async (_req, res) => {
     const transactions = await storage.getAllTransactions();
     return res.json(transactions);

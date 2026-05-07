@@ -77,7 +77,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPendingUsers(): Promise<User[]> {
-    return db.select().from(users).where(and(eq(users.isApproved, false), eq(users.isAdmin, false))).orderBy(desc(users.createdAt));
+    return db.select().from(users).where(and(eq(users.isApproved, false), eq(users.isAdmin, false), eq(users.isFrozen, false))).orderBy(desc(users.createdAt));
   }
 
   async approveUser(id: string): Promise<User | undefined> {

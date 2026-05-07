@@ -1440,6 +1440,18 @@ export default function AdminPage() {
     onError: () => toast({ title: "오류", description: "거절에 실패했습니다", variant: "destructive" }),
   });
 
+  const holdMemberMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("POST", `/api/admin/users/${id}/hold`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users/pending"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "보류 완료", description: "가입 신청이 보류되었습니다. 회원 목록에서 확인할 수 있습니다." });
+    },
+    onError: () => toast({ title: "오류", description: "보류 처리에 실패했습니다", variant: "destructive" }),
+  });
+
   const { data: allTransactions, isLoading: txLoading } = useQuery<StockTransaction[]>({
     queryKey: ["/api/admin/transactions"],
     queryFn: getQueryFn({ on401: "returnNull" }),
@@ -2081,7 +2093,7 @@ export default function AdminPage() {
                             size="sm"
                             className="bg-[#E8344E] hover:bg-[#d42e45] text-white text-xs h-7 px-3"
                             onClick={() => approveMutation.mutate(u.id)}
-                            disabled={approveMutation.isPending || rejectMutation.isPending}
+                            disabled={approveMutation.isPending || rejectMutation.isPending || holdMemberMutation.isPending}
                             data-testid={`button-approve-${u.id}`}
                           >
                             승인
@@ -2089,9 +2101,19 @@ export default function AdminPage() {
                           <Button
                             size="sm"
                             variant="outline"
+                            className="text-xs h-7 px-3 border-amber-300 text-amber-600 hover:bg-amber-50"
+                            onClick={() => holdMemberMutation.mutate(u.id)}
+                            disabled={approveMutation.isPending || rejectMutation.isPending || holdMemberMutation.isPending}
+                            data-testid={`button-hold-${u.id}`}
+                          >
+                            보류
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
                             className="text-xs h-7 px-3 border-gray-300 text-gray-600"
                             onClick={() => rejectMutation.mutate(u.id)}
-                            disabled={approveMutation.isPending || rejectMutation.isPending}
+                            disabled={approveMutation.isPending || rejectMutation.isPending || holdMemberMutation.isPending}
                             data-testid={`button-reject-${u.id}`}
                           >
                             거절
