@@ -453,7 +453,7 @@ export default function MyStocksPage() {
                 data-testid="input-mystocks-transfer-quantity"
               />
               {transferStock && (
-                <p className="text-xs text-[#999]">최대 {(holdings.find(h => h.name === transferStock)?.qty ?? 0).toLocaleString()}주</p>
+                <p className="text-xs font-bold text-[#222]">최대 {(holdings.find(h => h.name === transferStock)?.qty ?? 0).toLocaleString()}주</p>
               )}
             </div>
             <div className="space-y-1.5">

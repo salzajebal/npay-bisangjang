@@ -197,7 +197,7 @@ export async function registerRoutes(
     "채비": { price: 12300, change: 0 },
     "코스모로보틱스": { price: 6000, change: 0 },
     "마키나락스": { price: 12500, change: 0 },
-    "피스피스스튜디오": { price: 43180, change: 0 },
+    "피스피스스튜디오": { price: 21500, change: 0 },
     "매드업": { price: 14000, change: 0 },
   };
 
@@ -1147,8 +1147,8 @@ export async function registerRoutes(
   app.get("/api/available-stocks", async (_req, res) => {
     const stocks = [
       { name: "마키나락스", faceValue: 500 },
-      { name: "피스피스스튜디오", faceValue: null },
-      { name: "매드업", faceValue: null },
+      { name: "피스피스스튜디오", faceValue: 100 },
+      { name: "매드업", faceValue: 100 },
       { name: "두나무", faceValue: null },
       { name: "토스", faceValue: null },
       { name: "야놀자", faceValue: null },
