@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, bigint, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -82,7 +82,7 @@ export const transferRequests = pgTable("transfer_requests", {
   quantity: integer("quantity").notNull(),
   purchasePrice: integer("purchase_price").notNull().default(0),
   currentPrice: integer("current_price").notNull().default(0),
-  totalAmount: integer("total_amount").notNull().default(0),
+  totalAmount: bigint("total_amount", { mode: "number" }).notNull().default(0),
   profitRate: text("profit_rate").notNull().default("0"),
   status: text("status").notNull().default("pending"), // pending, approved, rejected, held
   adminMemo: text("admin_memo"),
