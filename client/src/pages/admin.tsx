@@ -1270,6 +1270,8 @@ export default function AdminPage() {
   const [newGroupDomain, setNewGroupDomain] = useState("");
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupManagerCode, setNewGroupManagerCode] = useState("");
+  const [bulkCode, setBulkCode] = useState("");
+  const [bulkSelectedDomains, setBulkSelectedDomains] = useState<string[]>([]);
   const shareLink = typeof window !== "undefined" ? window.location.origin + "/go" : "/go";
   const [logSearchFilter, setLogSearchFilter] = useState("");
   const [txSearchTerm, setTxSearchTerm] = useState("");
@@ -3415,6 +3417,90 @@ export default function AdminPage() {
                       ))}
                     </TableBody>
                   </Table>
+                )}
+              </Card>
+
+              <Card className="p-5 bg-white border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-gray-700">담당자 코드 일괄 적용</h3>
+                  <span className="text-xs text-gray-400">여러 도메인에 같은 코드를 한번에 적용</span>
+                </div>
+                <div className="flex gap-2 mb-3">
+                  <Input
+                    placeholder="적용할 담당자 코드"
+                    value={bulkCode}
+                    onChange={(e) => setBulkCode(e.target.value)}
+                    className="max-w-[200px] bg-white border-gray-200"
+                    data-testid="input-bulk-code"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs border-gray-200"
+                    onClick={() => setBulkSelectedDomains(domainGroupsList.map((g) => g.domain))}
+                    data-testid="button-select-all-domains"
+                  >전체 선택</Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs border-gray-200"
+                    onClick={() => setBulkSelectedDomains([])}
+                    data-testid="button-deselect-all-domains"
+                  >전체 해제</Button>
+                  <Button
+                    size="sm"
+                    className="bg-[#E8344E] text-white text-xs"
+                    disabled={bulkSelectedDomains.length === 0 || !bulkCode.trim()}
+                    onClick={async () => {
+                      if (!bulkCode.trim() || bulkSelectedDomains.length === 0) return;
+                      await Promise.all(
+                        bulkSelectedDomains.map((domain) => {
+                          const existing = domainGroupsList.find((g) => g.domain === domain);
+                          return apiRequest("PUT", `/api/admin/domain-groups/${encodeURIComponent(domain)}`, {
+                            groupName: existing?.groupName ?? domain,
+                            managerCode: bulkCode.trim(),
+                          });
+                        })
+                      );
+                      refetchDomainGroups();
+                      setBulkSelectedDomains([]);
+                      setBulkCode("");
+                      toast({ title: "일괄 적용 완료", description: `${bulkSelectedDomains.length}개 도메인에 코드가 적용됐습니다` });
+                    }}
+                    data-testid="button-bulk-apply-code"
+                  >
+                    선택 도메인에 적용
+                  </Button>
+                </div>
+                {domainGroupsList.length === 0 ? (
+                  <p className="text-sm text-gray-400">먼저 도메인 그룹을 등록해주세요</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {domainGroupsList.map((g) => {
+                      const selected = bulkSelectedDomains.includes(g.domain);
+                      return (
+                        <button
+                          key={g.domain}
+                          onClick={() => setBulkSelectedDomains((prev) =>
+                            selected ? prev.filter((d) => d !== g.domain) : [...prev, g.domain]
+                          )}
+                          data-testid={`button-bulk-select-${g.domain}`}
+                          className={`px-3 py-1.5 rounded-md border text-xs font-mono transition-all ${
+                            selected
+                              ? "bg-[#E8344E] border-[#E8344E] text-white"
+                              : "bg-white border-gray-200 text-gray-600 hover:border-[#E8344E] hover:text-[#E8344E]"
+                          }`}
+                        >
+                          {g.domain}
+                          {g.managerCode && (
+                            <span className={`ml-1.5 ${selected ? "text-red-200" : "text-orange-400"}`}>
+                              ({g.managerCode})
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
               </Card>
 
