@@ -2604,6 +2604,9 @@ export default function AdminPage() {
                       )}
                       <div className="text-xs text-gray-500 space-y-1">
                         <p>{tr.accountName} · {tr.brokerName && <span className="text-gray-600">{tr.brokerName} </span>}<span className="font-mono text-gray-400">{tr.accountNumber}</span></p>
+                        {(tr as any).approvedAt && (
+                          <p className="text-gray-400">처리일시: {new Date((tr as any).approvedAt).toLocaleDateString("ko-KR")} {new Date((tr as any).approvedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}</p>
+                        )}
                         {tr.adminMemo && <p className="text-gray-400">{tr.adminMemo}</p>}
                       </div>
                       <div className="flex items-center gap-1 flex-wrap pt-1 border-t border-gray-200">
