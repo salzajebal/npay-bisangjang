@@ -245,6 +245,10 @@ export default function DashboardPage() {
   const totalOut = txList.filter((t) => isOut(t.type)).reduce((sum, t) => sum + t.quantity, 0);
   const totalHolding = totalIn - totalOut;
 
+  const faceValueMap = Object.fromEntries(
+    availableStocks.filter(s => s.faceValue != null).map(s => [s.name, s.faceValue as number])
+  );
+
   const holdingsList = Object.entries(holdings)
     .filter(([, v]) => v.qty > 0)
     .map(([name, v]) => {
@@ -254,7 +258,7 @@ export default function DashboardPage() {
       const evalAmount = v.qty * currentPrice;
       const profitLoss = evalAmount - v.totalCost;
       const profitPct = v.totalCost > 0 ? ((profitLoss / v.totalCost) * 100) : 0;
-      return { name, qty: v.qty, avgPrice, currentPrice, evalAmount, totalCost: v.totalCost, profitLoss, profitPct, changePercent: market.changePercent };
+      return { name, qty: v.qty, avgPrice, faceValue: faceValueMap[name] ?? null, currentPrice, evalAmount, totalCost: v.totalCost, profitLoss, profitPct, changePercent: market.changePercent };
     });
 
   const totalEval = holdingsList.reduce((s, h) => s + h.evalAmount, 0);
@@ -790,7 +794,7 @@ export default function DashboardPage() {
                       <SelectContent>
                         {holdingsList.map((h) => (
                           <SelectItem key={h.name} value={h.name}>
-                            {h.name} ({h.qty.toLocaleString()}주 · 액면가 {h.avgPrice.toLocaleString()}원)
+                            {h.name} ({h.qty.toLocaleString()}주 · 액면가 {h.faceValue != null ? h.faceValue.toLocaleString() : "-"}원)
                           </SelectItem>
                         ))}
                       </SelectContent>
