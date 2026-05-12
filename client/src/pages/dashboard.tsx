@@ -969,9 +969,9 @@ function ProfileEditSection({ user }: { user: User }) {
       const body: any = {
         fullName: user.fullName,
         phone: user.phone || "",
-        bank: user.bank,
-        accountNumber,
-        accountHolder,
+        bank: user.bank || undefined,
+        accountNumber: accountNumber || undefined,
+        accountHolder: accountHolder || undefined,
       };
       if (newPassword) {
         if (newPassword !== confirmPassword) {
