@@ -88,6 +88,7 @@ export const transferRequests = pgTable("transfer_requests", {
   adminMemo: text("admin_memo"),
   requestType: text("request_type").notNull().default("출고신청"), // 출고신청, 입고신청
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  approvedAt: timestamp("approved_at"),
 });
 
 export const chatRooms = pgTable("chat_rooms", {

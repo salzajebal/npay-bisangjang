@@ -179,6 +179,9 @@ export class DatabaseStorage implements IStorage {
   async updateTransferRequestStatus(id: string, status: string, adminMemo?: string): Promise<TransferRequest | undefined> {
     const updateData: any = { status };
     if (adminMemo !== undefined) updateData.adminMemo = adminMemo;
+    if (status === "approved" || status === "rejected" || status === "held") {
+      updateData.approvedAt = new Date();
+    }
     const [req] = await db.update(transferRequests).set(updateData).where(eq(transferRequests.id, id)).returning();
     return req;
   }

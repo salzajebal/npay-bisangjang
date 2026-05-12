@@ -2572,7 +2572,9 @@ export default function AdminPage() {
                           {(tr as any).requestType === "입고신청" && <Badge className="gap-1 bg-blue-500 border-blue-500 text-white text-xs">입고</Badge>}
                           {(tr as any).requestType !== "입고신청" && <Badge variant="outline" className="gap-1 border-orange-300 text-orange-600 text-xs">출고</Badge>}
                         </div>
-                        <span className="text-xs text-gray-400">{new Date(tr.createdAt).toLocaleDateString("ko-KR")}</span>
+                        <span className="text-xs text-gray-400">
+                          {new Date(tr.createdAt).toLocaleDateString("ko-KR")} {new Date(tr.createdAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
                       </div>
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-gray-700">{getUserName(tr.userId)}</p>
@@ -2655,7 +2657,8 @@ export default function AdminPage() {
                           <TableHead className="text-right text-gray-500">평가금액</TableHead>
                           <TableHead className="text-gray-500">예금주</TableHead>
                           <TableHead className="text-gray-500">계좌번호</TableHead>
-                          <TableHead className="text-gray-500">신청일</TableHead>
+                          <TableHead className="text-gray-500">신청일시</TableHead>
+                          <TableHead className="text-gray-500">처리일시</TableHead>
                           <TableHead className="text-gray-500">메모</TableHead>
                           <TableHead className="text-center text-gray-500">처리</TableHead>
                         </TableRow>
@@ -2699,8 +2702,17 @@ export default function AdminPage() {
                               {tr.brokerName && <span className="text-gray-500 mr-1">{tr.brokerName}</span>}
                               <span className="font-mono">{tr.accountNumber}</span>
                             </TableCell>
-                            <TableCell className="text-sm text-gray-400">
-                              {new Date(tr.createdAt).toLocaleDateString("ko-KR")}
+                            <TableCell className="text-xs text-gray-400 whitespace-nowrap">
+                              {new Date(tr.createdAt).toLocaleDateString("ko-KR")}<br/>
+                              <span className="text-gray-300">{new Date(tr.createdAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}</span>
+                            </TableCell>
+                            <TableCell className="text-xs text-gray-400 whitespace-nowrap">
+                              {(tr as any).approvedAt ? (
+                                <>
+                                  {new Date((tr as any).approvedAt).toLocaleDateString("ko-KR")}<br/>
+                                  <span className="text-gray-300">{new Date((tr as any).approvedAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}</span>
+                                </>
+                              ) : "-"}
                             </TableCell>
                             <TableCell className="text-sm text-gray-400 max-w-[150px] truncate">
                               {tr.adminMemo || "-"}
@@ -3380,7 +3392,7 @@ export default function AdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {domainGroupsList.map((g) => (
+                      {[...domainGroupsList].sort((a, b) => a.groupName.localeCompare(b.groupName, "ko")).map((g) => (
                         <TableRow key={g.domain} className="border-gray-200">
                           <TableCell className="font-mono text-sm text-gray-700">{g.domain}</TableCell>
                           <TableCell>
