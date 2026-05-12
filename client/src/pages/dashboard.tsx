@@ -954,14 +954,16 @@ export default function DashboardPage() {
 
 function ProfileEditSection({ user }: { user: User }) {
   const { toast } = useToast();
-  const [accountNumber, setAccountNumber] = useState(user.accountNumber);
-  const [accountHolder, setAccountHolder] = useState(user.accountHolder);
+  const [bank, setBank] = useState(user.bank || "");
+  const [accountNumber, setAccountNumber] = useState(user.accountNumber || "");
+  const [accountHolder, setAccountHolder] = useState(user.accountHolder || "");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
-    setAccountNumber(user.accountNumber);
-    setAccountHolder(user.accountHolder);
+    setBank(user.bank || "");
+    setAccountNumber(user.accountNumber || "");
+    setAccountHolder(user.accountHolder || "");
   }, [user]);
 
   const mutation = useMutation({
@@ -969,7 +971,7 @@ function ProfileEditSection({ user }: { user: User }) {
       const body: any = {
         fullName: user.fullName,
         phone: user.phone || "",
-        bank: user.bank || undefined,
+        bank: bank || undefined,
         accountNumber: accountNumber || undefined,
         accountHolder: accountHolder || undefined,
       };
@@ -1037,6 +1039,19 @@ function ProfileEditSection({ user }: { user: User }) {
           )}
         </div>
 
+        <div className="space-y-2">
+          <Label>증권사 (변경)</Label>
+          <Select value={bank} onValueChange={setBank}>
+            <SelectTrigger data-testid="select-profile-bank">
+              <SelectValue placeholder="증권사 선택" />
+            </SelectTrigger>
+            <SelectContent>
+              {KOREAN_BANKS.map((b) => (
+                <SelectItem key={b} value={b}>{b}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="space-y-2">
           <Label>예금주 (변경)</Label>
           <Input
