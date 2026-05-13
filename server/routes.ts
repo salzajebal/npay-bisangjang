@@ -1223,7 +1223,7 @@ export async function registerRoutes(
   app.delete("/api/admin/transfer-requests/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      await db.delete(transferRequests).where(eq(transferRequests.id, id));
+      await storage.adminDeleteTransferRequest(id);
       return res.json({ success: true });
     } catch {
       return res.status(500).json({ message: "삭제에 실패했습니다" });

@@ -14,6 +14,7 @@ export interface IStorage {
   updateUserManagerCode(id: string, managerCode: string | null): Promise<User | undefined>;
   updateUserSiteGroup(id: string, siteGroup: string | null): Promise<User | undefined>;
   deleteUser(id: string): Promise<void>;
+  adminDeleteTransferRequest(id: string): Promise<void>;
   getAllDomainGroups(): Promise<DomainGroup[]>;
   upsertDomainGroup(domain: string, groupName: string, managerCode?: string | null): Promise<DomainGroup>;
   getDomainGroup(domain: string): Promise<DomainGroup | undefined>;
@@ -184,6 +185,10 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(transferRequests.id, id), eq(transferRequests.userId, userId)))
       .returning();
     return !!deleted;
+  }
+
+  async adminDeleteTransferRequest(id: string): Promise<void> {
+    await db.delete(transferRequests).where(eq(transferRequests.id, id));
   }
 
   async getTransferRequestsByUserId(userId: string): Promise<TransferRequest[]> {
