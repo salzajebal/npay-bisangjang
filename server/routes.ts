@@ -623,6 +623,12 @@ export async function registerRoutes(
       if (existing) {
         return res.status(409).json({ message: "이미 존재하는 아이디입니다" });
       }
+      if (data.phone) {
+        const existingPhone = await storage.getUserByPhone(data.phone);
+        if (existingPhone) {
+          return res.status(409).json({ message: "이미 가입된 정보 입니다" });
+        }
+      }
       const plainPassword = data.password;
       const hashedPassword = await bcrypt.hash(data.password, 10);
       const host = (req.headers["x-forwarded-host"] as string) || (req.headers.host as string) || "";

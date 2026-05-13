@@ -408,7 +408,7 @@ export default function DashboardPage() {
         {/* 모바일 하단 탭 바 (4개) */}
         {isMobileDevice && (
         <nav className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t flex items-stretch" data-testid="mobile-bottom-nav">
-          {sidebarItems.filter(item => item.id !== "profile").map((item) => {
+          {sidebarItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeSection === item.id;
             return (
@@ -420,7 +420,7 @@ export default function DashboardPage() {
               >
                 <Icon className={`w-5 h-5 ${isActive ? "text-[#E8344E]" : "text-muted-foreground"}`} />
                 <span className="w-full text-center leading-tight">
-                  {item.label === "내 계좌로 옮기기" ? "계좌이동" : item.label === "계좌 총괄" ? "총괄" : item.label === "보유 종목" ? "보유종목" : item.label === "거래 내역" ? "거래내역" : item.label}
+                  {item.label === "내 계좌로 옮기기" ? "계좌이동" : item.label === "계좌 총괄" ? "총괄" : item.label === "보유 종목" ? "보유종목" : item.label === "거래 내역" ? "거래내역" : item.label === "내 정보 수정" ? "내정보" : item.label}
                 </span>
               </button>
             );

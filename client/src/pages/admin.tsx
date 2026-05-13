@@ -2391,6 +2391,21 @@ export default function AdminPage() {
                 <Badge variant="outline" className="shrink-0 border-gray-200 text-gray-500">{filteredTransactions.length}건</Badge>
               </div>
 
+              {(txSearchTerm || filterType !== "all" || filterCategory !== "all") && filteredTransactions.length > 0 && (
+                <div className="flex flex-wrap gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200 text-sm">
+                  <span className="text-gray-500 font-medium">합산:</span>
+                  <span className="text-red-500 font-semibold">
+                    입고 {filteredTransactions.filter(t => t.type === "in").reduce((s, t) => s + t.quantity, 0).toLocaleString()}주
+                  </span>
+                  <span className="text-blue-500 font-semibold">
+                    출고 {filteredTransactions.filter(t => t.type === "out").reduce((s, t) => s + t.quantity, 0).toLocaleString()}주
+                  </span>
+                  <span className="text-gray-700 font-semibold">
+                    순보유 {(filteredTransactions.filter(t => t.type === "in").reduce((s, t) => s + t.quantity, 0) - filteredTransactions.filter(t => t.type === "out").reduce((s, t) => s + t.quantity, 0)).toLocaleString()}주
+                  </span>
+                </div>
+              )}
+
               {txLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full bg-gray-200" />)}
