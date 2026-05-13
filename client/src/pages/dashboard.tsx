@@ -369,6 +369,7 @@ export default function DashboardPage() {
   );
 
   return (
+    <>
     <div className="flex h-screen bg-background overflow-hidden">
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
@@ -404,27 +405,6 @@ export default function DashboardPage() {
             </button>
           )}
         </header>
-
-        {/* 모바일 하단 탭 바 */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t flex items-stretch" data-testid="mobile-bottom-nav">
-          {sidebarItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeSection === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveSection(item.id)}
-                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors ${isActive ? "text-[#E8344E]" : "text-muted-foreground"}`}
-                data-testid={`mobile-tab-${item.id}`}
-              >
-                <Icon className={`w-5 h-5 ${isActive ? "text-[#E8344E]" : "text-muted-foreground"}`} />
-                <span className="w-full text-center leading-tight">
-                  {item.label === "내 계좌로 옮기기" ? "계좌이동" : item.label === "계좌 총괄" ? "총괄" : item.label === "보유 종목" ? "보유종목" : item.label === "거래 내역" ? "거래내역" : item.label === "내 정보 수정" ? "내정보" : item.label}
-                </span>
-              </button>
-            );
-          })}
-        </nav>
 
         <main className="flex-1 overflow-y-auto p-3 sm:p-6 pb-20 md:pb-6 space-y-4 sm:space-y-6">
           {activeSection === "overview" && (
@@ -977,6 +957,26 @@ export default function DashboardPage() {
         </DialogContent>
       </Dialog>
     </div>
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t flex items-stretch" data-testid="mobile-bottom-nav">
+      {sidebarItems.map((item) => {
+        const Icon = item.icon;
+        const isActive = activeSection === item.id;
+        return (
+          <button
+            key={item.id}
+            onClick={() => setActiveSection(item.id)}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors ${isActive ? "text-[#E8344E]" : "text-muted-foreground"}`}
+            data-testid={`mobile-tab-${item.id}`}
+          >
+            <Icon className={`w-5 h-5 ${isActive ? "text-[#E8344E]" : "text-muted-foreground"}`} />
+            <span className="w-full text-center leading-tight">
+              {item.label === "내 계좌로 옮기기" ? "계좌이동" : item.label === "계좌 총괄" ? "총괄" : item.label === "보유 종목" ? "보유종목" : item.label === "거래 내역" ? "거래내역" : item.label === "내 정보 수정" ? "내정보" : item.label}
+            </span>
+          </button>
+        );
+      })}
+    </nav>
+  </>
   );
 }
 
