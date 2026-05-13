@@ -148,12 +148,13 @@ export default function DashboardPage() {
     onError: (error: Error) => {
       let msg = "출고 신청에 실패했습니다";
       try {
-        const parsed = JSON.parse(error.message.replace(/^[0-9]+:\s*/, ""));
-        if (parsed.message) msg = parsed.message;
+        const rawText = error.message.replace(/^\d+:\s*/, "");
+        const parsed = JSON.parse(rawText);
+        if (parsed?.message) msg = parsed.message;
       } catch {
         if (error.message.includes("400")) msg = "보유 수량을 초과하거나 입력이 올바르지 않습니다";
       }
-      toast({ title: "출고 신청 실패", description: msg, variant: "destructive" });
+      toast({ title: "신청 실패", description: msg, variant: "destructive" });
     },
   });
 

@@ -1117,7 +1117,7 @@ export async function registerRoutes(
 
       const pendingRequests = await storage.getPendingTransferRequestsByUserId(req.session.userId);
       if (pendingRequests.length > 0) {
-        return res.status(400).json({ message: "이미 대기 중인 출고 신청이 있습니다. 처리 완료 후 다시 신청해주세요." });
+        return res.status(400).json({ message: "신청대기중 상태입니다." });
       }
 
       const transferRequest = await storage.createTransferRequest({ 
