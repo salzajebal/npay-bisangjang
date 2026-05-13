@@ -234,6 +234,7 @@ export const KOREAN_BANKS = [
   "카카오페이증권",
   "토스증권",
   "신영증권",
+  "유진증권",
 ] as const;
 
 export const STOCK_CATEGORIES = [
