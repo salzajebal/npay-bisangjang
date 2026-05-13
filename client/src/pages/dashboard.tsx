@@ -405,9 +405,8 @@ export default function DashboardPage() {
           )}
         </header>
 
-        {/* 모바일 하단 탭 바 (4개) */}
-        {isMobileDevice && (
-        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t flex items-stretch" data-testid="mobile-bottom-nav">
+        {/* 모바일 하단 탭 바 */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t flex items-stretch" data-testid="mobile-bottom-nav">
           {sidebarItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeSection === item.id;
@@ -426,7 +425,6 @@ export default function DashboardPage() {
             );
           })}
         </nav>
-        )}
 
         <main className="flex-1 overflow-y-auto p-3 sm:p-6 pb-20 md:pb-6 space-y-4 sm:space-y-6">
           {activeSection === "overview" && (
