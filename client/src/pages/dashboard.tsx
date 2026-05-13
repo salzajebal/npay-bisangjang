@@ -110,6 +110,21 @@ export default function DashboardPage() {
   });
   const { toast } = useToast();
 
+  const deleteTransferMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/transfer-requests/${id}`);
+    },
+    onSuccess: () => {
+      toast({ title: "신청 취소 완료", description: "출고 신청이 삭제되었습니다." });
+      queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
+    },
+    onError: (err: Error) => {
+      let msg = "삭제에 실패했습니다";
+      try { const p = JSON.parse(err.message.replace(/^[0-9]+:\s*/, "")); if (p.message) msg = p.message; } catch {}
+      toast({ title: "삭제 실패", description: msg, variant: "destructive" });
+    },
+  });
+
   const transferMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/transfer-requests", {
@@ -908,6 +923,20 @@ export default function DashboardPage() {
                         {tr.adminMemo && (
                           <div className="text-xs text-muted-foreground mt-1 bg-muted/50 rounded p-1.5">
                             관리자 메모: {tr.adminMemo}
+                          </div>
+                        )}
+                        {tr.status === "pending" && (
+                          <div className="pt-1 border-t border-border/50">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs text-red-500 border-red-200 hover:bg-red-50 w-full"
+                              onClick={() => deleteTransferMutation.mutate(tr.id)}
+                              disabled={deleteTransferMutation.isPending}
+                              data-testid={`button-delete-transfer-${tr.id}`}
+                            >
+                              신청 취소
+                            </Button>
                           </div>
                         )}
                       </div>

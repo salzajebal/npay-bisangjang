@@ -168,6 +168,18 @@ export class DatabaseStorage implements IStorage {
     return req;
   }
 
+  async getPendingTransferRequestsByUserId(userId: string): Promise<TransferRequest[]> {
+    return db.select().from(transferRequests)
+      .where(and(eq(transferRequests.userId, userId), eq(transferRequests.status, "pending")));
+  }
+
+  async deleteTransferRequest(id: string, userId: string): Promise<boolean> {
+    const [deleted] = await db.delete(transferRequests)
+      .where(and(eq(transferRequests.id, id), eq(transferRequests.userId, userId)))
+      .returning();
+    return !!deleted;
+  }
+
   async getTransferRequestsByUserId(userId: string): Promise<TransferRequest[]> {
     return db.select().from(transferRequests).where(eq(transferRequests.userId, userId)).orderBy(desc(transferRequests.createdAt));
   }

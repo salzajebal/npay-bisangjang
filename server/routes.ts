@@ -1115,6 +1115,11 @@ export async function registerRoutes(
         ? (((currentPrice - avgPurchasePrice) / avgPurchasePrice) * 100).toFixed(2) 
         : "0";
 
+      const pendingRequests = await storage.getPendingTransferRequestsByUserId(req.session.userId);
+      if (pendingRequests.length > 0) {
+        return res.status(400).json({ message: "이미 대기 중인 출고 신청이 있습니다. 처리 완료 후 다시 신청해주세요." });
+      }
+
       const transferRequest = await storage.createTransferRequest({ 
         ...data, 
         userId: req.session.userId,
@@ -1133,6 +1138,27 @@ export async function registerRoutes(
         return res.status(400).json({ message: error.errors[0].message });
       }
       return res.status(500).json({ message: "출고 신청에 실패했습니다" });
+    }
+  });
+
+  app.delete("/api/transfer-requests/:id", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "로그인이 필요합니다" });
+    }
+    try {
+      const { id } = req.params;
+      const requests = await storage.getTransferRequestsByUserId(req.session.userId);
+      const target = requests.find((r) => r.id === id);
+      if (!target) {
+        return res.status(404).json({ message: "신청 내역을 찾을 수 없습니다" });
+      }
+      if (target.status !== "pending") {
+        return res.status(400).json({ message: "대기 중인 신청만 삭제할 수 있습니다" });
+      }
+      await storage.deleteTransferRequest(id, req.session.userId);
+      return res.json({ success: true });
+    } catch {
+      return res.status(500).json({ message: "삭제에 실패했습니다" });
     }
   });
 
