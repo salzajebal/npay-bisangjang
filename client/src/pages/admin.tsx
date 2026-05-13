@@ -1544,6 +1544,19 @@ export default function AdminPage() {
     },
   });
 
+  const deleteTransferRequestMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/admin/transfer-requests/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/transfer-requests"] });
+      toast({ title: "삭제 완료", description: "출고 신청 내역이 삭제되었습니다" });
+    },
+    onError: () => {
+      toast({ title: "오류", description: "삭제에 실패했습니다", variant: "destructive" });
+    },
+  });
+
   const logoutMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/auth/logout");
@@ -2640,6 +2653,16 @@ export default function AdminPage() {
                         >
                           보류
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs text-red-500 border-red-200 hover:bg-red-50 ml-auto"
+                          onClick={() => { if (confirm("이 출고 신청 내역을 삭제하시겠습니까?")) deleteTransferRequestMutation.mutate(tr.id); }}
+                          disabled={deleteTransferRequestMutation.isPending}
+                          data-testid={`button-delete-transfer-${tr.id}`}
+                        >
+                          삭제
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -2751,6 +2774,16 @@ export default function AdminPage() {
                                   data-testid={`button-hold-${tr.id}`}
                                 >
                                   보류
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs sm:text-sm px-2 sm:px-3 text-red-500 border-red-200 hover:bg-red-50"
+                                  onClick={() => { if (confirm("이 출고 신청 내역을 삭제하시겠습니까?")) deleteTransferRequestMutation.mutate(tr.id); }}
+                                  disabled={deleteTransferRequestMutation.isPending}
+                                  data-testid={`button-delete-admin-transfer-${tr.id}`}
+                                >
+                                  삭제
                                 </Button>
                               </div>
                             </TableCell>

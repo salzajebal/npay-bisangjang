@@ -1214,6 +1214,16 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/admin/transfer-requests/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await db.delete(transferRequests).where(eq(transferRequests.id, id));
+      return res.json({ success: true });
+    } catch {
+      return res.status(500).json({ message: "삭제에 실패했습니다" });
+    }
+  });
+
   app.get("/api/admin/transfer-requests", requireAdmin, async (_req, res) => {
     const requests = await storage.getAllTransferRequests();
     return res.json(requests);
