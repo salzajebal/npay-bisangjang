@@ -3283,7 +3283,7 @@ export default function AdminPage() {
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input
-                      placeholder="아이디, IP, 도메인 검색..."
+                      placeholder="아이디, 회원이름, IP, 도메인 검색..."
                       value={logSearchFilter}
                       onChange={(e) => setLogSearchFilter(e.target.value)}
                       className="pl-9 bg-white border-gray-200"
@@ -3317,6 +3317,7 @@ export default function AdminPage() {
                             const u = users.find((u) => u.id === log.userId);
                             return (
                               (u?.username || "").toLowerCase().includes(q) ||
+                              (u?.fullName || "").toLowerCase().includes(q) ||
                               (log.ipAddress || "").includes(q) ||
                               (log.domain || "").toLowerCase().includes(q)
                             );
