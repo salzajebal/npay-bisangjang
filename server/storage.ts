@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, type LoginLog, type DomainFallbackUrl, type InsertDomainFallbackUrl, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups, loginLogs, domainFallbackUrls } from "@shared/schema";
+import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, type LoginLog, type DomainFallbackUrl, type InsertDomainFallbackUrl, type BlockedIp, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups, loginLogs, domainFallbackUrls, blockedIps } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, asc } from "drizzle-orm";
 
@@ -15,6 +15,10 @@ export interface IStorage {
   updateUserSiteGroup(id: string, siteGroup: string | null): Promise<User | undefined>;
   deleteUser(id: string): Promise<void>;
   adminDeleteTransferRequest(id: string): Promise<void>;
+  getAllBlockedIps(): Promise<BlockedIp[]>;
+  addBlockedIp(ip: string, reason?: string): Promise<BlockedIp>;
+  removeBlockedIp(id: string): Promise<void>;
+  isIpBlocked(ip: string): Promise<boolean>;
   getAllDomainGroups(): Promise<DomainGroup[]>;
   upsertDomainGroup(domain: string, groupName: string, managerCode?: string | null): Promise<DomainGroup>;
   getDomainGroup(domain: string): Promise<DomainGroup | undefined>;
@@ -189,6 +193,24 @@ export class DatabaseStorage implements IStorage {
 
   async adminDeleteTransferRequest(id: string): Promise<void> {
     await db.delete(transferRequests).where(eq(transferRequests.id, id));
+  }
+
+  async getAllBlockedIps(): Promise<BlockedIp[]> {
+    return db.select().from(blockedIps).orderBy(desc(blockedIps.createdAt));
+  }
+
+  async addBlockedIp(ip: string, reason?: string): Promise<BlockedIp> {
+    const [item] = await db.insert(blockedIps).values({ ip, reason: reason || null }).returning();
+    return item;
+  }
+
+  async removeBlockedIp(id: string): Promise<void> {
+    await db.delete(blockedIps).where(eq(blockedIps.id, id));
+  }
+
+  async isIpBlocked(ip: string): Promise<boolean> {
+    const [item] = await db.select().from(blockedIps).where(eq(blockedIps.ip, ip));
+    return !!item;
   }
 
   async getTransferRequestsByUserId(userId: string): Promise<TransferRequest[]> {

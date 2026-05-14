@@ -237,6 +237,15 @@ export const KOREAN_BANKS = [
   "유진증권",
 ] as const;
 
+export const blockedIps = pgTable("blocked_ips", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ip: text("ip").notNull().unique(),
+  reason: text("reason"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type BlockedIp = typeof blockedIps.$inferSelect;
+
 export const STOCK_CATEGORIES = [
   "일반",
   "공모주",

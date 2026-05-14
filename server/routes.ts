@@ -39,6 +39,23 @@ export async function registerRoutes(
     })
   );
 
+  // IP block middleware
+  app.use(async (req: any, res: any, next: any) => {
+    if (req.path.startsWith("/api/admin") || req.path.startsWith("/assets") || req.path === "/api/auth/login") {
+      return next();
+    }
+    try {
+      const ip = (req.headers["x-forwarded-for"] as string || req.socket?.remoteAddress || "").split(",")[0].trim();
+      if (ip) {
+        const blocked = await storage.isIpBlocked(ip);
+        if (blocked) {
+          return res.status(403).json({ message: "접근이 차단되었습니다" });
+        }
+      }
+    } catch {}
+    next();
+  });
+
   // WebSocket server for real-time chat and transaction notifications
   const wssSessionStore = new PgSession({
     conString: process.env.DATABASE_URL,
@@ -1005,6 +1022,31 @@ export async function registerRoutes(
       return res.json({ message: "삭제 완료" });
     } catch (error) {
       return res.status(500).json({ message: "도메인 그룹 삭제 실패" });
+    }
+  });
+
+  app.get("/api/admin/blocked-ips", requireAdmin, async (_req, res) => {
+    const items = await storage.getAllBlockedIps();
+    return res.json(items);
+  });
+
+  app.post("/api/admin/blocked-ips", requireAdmin, async (req, res) => {
+    const { ip, reason } = req.body;
+    if (!ip || !ip.trim()) return res.status(400).json({ message: "IP 주소를 입력해주세요" });
+    try {
+      const item = await storage.addBlockedIp(ip.trim(), reason?.trim() || undefined);
+      return res.json(item);
+    } catch {
+      return res.status(409).json({ message: "이미 차단된 IP입니다" });
+    }
+  });
+
+  app.delete("/api/admin/blocked-ips/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.removeBlockedIp(req.params.id);
+      return res.json({ success: true });
+    } catch {
+      return res.status(500).json({ message: "삭제에 실패했습니다" });
     }
   });
 

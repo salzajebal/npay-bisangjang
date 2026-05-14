@@ -14,13 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { STOCK_CATEGORIES, KOREAN_BANKS } from "@shared/schema";
 import { StockIcon } from "@/components/stock-icon";
-import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup, LoginLog, DomainFallbackUrl } from "@shared/schema";
+import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup, LoginLog, DomainFallbackUrl, BlockedIp } from "@shared/schema";
 import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
   Eye, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
   CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu, Plus, BookOpen, Copy,
-  Bell, BellOff, Globe, Activity, ShieldAlert, GripVertical, ExternalLink, ToggleLeft, ToggleRight, Loader2,
+  Bell, BellOff, Globe, Activity, ShieldAlert, GripVertical, ExternalLink, ToggleLeft, ToggleRight, Loader2, Ban, Shield,
 } from "lucide-react";
 
 const formatPct = (n: number) =>
@@ -1160,7 +1160,7 @@ function copyUserInfo(user: User, toast: any) {
   });
 }
 
-type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "stocks" | "chat" | "groups" | "fallbacks" | "logs";
+type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "stocks" | "chat" | "groups" | "fallbacks" | "logs" | "ipblock";
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "대시보드", icon: LayoutDashboard },
@@ -1172,13 +1172,14 @@ const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashbo
   { id: "groups", label: "도메인 그룹", icon: Globe },
   { id: "fallbacks", label: "도메인 대체", icon: ShieldAlert },
   { id: "logs", label: "접속 로그", icon: Activity },
+  { id: "ipblock", label: "IP 차단", icon: Ban },
 ];
 
 export default function AdminPage() {
   const [, setLocation] = useLocation();
   const getHashSection = (): AdminSection => {
     const hash = window.location.hash.replace("#", "");
-    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "stocks", "chat", "groups", "fallbacks", "logs"];
+    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "stocks", "chat", "groups", "fallbacks", "logs", "ipblock"];
     return valid.includes(hash as AdminSection) ? (hash as AdminSection) : "dashboard";
   };
 
@@ -1274,6 +1275,8 @@ export default function AdminPage() {
   const [bulkSelectedDomains, setBulkSelectedDomains] = useState<string[]>([]);
   const shareLink = typeof window !== "undefined" ? window.location.origin + "/go" : "/go";
   const [logSearchFilter, setLogSearchFilter] = useState("");
+  const [newBlockIp, setNewBlockIp] = useState("");
+  const [newBlockReason, setNewBlockReason] = useState("");
   const [txSearchTerm, setTxSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
@@ -1375,6 +1378,33 @@ export default function AdminPage() {
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!authData?.user?.isAdmin,
     refetchInterval: 30000,
+  });
+
+  const { data: blockedIpsList = [], refetch: refetchBlockedIps } = useQuery<BlockedIp[]>({
+    queryKey: ["/api/admin/blocked-ips"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!authData?.user?.isAdmin,
+  });
+
+  const addBlockedIpMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/admin/blocked-ips", { ip: newBlockIp.trim(), reason: newBlockReason.trim() || undefined }),
+    onSuccess: () => {
+      setNewBlockIp("");
+      setNewBlockReason("");
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/blocked-ips"] });
+      toast({ title: "차단 완료", description: `${newBlockIp} IP가 차단되었습니다` });
+    },
+    onError: (e: any) => {
+      toast({ title: "오류", description: e.message || "이미 차단된 IP이거나 오류가 발생했습니다", variant: "destructive" });
+    },
+  });
+
+  const removeBlockedIpMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/blocked-ips/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/blocked-ips"] });
+      toast({ title: "차단 해제", description: "IP 차단이 해제되었습니다" });
+    },
   });
 
   const { data: pendingUsers = [], refetch: refetchPending } = useQuery<User[]>({
@@ -3634,6 +3664,105 @@ export default function AdminPage() {
               </Card>
             </>
           )}
+          {activeSection === "ipblock" && (
+            <>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-800">IP 차단 관리</h2>
+                <Badge variant="outline" className="border-gray-200 text-gray-500">{blockedIpsList.length}개 차단 중</Badge>
+              </div>
+
+              <Card className="p-5 bg-white border-gray-200">
+                <div className="flex items-start gap-2 mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                  <Shield className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
+                  <p className="text-sm text-red-700">차단된 IP는 로그인을 포함한 모든 API 요청이 차단됩니다. IPv4/IPv6 형식 모두 지원합니다.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                  <Input
+                    placeholder="IP 주소 (예: 192.168.1.1)"
+                    value={newBlockIp}
+                    onChange={(e) => setNewBlockIp(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && newBlockIp.trim() && addBlockedIpMutation.mutate()}
+                    className="bg-white border-gray-200 md:col-span-2"
+                    data-testid="input-block-ip"
+                  />
+                  <Input
+                    placeholder="차단 사유 (선택)"
+                    value={newBlockReason}
+                    onChange={(e) => setNewBlockReason(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && newBlockIp.trim() && addBlockedIpMutation.mutate()}
+                    className="bg-white border-gray-200"
+                    data-testid="input-block-reason"
+                  />
+                  <Button
+                    onClick={() => addBlockedIpMutation.mutate()}
+                    disabled={!newBlockIp.trim() || addBlockedIpMutation.isPending}
+                    className="bg-[#E8344E] hover:bg-[#c92b42] text-white"
+                    data-testid="button-add-block-ip"
+                  >
+                    {addBlockedIpMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Ban className="w-4 h-4 mr-1" />차단 추가</>}
+                  </Button>
+                </div>
+              </Card>
+
+              {blockedIpsList.length === 0 ? (
+                <Card className="p-12 text-center bg-white border-gray-200">
+                  <Ban className="w-10 h-10 mx-auto mb-3 opacity-20 text-gray-400" />
+                  <p className="font-medium text-gray-500">차단된 IP가 없습니다</p>
+                  <p className="text-xs text-gray-400 mt-1">위 폼에서 IP를 추가하면 즉시 차단됩니다</p>
+                </Card>
+              ) : (
+                <>
+                  <div className="md:hidden space-y-3">
+                    {blockedIpsList.map((item) => (
+                      <div key={item.id} className="rounded-md border border-gray-200 bg-white p-4 flex items-center justify-between gap-3" data-testid={`row-blocked-ip-${item.id}`}>
+                        <div>
+                          <p className="font-mono text-sm font-semibold text-gray-800">{item.ip}</p>
+                          {item.reason && <p className="text-xs text-gray-500 mt-0.5">{item.reason}</p>}
+                          <p className="text-xs text-gray-400 mt-0.5">{new Date(item.createdAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}</p>
+                        </div>
+                        <Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 shrink-0"
+                          onClick={() => removeBlockedIpMutation.mutate(item.id)}
+                          disabled={removeBlockedIpMutation.isPending}
+                          data-testid={`button-unblock-${item.id}`}
+                        >차단 해제</Button>
+                      </div>
+                    ))}
+                  </div>
+                  <Card className="hidden md:block p-0 overflow-hidden bg-white border-gray-200">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-gray-50 border-gray-200">
+                          <TableHead className="text-gray-500">IP 주소</TableHead>
+                          <TableHead className="text-gray-500">차단 사유</TableHead>
+                          <TableHead className="text-gray-500">차단 일시</TableHead>
+                          <TableHead className="text-center text-gray-500">관리</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {blockedIpsList.map((item) => (
+                          <TableRow key={item.id} className="border-gray-200" data-testid={`row-blocked-ip-${item.id}`}>
+                            <TableCell className="font-mono font-semibold text-gray-800">{item.ip}</TableCell>
+                            <TableCell className="text-gray-500 text-sm">{item.reason || "-"}</TableCell>
+                            <TableCell className="text-xs text-gray-500 whitespace-nowrap">
+                              {new Date(item.createdAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50"
+                                onClick={() => removeBlockedIpMutation.mutate(item.id)}
+                                disabled={removeBlockedIpMutation.isPending}
+                                data-testid={`button-unblock-${item.id}`}
+                              >차단 해제</Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </Card>
+                </>
+              )}
+            </>
+          )}
+
         </main>
       </div>
     </div>
