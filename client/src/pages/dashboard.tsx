@@ -975,6 +975,15 @@ export default function DashboardPage() {
           </button>
         );
       })}
+      <Link href="/chat" className="flex-1">
+        <button
+          className="w-full h-full flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium text-muted-foreground transition-colors"
+          data-testid="mobile-tab-chat"
+        >
+          <MessageSquare className="w-5 h-5 text-muted-foreground" />
+          <span className="w-full text-center leading-tight">상담</span>
+        </button>
+      </Link>
     </nav>
   </>
   );
