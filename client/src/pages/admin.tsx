@@ -647,7 +647,7 @@ function MemberDeleteDialog({ user, onSuccess }: { user: User; onSuccess: () => 
   const [composing, setComposing] = useState(false);
   const { toast } = useToast();
 
-  const normalize = (s: string) => s.normalize("NFC").toLowerCase().trim();
+  const normalize = (s: string) => s.normalize("NFC").toLowerCase().replace(/\s+/g, ' ').trim();
   const isMatch = normalize(confirmText) === normalize(user.username);
 
   const mutation = useMutation({
