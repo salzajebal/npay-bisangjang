@@ -1771,6 +1771,11 @@ export default function AdminPage() {
     return u?.managerCode || null;
   };
 
+  const getUserPhone = (userId: string) => {
+    const u = (allUsers || []).find((u) => u.id === userId);
+    return u?.phone || "-";
+  };
+
   const allManagerCodes = Array.from(new Set(
     (allUsers || []).map((u) => u.managerCode).filter((c): c is string => !!c && c.trim() !== "")
   )).sort();
@@ -2789,6 +2794,7 @@ export default function AdminPage() {
                             <Badge variant="outline" className="border-[#E8344E]/40 text-[#E8344E] bg-[#E8344E]/5 font-mono text-xs">{getUserManagerCode(tr.userId)}</Badge>
                           )}
                         </div>
+                        <p className="text-xs text-gray-500 font-mono">{getUserPhone(tr.userId)}</p>
                         <span className="text-sm text-gray-700 flex items-center gap-1.5"><StockIcon name={tr.stockName} size={18} />{tr.stockName} · {tr.quantity.toLocaleString()}주</span>
                       </div>
                       {tr.currentPrice > 0 && (
@@ -2889,6 +2895,7 @@ export default function AdminPage() {
                           <TableHead className="text-gray-500">상태</TableHead>
                           <TableHead className="text-gray-500">담당자</TableHead>
                           <TableHead className="text-gray-500">신청 회원</TableHead>
+                          <TableHead className="text-gray-500">연락처</TableHead>
                           <TableHead className="text-gray-500">종목</TableHead>
                           <TableHead className="text-right text-gray-500">수량</TableHead>
                           <TableHead className="text-right text-gray-500">매입단가</TableHead>
@@ -2938,6 +2945,7 @@ export default function AdminPage() {
                                 : <span className="text-gray-300 text-xs">-</span>}
                             </TableCell>
                             <TableCell className="font-medium text-gray-700">{getUserName(tr.userId)}</TableCell>
+                            <TableCell className="font-mono text-xs text-gray-500 whitespace-nowrap">{getUserPhone(tr.userId)}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1.5">
                                 <StockIcon name={tr.stockName} size={22} />
