@@ -1195,6 +1195,7 @@ export default function AdminPage() {
   const [transferTab, setTransferTab] = useState<"all" | "pending" | "approved" | "rejected" | "held">("all");
   const [transferSearch, setTransferSearch] = useState("");
   const [filterTransferManager, setFilterTransferManager] = useState<string>("all");
+  const [selectedTransferIds, setSelectedTransferIds] = useState<Set<string>>(new Set());
   const [alertActive, setAlertActive] = useState(false);
   const prevPendingCount = useRef<number | null>(null);
   const soundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -1566,6 +1567,21 @@ export default function AdminPage() {
     },
   });
 
+  const bulkUpdateTransferMutation = useMutation({
+    mutationFn: async ({ ids, status }: { ids: string[]; status: string }) => {
+      await Promise.all(ids.map((id) => apiRequest("PATCH", `/api/admin/transfer-requests/${id}`, { status })));
+    },
+    onSuccess: (_, { ids, status }) => {
+      const label: Record<string, string> = { approved: "승인", rejected: "거부", held: "보류" };
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/transfer-requests"] });
+      setSelectedTransferIds(new Set());
+      toast({ title: `일괄 ${label[status] ?? status} 완료`, description: `${ids.length}건 처리되었습니다` });
+    },
+    onError: (error: Error) => {
+      toast({ title: "오류", description: error.message, variant: "destructive" });
+    },
+  });
+
   const deleteTransactionMutation = useMutation({
     mutationFn: async (txId: string) => {
       await apiRequest("DELETE", `/api/admin/transactions/${txId}`);
@@ -1761,8 +1777,10 @@ export default function AdminPage() {
 
   const filteredTransfers = (allTransferRequests || []).filter((tr) => {
     const matchTab = transferTab === "all" || tr.status === transferTab;
+    const term = transferSearch.trim().toLowerCase();
     const name = getUserName(tr.userId).toLowerCase();
-    const matchSearch = transferSearch.trim() === "" || name.includes(transferSearch.trim().toLowerCase());
+    const stock = tr.stockName.toLowerCase();
+    const matchSearch = term === "" || name.includes(term) || stock.includes(term);
     const code = getUserManagerCode(tr.userId);
     const matchManager =
       filterTransferManager === "all" ||
@@ -2637,20 +2655,20 @@ export default function AdminPage() {
                     <span>{transferSoundEnabled ? "알림 ON" : "알림 OFF"}</span>
                   </button>
                 </div>
-                {/* 회원 검색 + 코드 필터 */}
+                {/* 검색 + 코드 필터 */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="relative flex-1 min-w-[180px]">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="회원 이름으로 검색..."
+                      placeholder="회원명 또는 종목명 검색..."
                       value={transferSearch}
                       onChange={(e) => setTransferSearch(e.target.value)}
                       className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#E8344E]/30 focus:border-[#E8344E]"
                       data-testid="input-transfer-search"
                     />
                   </div>
-                  <Select value={filterTransferManager} onValueChange={setFilterTransferManager}>
+                  <Select value={filterTransferManager} onValueChange={(v) => { setFilterTransferManager(v); setSelectedTransferIds(new Set()); }}>
                     <SelectTrigger className="w-[150px] bg-white border-gray-200 text-gray-700 text-sm" data-testid="select-filter-transfer-manager">
                       <SelectValue placeholder="담당자 코드" />
                     </SelectTrigger>
@@ -2662,8 +2680,66 @@ export default function AdminPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {/* 코드별 전체선택 버튼 */}
+                  {filterTransferManager !== "all" && filteredTransfers.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-[#E8344E]/40 text-[#E8344E] hover:bg-[#E8344E]/5 text-xs"
+                      onClick={() => {
+                        const allIds = filteredTransfers.map((t) => t.id);
+                        const allSelected = allIds.every((id) => selectedTransferIds.has(id));
+                        if (allSelected) {
+                          setSelectedTransferIds(new Set());
+                        } else {
+                          setSelectedTransferIds(new Set(allIds));
+                        }
+                      }}
+                      data-testid="button-select-all-by-code"
+                    >
+                      {filteredTransfers.every((t) => selectedTransferIds.has(t.id)) ? "전체 해제" : `코드 전체선택 (${filteredTransfers.length})`}
+                    </Button>
+                  )}
                   <Badge variant="outline" className="shrink-0 border-gray-200 text-gray-500">{filteredTransfers.length}건</Badge>
                 </div>
+
+                {/* 일괄 처리 액션바 */}
+                {selectedTransferIds.size > 0 && (
+                  <div className="flex items-center gap-2 p-3 bg-[#E8344E]/5 border border-[#E8344E]/20 rounded-lg flex-wrap">
+                    <span className="text-sm font-medium text-[#E8344E]">{selectedTransferIds.size}건 선택됨</span>
+                    <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+                      <Button
+                        size="sm"
+                        className="bg-green-600 border-green-600 text-xs"
+                        onClick={() => bulkUpdateTransferMutation.mutate({ ids: Array.from(selectedTransferIds), status: "approved" })}
+                        disabled={bulkUpdateTransferMutation.isPending}
+                        data-testid="button-bulk-approve"
+                      >일괄 승인</Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="text-xs"
+                        onClick={() => bulkUpdateTransferMutation.mutate({ ids: Array.from(selectedTransferIds), status: "held" })}
+                        disabled={bulkUpdateTransferMutation.isPending}
+                        data-testid="button-bulk-hold"
+                      >일괄 보류</Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="text-xs"
+                        onClick={() => bulkUpdateTransferMutation.mutate({ ids: Array.from(selectedTransferIds), status: "rejected" })}
+                        disabled={bulkUpdateTransferMutation.isPending}
+                        data-testid="button-bulk-reject"
+                      >일괄 거부</Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-xs text-gray-500"
+                        onClick={() => setSelectedTransferIds(new Set())}
+                      >선택 해제</Button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {transfersLoading ? (
@@ -2679,15 +2755,28 @@ export default function AdminPage() {
                 <>
                 <div className="md:hidden space-y-3">
                   {filteredTransfers.map((tr) => (
-                    <div key={tr.id} className="rounded-md border border-gray-200 bg-white p-4 space-y-3" data-testid={`row-transfer-${tr.id}`}>
+                    <div key={tr.id} className={`rounded-md border bg-white p-4 space-y-3 ${selectedTransferIds.has(tr.id) ? "border-[#E8344E]/50 bg-[#E8344E]/3" : "border-gray-200"}`} data-testid={`row-transfer-${tr.id}`}>
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5">
-                          {tr.status === "pending" && <Badge variant="outline" className="gap-1 border-gray-200 text-gray-500"><Clock className="w-3 h-3" />대기</Badge>}
-                          {tr.status === "approved" && <Badge className="gap-1 bg-green-600 border-green-600"><CheckCircle2 className="w-3 h-3" />승인</Badge>}
-                          {tr.status === "rejected" && <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" />거부</Badge>}
-                          {tr.status === "held" && <Badge variant="secondary" className="gap-1"><PauseCircle className="w-3 h-3" />보류</Badge>}
-                          {(tr as any).requestType === "입고신청" && <Badge className="gap-1 bg-blue-500 border-blue-500 text-white text-xs">입고</Badge>}
-                          {(tr as any).requestType !== "입고신청" && <Badge variant="outline" className="gap-1 border-orange-300 text-orange-600 text-xs">출고</Badge>}
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedTransferIds.has(tr.id)}
+                            onChange={(e) => {
+                              const next = new Set(selectedTransferIds);
+                              e.target.checked ? next.add(tr.id) : next.delete(tr.id);
+                              setSelectedTransferIds(next);
+                            }}
+                            className="w-4 h-4 accent-[#E8344E] cursor-pointer shrink-0"
+                            data-testid={`checkbox-transfer-${tr.id}`}
+                          />
+                          <div className="flex items-center gap-1.5">
+                            {tr.status === "pending" && <Badge variant="outline" className="gap-1 border-gray-200 text-gray-500"><Clock className="w-3 h-3" />대기</Badge>}
+                            {tr.status === "approved" && <Badge className="gap-1 bg-green-600 border-green-600"><CheckCircle2 className="w-3 h-3" />승인</Badge>}
+                            {tr.status === "rejected" && <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" />거부</Badge>}
+                            {tr.status === "held" && <Badge variant="secondary" className="gap-1"><PauseCircle className="w-3 h-3" />보류</Badge>}
+                            {(tr as any).requestType === "입고신청" && <Badge className="gap-1 bg-blue-500 border-blue-500 text-white text-xs">입고</Badge>}
+                            {(tr as any).requestType !== "입고신청" && <Badge variant="outline" className="gap-1 border-orange-300 text-orange-600 text-xs">출고</Badge>}
+                          </div>
                         </div>
                         <span className="text-xs text-gray-400">
                           {new Date(tr.createdAt).toLocaleDateString("ko-KR")} {new Date(tr.createdAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
@@ -2782,6 +2871,21 @@ export default function AdminPage() {
                     <Table>
                       <TableHeader>
                         <TableRow className="bg-gray-50 border-gray-200">
+                          <TableHead className="w-10 text-center">
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4 accent-[#E8344E] cursor-pointer"
+                              checked={filteredTransfers.length > 0 && filteredTransfers.every((t) => selectedTransferIds.has(t.id))}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedTransferIds(new Set(filteredTransfers.map((t) => t.id)));
+                                } else {
+                                  setSelectedTransferIds(new Set());
+                                }
+                              }}
+                              data-testid="checkbox-transfer-all"
+                            />
+                          </TableHead>
                           <TableHead className="text-gray-500">상태</TableHead>
                           <TableHead className="text-gray-500">담당자</TableHead>
                           <TableHead className="text-gray-500">신청 회원</TableHead>
@@ -2801,7 +2905,20 @@ export default function AdminPage() {
                       </TableHeader>
                       <TableBody>
                         {filteredTransfers.map((tr) => (
-                          <TableRow key={tr.id} className="border-gray-200" data-testid={`row-transfer-${tr.id}`}>
+                          <TableRow key={tr.id} className={`border-gray-200 ${selectedTransferIds.has(tr.id) ? "bg-[#E8344E]/3" : ""}`} data-testid={`row-transfer-${tr.id}`}>
+                            <TableCell className="text-center">
+                              <input
+                                type="checkbox"
+                                checked={selectedTransferIds.has(tr.id)}
+                                onChange={(e) => {
+                                  const next = new Set(selectedTransferIds);
+                                  e.target.checked ? next.add(tr.id) : next.delete(tr.id);
+                                  setSelectedTransferIds(next);
+                                }}
+                                className="w-4 h-4 accent-[#E8344E] cursor-pointer"
+                                data-testid={`checkbox-transfer-${tr.id}`}
+                              />
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1 flex-wrap">
                                 {tr.status === "pending" && <Badge variant="outline" className="gap-1 border-gray-200 text-gray-500"><Clock className="w-3 h-3" />대기</Badge>}
