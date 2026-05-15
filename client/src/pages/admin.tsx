@@ -2493,7 +2493,12 @@ export default function AdminPage() {
                         <span className="text-xs text-gray-400">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</span>
                       </div>
                       <div className="space-y-1">
-                        <span className="text-sm font-medium text-gray-700 flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{getUserName(tx.userId)} · {tx.stockName}</span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-gray-700 flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{getUserName(tx.userId)} · {tx.stockName}</span>
+                          {getUserManagerCode(tx.userId) && (
+                            <Badge variant="outline" className="border-[#E8344E]/40 text-[#E8344E] bg-[#E8344E]/5 font-mono text-xs">{getUserManagerCode(tx.userId)}</Badge>
+                          )}
+                        </div>
                         <div className="flex items-center gap-3 text-xs text-gray-500">
                           <span>{tx.quantity.toLocaleString()}주</span>
                           <span>{tx.pricePerShare.toLocaleString()}원</span>

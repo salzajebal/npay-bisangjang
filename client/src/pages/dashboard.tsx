@@ -982,6 +982,7 @@ export default function DashboardPage() {
 
 function ProfileEditSection({ user }: { user: User }) {
   const { toast } = useToast();
+  const [phone, setPhone] = useState(user.phone || "");
   const [bank, setBank] = useState(user.bank || "");
   const [accountNumber, setAccountNumber] = useState(user.accountNumber || "");
   const [accountHolder, setAccountHolder] = useState(user.accountHolder || "");
@@ -989,6 +990,7 @@ function ProfileEditSection({ user }: { user: User }) {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
+    setPhone(user.phone || "");
     setBank(user.bank || "");
     setAccountNumber(user.accountNumber || "");
     setAccountHolder(user.accountHolder || "");
@@ -998,7 +1000,7 @@ function ProfileEditSection({ user }: { user: User }) {
     mutationFn: async () => {
       const body: any = {
         fullName: user.fullName,
-        phone: user.phone || "",
+        phone: phone.trim() || undefined,
         bank: bank || undefined,
         accountNumber: accountNumber || undefined,
         accountHolder: accountHolder || undefined,
@@ -1032,17 +1034,31 @@ function ProfileEditSection({ user }: { user: User }) {
         <h2 className="text-lg font-semibold" data-testid="text-profile-title">내 정보 수정</h2>
       </div>
       <div className="space-y-4 max-w-lg">
+        {/* 고정 정보 */}
         <div className="bg-muted/40 rounded-lg p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">아이디 정보</span>
-            <span className="text-sm font-medium" data-testid="text-profile-username">{user.username}</span>
+            <span className="text-sm text-muted-foreground">이름</span>
+            <span className="text-sm font-semibold" data-testid="text-profile-fullname">{user.fullName}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">전화번호</span>
-            <span className="text-sm font-medium" data-testid="text-profile-phone">{user.phone || "-"}</span>
+            <span className="text-sm text-muted-foreground">아이디</span>
+            <span className="text-sm font-medium" data-testid="text-profile-username">{user.username}</span>
           </div>
         </div>
 
+        {/* 전화번호 수정 */}
+        <div className="space-y-2">
+          <Label>전화번호</Label>
+          <Input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="010-0000-0000"
+            data-testid="input-profile-phone"
+          />
+        </div>
+
+        {/* 비밀번호 */}
         <div className="space-y-2">
           <Label>비밀번호 (변경)</Label>
           <Input
@@ -1067,8 +1083,9 @@ function ProfileEditSection({ user }: { user: User }) {
           )}
         </div>
 
+        {/* 증권 계좌 정보 */}
         <div className="space-y-2">
-          <Label>증권사 (변경)</Label>
+          <Label>증권사</Label>
           <Select value={bank} onValueChange={setBank}>
             <SelectTrigger data-testid="select-profile-bank">
               <SelectValue placeholder="증권사 선택" />
@@ -1081,7 +1098,7 @@ function ProfileEditSection({ user }: { user: User }) {
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>예금주 (변경)</Label>
+          <Label>예금주</Label>
           <Input
             value={accountHolder}
             onChange={(e) => setAccountHolder(e.target.value)}
@@ -1090,7 +1107,7 @@ function ProfileEditSection({ user }: { user: User }) {
           />
         </div>
         <div className="space-y-2">
-          <Label>계좌번호 (변경)</Label>
+          <Label>계좌번호</Label>
           <Input
             value={accountNumber}
             onChange={(e) => setAccountNumber(e.target.value)}
