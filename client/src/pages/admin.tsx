@@ -1194,6 +1194,7 @@ export default function AdminPage() {
   });
   const [transferTab, setTransferTab] = useState<"all" | "pending" | "approved" | "rejected" | "held">("all");
   const [transferSearch, setTransferSearch] = useState("");
+  const [filterTransferManager, setFilterTransferManager] = useState<string>("all");
   const [alertActive, setAlertActive] = useState(false);
   const prevPendingCount = useRef<number | null>(null);
   const soundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -1280,6 +1281,7 @@ export default function AdminPage() {
   const [txSearchTerm, setTxSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
+  const [filterTxManager, setFilterTxManager] = useState<string>("all");
   const [selectedChatRoom, setSelectedChatRoom] = useState<string | null>(null);
   const selectedChatRoomRef = useRef<string | null>(null);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
@@ -1748,11 +1750,25 @@ export default function AdminPage() {
     return u ? u.fullName : "알 수 없음";
   };
 
+  const getUserManagerCode = (userId: string) => {
+    const u = (allUsers || []).find((u) => u.id === userId);
+    return u?.managerCode || null;
+  };
+
+  const allManagerCodes = Array.from(new Set(
+    (allUsers || []).map((u) => u.managerCode).filter((c): c is string => !!c && c.trim() !== "")
+  )).sort();
+
   const filteredTransfers = (allTransferRequests || []).filter((tr) => {
     const matchTab = transferTab === "all" || tr.status === transferTab;
     const name = getUserName(tr.userId).toLowerCase();
     const matchSearch = transferSearch.trim() === "" || name.includes(transferSearch.trim().toLowerCase());
-    return matchTab && matchSearch;
+    const code = getUserManagerCode(tr.userId);
+    const matchManager =
+      filterTransferManager === "all" ||
+      (filterTransferManager === "none" && !code) ||
+      (filterTransferManager !== "none" && code === filterTransferManager);
+    return matchTab && matchSearch && matchManager;
   });
 
   const getUserHoldings = (userId: string) => {
@@ -1772,6 +1788,11 @@ export default function AdminPage() {
   const filteredTransactions = transactions.filter((tx) => {
     if (filterCategory !== "all" && tx.category !== filterCategory) return false;
     if (filterType !== "all" && tx.type !== filterType) return false;
+    if (filterTxManager !== "all") {
+      const code = getUserManagerCode(tx.userId);
+      if (filterTxManager === "none" && code) return false;
+      if (filterTxManager !== "none" && code !== filterTxManager) return false;
+    }
     if (txSearchTerm) {
       const userName = getUserName(tx.userId);
       const term = txSearchTerm;
@@ -2418,6 +2439,18 @@ export default function AdminPage() {
                     ))}
                   </SelectContent>
                 </Select>
+                <Select value={filterTxManager} onValueChange={setFilterTxManager}>
+                  <SelectTrigger className="w-[140px] bg-white border-gray-200 text-gray-700" data-testid="select-filter-tx-manager">
+                    <SelectValue placeholder="담당자 코드" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">코드 전체</SelectItem>
+                    <SelectItem value="none">코드 없음</SelectItem>
+                    {allManagerCodes.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Badge variant="outline" className="shrink-0 border-gray-200 text-gray-500">{filteredTransactions.length}건</Badge>
               </div>
 
@@ -2493,6 +2526,7 @@ export default function AdminPage() {
                         <TableRow className="bg-gray-50 border-gray-200">
                           <TableHead className="text-gray-500">유형</TableHead>
                           <TableHead className="text-gray-500">카테고리</TableHead>
+                          <TableHead className="text-gray-500">담당자</TableHead>
                           <TableHead className="text-gray-500">회원</TableHead>
                           <TableHead className="text-gray-500">종목</TableHead>
                           <TableHead className="text-right text-gray-500">수량</TableHead>
@@ -2515,6 +2549,11 @@ export default function AdminPage() {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-gray-700">{tx.category}</TableCell>
+                            <TableCell>
+                              {getUserManagerCode(tx.userId)
+                                ? <Badge variant="outline" className="border-[#E8344E]/40 text-[#E8344E] bg-[#E8344E]/5 font-mono text-xs">{getUserManagerCode(tx.userId)}</Badge>
+                                : <span className="text-gray-300 text-xs">-</span>}
+                            </TableCell>
                             <TableCell className="font-medium text-gray-700">{getUserName(tx.userId)}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1.5">
@@ -2593,17 +2632,32 @@ export default function AdminPage() {
                     <span>{transferSoundEnabled ? "알림 ON" : "알림 OFF"}</span>
                   </button>
                 </div>
-                {/* 회원 검색 */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="회원 이름으로 검색..."
-                    value={transferSearch}
-                    onChange={(e) => setTransferSearch(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#E8344E]/30 focus:border-[#E8344E]"
-                    data-testid="input-transfer-search"
-                  />
+                {/* 회원 검색 + 코드 필터 */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="relative flex-1 min-w-[180px]">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="회원 이름으로 검색..."
+                      value={transferSearch}
+                      onChange={(e) => setTransferSearch(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#E8344E]/30 focus:border-[#E8344E]"
+                      data-testid="input-transfer-search"
+                    />
+                  </div>
+                  <Select value={filterTransferManager} onValueChange={setFilterTransferManager}>
+                    <SelectTrigger className="w-[150px] bg-white border-gray-200 text-gray-700 text-sm" data-testid="select-filter-transfer-manager">
+                      <SelectValue placeholder="담당자 코드" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">코드 전체</SelectItem>
+                      <SelectItem value="none">코드 없음</SelectItem>
+                      {allManagerCodes.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Badge variant="outline" className="shrink-0 border-gray-200 text-gray-500">{filteredTransfers.length}건</Badge>
                 </div>
               </div>
 
@@ -2635,7 +2689,12 @@ export default function AdminPage() {
                         </span>
                       </div>
                       <div className="space-y-1">
-                        <p className="text-sm font-medium text-gray-700">{getUserName(tr.userId)}</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-sm font-medium text-gray-700">{getUserName(tr.userId)}</p>
+                          {getUserManagerCode(tr.userId) && (
+                            <Badge variant="outline" className="border-[#E8344E]/40 text-[#E8344E] bg-[#E8344E]/5 font-mono text-xs">{getUserManagerCode(tr.userId)}</Badge>
+                          )}
+                        </div>
                         <span className="text-sm text-gray-700 flex items-center gap-1.5"><StockIcon name={tr.stockName} size={18} />{tr.stockName} · {tr.quantity.toLocaleString()}주</span>
                       </div>
                       {tr.currentPrice > 0 && (
@@ -2719,6 +2778,7 @@ export default function AdminPage() {
                       <TableHeader>
                         <TableRow className="bg-gray-50 border-gray-200">
                           <TableHead className="text-gray-500">상태</TableHead>
+                          <TableHead className="text-gray-500">담당자</TableHead>
                           <TableHead className="text-gray-500">신청 회원</TableHead>
                           <TableHead className="text-gray-500">종목</TableHead>
                           <TableHead className="text-right text-gray-500">수량</TableHead>
@@ -2749,6 +2809,11 @@ export default function AdminPage() {
                                   <Badge variant="outline" className="gap-1 border-orange-300 text-orange-600 text-xs">출고</Badge>
                                 )}
                               </div>
+                            </TableCell>
+                            <TableCell>
+                              {getUserManagerCode(tr.userId)
+                                ? <Badge variant="outline" className="border-[#E8344E]/40 text-[#E8344E] bg-[#E8344E]/5 font-mono text-xs">{getUserManagerCode(tr.userId)}</Badge>
+                                : <span className="text-gray-300 text-xs">-</span>}
                             </TableCell>
                             <TableCell className="font-medium text-gray-700">{getUserName(tr.userId)}</TableCell>
                             <TableCell>
