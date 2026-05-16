@@ -441,13 +441,11 @@ function Header({ user, searchQuery, onSearchChange, onSearchFocus }: {
               공모주 마이페이지
             </span>
           </Link>
-          {user && (
-            <Link href="/chat">
-              <span className="inline-block text-sm text-[#222] py-2 cursor-pointer" data-testid="link-mobile-nav-chat">
-                상담문의하기
-              </span>
-            </Link>
-          )}
+          <Link href="/chat">
+            <span className="inline-block text-sm text-[#222] py-2 cursor-pointer" data-testid="link-mobile-nav-chat">
+              상담문의하기
+            </span>
+          </Link>
           <div className="border-t border-[#eee] pt-3 flex items-center gap-3">
             {user ? (
               <>
