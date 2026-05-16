@@ -9,6 +9,7 @@ import { z } from "zod";
 import bcrypt from "bcrypt";
 import { WebSocketServer, WebSocket } from "ws";
 import { log } from "./index";
+import { registerDemoRoutes } from "./demo-routes";
 
 const PgSession = connectPg(session);
 
@@ -1579,6 +1580,8 @@ export async function registerRoutes(
       res.json({ logos: logoCache });
     }
   });
+
+  registerDemoRoutes(app);
 
   app.get("/go", async (_req, res) => {
     try {

@@ -10,6 +10,8 @@ import RegisterPage from "@/pages/register";
 import DashboardPage from "@/pages/dashboard";
 import AdminPage from "@/pages/admin";
 import AdminLoginPage from "@/pages/admin-login";
+import DemoAdminPage from "@/pages/demo-admin";
+import DemoAdminLoginPage from "@/pages/demo-admin-login";
 import ChatPage from "@/pages/chat";
 import MyStocksPage from "@/pages/my-stocks";
 import IPOCalendarPage from "@/pages/ipo-calendar";
@@ -56,6 +58,8 @@ function Router() {
       <Route path="/admin/manual" component={AdminManualPage} />
       <Route path="/admin/login" component={AdminLoginPage} />
       <Route path="/admin" component={AdminPage} />
+      <Route path="/demo-admin/login" component={DemoAdminLoginPage} />
+      <Route path="/demo-admin" component={DemoAdminPage} />
       <Route path="/test" component={TestAdminPage} />
       <Route path="/stock/:name" component={StockDetailPage} />
       <Route path="/chat" component={ChatPage} />
