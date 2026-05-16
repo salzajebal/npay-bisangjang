@@ -1491,12 +1491,17 @@ export default function AdminPage() {
     queryKey: ["/api/admin/transactions"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!authData?.user?.isAdmin,
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000,
   });
 
   const { data: allTransferRequests, isLoading: transfersLoading } = useQuery<TransferRequest[]>({
     queryKey: ["/api/admin/transfer-requests"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!authData?.user?.isAdmin,
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
   const { data: chatRooms, isLoading: chatRoomsLoading } = useQuery<any[]>({
@@ -1623,11 +1628,27 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshData();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
+  useEffect(() => {
     if (!authData?.user?.isAdmin) return;
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/chat`);
-    chatWsRef.current = ws;
-    ws.onmessage = (event) => {
+
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let isClosed = false;
+
+    const connect = () => {
+      if (isClosed) return;
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/chat`);
+      chatWsRef.current = ws;
+      ws.onmessage = (event) => {
       try {
         const parsed = JSON.parse(event.data);
         if (parsed.type === "message" && parsed.data) {
@@ -1673,8 +1694,21 @@ export default function AdminPage() {
         }
       } catch {}
     };
-    ws.onclose = () => {};
-    return () => { ws.close(); chatWsRef.current = null; };
+      ws.onclose = () => {
+        chatWsRef.current = null;
+        if (!isClosed) {
+          reconnectTimer = setTimeout(connect, 3000);
+        }
+      };
+      ws.onerror = () => { ws.close(); };
+    };
+
+    connect();
+    return () => {
+      isClosed = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (chatWsRef.current) { chatWsRef.current.close(); chatWsRef.current = null; }
+    };
   }, [authData?.user?.isAdmin]);
 
   useEffect(() => {
