@@ -1818,11 +1818,17 @@ export default function DemoAdminPage() {
     }
     if (txSearchTerm) {
       const userName = getUserName(tx.userId);
+      const phone = getUserPhone(tx.userId);
+      const username = getUserUsername(tx.userId);
+      const managerCode = getUserManagerCode(tx.userId) || "";
       const term = txSearchTerm;
       if (
         !userName.includes(term) &&
         !tx.stockName.includes(term) &&
-        !(tx.memo && tx.memo.includes(term))
+        !(tx.memo && tx.memo.includes(term)) &&
+        !phone.includes(term) &&
+        !username.includes(term) &&
+        !managerCode.includes(term)
       ) return false;
     }
     return true;
@@ -2434,7 +2440,7 @@ export default function DemoAdminPage() {
                 <div className="relative flex-1 min-w-[200px]">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
-                    placeholder="검색 (회원명, 종목명, 메모)"
+                    placeholder="검색 (회원명, 아이디, 연락처, 종목명, 담당자코드)"
                     value={txSearchTerm}
                     onChange={(e) => setTxSearchTerm(e.target.value)}
                     className="pl-9 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
@@ -2522,6 +2528,7 @@ export default function DemoAdminPage() {
                             <Badge variant="outline" className="border-[#E8344E]/40 text-[#E8344E] bg-[#E8344E]/5 font-mono text-xs">{getUserManagerCode(tx.userId)}</Badge>
                           )}
                         </div>
+                        <p className="text-xs text-gray-500 font-mono">{getUserPhone(tx.userId)} · <span className="text-gray-400">ID: {getUserUsername(tx.userId)}</span></p>
                         <div className="flex items-center gap-3 text-xs text-gray-500">
                           <span>{tx.quantity.toLocaleString()}주</span>
                           <span>{tx.pricePerShare.toLocaleString()}원</span>
@@ -2556,6 +2563,8 @@ export default function DemoAdminPage() {
                           <TableHead className="text-gray-500">카테고리</TableHead>
                           <TableHead className="text-gray-500">담당자</TableHead>
                           <TableHead className="text-gray-500">회원</TableHead>
+                          <TableHead className="text-gray-500">연락처</TableHead>
+                          <TableHead className="text-gray-500">아이디</TableHead>
                           <TableHead className="text-gray-500">종목</TableHead>
                           <TableHead className="text-right text-gray-500">수량</TableHead>
                           <TableHead className="text-right text-gray-500">단가</TableHead>
@@ -2583,6 +2592,8 @@ export default function DemoAdminPage() {
                                 : <span className="text-gray-300 text-xs">-</span>}
                             </TableCell>
                             <TableCell className="font-medium text-gray-700">{getUserName(tx.userId)}</TableCell>
+                            <TableCell className="font-mono text-xs text-gray-500 whitespace-nowrap">{getUserPhone(tx.userId)}</TableCell>
+                            <TableCell className="font-mono text-xs text-gray-400 whitespace-nowrap">{getUserUsername(tx.userId)}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1.5">
                                 <StockIcon name={tx.stockName} size={22} />
