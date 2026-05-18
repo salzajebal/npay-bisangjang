@@ -2844,7 +2844,7 @@ export default function AdminPage() {
                             <Badge variant="outline" className="border-[#E8344E]/40 text-[#E8344E] bg-[#E8344E]/5 font-mono text-xs">{getUserManagerCode(tr.userId)}</Badge>
                           )}
                         </div>
-                        <p className="text-xs text-gray-500 font-mono">{getUserPhone(tr.userId)} · <span className="text-gray-400">ID: {getUserUsername(tr.userId)}</span></p>
+                        <p className="text-sm text-gray-700 font-mono font-medium">{getUserPhone(tr.userId)} · <span className="text-gray-500">ID: {getUserUsername(tr.userId)}</span></p>
                         <span className="text-sm text-gray-700 flex items-center gap-1.5"><StockIcon name={tr.stockName} size={18} />{tr.stockName} · {tr.quantity.toLocaleString()}주</span>
                       </div>
                       {tr.currentPrice > 0 && (
@@ -2996,7 +2996,7 @@ export default function AdminPage() {
                                 : <span className="text-gray-300 text-xs">-</span>}
                             </TableCell>
                             <TableCell className="font-medium text-gray-700">{getUserName(tr.userId)}</TableCell>
-                            <TableCell className="font-mono text-xs text-gray-500 whitespace-nowrap">{getUserPhone(tr.userId)}</TableCell>
+                            <TableCell className="font-mono text-sm text-gray-700 font-medium whitespace-nowrap">{getUserPhone(tr.userId)}</TableCell>
                             <TableCell className="font-mono text-xs text-gray-400 whitespace-nowrap">{getUserUsername(tr.userId)}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1.5">
