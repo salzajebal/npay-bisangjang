@@ -1645,23 +1645,37 @@ export async function registerRoutes(
 
     if (status === "approved") {
       const senderTxs = await storage.getTransactionsByUserId(transfer.fromUserId);
-      const holdingsMap: Record<string, number> = {};
+      const holdingsMap: Record<string, { qty: number; totalCost: number }> = {};
       for (const tx of senderTxs) {
         const key = tx.stockName;
-        if (!holdingsMap[key]) holdingsMap[key] = 0;
-        if (tx.type === "in" || tx.type === "입고") holdingsMap[key] += tx.quantity;
-        else if (tx.type === "out" || tx.type === "출고" || tx.type === "주식이전") holdingsMap[key] -= tx.quantity;
+        if (!holdingsMap[key]) holdingsMap[key] = { qty: 0, totalCost: 0 };
+        if (tx.type === "in" || tx.type === "입고") {
+          holdingsMap[key].qty += tx.quantity;
+          holdingsMap[key].totalCost += tx.quantity * tx.pricePerShare;
+        } else if (tx.type === "out" || tx.type === "출고") {
+          const avg = holdingsMap[key].qty > 0 ? holdingsMap[key].totalCost / holdingsMap[key].qty : 0;
+          holdingsMap[key].qty -= tx.quantity;
+          if (holdingsMap[key].qty <= 0) {
+            holdingsMap[key].qty = 0;
+            holdingsMap[key].totalCost = 0;
+          } else {
+            holdingsMap[key].totalCost = holdingsMap[key].qty * avg;
+          }
+        }
       }
-      const available = holdingsMap[transfer.stockName] ?? 0;
+      const holding = holdingsMap[transfer.stockName] ?? { qty: 0, totalCost: 0 };
+      const available = holding.qty;
       if (transfer.quantity > available) {
         return res.status(400).json({ message: `보내는 회원의 ${transfer.stockName} 보유 수량(${available}주)이 부족합니다` });
       }
+      const avgPrice = available > 0 ? Math.round(holding.totalCost / available) : 0;
+      const fromUser = await storage.getUser(transfer.fromUserId);
       await storage.createTransaction({
         userId: transfer.fromUserId,
         type: "출고",
         stockName: transfer.stockName,
         quantity: transfer.quantity,
-        pricePerShare: 0,
+        pricePerShare: avgPrice,
         category: "주식이전",
         memo: `회원 이전 → ${transfer.toUsername}`,
       });
@@ -1670,9 +1684,9 @@ export async function registerRoutes(
         type: "입고",
         stockName: transfer.stockName,
         quantity: transfer.quantity,
-        pricePerShare: 0,
+        pricePerShare: avgPrice,
         category: "주식이전",
-        memo: `회원 이전 ← ${(await storage.getUser(transfer.fromUserId))?.username || transfer.fromUserId}`,
+        memo: `회원 이전 ← ${fromUser?.username || transfer.fromUserId}`,
       });
     }
 
