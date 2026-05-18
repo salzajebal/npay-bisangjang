@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { db } from "./db";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
-import { registerSchema, loginSchema, insertStockTransactionSchema, updateUserSchema, insertTransferRequestSchema } from "@shared/schema";
+import { registerSchema, loginSchema, insertStockTransactionSchema, updateUserSchema, insertTransferRequestSchema, insertStockMemberTransferSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import { WebSocketServer, WebSocket } from "ws";
@@ -1579,6 +1579,105 @@ export async function registerRoutes(
     } catch (e) {
       res.json({ logos: logoCache });
     }
+  });
+
+  // ─── 회원 간 주식 이전 신청 ───────────────────────────────────────────────
+  app.post("/api/stock-member-transfers", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ message: "로그인이 필요합니다" });
+    try {
+      const { toUsername, stockName, quantity } = req.body;
+      if (!toUsername || !stockName || !quantity || quantity <= 0) {
+        return res.status(400).json({ message: "입력값을 확인해주세요" });
+      }
+      const fromUser = await storage.getUser(req.session.userId);
+      if (!fromUser) return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+
+      const toUser = await storage.getUserByUsername(toUsername.trim());
+      if (!toUser) return res.status(404).json({ message: "받는 회원 아이디를 찾을 수 없습니다" });
+      if (toUser.id === req.session.userId) return res.status(400).json({ message: "자기 자신에게 이전할 수 없습니다" });
+
+      const transactions = await storage.getTransactionsByUserId(req.session.userId);
+      const holdingsMap: Record<string, number> = {};
+      for (const tx of transactions) {
+        const key = tx.stockName;
+        if (!holdingsMap[key]) holdingsMap[key] = 0;
+        if (tx.type === "in" || tx.type === "입고") holdingsMap[key] += tx.quantity;
+        else if (tx.type === "out" || tx.type === "출고" || tx.type === "주식이전") holdingsMap[key] -= tx.quantity;
+      }
+      const available = holdingsMap[stockName] ?? 0;
+      if (available <= 0) return res.status(400).json({ message: `${stockName} 보유 수량이 없습니다` });
+      if (quantity > available) return res.status(400).json({ message: `${stockName} 보유 수량(${available}주)을 초과할 수 없습니다` });
+
+      const transfer = await storage.createStockMemberTransfer({
+        fromUserId: req.session.userId,
+        toUserId: toUser.id,
+        toUsername: toUser.username,
+        stockName,
+        quantity,
+      });
+      return res.json(transfer);
+    } catch (error) {
+      return res.status(500).json({ message: "이전 신청에 실패했습니다" });
+    }
+  });
+
+  app.get("/api/stock-member-transfers/my", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ message: "로그인이 필요합니다" });
+    const transfers = await storage.getStockMemberTransfersByFromUserId(req.session.userId);
+    return res.json(transfers);
+  });
+
+  app.get("/api/admin/stock-member-transfers", requireAdmin, async (_req, res) => {
+    const transfers = await storage.getAllStockMemberTransfers();
+    return res.json(transfers);
+  });
+
+  app.patch("/api/admin/stock-member-transfers/:id", requireAdmin, async (req, res) => {
+    const { id } = req.params;
+    const { status, adminMemo } = req.body;
+    if (!["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "잘못된 상태값입니다" });
+    }
+    const all = await storage.getAllStockMemberTransfers();
+    const transfer = all.find((t) => t.id === id);
+    if (!transfer) return res.status(404).json({ message: "이전 신청을 찾을 수 없습니다" });
+    if (transfer.status !== "pending") return res.status(400).json({ message: "이미 처리된 신청입니다" });
+
+    if (status === "approved") {
+      const senderTxs = await storage.getTransactionsByUserId(transfer.fromUserId);
+      const holdingsMap: Record<string, number> = {};
+      for (const tx of senderTxs) {
+        const key = tx.stockName;
+        if (!holdingsMap[key]) holdingsMap[key] = 0;
+        if (tx.type === "in" || tx.type === "입고") holdingsMap[key] += tx.quantity;
+        else if (tx.type === "out" || tx.type === "출고" || tx.type === "주식이전") holdingsMap[key] -= tx.quantity;
+      }
+      const available = holdingsMap[transfer.stockName] ?? 0;
+      if (transfer.quantity > available) {
+        return res.status(400).json({ message: `보내는 회원의 ${transfer.stockName} 보유 수량(${available}주)이 부족합니다` });
+      }
+      await storage.createTransaction({
+        userId: transfer.fromUserId,
+        type: "출고",
+        stockName: transfer.stockName,
+        quantity: transfer.quantity,
+        pricePerShare: 0,
+        category: "주식이전",
+        memo: `회원 이전 → ${transfer.toUsername}`,
+      });
+      await storage.createTransaction({
+        userId: transfer.toUserId,
+        type: "입고",
+        stockName: transfer.stockName,
+        quantity: transfer.quantity,
+        pricePerShare: 0,
+        category: "주식이전",
+        memo: `회원 이전 ← ${(await storage.getUser(transfer.fromUserId))?.username || transfer.fromUserId}`,
+      });
+    }
+
+    const updated = await storage.updateStockMemberTransferStatus(id, status, adminMemo);
+    return res.json(updated);
   });
 
   registerDemoRoutes(app);

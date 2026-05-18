@@ -19,14 +19,14 @@ import {
 } from "lucide-react";
 import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
-import type { User, StockTransaction, TransferRequest } from "@shared/schema";
+import type { User, StockTransaction, TransferRequest, StockMemberTransfer } from "@shared/schema";
 import { KOREAN_BANKS } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { fetchStockPrices } from "@/lib/market-prices";
 
-type DashSection = "overview" | "holdings" | "transactions" | "transfer" | "profile";
+type DashSection = "overview" | "holdings" | "transactions" | "transfer" | "member-transfer" | "profile";
 
 const formatPct = (n: number) =>
   n.toLocaleString("ko-KR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -51,6 +51,7 @@ const sidebarItems: { id: DashSection; label: string; icon: typeof LayoutDashboa
   { id: "holdings", label: "보유 종목", icon: Wallet },
   { id: "transactions", label: "거래 내역", icon: ClipboardList },
   { id: "transfer", label: "내 계좌로 옮기기", icon: ArrowRightLeft },
+  { id: "member-transfer", label: "주식 이전 신청", icon: Send },
   { id: "profile", label: "내 정보 수정", icon: Settings },
 ];
 
@@ -85,10 +86,41 @@ export default function DashboardPage() {
   const [transferStock, setTransferStock] = useState("");
   const [stockInStock, setStockInStock] = useState("");
   const [stockInQuantity, setStockInQuantity] = useState("");
+  const [memberTransferStock, setMemberTransferStock] = useState("");
+  const [memberTransferQuantity, setMemberTransferQuantity] = useState("");
+  const [memberTransferToUsername, setMemberTransferToUsername] = useState("");
 
   const { data: availableStocks = [] } = useQuery<{ name: string; faceValue: number | null }[]>({
     queryKey: ["/api/available-stocks"],
     enabled: !!authData?.user,
+  });
+
+  const { data: myMemberTransfers = [] } = useQuery<StockMemberTransfer[]>({
+    queryKey: ["/api/stock-member-transfers/my"],
+    enabled: !!authData?.user,
+  });
+
+  const memberTransferMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/stock-member-transfers", {
+        toUsername: memberTransferToUsername.trim(),
+        stockName: memberTransferStock,
+        quantity: parseInt(memberTransferQuantity),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "이전 신청 완료", description: `${memberTransferStock} ${parseInt(memberTransferQuantity).toLocaleString()}주 이전 신청이 접수되었습니다. 관리자 승인 후 처리됩니다.` });
+      setMemberTransferStock("");
+      setMemberTransferQuantity("");
+      setMemberTransferToUsername("");
+      queryClient.invalidateQueries({ queryKey: ["/api/stock-member-transfers/my"] });
+    },
+    onError: (err: Error) => {
+      let msg = "이전 신청에 실패했습니다";
+      try { const p = JSON.parse(err.message.replace(/^[0-9]+:\s*/, "")); if (p.message) msg = p.message; } catch {}
+      toast({ title: "신청 실패", description: msg, variant: "destructive" });
+    },
   });
 
   const stockInMutation = useMutation({
@@ -918,6 +950,121 @@ export default function DashboardPage() {
                             </Button>
                           </div>
                         )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </div>
+          )}
+
+          {activeSection === "member-transfer" && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <Card className="p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Send className="w-5 h-5 text-[#E8344E]" />
+                  <h2 className="text-lg font-semibold">주식 이전 신청</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  보유 중인 주식을 다른 회원에게 이전할 수 있습니다. 관리자 승인 후 처리됩니다.
+                </p>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>이전할 종목</Label>
+                    <Select value={memberTransferStock} onValueChange={(val) => { setMemberTransferStock(val); setMemberTransferQuantity(""); }}>
+                      <SelectTrigger data-testid="select-member-transfer-stock">
+                        <SelectValue placeholder="종목을 선택하세요" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {holdingsList.map((h) => (
+                          <SelectItem key={h.name} value={h.name}>
+                            {h.name} ({h.qty.toLocaleString()}주 보유)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {memberTransferStock && (
+                    <div className="bg-muted/50 rounded-md p-3 text-sm">
+                      <span className="text-muted-foreground">보유 수량: </span>
+                      <span className="font-bold">
+                        {(holdingsList.find(h => h.name === memberTransferStock)?.qty || 0).toLocaleString()}주
+                      </span>
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <Label>이전 수량 (주)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max={memberTransferStock ? (holdingsList.find(h => h.name === memberTransferStock)?.qty || 0) : undefined}
+                      value={memberTransferQuantity}
+                      onChange={(e) => setMemberTransferQuantity(e.target.value)}
+                      placeholder={memberTransferStock ? `최대 ${(holdingsList.find(h => h.name === memberTransferStock)?.qty || 0).toLocaleString()}주` : "종목을 먼저 선택하세요"}
+                      disabled={!memberTransferStock}
+                      data-testid="input-member-transfer-quantity"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>받는 회원 아이디</Label>
+                    <Input
+                      value={memberTransferToUsername}
+                      onChange={(e) => setMemberTransferToUsername(e.target.value)}
+                      placeholder="받는 회원의 아이디를 입력하세요"
+                      data-testid="input-member-transfer-to-username"
+                    />
+                  </div>
+                  <Button
+                    className="w-full bg-[#E8344E] border-[#E8344E]"
+                    disabled={
+                      memberTransferMutation.isPending ||
+                      !memberTransferStock ||
+                      !memberTransferQuantity ||
+                      parseInt(memberTransferQuantity) <= 0 ||
+                      !memberTransferToUsername.trim() ||
+                      holdingsList.length === 0
+                    }
+                    onClick={() => memberTransferMutation.mutate()}
+                    data-testid="button-submit-member-transfer"
+                  >
+                    <Send className="w-4 h-4 mr-2" />
+                    {memberTransferMutation.isPending ? "신청 중..." : "이전 신청"}
+                  </Button>
+                </div>
+              </Card>
+
+              <Card className="p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock className="w-5 h-5 text-[#E8344E]" />
+                  <h2 className="text-lg font-semibold">이전 신청 내역</h2>
+                </div>
+                {myMemberTransfers.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    주식 이전 신청 내역이 없습니다
+                  </div>
+                ) : (
+                  <div className="space-y-3 max-h-[480px] overflow-y-auto">
+                    {myMemberTransfers.map((mt) => (
+                      <div key={mt.id} className="border rounded-md p-3 space-y-2" data-testid={`member-transfer-item-${mt.id}`}>
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-1.5">
+                            <StockIcon name={mt.stockName} size={20} />
+                            <span className="font-medium text-sm">{mt.stockName} {mt.quantity.toLocaleString()}주</span>
+                          </div>
+                          <TransferStatusBadge status={mt.status} />
+                        </div>
+                        <div className="text-sm text-muted-foreground flex items-center gap-1">
+                          <Send className="w-3 h-3" />
+                          <span>받는 회원: <span className="font-medium text-foreground">{mt.toUsername}</span></span>
+                        </div>
+                        {mt.adminMemo && (
+                          <div className="text-xs text-muted-foreground bg-muted/50 rounded p-1.5">
+                            관리자 메모: {mt.adminMemo}
+                          </div>
+                        )}
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(mt.createdAt).toLocaleString("ko-KR")}
+                        </div>
                       </div>
                     ))}
                   </div>

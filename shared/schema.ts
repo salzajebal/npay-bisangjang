@@ -210,6 +210,30 @@ export const insertIpoStockSchema = createInsertSchema(ipoStocks).omit({
 export type IpoStock = typeof ipoStocks.$inferSelect;
 export type InsertIpoStock = z.infer<typeof insertIpoStockSchema>;
 
+export const stockMemberTransfers = pgTable("stock_member_transfers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fromUserId: varchar("from_user_id").notNull(),
+  toUserId: varchar("to_user_id").notNull(),
+  toUsername: text("to_username").notNull(),
+  stockName: text("stock_name").notNull(),
+  quantity: integer("quantity").notNull(),
+  status: text("status").notNull().default("pending"),
+  adminMemo: text("admin_memo"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  processedAt: timestamp("processed_at"),
+});
+
+export const insertStockMemberTransferSchema = createInsertSchema(stockMemberTransfers).omit({
+  id: true,
+  status: true,
+  adminMemo: true,
+  createdAt: true,
+  processedAt: true,
+});
+
+export type StockMemberTransfer = typeof stockMemberTransfers.$inferSelect;
+export type InsertStockMemberTransfer = z.infer<typeof insertStockMemberTransferSchema>;
+
 export const KOREAN_BANKS = [
   "KB증권",
   "삼성증권",

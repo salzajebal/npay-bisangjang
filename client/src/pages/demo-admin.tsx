@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { STOCK_CATEGORIES, KOREAN_BANKS } from "@shared/schema";
 import { StockIcon } from "@/components/stock-icon";
-import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup, LoginLog, DomainFallbackUrl, BlockedIp } from "@shared/schema";
+import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup, LoginLog, DomainFallbackUrl, BlockedIp, StockMemberTransfer } from "@shared/schema";
 import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
@@ -1160,13 +1160,14 @@ function copyUserInfo(user: User, toast: any) {
   });
 }
 
-type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "stocks" | "chat" | "groups" | "fallbacks" | "logs" | "ipblock";
+type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "member-transfers" | "stocks" | "chat" | "groups" | "fallbacks" | "logs" | "ipblock";
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "대시보드", icon: LayoutDashboard },
   { id: "members", label: "회원 관리", icon: Users },
   { id: "transactions", label: "거래 내역", icon: ClipboardList },
   { id: "transfers", label: "대체출고 관리", icon: ArrowRightLeft },
+  { id: "member-transfers", label: "주식 이전 관리", icon: Send },
   { id: "stocks", label: "종목 관리", icon: Package },
   { id: "chat", label: "1:1 상담", icon: MessageSquare },
   { id: "groups", label: "도메인 그룹", icon: Globe },
@@ -1179,7 +1180,7 @@ export default function DemoAdminPage() {
   const [, setLocation] = useLocation();
   const getHashSection = (): AdminSection => {
     const hash = window.location.hash.replace("#", "");
-    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "stocks", "chat", "groups", "fallbacks", "logs", "ipblock"];
+    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "member-transfers", "stocks", "chat", "groups", "fallbacks", "logs", "ipblock"];
     return valid.includes(hash as AdminSection) ? (hash as AdminSection) : "dashboard";
   };
 
@@ -1499,6 +1500,14 @@ export default function DemoAdminPage() {
     enabled: !!authData?.user?.isAdmin,
   });
 
+  const { data: allMemberTransfers = [], isLoading: memberTransfersLoading } = useQuery<StockMemberTransfer[]>({
+    queryKey: ["/api/admin/stock-member-transfers"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!authData?.user?.isAdmin,
+    refetchInterval: 5000,
+    staleTime: 0,
+  });
+
   const { data: chatRooms, isLoading: chatRoomsLoading } = useQuery<any[]>({
     queryKey: ["/api/chat/rooms"],
     queryFn: getQueryFn({ on401: "returnNull" }),
@@ -1514,6 +1523,28 @@ export default function DemoAdminPage() {
 
   const totalUnreadCount = (chatRooms || []).reduce((sum: number, room: any) => sum + (room.unreadCount || 0), 0);
   const pendingTransferCount = (allTransferRequests || []).filter(r => r.status === "pending").length;
+  const pendingMemberTransferCount = allMemberTransfers.filter(t => t.status === "pending").length;
+
+  const [memberTransferAdminMemo, setMemberTransferAdminMemo] = useState<Record<string, string>>({});
+  const [memberTransferTab, setMemberTransferTab] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [memberTransferSearch, setMemberTransferSearch] = useState("");
+
+  const approveMemberTransferMutation = useMutation({
+    mutationFn: async ({ id, status, adminMemo }: { id: string; status: string; adminMemo?: string }) => {
+      const res = await apiRequest("PATCH", `/api/admin/stock-member-transfers/${id}`, { status, adminMemo });
+      return res.json();
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stock-member-transfers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/demo-admin/transactions"] });
+      toast({ title: vars.status === "approved" ? "승인 완료" : "거부 완료", description: vars.status === "approved" ? "주식 이전이 처리되었습니다." : "주식 이전 신청이 거부되었습니다." });
+    },
+    onError: (err: Error) => {
+      let msg = "처리에 실패했습니다";
+      try { const p = JSON.parse(err.message.replace(/^[0-9]+:\s*/, "")); if (p.message) msg = p.message; } catch {}
+      toast({ title: "오류", description: msg, variant: "destructive" });
+    },
+  });
 
   const createIpoStockMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -3870,6 +3901,139 @@ export default function DemoAdminPage() {
               </Card>
             </>
           )}
+          {activeSection === "member-transfers" && (
+            <>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-gray-800">주식 이전 관리</h2>
+                  {pendingMemberTransferCount > 0 && (
+                    <Badge className="bg-[#E8344E] text-white border-[#E8344E]">{pendingMemberTransferCount}건 대기</Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {(["all", "pending", "approved", "rejected"] as const).map((tab) => {
+                  const labels: Record<string, string> = { all: "전체", pending: "대기", approved: "승인", rejected: "거부" };
+                  const counts: Record<string, number> = {
+                    all: allMemberTransfers.length,
+                    pending: allMemberTransfers.filter(t => t.status === "pending").length,
+                    approved: allMemberTransfers.filter(t => t.status === "approved").length,
+                    rejected: allMemberTransfers.filter(t => t.status === "rejected").length,
+                  };
+                  const active = memberTransferTab === tab;
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => setMemberTransferTab(tab)}
+                      className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${active ? "bg-[#E8344E] text-white border-[#E8344E]" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"}`}
+                    >
+                      {labels[tab]}
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${active ? "bg-white/20" : "bg-gray-100 text-gray-400"}`}>
+                        {counts[tab]}
+                      </span>
+                    </button>
+                  );
+                })}
+                <div className="ml-auto relative min-w-[200px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="보내는 회원 또는 종목명..."
+                    value={memberTransferSearch}
+                    onChange={(e) => setMemberTransferSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#E8344E]/30 focus:border-[#E8344E]"
+                  />
+                </div>
+              </div>
+
+              {memberTransfersLoading ? (
+                <div className="space-y-3">{[1,2,3].map(i => <Card key={i} className="p-4 bg-white"><Skeleton className="h-12 w-full" /></Card>)}</div>
+              ) : (() => {
+                const filtered = allMemberTransfers.filter(t => {
+                  if (memberTransferTab !== "all" && t.status !== memberTransferTab) return false;
+                  if (memberTransferSearch) {
+                    const q = memberTransferSearch.toLowerCase();
+                    const fromUser = (allUsers || []).find(u => u.id === t.fromUserId);
+                    const fromName = (fromUser?.fullName || fromUser?.username || "").toLowerCase();
+                    if (!fromName.includes(q) && !t.toUsername.toLowerCase().includes(q) && !t.stockName.toLowerCase().includes(q)) return false;
+                  }
+                  return true;
+                });
+                if (filtered.length === 0) return (
+                  <Card className="p-12 text-center bg-white border-gray-200">
+                    <Send className="w-10 h-10 mx-auto mb-3 opacity-20 text-gray-400" />
+                    <p className="font-medium text-gray-500">이전 신청 내역이 없습니다</p>
+                  </Card>
+                );
+                return (
+                  <div className="space-y-3">
+                    {filtered.map((t) => {
+                      const fromUser = (allUsers || []).find(u => u.id === t.fromUserId);
+                      const fromName = fromUser?.fullName || fromUser?.username || t.fromUserId;
+                      const memo = memberTransferAdminMemo[t.id] ?? (t.adminMemo || "");
+                      const statusLabel: Record<string, string> = { pending: "대기중", approved: "승인", rejected: "거부" };
+                      const statusColor: Record<string, string> = { pending: "bg-yellow-100 text-yellow-700 border-yellow-200", approved: "bg-green-100 text-green-700 border-green-200", rejected: "bg-red-100 text-red-700 border-red-200" };
+                      return (
+                        <Card key={t.id} className="p-4 bg-white border-gray-200">
+                          <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <StockIcon name={t.stockName} size={20} />
+                                <span className="font-semibold text-sm">{t.stockName}</span>
+                                <span className="text-sm font-mono text-gray-700">{t.quantity.toLocaleString()}주</span>
+                                <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${statusColor[t.status] || "bg-gray-100 text-gray-500 border-gray-200"}`}>
+                                  {statusLabel[t.status] || t.status}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
+                                <span>보내는 회원: <span className="font-medium text-gray-900">{fromName}</span>{fromUser?.username ? ` (${fromUser.username})` : ""}</span>
+                                <span className="flex items-center gap-1"><Send className="w-3 h-3" /> 받는 회원: <span className="font-medium text-gray-900">{t.toUsername}</span></span>
+                              </div>
+                              <div className="text-xs text-gray-400">{new Date(t.createdAt).toLocaleString("ko-KR")}</div>
+                              {t.adminMemo && t.status !== "pending" && (
+                                <div className="text-xs text-gray-500 bg-gray-50 rounded px-2 py-1.5">메모: {t.adminMemo}</div>
+                              )}
+                            </div>
+                            {t.status === "pending" && (
+                              <div className="flex flex-col gap-2 sm:w-56">
+                                <Input
+                                  placeholder="관리자 메모 (선택)"
+                                  value={memo}
+                                  onChange={(e) => setMemberTransferAdminMemo(prev => ({ ...prev, [t.id]: e.target.value }))}
+                                  className="text-xs h-8 bg-white border-gray-200"
+                                />
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs h-8"
+                                    disabled={approveMemberTransferMutation.isPending}
+                                    onClick={() => approveMemberTransferMutation.mutate({ id: t.id, status: "approved", adminMemo: memo || undefined })}
+                                  >
+                                    <CheckCircle2 className="w-3 h-3 mr-1" />승인
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="flex-1 border-red-300 text-red-600 hover:bg-red-50 text-xs h-8"
+                                    disabled={approveMemberTransferMutation.isPending}
+                                    onClick={() => approveMemberTransferMutation.mutate({ id: t.id, status: "rejected", adminMemo: memo || undefined })}
+                                  >
+                                    <XCircle className="w-3 h-3 mr-1" />거부
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </>
+          )}
+
           {activeSection === "ipblock" && (
             <>
               <div className="flex items-center justify-between">

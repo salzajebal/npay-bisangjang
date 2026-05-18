@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, type LoginLog, type DomainFallbackUrl, type InsertDomainFallbackUrl, type BlockedIp, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups, loginLogs, domainFallbackUrls, blockedIps } from "@shared/schema";
+import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, type LoginLog, type DomainFallbackUrl, type InsertDomainFallbackUrl, type BlockedIp, type StockMemberTransfer, type InsertStockMemberTransfer, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups, loginLogs, domainFallbackUrls, blockedIps, stockMemberTransfers } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, asc } from "drizzle-orm";
 
@@ -60,6 +60,10 @@ export interface IStorage {
   updateFallbackUrl(id: string, data: Partial<Pick<DomainFallbackUrl, "url" | "label" | "priority" | "isActive">>): Promise<DomainFallbackUrl | undefined>;
   deleteFallbackUrl(id: string): Promise<void>;
   reorderFallbackUrls(ids: string[]): Promise<void>;
+  createStockMemberTransfer(data: InsertStockMemberTransfer): Promise<StockMemberTransfer>;
+  getStockMemberTransfersByFromUserId(userId: string): Promise<StockMemberTransfer[]>;
+  getAllStockMemberTransfers(): Promise<StockMemberTransfer[]>;
+  updateStockMemberTransferStatus(id: string, status: string, adminMemo?: string): Promise<StockMemberTransfer | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -155,6 +159,8 @@ export class DatabaseStorage implements IStorage {
     await db.delete(loginLogs).where(eq(loginLogs.userId, id));
     await db.delete(watchlist).where(eq(watchlist.userId, id));
     await db.delete(transferRequests).where(eq(transferRequests.userId, id));
+    await db.delete(stockMemberTransfers).where(eq(stockMemberTransfers.fromUserId, id));
+    await db.delete(stockMemberTransfers).where(eq(stockMemberTransfers.toUserId, id));
     // 채팅방에 속한 메시지 먼저 삭제
     const rooms = await db.select().from(chatRooms).where(eq(chatRooms.userId, id));
     for (const room of rooms) {
@@ -361,6 +367,31 @@ export class DatabaseStorage implements IStorage {
     for (let i = 0; i < ids.length; i++) {
       await db.update(domainFallbackUrls).set({ priority: i + 1 }).where(eq(domainFallbackUrls.id, ids[i]));
     }
+  }
+
+  async createStockMemberTransfer(data: InsertStockMemberTransfer): Promise<StockMemberTransfer> {
+    const [item] = await db.insert(stockMemberTransfers).values(data).returning();
+    return item;
+  }
+
+  async getStockMemberTransfersByFromUserId(userId: string): Promise<StockMemberTransfer[]> {
+    return db.select().from(stockMemberTransfers)
+      .where(eq(stockMemberTransfers.fromUserId, userId))
+      .orderBy(desc(stockMemberTransfers.createdAt));
+  }
+
+  async getAllStockMemberTransfers(): Promise<StockMemberTransfer[]> {
+    return db.select().from(stockMemberTransfers).orderBy(desc(stockMemberTransfers.createdAt));
+  }
+
+  async updateStockMemberTransferStatus(id: string, status: string, adminMemo?: string): Promise<StockMemberTransfer | undefined> {
+    const updateData: any = { status };
+    if (adminMemo !== undefined) updateData.adminMemo = adminMemo;
+    if (status === "approved" || status === "rejected") {
+      updateData.processedAt = new Date();
+    }
+    const [item] = await db.update(stockMemberTransfers).set(updateData).where(eq(stockMemberTransfers.id, id)).returning();
+    return item;
   }
 }
 
