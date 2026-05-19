@@ -2748,6 +2748,7 @@ export default function DemoAdminPage() {
                     </Button>
                   )}
                   <Badge variant="outline" className="shrink-0 border-gray-200 text-gray-500">{filteredTransfers.length}건</Badge>
+                  <Badge variant="outline" className="shrink-0 border-blue-200 text-blue-600 bg-blue-50">총 {filteredTransfers.reduce((sum, t) => sum + t.quantity, 0).toLocaleString()}주</Badge>
                 </div>
 
                 {/* 일괄 처리 액션바 */}
