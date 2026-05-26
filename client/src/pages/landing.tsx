@@ -1751,7 +1751,6 @@ function Footer() {
         <div className="text-[11px] text-[#999] leading-relaxed mb-3 space-y-0.5">
           <p>상호명: (주)증권플러스비상장 &nbsp;|&nbsp; 대표이사: 오경석</p>
           <p>사업자등록번호: 119-86-54986 &nbsp;|&nbsp; 통신판매업신고번호: 2026-서울강남-0000</p>
-          <p>거래소: <a href="tel:07080986357" className="hover:text-[#E8344E]">070-8098-6357</a> &nbsp;|&nbsp; 운영시간: 평일 09:00 ~ 18:00</p>
           <p>주소: 서울특별시 서초구 강남대로 369, 15층</p>
           <p>이메일: support@ustockplus.com</p>
         </div>
