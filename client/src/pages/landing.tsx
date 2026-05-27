@@ -437,12 +437,12 @@ function Header({ user, searchQuery, onSearchChange, onSearchFocus }: {
             </a>
           ))}
           <Link href="/my-stocks">
-            <span className="inline-block text-sm text-[#E8344E] font-bold py-2 cursor-pointer" data-testid="link-mobile-nav-my-stocks">
+            <span className="block text-sm text-[#E8344E] font-bold py-2 cursor-pointer" data-testid="link-mobile-nav-my-stocks">
               공모주 마이페이지
             </span>
           </Link>
           <Link href="/chat">
-            <span className="inline-block text-sm text-[#E8344E] font-bold py-2 cursor-pointer" data-testid="link-mobile-nav-chat">
+            <span className="block text-sm text-[#E8344E] font-bold py-2 cursor-pointer" data-testid="link-mobile-nav-chat">
               상담문의하기
             </span>
           </Link>
