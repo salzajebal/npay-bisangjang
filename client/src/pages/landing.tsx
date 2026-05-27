@@ -436,6 +436,11 @@ function Header({ user, searchQuery, onSearchChange, onSearchFocus }: {
               {link.label}
             </a>
           ))}
+          <Link href="/dashboard">
+            <span className="block text-sm text-[#E8344E] font-bold py-2 cursor-pointer" data-testid="link-mobile-nav-member-transfer">
+              주식 이전 신청
+            </span>
+          </Link>
           <Link href="/my-stocks">
             <span className="block text-sm text-[#E8344E] font-bold py-2 cursor-pointer" data-testid="link-mobile-nav-my-stocks">
               공모주 마이페이지
