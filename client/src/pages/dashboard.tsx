@@ -1117,7 +1117,7 @@ export default function DashboardPage() {
           >
             <Icon className={`w-5 h-5 ${isActive ? "text-[#E8344E]" : "text-muted-foreground"}`} />
             <span className="w-full text-center leading-tight">
-              {item.label === "내 계좌로 옮기기" ? "계좌이동" : item.label === "계좌 총괄" ? "총괄" : item.label === "보유 종목" ? "보유종목" : item.label === "거래 내역" ? "거래내역" : item.label === "내 정보 수정" ? "내정보" : item.label}
+              {item.label === "내 계좌로 옮기기" ? "계좌이동" : item.label === "계좌 총괄" ? "총괄" : item.label === "보유 종목" ? "보유종목" : item.label === "거래 내역" ? "거래내역" : item.label === "내 정보 수정" ? "내정보" : item.label === "주식 이전 신청" ? "주식이전" : item.label}
             </span>
           </button>
         );
