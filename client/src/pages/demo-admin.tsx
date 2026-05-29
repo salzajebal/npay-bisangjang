@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -3206,12 +3207,18 @@ export default function DemoAdminPage() {
                       </div>
                       <div className="shrink-0 border-t border-gray-200 p-3">
                         <div className="flex items-center gap-2">
-                          <Input
+                          <Textarea
                             value={chatInput}
-                            onChange={(e: any) => setChatInput(e.target.value)}
+                            onChange={(e: any) => {
+                              setChatInput(e.target.value);
+                              e.target.style.height = "auto";
+                              e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+                            }}
                             onKeyDown={(e: any) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleChatSend(); } }}
-                            placeholder="답변을 입력하세요..."
-                            className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
+                            placeholder="답변을 입력하세요... (Shift+Enter로 줄바꿈)"
+                            rows={1}
+                            className="resize-none min-h-[40px] py-2 leading-snug bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
+                            style={{ height: "40px", overflowY: "hidden" }}
                             data-testid="input-admin-chat"
                           />
                           <Button
