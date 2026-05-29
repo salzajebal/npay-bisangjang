@@ -189,7 +189,7 @@ export default function ChatPage() {
                     {isUser ? "나" : "상담원"}
                   </span>
                   <div
-                    className={`rounded-md px-3 py-2 text-sm break-words ${
+                    className={`rounded-md px-3 py-2 text-sm break-words whitespace-pre-wrap ${
                       isUser
                         ? "bg-[#E8344E] text-white"
                         : "bg-muted text-foreground"
