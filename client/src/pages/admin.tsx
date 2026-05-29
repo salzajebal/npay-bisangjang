@@ -1160,136 +1160,7 @@ function copyUserInfo(user: User, toast: any) {
   });
 }
 
-type DistributorInfo = { id: string; username: string; name: string; managerCode: string; createdAt: string };
-
-function DistributorSection() {
-  const { toast } = useToast();
-  const [form, setForm] = useState({ username: "", password: "", name: "", managerCode: "" });
-  const [editId, setEditId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", managerCode: "", password: "" });
-
-  const { data: list = [], isLoading } = useQuery<DistributorInfo[]>({ queryKey: ["/api/admin/distributors"] });
-
-  const createMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/admin/distributors", form),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/admin/distributors"] }); setForm({ username: "", password: "", name: "", managerCode: "" }); toast({ title: "총판 계정 생성 완료" }); },
-    onError: (e: any) => toast({ title: "생성 실패", description: e.message, variant: "destructive" }),
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => apiRequest("PATCH", `/api/admin/distributors/${id}`, data),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/admin/distributors"] }); setEditId(null); toast({ title: "수정 완료" }); },
-    onError: (e: any) => toast({ title: "수정 실패", description: e.message, variant: "destructive" }),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/distributors/${id}`),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/admin/distributors"] }); toast({ title: "총판 삭제 완료" }); },
-    onError: (e: any) => toast({ title: "삭제 실패", description: e.message, variant: "destructive" }),
-  });
-
-  const inputCls = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E8344E]/30 focus:border-[#E8344E] bg-white";
-
-  return (
-    <>
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-gray-800">총판 관리</h2>
-        <Badge variant="outline" className="border-gray-200 text-gray-500">{list.length}개</Badge>
-      </div>
-
-      {/* 생성 폼 */}
-      <Card className="p-5 bg-white border-gray-200">
-        <h3 className="font-semibold text-gray-700 mb-3 text-sm">신규 총판 계정 추가</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
-          <div>
-            <label className="text-xs text-gray-500 block mb-1">아이디</label>
-            <input className={inputCls} placeholder="총판 아이디" value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} data-testid="input-dist-username" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 block mb-1">비밀번호</label>
-            <input className={inputCls} type="password" placeholder="비밀번호" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} data-testid="input-dist-password" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 block mb-1">이름</label>
-            <input className={inputCls} placeholder="총판 이름" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} data-testid="input-dist-name" />
-          </div>
-          <div>
-            <label className="text-xs text-gray-500 block mb-1">담당자 코드</label>
-            <input className={inputCls} placeholder="예: ABC123" value={form.managerCode} onChange={e => setForm(f => ({ ...f, managerCode: e.target.value }))} data-testid="input-dist-code" />
-          </div>
-        </div>
-        <Button
-          className="bg-[#E8344E] hover:bg-[#c9293f] text-white"
-          onClick={() => createMutation.mutate()}
-          disabled={!form.username || !form.password || !form.name || !form.managerCode || createMutation.isPending}
-          data-testid="button-create-distributor"
-        >
-          <Plus className="w-4 h-4 mr-1" />총판 추가
-        </Button>
-      </Card>
-
-      {/* 총판 목록 */}
-      {isLoading ? (
-        <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-16 w-full bg-gray-200" />)}</div>
-      ) : list.length === 0 ? (
-        <Card className="p-12 text-center bg-white border-gray-200">
-          <Users className="w-10 h-10 mx-auto mb-3 opacity-20 text-gray-400" />
-          <p className="font-medium text-gray-500">등록된 총판이 없습니다</p>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {list.map(d => (
-            <Card key={d.id} className="p-4 bg-white border-gray-200" data-testid={`row-distributor-${d.id}`}>
-              {editId === d.id ? (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="text-xs text-gray-500 block mb-1">이름</label>
-                      <input className={inputCls} value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500 block mb-1">담당자 코드</label>
-                      <input className={inputCls} value={editForm.managerCode} onChange={e => setEditForm(f => ({ ...f, managerCode: e.target.value }))} />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-500 block mb-1">새 비밀번호 (선택)</label>
-                      <input className={inputCls} type="password" placeholder="변경 시 입력" value={editForm.password} onChange={e => setEditForm(f => ({ ...f, password: e.target.value }))} />
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" className="bg-[#E8344E] hover:bg-[#c9293f] text-white" onClick={() => updateMutation.mutate({ id: d.id, data: editForm })} disabled={updateMutation.isPending}>저장</Button>
-                    <Button size="sm" variant="outline" onClick={() => setEditId(null)}>취소</Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-[#222]">{d.name}</span>
-                      <Badge variant="outline" className="border-[#E8344E]/40 text-[#E8344E] bg-[#E8344E]/5 font-mono text-xs">{d.managerCode}</Badge>
-                    </div>
-                    <p className="text-xs text-gray-400 mt-0.5">아이디: {d.username} · 생성: {new Date(d.createdAt).toLocaleDateString("ko-KR")}</p>
-                    <a href="/distributor" target="_blank" className="text-xs text-blue-500 hover:underline mt-0.5 inline-block">총판 페이지 열기 →</a>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="border-gray-200" onClick={() => { setEditId(d.id); setEditForm({ name: d.name, managerCode: d.managerCode, password: "" }); }} data-testid={`button-edit-distributor-${d.id}`}>
-                      <Pencil className="w-3 h-3 mr-1" />수정
-                    </Button>
-                    <Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" onClick={() => { if (confirm(`'${d.name}' 총판을 삭제하시겠습니까?`)) deleteMutation.mutate(d.id); }} disabled={deleteMutation.isPending} data-testid={`button-delete-distributor-${d.id}`}>
-                      <Trash2 className="w-3 h-3 mr-1" />삭제
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
-      )}
-    </>
-  );
-}
-
-type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "member-transfers" | "stocks" | "chat" | "groups" | "fallbacks" | "logs" | "ipblock" | "distributors";
+type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "member-transfers" | "stocks" | "chat" | "groups" | "fallbacks" | "logs" | "ipblock";
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "대시보드", icon: LayoutDashboard },
@@ -1299,7 +1170,6 @@ const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashbo
   { id: "member-transfers", label: "주식 이전 관리", icon: Send },
   { id: "stocks", label: "종목 관리", icon: Package },
   { id: "chat", label: "1:1 상담", icon: MessageSquare },
-  { id: "distributors", label: "총판 관리", icon: Users },
   { id: "groups", label: "도메인 그룹", icon: Globe },
   { id: "fallbacks", label: "도메인 대체", icon: ShieldAlert },
   { id: "logs", label: "접속 로그", icon: Activity },
@@ -1310,7 +1180,7 @@ export default function AdminPage() {
   const [, setLocation] = useLocation();
   const getHashSection = (): AdminSection => {
     const hash = window.location.hash.replace("#", "");
-    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "member-transfers", "stocks", "chat", "groups", "fallbacks", "logs", "ipblock", "distributors"];
+    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "member-transfers", "stocks", "chat", "groups", "fallbacks", "logs", "ipblock"];
     return valid.includes(hash as AdminSection) ? (hash as AdminSection) : "dashboard";
   };
 
@@ -4209,10 +4079,6 @@ export default function AdminPage() {
                 );
               })()}
             </>
-          )}
-
-          {activeSection === "distributors" && (
-            <DistributorSection />
           )}
 
           {activeSection === "ipblock" && (

@@ -18,7 +18,6 @@ import IPOCalendarPage from "@/pages/ipo-calendar";
 import AdminManualPage from "@/pages/admin-manual";
 import TestAdminPage from "@/pages/test-admin";
 import StockDetailPage from "@/pages/stock-detail";
-import DistributorPage from "@/pages/distributor";
 import { useEffect } from "react";
 
 function ServiceWorkerProvider() {
@@ -64,7 +63,6 @@ function Router() {
       <Route path="/test" component={TestAdminPage} />
       <Route path="/stock/:name" component={StockDetailPage} />
       <Route path="/chat" component={ChatPage} />
-      <Route path="/distributor" component={DistributorPage} />
       <Route component={NotFound} />
     </Switch>
   );

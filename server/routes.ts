@@ -16,7 +16,6 @@ const PgSession = connectPg(session);
 declare module "express-session" {
   interface SessionData {
     userId: string;
-    distributorId: string;
   }
 }
 
@@ -1696,98 +1695,6 @@ export async function registerRoutes(
   });
 
   registerDemoRoutes(app);
-
-  // ── 총판(Distributor) 인증 + 데이터 라우트 ──────────────────────────────
-
-  const requireDistributor = (req: any, res: any, next: any) => {
-    if (!req.session.distributorId) return res.status(401).json({ message: "총판 로그인이 필요합니다" });
-    next();
-  };
-
-  app.post("/api/distributor/login", async (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) return res.status(400).json({ message: "아이디와 비밀번호를 입력해주세요" });
-    const distributor = await storage.getDistributorByUsername(username);
-    if (!distributor) return res.status(401).json({ message: "아이디 또는 비밀번호가 올바르지 않습니다" });
-    const valid = await bcrypt.compare(password, distributor.password);
-    if (!valid) return res.status(401).json({ message: "아이디 또는 비밀번호가 올바르지 않습니다" });
-    req.session.distributorId = distributor.id;
-    const { password: _, ...safe } = distributor;
-    return res.json(safe);
-  });
-
-  app.post("/api/distributor/logout", (req, res) => {
-    req.session.distributorId = undefined as any;
-    res.json({ message: "로그아웃 되었습니다" });
-  });
-
-  app.get("/api/distributor/me", requireDistributor, async (req, res) => {
-    const distributor = await storage.getDistributorById(req.session.distributorId!);
-    if (!distributor) return res.status(404).json({ message: "총판 계정을 찾을 수 없습니다" });
-    const { password: _, ...safe } = distributor;
-    return res.json(safe);
-  });
-
-  app.get("/api/distributor/members", requireDistributor, async (req, res) => {
-    const distributor = await storage.getDistributorById(req.session.distributorId!);
-    if (!distributor) return res.status(404).json({ message: "총판 계정을 찾을 수 없습니다" });
-    const allUsers = await storage.getAllUsers();
-    const members = allUsers
-      .filter(u => u.managerCode === distributor.managerCode)
-      .map(u => {
-        const { password, plainPassword, ...safe } = u;
-        return safe;
-      });
-    return res.json(members);
-  });
-
-  app.get("/api/distributor/members/:id/transactions", requireDistributor, async (req, res) => {
-    const distributor = await storage.getDistributorById(req.session.distributorId!);
-    if (!distributor) return res.status(404).json({ message: "총판 계정을 찾을 수 없습니다" });
-    const member = await storage.getUser(req.params.id);
-    if (!member || member.managerCode !== distributor.managerCode) {
-      return res.status(403).json({ message: "접근 권한이 없습니다" });
-    }
-    const txs = await storage.getTransactionsByUserId(req.params.id);
-    return res.json(txs);
-  });
-
-  // ── 어드민 총판 관리 ────────────────────────────────────────────────────
-
-  app.get("/api/admin/distributors", requireAdmin, async (_req, res) => {
-    const list = await storage.getAllDistributors();
-    return res.json(list.map(d => { const { password: _, ...safe } = d; return safe; }));
-  });
-
-  app.post("/api/admin/distributors", requireAdmin, async (req, res) => {
-    const { username, password, name, managerCode } = req.body;
-    if (!username || !password || !name || !managerCode) {
-      return res.status(400).json({ message: "모든 필드를 입력해주세요" });
-    }
-    const existing = await storage.getDistributorByUsername(username);
-    if (existing) return res.status(409).json({ message: "이미 사용 중인 아이디입니다" });
-    const hashed = await bcrypt.hash(password, 10);
-    const d = await storage.createDistributor({ username, password: hashed, name, managerCode });
-    const { password: _, ...safe } = d;
-    return res.status(201).json(safe);
-  });
-
-  app.patch("/api/admin/distributors/:id", requireAdmin, async (req, res) => {
-    const { name, managerCode, password } = req.body;
-    const updateData: any = {};
-    if (name) updateData.name = name;
-    if (managerCode) updateData.managerCode = managerCode;
-    if (password) updateData.password = await bcrypt.hash(password, 10);
-    const d = await storage.updateDistributor(req.params.id, updateData);
-    if (!d) return res.status(404).json({ message: "총판을 찾을 수 없습니다" });
-    const { password: _, ...safe } = d;
-    return res.json(safe);
-  });
-
-  app.delete("/api/admin/distributors/:id", requireAdmin, async (req, res) => {
-    await storage.deleteDistributor(req.params.id);
-    return res.json({ message: "삭제되었습니다" });
-  });
 
   app.get("/go", async (_req, res) => {
     try {

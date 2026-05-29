@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, type LoginLog, type DomainFallbackUrl, type InsertDomainFallbackUrl, type BlockedIp, type StockMemberTransfer, type InsertStockMemberTransfer, type Distributor, type InsertDistributor, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups, loginLogs, domainFallbackUrls, blockedIps, stockMemberTransfers, distributors } from "@shared/schema";
+import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, type LoginLog, type DomainFallbackUrl, type InsertDomainFallbackUrl, type BlockedIp, type StockMemberTransfer, type InsertStockMemberTransfer, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups, loginLogs, domainFallbackUrls, blockedIps, stockMemberTransfers } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, asc } from "drizzle-orm";
 
@@ -64,12 +64,6 @@ export interface IStorage {
   getStockMemberTransfersByFromUserId(userId: string): Promise<StockMemberTransfer[]>;
   getAllStockMemberTransfers(): Promise<StockMemberTransfer[]>;
   updateStockMemberTransferStatus(id: string, status: string, adminMemo?: string): Promise<StockMemberTransfer | undefined>;
-  createDistributor(data: InsertDistributor): Promise<Distributor>;
-  getDistributorByUsername(username: string): Promise<Distributor | undefined>;
-  getDistributorById(id: string): Promise<Distributor | undefined>;
-  getAllDistributors(): Promise<Distributor[]>;
-  deleteDistributor(id: string): Promise<void>;
-  updateDistributor(id: string, data: Partial<Pick<Distributor, "name" | "managerCode" | "password">>): Promise<Distributor | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -398,34 +392,6 @@ export class DatabaseStorage implements IStorage {
     }
     const [item] = await db.update(stockMemberTransfers).set(updateData).where(eq(stockMemberTransfers.id, id)).returning();
     return item;
-  }
-
-  async createDistributor(data: InsertDistributor): Promise<Distributor> {
-    const [d] = await db.insert(distributors).values(data).returning();
-    return d;
-  }
-
-  async getDistributorByUsername(username: string): Promise<Distributor | undefined> {
-    const [d] = await db.select().from(distributors).where(eq(distributors.username, username));
-    return d;
-  }
-
-  async getDistributorById(id: string): Promise<Distributor | undefined> {
-    const [d] = await db.select().from(distributors).where(eq(distributors.id, id));
-    return d;
-  }
-
-  async getAllDistributors(): Promise<Distributor[]> {
-    return db.select().from(distributors).orderBy(asc(distributors.createdAt));
-  }
-
-  async deleteDistributor(id: string): Promise<void> {
-    await db.delete(distributors).where(eq(distributors.id, id));
-  }
-
-  async updateDistributor(id: string, data: Partial<Pick<Distributor, "name" | "managerCode" | "password">>): Promise<Distributor | undefined> {
-    const [d] = await db.update(distributors).set(data).where(eq(distributors.id, id)).returning();
-    return d;
   }
 }
 
