@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, Redirect } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { MessageSquare, Send, ArrowLeft, Loader2 } from "lucide-react";
@@ -211,12 +211,19 @@ export default function ChatPage() {
 
       <div className="shrink-0 border-t bg-background p-3" data-testid="chat-input-area">
         <div className="flex items-center gap-2 max-w-3xl mx-auto">
-          <Input
+          <Textarea
             value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
+            onChange={(e) => {
+              setInputText(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
+            }}
             onKeyDown={handleKeyDown}
-            placeholder="메시지를 입력하세요..."
+            placeholder="메시지를 입력하세요... (Shift+Enter로 줄바꿈)"
             disabled={!wsConnected}
+            rows={1}
+            className="resize-none min-h-[40px] py-2 leading-snug"
+            style={{ height: "40px", overflowY: "hidden" }}
             data-testid="input-chat-message"
           />
           <Button
