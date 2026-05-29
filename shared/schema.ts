@@ -261,6 +261,19 @@ export const KOREAN_BANKS = [
   "유진증권",
 ] as const;
 
+export const distributors = pgTable("distributors", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  name: text("name").notNull(),
+  managerCode: text("manager_code").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertDistributorSchema = createInsertSchema(distributors).omit({ id: true, createdAt: true });
+export type Distributor = typeof distributors.$inferSelect;
+export type InsertDistributor = z.infer<typeof insertDistributorSchema>;
+
 export const blockedIps = pgTable("blocked_ips", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   ip: text("ip").notNull().unique(),
