@@ -44,15 +44,9 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Serve uploaded chat images
+  // Serve uploaded chat images (static - no auth needed)
   const express = (await import("express")).default;
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-
-  app.post("/api/chat/upload", chatUpload.single("image"), (req: any, res: any) => {
-    if (!req.session?.userId) return res.status(401).json({ message: "로그인이 필요합니다" });
-    if (!req.file) return res.status(400).json({ message: "파일이 없습니다" });
-    return res.json({ url: `/uploads/chat/${req.file.filename}` });
-  });
 
   app.use(
     session({
@@ -70,6 +64,17 @@ export async function registerRoutes(
       },
     })
   );
+
+  // Chat image upload
+  app.post("/api/chat/upload", (req: any, res: any, next: any) => {
+    chatUpload.single("image")(req, res, (err: any) => {
+      if (err) {
+        return res.status(400).json({ message: err.message || "파일 업로드 오류" });
+      }
+      if (!req.file) return res.status(400).json({ message: "파일이 없습니다" });
+      return res.json({ url: `/uploads/chat/${req.file.filename}` });
+    });
+  });
 
   // IP block middleware
   app.use(async (req: any, res: any, next: any) => {
