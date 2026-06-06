@@ -21,7 +21,7 @@ import {
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
   Eye, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
   CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu, Plus, BookOpen, Copy,
-  Bell, BellOff, Globe, Activity, ShieldAlert, GripVertical, ExternalLink, ToggleLeft, ToggleRight, Loader2, Ban, Shield,
+  Bell, BellOff, Globe, Activity, ShieldAlert, GripVertical, ExternalLink, ToggleLeft, ToggleRight, Loader2, Ban, Shield, ImageIcon,
 } from "lucide-react";
 
 const formatPct = (n: number) =>
@@ -1775,6 +1775,28 @@ export default function AdminPage() {
     setChatInput("");
   };
 
+  const [chatImageUploading, setChatImageUploading] = useState(false);
+  const adminChatImageRef = useRef<HTMLInputElement>(null);
+
+  const handleChatImageUpload = async (file: File) => {
+    if (!chatWsRef.current || !selectedChatRoom) return;
+    setChatImageUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch("/api/chat/upload", { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) throw new Error();
+      const { url } = await res.json();
+      chatWsRef.current.send(JSON.stringify({ type: "join", roomId: selectedChatRoom }));
+      chatWsRef.current.send(JSON.stringify({ type: "message", roomId: selectedChatRoom, message: `[img]${url}` }));
+    } catch {
+      toast({ title: "이미지 업로드 실패", description: "다시 시도해주세요.", variant: "destructive" });
+    } finally {
+      setChatImageUploading(false);
+      if (adminChatImageRef.current) adminChatImageRef.current.value = "";
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -3233,8 +3255,12 @@ export default function AdminPage() {
                                   <span className="text-xs text-gray-400 px-1">
                                     {isAdmin ? "상담원" : ((chatRooms || []).find((r: any) => r.id === selectedChatRoom)?.userName || "회원")}
                                   </span>
-                                  <div className={`rounded-md px-3 py-2 text-sm break-words ${isAdmin ? "bg-[#E8344E] text-white" : "bg-gray-200 text-gray-700"}`}>
-                                    {msg.message}
+                                  <div className={`rounded-md px-3 py-2 text-sm break-words ${msg.message.startsWith("[img]") ? "p-1" : ""} ${isAdmin ? "bg-[#E8344E] text-white" : "bg-gray-200 text-gray-700"}`}>
+                                    {msg.message.startsWith("[img]") ? (
+                                      <img src={msg.message.slice(5)} alt="이미지" className="max-w-full max-h-56 rounded cursor-pointer" onClick={() => window.open(msg.message.slice(5), "_blank")} />
+                                    ) : (
+                                      <span className="whitespace-pre-wrap">{msg.message}</span>
+                                    )}
                                   </div>
                                   <span className="text-[11px] text-gray-400 px-1">
                                     {new Date(msg.createdAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
@@ -3248,6 +3274,28 @@ export default function AdminPage() {
                       </div>
                       <div className="shrink-0 border-t border-gray-200 p-3">
                         <div className="flex items-center gap-2">
+                          <input
+                            ref={adminChatImageRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e: any) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleChatImageUpload(file);
+                            }}
+                            data-testid="input-admin-chat-image-file"
+                          />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => adminChatImageRef.current?.click()}
+                            disabled={chatImageUploading}
+                            className="shrink-0 text-gray-500 hover:text-[#E8344E]"
+                            data-testid="button-admin-attach-image"
+                            title="이미지 첨부"
+                          >
+                            {chatImageUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                          </Button>
                           <Textarea
                             value={chatInput}
                             onChange={(e: any) => {

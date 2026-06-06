@@ -6,17 +6,36 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
-import { MessageSquare, Send, ArrowLeft, Loader2 } from "lucide-react";
+import { MessageSquare, Send, ArrowLeft, Loader2, ImageIcon } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import type { User, ChatRoom, ChatMessage } from "@shared/schema";
+
+function renderMessage(text: string) {
+  if (text.startsWith("[img]")) {
+    const url = text.slice(5);
+    return (
+      <img
+        src={url}
+        alt="이미지"
+        className="max-w-full max-h-56 rounded cursor-pointer"
+        onClick={() => window.open(url, "_blank")}
+      />
+    );
+  }
+  return <span className="whitespace-pre-wrap">{text}</span>;
+}
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
   const [wsConnected, setWsConnected] = useState(false);
   const [roomId, setRoomId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const { data: authData, isLoading: authLoading } = useQuery<{ user: User } | null>({
     queryKey: ["/api/auth/me"],
@@ -101,6 +120,28 @@ export default function ChatPage() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    }
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!wsRef.current || !roomId) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      const res = await fetch("/api/chat/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error();
+      const { url } = await res.json();
+      wsRef.current.send(JSON.stringify({ type: "message", roomId, message: `[img]${url}` }));
+    } catch {
+      toast({ title: "이미지 업로드 실패", description: "다시 시도해주세요.", variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
     }
   };
 
@@ -189,14 +230,16 @@ export default function ChatPage() {
                     {isUser ? "나" : "상담원"}
                   </span>
                   <div
-                    className={`rounded-md px-3 py-2 text-sm break-words whitespace-pre-wrap ${
+                    className={`rounded-md px-3 py-2 text-sm break-words ${
+                      msg.message.startsWith("[img]") ? "p-1" : ""
+                    } ${
                       isUser
                         ? "bg-[#E8344E] text-white"
                         : "bg-muted text-foreground"
                     }`}
                     data-testid={`chat-bubble-${msg.id}`}
                   >
-                    {msg.message}
+                    {renderMessage(msg.message)}
                   </div>
                   <span className="text-[11px] text-muted-foreground px-1" data-testid={`chat-time-${msg.id}`}>
                     {formatTime(msg.createdAt)}
@@ -211,6 +254,28 @@ export default function ChatPage() {
 
       <div className="shrink-0 border-t bg-background p-3" data-testid="chat-input-area">
         <div className="flex items-center gap-2 max-w-3xl mx-auto">
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImageUpload(file);
+            }}
+            data-testid="input-chat-image-file"
+          />
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => imageInputRef.current?.click()}
+            disabled={!wsConnected || uploading}
+            className="shrink-0 text-gray-500 hover:text-[#E8344E]"
+            data-testid="button-attach-image"
+            title="이미지 첨부"
+          >
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+          </Button>
           <Textarea
             value={inputText}
             onChange={(e) => {

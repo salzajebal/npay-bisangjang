@@ -10,6 +10,27 @@ import bcrypt from "bcrypt";
 import { WebSocketServer, WebSocket } from "ws";
 import { log } from "./index";
 import { registerDemoRoutes } from "./demo-routes";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+const uploadDir = path.join(process.cwd(), "uploads", "chat");
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+const chatUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname) || ".jpg";
+      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+    },
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("이미지 파일만 업로드 가능합니다") as any, false);
+  },
+});
 
 const PgSession = connectPg(session);
 
@@ -23,6 +44,16 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Serve uploaded chat images
+  const express = (await import("express")).default;
+  app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
+  app.post("/api/chat/upload", chatUpload.single("image"), (req: any, res: any) => {
+    if (!req.session?.userId) return res.status(401).json({ message: "로그인이 필요합니다" });
+    if (!req.file) return res.status(400).json({ message: "파일이 없습니다" });
+    return res.json({ url: `/uploads/chat/${req.file.filename}` });
+  });
+
   app.use(
     session({
       store: new PgSession({
