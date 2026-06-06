@@ -227,7 +227,7 @@ export default function ChatPage() {
               >
                 <div className={`max-w-[75%] space-y-1 ${isUser ? "items-end" : "items-start"} flex flex-col`}>
                   <span className="text-xs text-muted-foreground px-1" data-testid={`chat-sender-${msg.id}`}>
-                    {isUser ? "나" : "상담원"}
+                    {isUser ? "회원" : "상담원"}
                   </span>
                   <div
                     className={`rounded-md px-3 py-2 text-sm break-words ${
