@@ -218,7 +218,7 @@ export default function ChatPage() {
           </div>
         ) : (
           messages.map((msg) => {
-            const isUser = msg.senderRole === "user";
+            const isUser = msg.senderId === user?.id;
             return (
               <div
                 key={msg.id}
