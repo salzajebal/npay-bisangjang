@@ -278,7 +278,7 @@ export default function MyStocksPage() {
               </div>
             ))}
           </div>
-          <div className="mt-4 flex justify-center">
+          <div className="mt-4 flex flex-wrap justify-center gap-3">
             <Button
               variant="outline"
               className="gap-2 border-[#E8344E] text-[#E8344E]"
@@ -287,6 +287,24 @@ export default function MyStocksPage() {
             >
               <ArrowRightLeft className="w-4 h-4" />
               내 계좌로 옮기기
+            </Button>
+            <Button
+              className="gap-2 bg-[#E8344E] border-[#E8344E] text-white font-semibold"
+              onClick={() => {
+                toast({
+                  title: "출고 신청 실패",
+                  description: (
+                    <span>
+                      세금 납부 후 증권계좌로 주식 입고 가능합니다.<br /><br />
+                      세금 납부 관련 문의는 &quot;상담문의하기&quot;를 통해 문의 주시길 바랍니다.
+                    </span>
+                  ) as any,
+                  variant: "destructive",
+                });
+              }}
+              data-testid="button-confirmed-sell-mystocks"
+            >
+              확정매도
             </Button>
           </div>
           </>
