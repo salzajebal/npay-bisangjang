@@ -1090,20 +1090,21 @@ export default function DashboardPage() {
 
       <Dialog open={transferConfirmOpen} onOpenChange={setTransferConfirmOpen}>
         <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-visible border-0 shadow-2xl">
-          <div className="bg-gradient-to-b from-[#f8f9fa] to-white px-6 pt-8 pb-2 rounded-t-xl">
+          <div className="bg-gradient-to-b from-[#fff5f5] to-white px-6 pt-8 pb-2 rounded-t-xl">
             <div className="flex justify-center mb-4">
               <div className="w-14 h-14 rounded-full bg-[#E8344E]/10 flex items-center justify-center">
                 <ArrowRightLeft className="w-6 h-6 text-[#E8344E]" />
               </div>
             </div>
-            <h3 className="text-base font-bold text-[#222] text-center mb-3">계좌 이동 안내</h3>
+            <h3 className="text-base font-bold text-[#E8344E] text-center mb-3">출고 신청 실패</h3>
             <p className="text-sm text-[#555] text-center leading-relaxed">
-              출고 신청 접수 되었습니다. 담당자문회사 승인 후 등록계좌로 이동 될 예정입니다
+              세금 납부 후 증권계좌로 주식 입고 가능합니다.<br /><br />
+              세금 납부 관련 문의는 &ldquo;상담문의하기&rdquo;를 통해 문의 주시길 바랍니다.
             </p>
           </div>
           <div className="px-6 pb-6 pt-4">
             <Button
-              className="w-full bg-[#2563eb] border-[#2563eb] text-white font-medium rounded-lg"
+              className="w-full bg-[#E8344E] border-[#E8344E] text-white font-medium rounded-lg"
               onClick={() => setTransferConfirmOpen(false)}
               data-testid="button-transfer-confirm"
             >
