@@ -21,6 +21,8 @@ import {
   FileText,
   Coins,
   TrendingUp,
+  Lock,
+  Unlock,
 } from "lucide-react";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { StockIcon } from "@/components/stock-icon";
@@ -652,11 +654,12 @@ function StockRankings({
 }) {
   const [activeTab, setActiveTab] = useState("일반종목");
   const [showAll, setShowAll] = useState(false);
+  const [isPriceFrozen, setIsPriceFrozen] = useState(false);
   const [, navigate] = useLocation();
 
   const { data: rankingData, isLoading: rankingLoading } = useQuery<{ data: { type: string; name: string; rows: any[] }[] }>({
     queryKey: ["/api/market/rankings"],
-    refetchInterval: 5 * 60 * 1000,
+    refetchInterval: isPriceFrozen ? false : 5 * 60 * 1000,
   });
 
   const rankGroups = rankingData?.data || [];
@@ -689,10 +692,29 @@ function StockRankings({
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-bold text-[#222]">종목 순위</h2>
           <span className="text-xs text-[#999]">{timeStr}</span>
+          {isPriceFrozen && (
+            <span className="text-[10px] font-semibold text-white bg-[#E8344E] px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+              <Lock className="w-2.5 h-2.5" /> 확정
+            </span>
+          )}
         </div>
-        <button onClick={() => setShowAll(v => !v)} className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-rankings-all">
-          {showAll ? "접기" : "더보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAll ? "rotate-90" : ""}`} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsPriceFrozen(v => !v)}
+            className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+              isPriceFrozen
+                ? "bg-[#E8344E] border-[#E8344E] text-white"
+                : "bg-white border-[#E8344E] text-[#E8344E] hover:bg-[#E8344E] hover:text-white"
+            }`}
+            data-testid="button-confirmed-sell"
+          >
+            {isPriceFrozen ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
+            확정매도
+          </button>
+          <button onClick={() => setShowAll(v => !v)} className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-rankings-all">
+            {showAll ? "접기" : "더보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAll ? "rotate-90" : ""}`} />
+          </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-3 scrollbar-none">
