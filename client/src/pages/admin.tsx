@@ -1294,7 +1294,7 @@ export default function AdminPage() {
   const { toast } = useToast();
 
   const { data: authData, isLoading: authLoading } = useQuery<{ user: User } | null>({
-    queryKey: ["/api/auth/me"],
+    queryKey: ["/api/auth/admin-me"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     refetchInterval: 60000,
     staleTime: 30000,
@@ -1644,10 +1644,10 @@ export default function AdminPage() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/auth/logout");
+      await apiRequest("POST", "/api/auth/admin-logout");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/admin-me"] });
       setLocation("/admin/login");
     },
   });

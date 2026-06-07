@@ -37,6 +37,7 @@ const PgSession = connectPg(session);
 declare module "express-session" {
   interface SessionData {
     userId: string;
+    adminUserId: string;
   }
 }
 
@@ -741,11 +742,30 @@ export async function registerRoutes(
       if (user.isFrozen) {
         return res.status(403).json({ message: "계정이 동결되었습니다. 관리자에게 문의하세요." });
       }
-      req.session.userId = user.id;
+      req.session.adminUserId = user.id;
       return res.json({ user: { ...user, password: undefined, plainPassword: undefined } });
     } catch (error) {
       return res.status(400).json({ message: "잘못된 요청입니다" });
     }
+  });
+
+  app.get("/api/auth/admin-me", async (req, res) => {
+    if (!req.session.adminUserId) {
+      return res.status(401).json(null);
+    }
+    const user = await storage.getUser(req.session.adminUserId);
+    if (!user || !user.isAdmin) {
+      return res.status(401).json(null);
+    }
+    return res.json({ user: { ...user, password: undefined, plainPassword: undefined } });
+  });
+
+  app.post("/api/auth/admin-logout", (req, res) => {
+    req.session.adminUserId = undefined as any;
+    req.session.save((err) => {
+      if (err) return res.status(500).json({ message: "로그아웃 실패" });
+      return res.json({ message: "로그아웃 완료" });
+    });
   });
 
   app.post("/api/auth/logout", (req, res) => {
@@ -802,10 +822,10 @@ export async function registerRoutes(
   });
 
   const requireAdmin = async (req: any, res: any, next: any) => {
-    if (!req.session.userId) {
+    if (!req.session.adminUserId) {
       return res.status(401).json({ message: "로그인이 필요합니다" });
     }
-    const user = await storage.getUser(req.session.userId);
+    const user = await storage.getUser(req.session.adminUserId);
     if (!user?.isAdmin) {
       return res.status(403).json({ message: "관리자 권한이 필요합니다" });
     }

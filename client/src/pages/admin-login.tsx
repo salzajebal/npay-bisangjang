@@ -18,7 +18,7 @@ export default function AdminLoginPage() {
   const { toast } = useToast();
 
   const { data: authData } = useQuery<{ user: UserType } | null>({
-    queryKey: ["/api/auth/me"],
+    queryKey: ["/api/auth/admin-me"],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
@@ -34,7 +34,7 @@ export default function AdminLoginPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/admin-me"] });
       setLocation("/admin");
     },
     onError: (error: any) => {

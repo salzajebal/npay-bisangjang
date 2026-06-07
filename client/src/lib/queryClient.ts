@@ -6,7 +6,7 @@ async function throwIfResNotOk(res: Response) {
     if (res.status === 401 || res.status === 403) {
       const isAdminPath = window.location.pathname.startsWith("/admin");
       if (isAdminPath && res.status === 403) {
-        queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/admin-me"] });
         window.location.href = "/admin/login";
         throw new Error("세션이 만료되었습니다. 다시 로그인해주세요.");
       }
