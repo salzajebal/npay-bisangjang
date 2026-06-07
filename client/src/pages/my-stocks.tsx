@@ -474,8 +474,8 @@ export default function MyStocksPage() {
 
       {/* 확정매도 다이얼로그 */}
       <Dialog open={sellDialogOpen} onOpenChange={(v) => { if (!v) { setSellStock(""); setSellQty(""); setFrozenPrices({}); } setSellDialogOpen(v); }}>
-        <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-visible border-0 shadow-2xl">
-          <div className="bg-gradient-to-b from-[#fff0f2] to-white px-6 pt-8 pb-2 rounded-t-xl">
+        <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-hidden border-0 shadow-2xl max-h-[90vh] flex flex-col">
+          <div className="bg-gradient-to-b from-[#fff0f2] to-white px-6 pt-8 pb-2 rounded-t-xl shrink-0">
             <div className="flex justify-center mb-4">
               <div className="w-14 h-14 rounded-full bg-[#E8344E]/10 flex items-center justify-center">
                 <Lock className="w-6 h-6 text-[#E8344E]" />
@@ -484,7 +484,7 @@ export default function MyStocksPage() {
             <h3 className="text-base font-bold text-[#222] text-center mb-1">확정매도</h3>
             <p className="text-xs text-[#999] text-center mb-4">현재 시세로 주식을 매도합니다</p>
           </div>
-          <div className="px-6 pb-6 pt-2 space-y-3">
+          <div className="px-6 pb-6 pt-2 space-y-3 overflow-y-auto">
             {holdings.length > 1 && (
               <div className="space-y-1.5">
                 <Label className="text-xs text-[#555]">종목 선택</Label>
@@ -570,8 +570,8 @@ export default function MyStocksPage() {
       </Dialog>
 
       <Dialog open={transferConfirmOpen} onOpenChange={(v) => { if (!v) { setTransferStock(""); setTransferQuantity(""); } setTransferConfirmOpen(v); }}>
-        <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-visible border-0 shadow-2xl">
-          <div className="bg-gradient-to-b from-[#f8f9fa] to-white px-6 pt-8 pb-2 rounded-t-xl">
+        <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-hidden border-0 shadow-2xl max-h-[90vh] flex flex-col">
+          <div className="bg-gradient-to-b from-[#f8f9fa] to-white px-6 pt-8 pb-2 rounded-t-xl shrink-0">
             <div className="flex justify-center mb-4">
               <div className="w-14 h-14 rounded-full bg-[#E8344E]/10 flex items-center justify-center">
                 <ArrowRightLeft className="w-6 h-6 text-[#E8344E]" />
@@ -580,7 +580,7 @@ export default function MyStocksPage() {
             <h3 className="text-base font-bold text-[#222] text-center mb-1">내 계좌로 옮기기</h3>
             <p className="text-xs text-[#999] text-center mb-4">연동된 증권계좌로 출고 신청합니다</p>
           </div>
-          <div className="px-6 pb-6 pt-2 space-y-3">
+          <div className="px-6 pb-6 pt-2 space-y-3 overflow-y-auto">
             <div className="space-y-1.5">
               <Label className="text-xs text-[#555]">종목 선택</Label>
               <Select value={transferStock} onValueChange={(v) => { setTransferStock(v); setTransferQuantity(""); }}>
