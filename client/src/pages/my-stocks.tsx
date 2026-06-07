@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Package, TrendingUp, TrendingDown, ArrowRightLeft, Clock, CheckCircle2, XCircle, PauseCircle, Lock, Unlock } from "lucide-react";
+import { ArrowLeft, Package, TrendingUp, TrendingDown, ArrowRightLeft, Clock, CheckCircle2, XCircle, PauseCircle, Lock } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { SiteLogoBadge } from "@/components/site-logo";
@@ -45,10 +45,13 @@ export default function MyStocksPage() {
   );
 
   const [priceData, setPriceData] = useState<Record<string, { currentPrice: number; changePercent: number }>>({});
-  const [isPriceFrozen, setIsPriceFrozen] = useState(false);
   const [transferConfirmOpen, setTransferConfirmOpen] = useState(false);
   const [transferStock, setTransferStock] = useState("");
   const [transferQuantity, setTransferQuantity] = useState("");
+  const [sellDialogOpen, setSellDialogOpen] = useState(false);
+  const [sellStock, setSellStock] = useState("");
+  const [sellQty, setSellQty] = useState<string>("");
+  const [frozenPrices, setFrozenPrices] = useState<Record<string, number>>({});
   const { toast } = useToast();
 
   const transferMutation = useMutation({
@@ -93,19 +96,43 @@ export default function MyStocksPage() {
     }
   }
 
-  const stockNames = Array.from(holdingsMap.keys());
   const allTxStockNames = Array.from(new Set(txList.map(tx => tx.stockName)));
   const allStockNamesKey = JSON.stringify(allTxStockNames);
+
+  const sellMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/transactions/sell", {
+        stockName: sellStock,
+        quantity: parseInt(sellQty),
+        pricePerShare: frozenPrices[sellStock] ?? 0,
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "매도 실패");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "확정매도 완료", description: `${sellStock} ${parseInt(sellQty).toLocaleString()}주가 ${(frozenPrices[sellStock] ?? 0).toLocaleString()}원에 매도 처리되었습니다.` });
+      setSellDialogOpen(false);
+      setSellStock("");
+      setSellQty("");
+      setFrozenPrices({});
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions/my"] });
+    },
+    onError: (err: Error) => {
+      toast({ title: "매도 실패", description: err.message, variant: "destructive" });
+    },
+  });
 
   useEffect(() => {
     if (allTxStockNames.length === 0) return;
     fetchStockPrices(allTxStockNames).then(setPriceData);
-    if (isPriceFrozen) return;
     const interval = setInterval(() => {
       fetchStockPrices(allTxStockNames).then(setPriceData);
     }, 60 * 1000);
     return () => clearInterval(interval);
-  }, [allStockNamesKey, isPriceFrozen]);
+  }, [allStockNamesKey]);
 
   if (userLoading) {
     return (
@@ -294,15 +321,19 @@ export default function MyStocksPage() {
               내 계좌로 옮기기
             </Button>
             <Button
-              className={`gap-2 font-semibold border transition-colors ${
-                isPriceFrozen
-                  ? "bg-[#E8344E] border-[#E8344E] text-white"
-                  : "bg-white border-[#E8344E] text-[#E8344E] hover:bg-[#E8344E] hover:text-white"
-              }`}
-              onClick={() => setIsPriceFrozen(v => !v)}
+              className="gap-2 bg-[#E8344E] border-[#E8344E] text-white font-semibold hover:bg-[#c9243d]"
+              onClick={() => {
+                const frozen: Record<string, number> = {};
+                holdings.forEach(h => { frozen[h.name] = h.currentPrice; });
+                setFrozenPrices(frozen);
+                const first = holdings[0];
+                setSellStock(first?.name ?? "");
+                setSellQty(String(first?.qty ?? ""));
+                setSellDialogOpen(true);
+              }}
               data-testid="button-confirmed-sell-mystocks"
             >
-              {isPriceFrozen ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+              <Lock className="w-4 h-4" />
               확정매도
             </Button>
           </div>
@@ -440,6 +471,103 @@ export default function MyStocksPage() {
           )}
         </div>
       </main>
+
+      {/* 확정매도 다이얼로그 */}
+      <Dialog open={sellDialogOpen} onOpenChange={(v) => { if (!v) { setSellStock(""); setSellQty(""); setFrozenPrices({}); } setSellDialogOpen(v); }}>
+        <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-visible border-0 shadow-2xl">
+          <div className="bg-gradient-to-b from-[#fff0f2] to-white px-6 pt-8 pb-2 rounded-t-xl">
+            <div className="flex justify-center mb-4">
+              <div className="w-14 h-14 rounded-full bg-[#E8344E]/10 flex items-center justify-center">
+                <Lock className="w-6 h-6 text-[#E8344E]" />
+              </div>
+            </div>
+            <h3 className="text-base font-bold text-[#222] text-center mb-1">확정매도</h3>
+            <p className="text-xs text-[#999] text-center mb-4">현재 시세로 주식을 매도합니다</p>
+          </div>
+          <div className="px-6 pb-6 pt-2 space-y-3">
+            {holdings.length > 1 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-[#555]">종목 선택</Label>
+                <Select value={sellStock} onValueChange={(v) => { setSellStock(v); setSellQty(String(holdings.find(h => h.name === v)?.qty ?? "")); }}>
+                  <SelectTrigger data-testid="select-sell-stock">
+                    <SelectValue placeholder="매도할 종목을 선택하세요" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {holdings.map((h) => (
+                      <SelectItem key={h.name} value={h.name}>
+                        {h.name} ({h.qty.toLocaleString()}주)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {sellStock && (
+              <div className="bg-[#f8f9fa] rounded-lg p-3 space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-[#999]">확정 매도가</span>
+                  <span className="font-bold text-[#E8344E] tabular-nums">{(frozenPrices[sellStock] ?? 0).toLocaleString()}원</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-[#999]">보유 수량</span>
+                  <span className="tabular-nums">{(holdings.find(h => h.name === sellStock)?.qty ?? 0).toLocaleString()}주</span>
+                </div>
+              </div>
+            )}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-[#555]">매도 수량</Label>
+              <Input
+                type="number"
+                placeholder="수량을 입력하세요"
+                value={sellQty}
+                onChange={(e) => setSellQty(e.target.value)}
+                min={1}
+                max={holdings.find(h => h.name === sellStock)?.qty ?? undefined}
+                data-testid="input-sell-quantity"
+              />
+              {sellStock && (
+                <p className="text-xs text-[#999]">최대 {(holdings.find(h => h.name === sellStock)?.qty ?? 0).toLocaleString()}주</p>
+              )}
+            </div>
+            {sellStock && sellQty && parseInt(sellQty) > 0 && (
+              <div className="bg-[#E8344E]/5 border border-[#E8344E]/20 rounded-lg p-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-[#555] font-medium">총 매도금액</span>
+                  <span className="font-bold text-[#E8344E] tabular-nums">
+                    {((frozenPrices[sellStock] ?? 0) * parseInt(sellQty)).toLocaleString()}원
+                  </span>
+                </div>
+              </div>
+            )}
+            <div className="flex gap-2 pt-1">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setSellDialogOpen(false)}
+                disabled={sellMutation.isPending}
+                data-testid="button-sell-cancel"
+              >
+                취소
+              </Button>
+              <Button
+                className="flex-1 bg-[#E8344E] hover:bg-[#c9243d] text-white font-medium rounded-lg"
+                disabled={
+                  !sellStock ||
+                  !sellQty ||
+                  parseInt(sellQty) <= 0 ||
+                  parseInt(sellQty) > (holdings.find(h => h.name === sellStock)?.qty ?? 0) ||
+                  !(frozenPrices[sellStock] > 0) ||
+                  sellMutation.isPending
+                }
+                onClick={() => sellMutation.mutate()}
+                data-testid="button-sell-confirm"
+              >
+                {sellMutation.isPending ? "처리 중..." : "확정매도"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={transferConfirmOpen} onOpenChange={(v) => { if (!v) { setTransferStock(""); setTransferQuantity(""); } setTransferConfirmOpen(v); }}>
         <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-visible border-0 shadow-2xl">

@@ -1319,6 +1319,63 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/transactions/sell", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "로그인이 필요합니다" });
+    }
+    try {
+      const { stockName, quantity, pricePerShare } = req.body;
+      if (!stockName || typeof stockName !== "string" || !stockName.trim()) {
+        return res.status(400).json({ message: "종목명이 필요합니다" });
+      }
+      const qty = Number(quantity);
+      const price = Number(pricePerShare);
+      if (!Number.isInteger(qty) || qty <= 0) {
+        return res.status(400).json({ message: "수량을 올바르게 입력해주세요" });
+      }
+      if (!price || price <= 0) {
+        return res.status(400).json({ message: "매도가격이 필요합니다" });
+      }
+
+      const transactions = await storage.getTransactionsByUserId(req.session.userId);
+      const isInType = (t: string) => t === "in" || t === "입고";
+      const isOutType = (t: string) => t === "out" || t === "출고" || t === "주식이전" || t === "내 계좌로 옮기기" || t === "확정매도";
+
+      const holdingsMap: Record<string, { qty: number; category: string }> = {};
+      for (const tx of transactions) {
+        const key = tx.stockName;
+        if (!holdingsMap[key]) holdingsMap[key] = { qty: 0, category: tx.category };
+        if (isInType(tx.type)) {
+          holdingsMap[key].qty += tx.quantity;
+        } else if (isOutType(tx.type)) {
+          holdingsMap[key].qty -= tx.quantity;
+        }
+      }
+
+      const holding = holdingsMap[stockName.trim()];
+      if (!holding || holding.qty <= 0) {
+        return res.status(400).json({ message: "보유 중인 종목이 없습니다" });
+      }
+      if (qty > holding.qty) {
+        return res.status(400).json({ message: `보유 수량(${holding.qty}주)을 초과할 수 없습니다` });
+      }
+
+      const tx = await storage.createTransaction({
+        userId: req.session.userId,
+        type: "out",
+        category: holding.category,
+        stockName: stockName.trim(),
+        quantity: qty,
+        pricePerShare: Math.round(price),
+        memo: "확정매도",
+      });
+
+      return res.json(tx);
+    } catch (error) {
+      return res.status(500).json({ message: "매도 처리에 실패했습니다" });
+    }
+  });
+
   app.delete("/api/admin/transfer-requests/:id", requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
