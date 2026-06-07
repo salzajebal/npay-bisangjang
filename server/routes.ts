@@ -1486,15 +1486,16 @@ export async function registerRoutes(
   });
 
   app.get("/api/chat/rooms/:id/messages", async (req, res) => {
-    if (!req.session.userId) {
+    const effectiveUserId = req.session.adminUserId || req.session.userId;
+    if (!effectiveUserId) {
       return res.status(401).json({ message: "로그인이 필요합니다" });
     }
-    const user = await storage.getUser(req.session.userId);
+    const user = await storage.getUser(effectiveUserId);
     if (!user) return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
 
     const rooms = user.isAdmin
       ? await storage.getAllChatRooms()
-      : await storage.getChatRoomsByUserId(req.session.userId);
+      : await storage.getChatRoomsByUserId(effectiveUserId);
 
     const room = rooms.find(r => r.id === req.params.id);
     if (!room) return res.status(403).json({ message: "접근 권한이 없습니다" });
@@ -1518,20 +1519,21 @@ export async function registerRoutes(
 
     const sessionId = sidMatch[1];
     wssSessionStore.get(sessionId, (err: any, sessionData: any) => {
-      if (err || !sessionData || !sessionData.userId) {
+      const effectiveUserId = sessionData?.adminUserId || sessionData?.userId;
+      if (err || !sessionData || !effectiveUserId) {
         socket.destroy();
         return;
       }
 
       wss.handleUpgrade(request, socket, head, (ws) => {
-        (ws as AuthenticatedWebSocket).userId = sessionData.userId;
-        wss.emit("connection", ws, request, sessionData);
+        (ws as AuthenticatedWebSocket).userId = effectiveUserId;
+        wss.emit("connection", ws, request, { ...sessionData, _effectiveUserId: effectiveUserId });
       });
     });
   });
 
   wss.on("connection", async (ws: AuthenticatedWebSocket, _request: any, sessionData: any) => {
-    const userId = sessionData.userId;
+    const userId = sessionData._effectiveUserId || sessionData.adminUserId || sessionData.userId;
     const user = await storage.getUser(userId);
     if (!user) {
       ws.close();
