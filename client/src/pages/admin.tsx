@@ -1795,13 +1795,14 @@ export default function AdminPage() {
     if (!chatWsRef.current || !selectedChatRoom) return;
     setChatImageUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("image", file);
-      const res = await fetch("/api/chat/upload", { method: "POST", body: formData, credentials: "include" });
-      if (!res.ok) throw new Error();
-      const { url } = await res.json();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
       chatWsRef.current.send(JSON.stringify({ type: "join", roomId: selectedChatRoom }));
-      chatWsRef.current.send(JSON.stringify({ type: "message", roomId: selectedChatRoom, message: `[img]${url}` }));
+      chatWsRef.current.send(JSON.stringify({ type: "message", roomId: selectedChatRoom, message: `[img]${dataUrl}` }));
     } catch {
       toast({ title: "이미지 업로드 실패", description: "다시 시도해주세요.", variant: "destructive" });
     } finally {

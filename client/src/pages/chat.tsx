@@ -128,16 +128,13 @@ export default function ChatPage() {
     if (!wsRef.current || !roomId) return;
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("image", file);
-      const res = await fetch("/api/chat/upload", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       });
-      if (!res.ok) throw new Error();
-      const { url } = await res.json();
-      wsRef.current.send(JSON.stringify({ type: "message", roomId, message: `[img]${url}` }));
+      wsRef.current.send(JSON.stringify({ type: "message", roomId, message: `[img]${dataUrl}` }));
     } catch {
       toast({ title: "이미지 업로드 실패", description: "다시 시도해주세요.", variant: "destructive" });
     } finally {
