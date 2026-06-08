@@ -1775,6 +1775,18 @@ export default function AdminPage() {
     setChatInput("");
   };
 
+  const deleteChatMessageMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/chat/messages/${id}`);
+    },
+    onSuccess: (_, id) => {
+      setChatMessages((prev) => prev.filter((m) => m.id !== id));
+    },
+    onError: () => {
+      toast({ title: "삭제 실패", description: "다시 시도해주세요.", variant: "destructive" });
+    },
+  });
+
   const [chatImageUploading, setChatImageUploading] = useState(false);
   const adminChatImageRef = useRef<HTMLInputElement>(null);
 
@@ -3250,17 +3262,28 @@ export default function AdminPage() {
                           chatMessages.filter(m => m.roomId === selectedChatRoom).map((msg: any) => {
                             const isAdmin = msg.senderRole === "admin";
                             return (
-                              <div key={msg.id} className={`flex ${isAdmin ? "justify-end" : "justify-start"}`} data-testid={`admin-chat-msg-${msg.id}`}>
+                              <div key={msg.id} className={`flex group ${isAdmin ? "justify-end" : "justify-start"}`} data-testid={`admin-chat-msg-${msg.id}`}>
                                 <div className={`max-w-[75%] space-y-1 flex flex-col ${isAdmin ? "items-end" : "items-start"}`}>
                                   <span className="text-xs text-gray-400 px-1">
                                     {isAdmin ? "상담원" : ((chatRooms || []).find((r: any) => r.id === selectedChatRoom)?.userName || "회원")}
                                   </span>
-                                  <div className={`rounded-md px-3 py-2 text-sm break-words ${msg.message.startsWith("[img]") ? "p-1" : ""} ${isAdmin ? "bg-[#E8344E] text-white" : "bg-gray-200 text-gray-700"}`}>
-                                    {msg.message.startsWith("[img]") ? (
-                                      <img src={msg.message.slice(5)} alt="이미지" className="max-w-full max-h-56 rounded cursor-pointer" onClick={() => window.open(msg.message.slice(5), "_blank")} />
-                                    ) : (
-                                      <span className="whitespace-pre-wrap">{msg.message}</span>
-                                    )}
+                                  <div className={`flex items-end gap-1.5 ${isAdmin ? "flex-row-reverse" : "flex-row"}`}>
+                                    <div className={`rounded-md px-3 py-2 text-sm break-words ${msg.message.startsWith("[img]") ? "p-1" : ""} ${isAdmin ? "bg-[#E8344E] text-white" : "bg-gray-200 text-gray-700"}`}>
+                                      {msg.message.startsWith("[img]") ? (
+                                        <img src={msg.message.slice(5)} alt="이미지" className="max-w-full max-h-56 rounded cursor-pointer" onClick={() => window.open(msg.message.slice(5), "_blank")} />
+                                      ) : (
+                                        <span className="whitespace-pre-wrap">{msg.message}</span>
+                                      )}
+                                    </div>
+                                    <button
+                                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-red-500 shrink-0"
+                                      onClick={() => { if (window.confirm("이 메시지를 삭제하시겠습니까?")) deleteChatMessageMutation.mutate(msg.id); }}
+                                      disabled={deleteChatMessageMutation.isPending}
+                                      title="메시지 삭제"
+                                      data-testid={`button-delete-chat-msg-${msg.id}`}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
                                   </div>
                                   <span className="text-[11px] text-gray-400 px-1">
                                     {new Date(msg.createdAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}

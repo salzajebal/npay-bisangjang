@@ -42,6 +42,7 @@ export interface IStorage {
   getUnreadCountByRoom(roomId: string): Promise<number>;
   getTotalUnreadCountForAdmin(): Promise<number>;
   markMessagesAsReadByAdmin(roomId: string): Promise<void>;
+  deleteChatMessage(id: number): Promise<void>;
   getAllIpoStocks(): Promise<IpoStock[]>;
   getActiveIpoStocks(): Promise<IpoStock[]>;
   createIpoStock(data: InsertIpoStock): Promise<IpoStock>;
@@ -284,6 +285,10 @@ export class DatabaseStorage implements IStorage {
     await db.update(chatMessages)
       .set({ isReadByAdmin: 1 })
       .where(and(eq(chatMessages.roomId, roomId), eq(chatMessages.senderRole, "user"), eq(chatMessages.isReadByAdmin, 0)));
+  }
+
+  async deleteChatMessage(id: number): Promise<void> {
+    await db.delete(chatMessages).where(eq(chatMessages.id, id));
   }
 
   async getAllIpoStocks(): Promise<IpoStock[]> {

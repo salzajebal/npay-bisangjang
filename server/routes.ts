@@ -1542,6 +1542,13 @@ export async function registerRoutes(
     return res.json({ success: true });
   });
 
+  app.delete("/api/admin/chat/messages/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "잘못된 메시지 ID입니다" });
+    await storage.deleteChatMessage(id);
+    return res.json({ success: true });
+  });
+
   app.get("/api/chat/rooms/:id/messages", async (req, res) => {
     const effectiveUserId = req.session.adminUserId || req.session.userId;
     if (!effectiveUserId) {
