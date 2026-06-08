@@ -1535,6 +1535,7 @@ export default function AdminPage() {
   const [memberTransferAdminMemo, setMemberTransferAdminMemo] = useState<Record<string, string>>({});
   const [memberTransferTab, setMemberTransferTab] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [memberTransferSearch, setMemberTransferSearch] = useState("");
+  const [chatSearch, setChatSearch] = useState("");
 
   const approveMemberTransferMutation = useMutation({
     mutationFn: async ({ id, status, adminMemo }: { id: string; status: string; adminMemo?: string }) => {
@@ -3183,9 +3184,21 @@ export default function AdminPage() {
               </div>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 h-[calc(100vh-200px)] sm:h-[calc(100vh-180px)]">
                 <Card className={`${selectedChatRoom ? "hidden sm:flex" : "flex"} w-full sm:w-72 sm:shrink-0 p-0 overflow-hidden flex-col bg-white border-gray-200`}>
-                  <div className="p-3 border-b border-gray-200">
-                    <h3 className="text-sm font-bold text-gray-900">상담 목록</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">{(chatRooms || []).length}건의 상담</p>
+                  <div className="p-3 border-b border-gray-200 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold text-gray-900">상담 목록</h3>
+                      <p className="text-xs text-gray-500">{(chatRooms || []).length}건</p>
+                    </div>
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                      <Input
+                        className="pl-7 h-7 text-xs bg-gray-50 border-gray-200"
+                        placeholder="이름, 아이디, 담당자코드 검색"
+                        value={chatSearch}
+                        onChange={(e) => setChatSearch(e.target.value)}
+                        data-testid="input-chat-search"
+                      />
+                    </div>
                   </div>
                   <div className="flex-1 overflow-y-auto divide-y divide-gray-200">
                     {chatRoomsLoading ? (
@@ -3195,8 +3208,19 @@ export default function AdminPage() {
                         <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30 text-gray-400" />
                         <p className="text-sm text-gray-500">상담 내역이 없습니다</p>
                       </div>
-                    ) : (
-                      (chatRooms || []).map((room: any) => (
+                    ) : (() => {
+                      const q = chatSearch.trim().toLowerCase();
+                      const filtered = (chatRooms || []).filter((room: any) =>
+                        !q ||
+                        (room.userName || "").toLowerCase().includes(q) ||
+                        (room.userUsername || "").toLowerCase().includes(q) ||
+                        (room.userManagerCode || "").toLowerCase().includes(q)
+                      );
+                      return filtered.length === 0 ? (
+                        <div className="p-8 text-center">
+                          <p className="text-sm text-gray-500">검색 결과가 없습니다</p>
+                        </div>
+                      ) : filtered.map((room: any) => (
                         <div
                           key={room.id}
                           className={`px-3 py-3 cursor-pointer hover-elevate ${selectedChatRoom === room.id ? "bg-[#E8344E]/20" : ""}`}
@@ -3209,7 +3233,12 @@ export default function AdminPage() {
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-medium truncate text-gray-700">{room.userName}</p>
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <p className="text-sm font-medium truncate text-gray-700">{room.userName}</p>
+                                  {room.userManagerCode && (
+                                    <span className="text-[10px] bg-[#E8344E]/10 text-[#E8344E] px-1 py-0.5 rounded font-medium shrink-0">{room.userManagerCode}</span>
+                                  )}
+                                </div>
                                 {room.unreadCount > 0 ? (
                                   <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shrink-0" data-testid={`badge-room-unread-${room.id}`}>
                                     {room.unreadCount > 99 ? "99+" : room.unreadCount}
@@ -3224,8 +3253,8 @@ export default function AdminPage() {
                             </div>
                           </div>
                         </div>
-                      ))
-                    )}
+                      ));
+                    })()}
                   </div>
                 </Card>
                 <Card className={`${!selectedChatRoom ? "hidden sm:flex" : "flex"} flex-1 p-0 overflow-hidden flex-col bg-white border-gray-200`}>

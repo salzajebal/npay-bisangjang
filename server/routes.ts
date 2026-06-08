@@ -1525,6 +1525,7 @@ export async function registerRoutes(
         ...room,
         userName: user?.fullName || "알 수 없음",
         userUsername: user?.username || "unknown",
+        userManagerCode: user?.managerCode || "",
         unreadCount,
       };
     }));
