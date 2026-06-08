@@ -52,6 +52,7 @@ export default function MyStocksPage() {
   const [sellStock, setSellStock] = useState("");
   const [sellQty, setSellQty] = useState<string>("");
   const [frozenPrices, setFrozenPrices] = useState<Record<string, number>>({});
+  const [sellFetchingPrice, setSellFetchingPrice] = useState(false);
   const { toast } = useToast();
 
   const transferMutation = useMutation({
@@ -323,10 +324,30 @@ export default function MyStocksPage() {
             </Button>
             <Button
               className="gap-2 bg-[#E8344E] border-[#E8344E] text-white font-semibold hover:bg-[#c9243d]"
-              onClick={() => {
-                const frozen: Record<string, number> = {};
-                holdings.forEach(h => { frozen[h.name] = h.currentPrice; });
-                setFrozenPrices(frozen);
+              disabled={sellFetchingPrice}
+              onClick={async () => {
+                setSellFetchingPrice(true);
+                try {
+                  const stockNames = holdings.map(h => h.name);
+                  const res = await fetch("/api/stocks/prices", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({ stockNames }),
+                  });
+                  const freshPrices = await res.json();
+                  const frozen: Record<string, number> = {};
+                  holdings.forEach(h => {
+                    frozen[h.name] = (freshPrices[h.name]?.currentPrice || h.currentPrice) as number;
+                  });
+                  setFrozenPrices(frozen);
+                } catch {
+                  const frozen: Record<string, number> = {};
+                  holdings.forEach(h => { frozen[h.name] = h.currentPrice; });
+                  setFrozenPrices(frozen);
+                } finally {
+                  setSellFetchingPrice(false);
+                }
                 const first = holdings[0];
                 setSellStock(first?.name ?? "");
                 setSellQty(String(first?.qty ?? ""));
@@ -335,7 +356,7 @@ export default function MyStocksPage() {
               data-testid="button-confirmed-sell-mystocks"
             >
               <Lock className="w-4 h-4" />
-              확정매도
+              {sellFetchingPrice ? "가격 확인 중..." : "확정매도"}
             </Button>
           </div>
           </>

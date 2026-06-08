@@ -1328,10 +1328,11 @@ export async function registerRoutes(
         return res.status(400).json({ message: "종목명이 필요합니다" });
       }
       const qty = Number(quantity);
-      const price = Number(pricePerShare);
       if (!Number.isInteger(qty) || qty <= 0) {
         return res.status(400).json({ message: "수량을 올바르게 입력해주세요" });
       }
+      const livePrice = await getServerStockPrice(stockName.trim());
+      const price = livePrice ?? Number(pricePerShare);
       if (!price || price <= 0) {
         return res.status(400).json({ message: "매도가격이 필요합니다" });
       }
