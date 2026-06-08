@@ -88,6 +88,13 @@ export default function MyStocksPage() {
     holdingsMap.set(tx.stockName, existing);
   }
 
+  for (const tx of txList.filter(t => t.type === "out")) {
+    const existing = holdingsMap.get(tx.stockName);
+    if (existing) {
+      existing.qty -= tx.quantity;
+      if (existing.qty <= 0) holdingsMap.delete(tx.stockName);
+    }
+  }
 
   const allTxStockNames = Array.from(new Set(txList.map(tx => tx.stockName)));
   const allStockNamesKey = JSON.stringify(allTxStockNames);
