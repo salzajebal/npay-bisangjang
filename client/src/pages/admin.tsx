@@ -3276,7 +3276,7 @@ export default function AdminPage() {
                                       )}
                                     </div>
                                     <button
-                                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-red-500 shrink-0"
+                                      className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-red-500 shrink-0"
                                       onClick={() => { if (window.confirm("이 메시지를 삭제하시겠습니까?")) deleteChatMessageMutation.mutate(msg.id); }}
                                       disabled={deleteChatMessageMutation.isPending}
                                       title="메시지 삭제"
