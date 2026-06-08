@@ -42,7 +42,7 @@ export interface IStorage {
   getUnreadCountByRoom(roomId: string): Promise<number>;
   getTotalUnreadCountForAdmin(): Promise<number>;
   markMessagesAsReadByAdmin(roomId: string): Promise<void>;
-  deleteChatMessage(id: number): Promise<void>;
+  deleteChatMessage(id: string): Promise<void>;
   getAllIpoStocks(): Promise<IpoStock[]>;
   getActiveIpoStocks(): Promise<IpoStock[]>;
   createIpoStock(data: InsertIpoStock): Promise<IpoStock>;
@@ -287,7 +287,7 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(chatMessages.roomId, roomId), eq(chatMessages.senderRole, "user"), eq(chatMessages.isReadByAdmin, 0)));
   }
 
-  async deleteChatMessage(id: number): Promise<void> {
+  async deleteChatMessage(id: string): Promise<void> {
     await db.delete(chatMessages).where(eq(chatMessages.id, id));
   }
 
