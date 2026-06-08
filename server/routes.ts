@@ -221,7 +221,6 @@ export async function registerRoutes(
   // Admin-set price overrides — always takes priority over live scrape or any fallback
   const PRICE_OVERRIDES: Record<string, { price: number; change: number }> = {
     "마키나락스": { price: 15000, change: 0 },
-    "피스피스스튜디오": { price: 21500, change: 0 },
   };
 
   const UNLISTED_PRICES: Record<string, { price: number; change: number }> = {

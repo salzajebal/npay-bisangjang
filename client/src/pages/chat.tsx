@@ -10,27 +10,28 @@ import { MessageSquare, Send, ArrowLeft, Loader2, ImageIcon } from "lucide-react
 import { useToast } from "@/hooks/use-toast";
 import type { User, ChatRoom, ChatMessage } from "@shared/schema";
 
-function renderMessage(text: string) {
-  if (text.startsWith("[img]")) {
-    const url = text.slice(5);
-    return (
-      <img
-        src={url}
-        alt="이미지"
-        className="max-w-full max-h-56 rounded cursor-pointer"
-        onClick={() => window.open(url, "_blank")}
-      />
-    );
-  }
-  return <span className="whitespace-pre-wrap">{text}</span>;
-}
-
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
   const [wsConnected, setWsConnected] = useState(false);
   const [roomId, setRoomId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
+
+  function renderMessage(text: string) {
+    if (text.startsWith("[img]")) {
+      const url = text.slice(5);
+      return (
+        <img
+          src={url}
+          alt="이미지"
+          className="max-w-full max-h-56 rounded cursor-pointer"
+          onClick={() => setViewingImage(url)}
+        />
+      );
+    }
+    return <span className="whitespace-pre-wrap">{text}</span>;
+  }
   const wsRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
@@ -167,6 +168,7 @@ export default function ChatPage() {
   };
 
   return (
+    <>
     <div className="flex flex-col h-screen bg-background" data-testid="page-chat">
       <header
         className="h-14 shrink-0 flex items-center gap-3 px-4 text-white"
@@ -303,5 +305,23 @@ export default function ChatPage() {
         </div>
       </div>
     </div>
+    {viewingImage && (
+      <div
+        className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+        onClick={() => setViewingImage(null)}
+      >
+        <img
+          src={viewingImage}
+          alt="이미지"
+          className="max-w-full max-h-full rounded-lg shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        />
+        <button
+          className="absolute top-4 right-4 text-white bg-black/50 rounded-full w-9 h-9 flex items-center justify-center text-xl"
+          onClick={() => setViewingImage(null)}
+        >×</button>
+      </div>
+    )}
+    </>
   );
 }

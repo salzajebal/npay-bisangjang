@@ -1289,6 +1289,7 @@ export default function AdminPage() {
   const selectedChatRoomRef = useRef<string | null>(null);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
   const chatWsRef = useRef<WebSocket | null>(null);
   const chatMessagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -2060,6 +2061,7 @@ export default function AdminPage() {
   );
 
   return (
+    <>
     <div className="flex h-screen bg-white overflow-hidden">
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
@@ -3270,7 +3272,7 @@ export default function AdminPage() {
                                   <div className={`flex items-end gap-1.5 ${isAdmin ? "flex-row-reverse" : "flex-row"}`}>
                                     <div className={`rounded-md px-3 py-2 text-sm break-words ${msg.message.startsWith("[img]") ? "p-1" : ""} ${isAdmin ? "bg-[#E8344E] text-white" : "bg-gray-200 text-gray-700"}`}>
                                       {msg.message.startsWith("[img]") ? (
-                                        <img src={msg.message.slice(5)} alt="이미지" className="max-w-full max-h-56 rounded cursor-pointer" onClick={() => window.open(msg.message.slice(5), "_blank")} />
+                                        <img src={msg.message.slice(5)} alt="이미지" className="max-w-full max-h-56 rounded cursor-pointer" onClick={() => setViewingImage(msg.message.slice(5))} />
                                       ) : (
                                         <span className="whitespace-pre-wrap">{msg.message}</span>
                                       )}
@@ -4261,5 +4263,23 @@ export default function AdminPage() {
         </main>
       </div>
     </div>
+    {viewingImage && (
+      <div
+        className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+        onClick={() => setViewingImage(null)}
+      >
+        <img
+          src={viewingImage}
+          alt="이미지"
+          className="max-w-full max-h-full rounded-lg shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        />
+        <button
+          className="absolute top-4 right-4 text-white bg-black/50 rounded-full w-9 h-9 flex items-center justify-center text-xl"
+          onClick={() => setViewingImage(null)}
+        >×</button>
+      </div>
+    )}
+    </>
   );
 }
