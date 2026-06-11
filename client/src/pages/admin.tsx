@@ -1161,6 +1161,49 @@ function copyUserInfo(user: User, toast: any) {
   });
 }
 
+function MaintenanceToggleCard() {
+  const { toast } = useToast();
+  const { data, refetch } = useQuery<{ maintenance: boolean }>({
+    queryKey: ["/api/maintenance"],
+  });
+  const mutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const res = await apiRequest("POST", "/api/admin/maintenance", { enabled });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["/api/maintenance"], data);
+      toast({
+        title: data.maintenance ? "점검 모드 활성화" : "점검 모드 해제",
+        description: data.maintenance ? "일반 사용자에게 점검 중 화면이 표시됩니다." : "사이트가 정상적으로 운영됩니다.",
+      });
+    },
+  });
+
+  const isOn = data?.maintenance ?? false;
+
+  return (
+    <Card className={`p-5 border-2 ${isOn ? "border-orange-400 bg-orange-50" : "border-gray-200 bg-white"}`}>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h3 className="font-bold text-sm text-gray-900">점검 모드</h3>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {isOn ? "현재 점검 중 화면이 표시되고 있습니다. 관리자는 정상 접근 가능합니다." : "사이트가 정상 운영 중입니다."}
+          </p>
+        </div>
+        <button
+          data-testid="button-toggle-maintenance"
+          onClick={() => mutation.mutate(!isOn)}
+          disabled={mutation.isPending}
+          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none ${isOn ? "bg-orange-500" : "bg-gray-300"}`}
+        >
+          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${isOn ? "translate-x-6" : "translate-x-1"}`} />
+        </button>
+      </div>
+    </Card>
+  );
+}
+
 type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "member-transfers" | "stocks" | "chat" | "groups" | "fallbacks" | "logs" | "ipblock";
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
@@ -2222,6 +2265,8 @@ export default function AdminPage() {
                   )}
                 </Card>
               </div>
+
+              <MaintenanceToggleCard />
 
               <Card className="p-5 bg-white border-gray-200">
                 <h3 className="font-bold text-sm mb-1 text-gray-900">자산 요약</h3>

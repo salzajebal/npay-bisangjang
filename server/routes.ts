@@ -41,6 +41,8 @@ declare module "express-session" {
   }
 }
 
+let maintenanceMode = false;
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -75,6 +77,30 @@ export async function registerRoutes(
       if (!req.file) return res.status(400).json({ message: "파일이 없습니다" });
       return res.json({ url: `/uploads/chat/${req.file.filename}` });
     });
+  });
+
+  // Maintenance mode API
+  app.get("/api/maintenance", (req: any, res: any) => {
+    res.json({ maintenance: maintenanceMode });
+  });
+
+  app.post("/api/admin/maintenance", (req: any, res: any) => {
+    if (!req.session.adminUserId) return res.status(401).json({ message: "Unauthorized" });
+    const { enabled } = req.body;
+    maintenanceMode = !!enabled;
+    res.json({ maintenance: maintenanceMode });
+  });
+
+  // Maintenance mode middleware
+  app.use((req: any, res: any, next: any) => {
+    if (!maintenanceMode) return next();
+    if (req.path.startsWith("/api/admin") || req.path.startsWith("/api/auth") || req.path.startsWith("/assets") || req.path.startsWith("/uploads")) {
+      return next();
+    }
+    if (req.path.startsWith("/api/")) {
+      return res.status(503).json({ maintenance: true, message: "점검 중입니다" });
+    }
+    next();
   });
 
   // IP block middleware
