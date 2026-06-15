@@ -1163,8 +1163,8 @@ function copyUserInfo(user: User, toast: any) {
 
 function DatabaseResetCard() {
   const { toast } = useToast();
-  const [open, setOpen] = React.useState(false);
-  const [confirm, setConfirm] = React.useState("");
+  const [open, setOpen] = useState(false);
+  const [confirm, setConfirm] = useState("");
 
   const resetMutation = useMutation({
     mutationFn: async () => {
