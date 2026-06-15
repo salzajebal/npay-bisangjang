@@ -2349,8 +2349,6 @@ export default function AdminPage() {
 
               <MaintenanceToggleCard />
 
-              <DatabaseResetCard />
-
               <Card className="p-5 bg-white border-gray-200">
                 <h3 className="font-bold text-sm mb-1 text-gray-900">자산 요약</h3>
                 <p className="text-xs text-gray-500 mb-4">전체 입고 기준 총 자산 가치</p>
