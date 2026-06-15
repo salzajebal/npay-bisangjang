@@ -1161,6 +1161,86 @@ function copyUserInfo(user: User, toast: any) {
   });
 }
 
+function DatabaseResetCard() {
+  const { toast } = useToast();
+  const [open, setOpen] = React.useState(false);
+  const [confirm, setConfirm] = React.useState("");
+
+  const resetMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/reset-database", {});
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "초기화 완료", description: "모든 데이터가 삭제되었습니다. 페이지를 새로고침합니다." });
+      setTimeout(() => window.location.reload(), 1500);
+    },
+    onError: (e: any) => {
+      toast({ title: "초기화 실패", description: e.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <>
+      <Card className="p-5 border-2 border-red-200 bg-red-50">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="font-bold text-sm text-red-700">전체 데이터 초기화</h3>
+            <p className="text-xs text-red-500 mt-0.5">모든 회원, 거래, 종목 데이터를 완전히 삭제합니다.</p>
+          </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            data-testid="button-open-db-reset"
+            onClick={() => { setConfirm(""); setOpen(true); }}
+          >
+            초기화
+          </Button>
+        </div>
+      </Card>
+
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
+            <h2 className="text-lg font-bold text-red-600 mb-1">⚠️ 전체 데이터 초기화</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              모든 회원, 거래내역, 종목 등 <strong>전체 데이터가 영구 삭제</strong>됩니다.<br />
+              계속하려면 아래에 <strong className="text-red-600">삭제확인</strong>을 입력하세요.
+            </p>
+            <input
+              type="text"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="삭제확인"
+              data-testid="input-db-reset-confirm"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-red-400"
+            />
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setOpen(false)}
+                data-testid="button-cancel-db-reset"
+              >
+                취소
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                disabled={confirm !== "삭제확인" || resetMutation.isPending}
+                onClick={() => resetMutation.mutate()}
+                data-testid="button-confirm-db-reset"
+              >
+                {resetMutation.isPending ? "삭제 중..." : "전체 삭제"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function MaintenanceToggleCard() {
   const { toast } = useToast();
   const { data } = useQuery<{ maintenance: boolean }>({
@@ -2268,6 +2348,8 @@ export default function AdminPage() {
               </div>
 
               <MaintenanceToggleCard />
+
+              <DatabaseResetCard />
 
               <Card className="p-5 bg-white border-gray-200">
                 <h3 className="font-bold text-sm mb-1 text-gray-900">자산 요약</h3>
