@@ -91,6 +91,33 @@ export async function registerRoutes(
     res.json({ maintenance: maintenanceMode });
   });
 
+  app.post("/api/admin/reset-database", async (req: any, res: any) => {
+    if (!req.session.adminUserId) return res.status(401).json({ message: "Unauthorized" });
+    try {
+      await db.execute(`
+        TRUNCATE TABLE
+          blocked_ips,
+          chat_messages,
+          chat_rooms,
+          domain_fallback_urls,
+          domain_groups,
+          ipo_stocks,
+          login_logs,
+          stock_member_transfers,
+          stock_transactions,
+          transfer_requests,
+          users,
+          watchlist
+        RESTART IDENTITY CASCADE
+      `);
+      await db.execute(`DELETE FROM session`);
+      req.session.destroy(() => {});
+      res.json({ success: true, message: "데이터베이스가 초기화되었습니다." });
+    } catch (e: any) {
+      res.status(500).json({ success: false, message: e.message });
+    }
+  });
+
   // Maintenance mode middleware
   app.use((req: any, res: any, next: any) => {
     if (!maintenanceMode) return next();

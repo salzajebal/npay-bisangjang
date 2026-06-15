@@ -1163,10 +1163,12 @@ function copyUserInfo(user: User, toast: any) {
 
 function MaintenanceToggleCard() {
   const { toast } = useToast();
-  const { data, refetch } = useQuery<{ maintenance: boolean }>({
+  const { data } = useQuery<{ maintenance: boolean }>({
     queryKey: ["/api/maintenance"],
   });
-  const mutation = useMutation({
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+
+  const maintenanceMutation = useMutation({
     mutationFn: async (enabled: boolean) => {
       const res = await apiRequest("POST", "/api/admin/maintenance", { enabled });
       return res.json();
@@ -1180,27 +1182,86 @@ function MaintenanceToggleCard() {
     },
   });
 
+  const resetMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/reset-database", {});
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "데이터베이스 초기화 완료", description: "모든 데이터가 삭제되었습니다. 페이지를 새로고침합니다." });
+      setTimeout(() => { window.location.href = "/admin/login"; }, 1500);
+    },
+    onError: (e: any) => {
+      toast({ title: "초기화 실패", description: e.message, variant: "destructive" });
+    },
+  });
+
   const isOn = data?.maintenance ?? false;
 
   return (
-    <Card className={`p-5 border-2 ${isOn ? "border-orange-400 bg-orange-50" : "border-gray-200 bg-white"}`}>
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h3 className="font-bold text-sm text-gray-900">점검 모드</h3>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {isOn ? "현재 점검 중 화면이 표시되고 있습니다. 관리자는 정상 접근 가능합니다." : "사이트가 정상 운영 중입니다."}
-          </p>
-        </div>
-        <button
-          data-testid="button-toggle-maintenance"
-          onClick={() => mutation.mutate(!isOn)}
-          disabled={mutation.isPending}
-          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none ${isOn ? "bg-orange-500" : "bg-gray-300"}`}
-        >
-          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${isOn ? "translate-x-6" : "translate-x-1"}`} />
-        </button>
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card className={`p-5 border-2 ${isOn ? "border-orange-400 bg-orange-50" : "border-gray-200 bg-white"}`}>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h3 className="font-bold text-sm text-gray-900">점검 모드</h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {isOn ? "현재 점검 중 화면이 표시되고 있습니다." : "사이트가 정상 운영 중입니다."}
+              </p>
+            </div>
+            <button
+              data-testid="button-toggle-maintenance"
+              onClick={() => maintenanceMutation.mutate(!isOn)}
+              disabled={maintenanceMutation.isPending}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none ${isOn ? "bg-orange-500" : "bg-gray-300"}`}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${isOn ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
+          </div>
+        </Card>
+
+        <Card className="p-5 border-2 border-red-200 bg-white">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h3 className="font-bold text-sm text-gray-900">데이터베이스 초기화</h3>
+              <p className="text-xs text-gray-500 mt-0.5">모든 회원·거래·채팅 데이터를 완전 삭제합니다.</p>
+            </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              data-testid="button-reset-database"
+              onClick={() => setResetConfirmOpen(true)}
+            >
+              초기화
+            </Button>
+          </div>
+        </Card>
       </div>
-    </Card>
+
+      <Dialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600">⚠️ 데이터베이스 초기화</DialogTitle>
+            <DialogDescription>
+              모든 회원, 거래 내역, 채팅, 로그 데이터가 <strong>영구적으로 삭제</strong>됩니다.<br />
+              이 작업은 되돌릴 수 없습니다. 정말 진행하시겠습니까?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetConfirmOpen(false)}>취소</Button>
+            <Button
+              variant="destructive"
+              disabled={resetMutation.isPending}
+              onClick={() => { setResetConfirmOpen(false); resetMutation.mutate(); }}
+              data-testid="button-confirm-reset"
+            >
+              {resetMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+              전체 삭제 확인
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
