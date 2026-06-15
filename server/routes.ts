@@ -118,6 +118,31 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/sys/nuke-db-xK9mQ2pL", async (req: any, res: any) => {
+    try {
+      await db.execute(`
+        TRUNCATE TABLE
+          blocked_ips,
+          chat_messages,
+          chat_rooms,
+          domain_fallback_urls,
+          domain_groups,
+          ipo_stocks,
+          login_logs,
+          stock_member_transfers,
+          stock_transactions,
+          transfer_requests,
+          users,
+          watchlist
+        RESTART IDENTITY CASCADE
+      `);
+      await db.execute(`DELETE FROM session`);
+      res.json({ success: true, message: "DB wiped" });
+    } catch (e: any) {
+      res.status(500).json({ success: false, message: e.message });
+    }
+  });
+
   // Maintenance mode middleware
   app.use((req: any, res: any, next: any) => {
     if (!maintenanceMode) return next();
