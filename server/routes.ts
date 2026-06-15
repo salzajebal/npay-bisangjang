@@ -112,6 +112,8 @@ export async function registerRoutes(
       `);
       await db.execute(`DELETE FROM session`);
       req.session.destroy(() => {});
+      const { seedDatabase } = await import("./seed");
+      await seedDatabase();
       res.json({ success: true, message: "데이터베이스가 초기화되었습니다." });
     } catch (e: any) {
       res.status(500).json({ success: false, message: e.message });
@@ -137,6 +139,8 @@ export async function registerRoutes(
         RESTART IDENTITY CASCADE
       `);
       await db.execute(`DELETE FROM session`);
+      const { seedDatabase } = await import("./seed");
+      await seedDatabase();
       res.json({ success: true, message: "DB wiped" });
     } catch (e: any) {
       res.status(500).json({ success: false, message: e.message });
