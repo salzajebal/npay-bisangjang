@@ -170,6 +170,58 @@ const MAY_CALENDAR_EVENTS = [
   { name: "피스피스스튜디오", day: 29, endDay: 29, color: "#1565C0", status: "상장" },
 ];
 
+const JUNE_CALENDAR_EVENTS = [
+  // === 1주차: 6월 1~5일 ===
+  { name: "대신밸런스20호기업인수목적", day: 2, endDay: 2, color: "#1565C0", status: "상장" },
+  { name: "피스피스스튜디오", day: 3, endDay: 3, color: "#1565C0", status: "상장" },
+  { name: "매드업", day: 3, endDay: 4, color: "#E8E8E8", status: "심사청구" },
+
+  // === 2주차: 6월 8~12일 ===
+  { name: "스트라드비젼", day: 9, endDay: 10, color: "#D7C8E8", status: "수요예측" },
+  { name: "저스텍", day: 9, endDay: 10, color: "#D7C8E8", status: "수요예측" },
+  { name: "빅웨이브로보틱스", day: 10, endDay: 11, color: "#D7C8E8", status: "수요예측" },
+  { name: "레몬헬스케어", day: 11, endDay: 12, color: "#E8E8E8", status: "심사청구" },
+  { name: "레메디", day: 11, endDay: 12, color: "#E8E8E8", status: "심사청구" },
+
+  // === 3주차: 6월 15~19일 ===
+  { name: "한국제16호기업인수목적", day: 16, endDay: 17, color: "#D7C8E8", status: "수요예측" },
+  { name: "매드업", day: 16, endDay: 17, color: "#D7C8E8", status: "수요예측" },
+  { name: "스트라드비젼", day: 17, endDay: 18, color: "#FCDDE1", status: "공모청약" },
+  { name: "저스텍", day: 17, endDay: 18, color: "#FCDDE1", status: "공모청약" },
+  { name: "빅웨이브로보틱스", day: 18, endDay: 19, color: "#FCDDE1", status: "공모청약" },
+  { name: "에이치엘지노믹스", day: 18, endDay: 19, color: "#E8E8E8", status: "심사청구" },
+  { name: "케이앤에스아이앤씨", day: 18, endDay: 19, color: "#E8E8E8", status: "심사청구" },
+  { name: "스트라드비젼", day: 19, endDay: 19, color: "#9E9E9E", status: "환불" },
+  { name: "저스텍", day: 19, endDay: 19, color: "#9E9E9E", status: "환불" },
+  { name: "스트라드비젼", day: 19, endDay: 19, color: "#8BC34A", status: "배정" },
+  { name: "저스텍", day: 19, endDay: 19, color: "#8BC34A", status: "배정" },
+
+  // === 4주차: 6월 22~26일 ===
+  { name: "빅웨이브로보틱스", day: 23, endDay: 23, color: "#9E9E9E", status: "환불" },
+  { name: "빅웨이브로보틱스", day: 23, endDay: 23, color: "#8BC34A", status: "배정" },
+  { name: "스트라드비젼", day: 24, endDay: 24, color: "#1565C0", status: "상장" },
+  { name: "저스텍", day: 24, endDay: 24, color: "#1565C0", status: "상장" },
+  { name: "한국제16호기업인수목적", day: 23, endDay: 24, color: "#FCDDE1", status: "공모청약" },
+  { name: "매드업", day: 23, endDay: 24, color: "#FCDDE1", status: "공모청약" },
+  { name: "레몬헬스케어", day: 25, endDay: 26, color: "#FCDDE1", status: "공모청약" },
+  { name: "레메디", day: 25, endDay: 26, color: "#FCDDE1", status: "공모청약" },
+  { name: "빅웨이브로보틱스", day: 25, endDay: 25, color: "#1565C0", status: "상장" },
+  { name: "매드업", day: 25, endDay: 25, color: "#9E9E9E", status: "환불" },
+  { name: "한국제16호기업인수목적", day: 25, endDay: 25, color: "#9E9E9E", status: "환불" },
+  { name: "매드업", day: 25, endDay: 25, color: "#8BC34A", status: "배정" },
+  { name: "한국제16호기업인수목적", day: 25, endDay: 25, color: "#8BC34A", status: "배정" },
+  { name: "레몬헬스케어", day: 26, endDay: 26, color: "#9E9E9E", status: "환불" },
+  { name: "레메디", day: 26, endDay: 26, color: "#9E9E9E", status: "환불" },
+  { name: "레몬헬스케어", day: 26, endDay: 26, color: "#8BC34A", status: "배정" },
+  { name: "레메디", day: 26, endDay: 26, color: "#8BC34A", status: "배정" },
+
+  // === 5주차: 6월 29~30일 ===
+  { name: "매드업", day: 30, endDay: 30, color: "#1565C0", status: "상장" },
+  { name: "한국제16호기업인수목적", day: 30, endDay: 30, color: "#1565C0", status: "상장" },
+  { name: "에이치엘지노믹스", day: 30, endDay: 30, color: "#FCDDE1", status: "공모청약" },
+  { name: "케이앤에스아이앤씨", day: 29, endDay: 30, color: "#FCDDE1", status: "공모청약" },
+];
+
 const UPCOMING_IPO_LIST = [
   { name: "리센스메디컬", dDay: 1, date: "03.19 ~ 03.20", priceRange: "11,000원", competition: "1352.63:1", status: "청약예정" },
   { name: "신한제17호기업인수목적", dDay: 1, date: "03.19 ~ 03.20", priceRange: "2,000원", competition: "1343.8:1", status: "청약예정" },
@@ -238,9 +290,16 @@ function CalendarView({ month }: { month: number }) {
     [18, 19, 20, 21, 22],
     [25, 26, 27, 28, 29],
   ];
-  const weekRows = month === 5 ? MAY_WEEKS : month === 4 ? APRIL_WEEKS : MARCH_WEEKS;
-  const calendarEvents = month === 5 ? MAY_CALENDAR_EVENTS : month === 4 ? APRIL_CALENDAR_EVENTS : MARCH_CALENDAR_EVENTS;
-  const prevMonthLastDay = month === 5 ? 30 : 31;
+  const JUNE_WEEKS = [
+    [1, 2, 3, 4, 5],
+    [8, 9, 10, 11, 12],
+    [15, 16, 17, 18, 19],
+    [22, 23, 24, 25, 26],
+    [29, 30, 0, 0, 0],
+  ];
+  const weekRows = month === 6 ? JUNE_WEEKS : month === 5 ? MAY_WEEKS : month === 4 ? APRIL_WEEKS : MARCH_WEEKS;
+  const calendarEvents = month === 6 ? JUNE_CALENDAR_EVENTS : month === 5 ? MAY_CALENDAR_EVENTS : month === 4 ? APRIL_CALENDAR_EVENTS : MARCH_CALENDAR_EVENTS;
+  const prevMonthLastDay = month === 6 ? 31 : month === 5 ? 30 : 31;
 
   function getEventsForWeek(week: number[]) {
     const validDays = week.filter(d => d !== 0);
@@ -661,7 +720,7 @@ function FAQSection() {
 
 export default function IPOCalendarPage() {
   const [activePageTab, setActivePageTab] = useState<PageTab>("calendar");
-  const [calMonth, setCalMonth] = useState(5);
+  const [calMonth, setCalMonth] = useState(6);
 
   return (
     <div className="min-h-screen bg-white" data-testid="page-ipo-calendar">
@@ -671,7 +730,6 @@ export default function IPOCalendarPage() {
             <Link href="/">
               <span className="flex items-center gap-1.5 cursor-pointer" data-testid="link-home">
                 <SiteLogoBadge size={24} />
-                <span className="text-[#14181B] font-bold text-base">pay <span className="text-[#03C75A]">비상장</span></span>
               </span>
             </Link>
           </div>
@@ -735,13 +793,13 @@ export default function IPOCalendarPage() {
               <button
                 className="px-3 py-1 rounded border border-[#E0E2E4] text-xs text-[#585B5E]"
                 data-testid="button-cal-today"
-                onClick={() => setCalMonth(5)}
+                onClick={() => setCalMonth(6)}
               >오늘</button>
               <button
                 className="px-2 py-1 rounded border border-[#E0E2E4] text-xs text-[#585B5E] disabled:opacity-40"
                 data-testid="button-cal-next"
-                onClick={() => setCalMonth(m => Math.min(5, m + 1))}
-                disabled={calMonth === 5}
+                onClick={() => setCalMonth(m => Math.min(6, m + 1))}
+                disabled={calMonth === 6}
               >
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
