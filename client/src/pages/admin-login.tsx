@@ -58,14 +58,14 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen bg-[#0a1628] flex items-center justify-center p-4">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#E8344E]/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#E8344E]/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#03C75A]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#03C75A]/5 rounded-full blur-3xl" />
       </div>
 
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#E8344E]/20 border border-[#E8344E]/30 mb-4">
-            <Shield className="w-8 h-8 text-[#E8344E]" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#03C75A]/20 border border-[#03C75A]/30 mb-4">
+            <Shield className="w-8 h-8 text-[#03C75A]" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-1" data-testid="text-admin-login-title">관리자 로그인</h1>
           <p className="text-sm text-slate-400">증권플러스 비상장 관리 시스템</p>
@@ -82,7 +82,7 @@ export default function AdminLoginPage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="관리자 아이디 입력"
-                  className="pl-10 bg-[#0a1628] border-[#1e3050] text-white placeholder:text-slate-600 focus:border-[#E8344E]"
+                  className="pl-10 bg-[#0a1628] border-[#1e3050] text-white placeholder:text-slate-600 focus:border-[#03C75A]"
                   data-testid="input-admin-username"
                 />
               </div>
@@ -96,14 +96,14 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="비밀번호 입력"
-                  className="pl-10 bg-[#0a1628] border-[#1e3050] text-white placeholder:text-slate-600 focus:border-[#E8344E]"
+                  className="pl-10 bg-[#0a1628] border-[#1e3050] text-white placeholder:text-slate-600 focus:border-[#03C75A]"
                   data-testid="input-admin-password"
                 />
               </div>
             </div>
             <Button
               type="submit"
-              className="w-full bg-[#E8344E] border-[#E8344E] text-white font-semibold"
+              className="w-full bg-[#03C75A] border-[#03C75A] text-white font-semibold"
               disabled={loginMutation.isPending}
               data-testid="button-admin-login"
             >

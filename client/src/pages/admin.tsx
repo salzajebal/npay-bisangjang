@@ -968,7 +968,7 @@ function StocksManagementSection({
         </div>
         <Dialog open={addOpen} onOpenChange={(v) => { setAddOpen(v); if (!v) resetForm(); }}>
           <DialogTrigger asChild>
-            <Button className="bg-[#E8344E] border-[#E8344E]" data-testid="button-add-stock">
+            <Button className="bg-[#03C75A] border-[#03C75A]" data-testid="button-add-stock">
               <Plus className="w-4 h-4 mr-1" />종목 추가
             </Button>
           </DialogTrigger>
@@ -980,7 +980,7 @@ function StocksManagementSection({
             {stockFormFields}
             <DialogFooter>
               <Button variant="ghost" onClick={() => { setAddOpen(false); resetForm(); }}>취소</Button>
-              <Button className="bg-[#E8344E] border-[#E8344E]" onClick={handleAdd} disabled={isCreating} data-testid="button-confirm-add-stock">
+              <Button className="bg-[#03C75A] border-[#03C75A]" onClick={handleAdd} disabled={isCreating} data-testid="button-confirm-add-stock">
                 {isCreating ? "추가 중..." : "추가"}
               </Button>
             </DialogFooter>
@@ -1023,7 +1023,7 @@ function StocksManagementSection({
                   <span>경쟁률: {stock.competitionRate || "-"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className={stock.subscriptionStatus === "청약진행중" ? "text-[#E8344E] border-[#E8344E]" : ""}>{stock.subscriptionStatus}</Badge>
+                  <Badge variant="outline" className={stock.subscriptionStatus === "청약진행중" ? "text-[#03C75A] border-[#03C75A]" : ""}>{stock.subscriptionStatus}</Badge>
                 </div>
                 <div className="flex items-center gap-1 pt-2 border-t border-gray-200">
                   <Button size="sm" variant="default" className="bg-blue-500 border-blue-500 text-xs" onClick={() => openEdit(stock)} data-testid={`button-edit-stock-${stock.id}`}>
@@ -1079,7 +1079,7 @@ function StocksManagementSection({
                       </TableCell>
                       <TableCell className="text-gray-700">{stock.competitionRate || "-"}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={stock.subscriptionStatus === "청약진행중" ? "text-[#E8344E] border-[#E8344E]" : ""}>
+                        <Badge variant="outline" className={stock.subscriptionStatus === "청약진행중" ? "text-[#03C75A] border-[#03C75A]" : ""}>
                           {stock.subscriptionStatus}
                         </Badge>
                       </TableCell>
@@ -1125,7 +1125,7 @@ function StocksManagementSection({
           {stockFormFields}
           <DialogFooter>
             <Button variant="ghost" onClick={() => { setEditOpen(false); setEditStock(null); resetForm(); }}>취소</Button>
-            <Button className="bg-[#E8344E] border-[#E8344E]" onClick={handleEdit} disabled={isUpdating} data-testid="button-confirm-edit-stock">
+            <Button className="bg-[#03C75A] border-[#03C75A]" onClick={handleEdit} disabled={isUpdating} data-testid="button-confirm-edit-stock">
               {isUpdating ? "수정 중..." : "수정"}
             </Button>
           </DialogFooter>
@@ -2076,12 +2076,12 @@ export default function AdminPage() {
     <>
       <div className={`h-14 border-b border-gray-200 flex items-center ${!isMobile && sidebarCollapsed ? "justify-center px-2" : "px-4"} gap-2`}>
         {(!isMobile && sidebarCollapsed) ? (
-          <div className="w-7 h-7 rounded-md bg-[#E8344E] flex items-center justify-center shrink-0">
+          <div className="w-7 h-7 rounded-md bg-[#03C75A] flex items-center justify-center shrink-0">
             <span className="text-white text-xs font-bold">U+</span>
           </div>
         ) : (
           <>
-            <div className="w-7 h-7 rounded-md bg-[#E8344E] flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-md bg-[#03C75A] flex items-center justify-center shrink-0">
               <span className="text-white text-xs font-bold">U+</span>
             </div>
             <div className="flex flex-col min-w-0">
@@ -2107,7 +2107,7 @@ export default function AdminPage() {
             <button
               key={item.id}
               onClick={() => { setActiveSection(item.id); if (isMobile) setMobileSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 rounded-md text-sm font-medium transition-colors ${!isMobile && sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${isActive ? "bg-[#E8344E] text-white" : "text-gray-600"}`}
+              className={`w-full flex items-center gap-3 rounded-md text-sm font-medium transition-colors ${!isMobile && sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${isActive ? "bg-[#03C75A] text-white" : "text-gray-600"}`}
               data-testid={`nav-admin-${item.id}`}
               title={!isMobile && sidebarCollapsed ? item.label : undefined}
             >
@@ -2228,8 +2228,8 @@ export default function AdminPage() {
                       <p className="text-2xl font-bold mt-1 tabular-nums text-gray-900" data-testid="text-total-members">{totalMembers}명</p>
                       {frozenMembers > 0 && <p className="text-xs text-blue-500 mt-0.5">{frozenMembers}명 동결</p>}
                     </div>
-                    <div className="w-10 h-10 rounded-md bg-[#E8344E]/20 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-[#E8344E]" />
+                    <div className="w-10 h-10 rounded-md bg-[#03C75A]/20 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-[#03C75A]" />
                     </div>
                   </div>
                 </Card>
@@ -2261,8 +2261,8 @@ export default function AdminPage() {
                       <p className="text-sm text-gray-500">보유 잔량</p>
                       <p className="text-2xl font-bold mt-1 tabular-nums text-gray-900" data-testid="text-admin-holding">{(totalIn - totalOut).toLocaleString()}주</p>
                     </div>
-                    <div className="w-10 h-10 rounded-md bg-[#E8344E]/20 flex items-center justify-center">
-                      <Package className="w-5 h-5 text-[#E8344E]" />
+                    <div className="w-10 h-10 rounded-md bg-[#03C75A]/20 flex items-center justify-center">
+                      <Package className="w-5 h-5 text-[#03C75A]" />
                     </div>
                   </div>
                 </Card>
@@ -2288,8 +2288,8 @@ export default function AdminPage() {
                       {users.slice(0, 5).map((u) => (
                         <div key={u.id} className="px-4 py-3 flex items-center justify-between gap-4" data-testid={`dash-user-${u.id}`}>
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-8 h-8 rounded-full bg-[#E8344E]/20 flex items-center justify-center shrink-0">
-                              <span className="text-xs font-bold text-[#E8344E]">{u.fullName.charAt(0)}</span>
+                            <div className="w-8 h-8 rounded-full bg-[#03C75A]/20 flex items-center justify-center shrink-0">
+                              <span className="text-xs font-bold text-[#03C75A]">{u.fullName.charAt(0)}</span>
                             </div>
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
@@ -2422,7 +2422,7 @@ export default function AdminPage() {
                         <div className="flex gap-1 shrink-0">
                           <Button
                             size="sm"
-                            className="bg-[#E8344E] hover:bg-[#d42e45] text-white text-xs h-7 px-3"
+                            className="bg-[#03C75A] hover:bg-[#d42e45] text-white text-xs h-7 px-3"
                             onClick={() => approveMutation.mutate(u.id)}
                             disabled={approveMutation.isPending || rejectMutation.isPending || holdMemberMutation.isPending}
                             data-testid={`button-approve-${u.id}`}
@@ -2525,8 +2525,8 @@ export default function AdminPage() {
                   {filteredUsers.map((u) => (
                     <div key={u.id} className={`rounded-md border border-gray-200 bg-white p-4 space-y-3 ${u.isFrozen ? "opacity-60" : ""}`} data-testid={`row-user-${u.id}`}>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#E8344E]/20 flex items-center justify-center shrink-0">
-                          <span className="text-sm font-bold text-[#E8344E]">{u.fullName.charAt(0)}</span>
+                        <div className="w-10 h-10 rounded-full bg-[#03C75A]/20 flex items-center justify-center shrink-0">
+                          <span className="text-sm font-bold text-[#03C75A]">{u.fullName.charAt(0)}</span>
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-gray-700 truncate">{u.fullName}</p>
@@ -2760,7 +2760,7 @@ export default function AdminPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-sm font-medium text-gray-700 flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{getUserName(tx.userId)} · {tx.stockName}</span>
                           {getUserManagerCode(tx.userId) && (
-                            <Badge variant="outline" className="border-[#E8344E]/40 text-[#E8344E] bg-[#E8344E]/5 font-mono text-xs">{getUserManagerCode(tx.userId)}</Badge>
+                            <Badge variant="outline" className="border-[#03C75A]/40 text-[#03C75A] bg-[#03C75A]/5 font-mono text-xs">{getUserManagerCode(tx.userId)}</Badge>
                           )}
                         </div>
                         <p className="text-xs text-gray-500 font-mono">{getUserPhone(tx.userId)} · <span className="text-gray-400">ID: {getUserUsername(tx.userId)}</span></p>
@@ -2823,7 +2823,7 @@ export default function AdminPage() {
                             <TableCell className="text-gray-700">{tx.category}</TableCell>
                             <TableCell>
                               {getUserManagerCode(tx.userId)
-                                ? <Badge variant="outline" className="border-[#E8344E]/40 text-[#E8344E] bg-[#E8344E]/5 font-mono text-xs">{getUserManagerCode(tx.userId)}</Badge>
+                                ? <Badge variant="outline" className="border-[#03C75A]/40 text-[#03C75A] bg-[#03C75A]/5 font-mono text-xs">{getUserManagerCode(tx.userId)}</Badge>
                                 : <span className="text-gray-300 text-xs">-</span>}
                             </TableCell>
                             <TableCell className="font-medium text-gray-700">{getUserName(tx.userId)}</TableCell>
@@ -2886,7 +2886,7 @@ export default function AdminPage() {
                       <button
                         key={tab}
                         onClick={() => setTransferTab(tab)}
-                        className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${active ? "bg-[#E8344E] text-white border-[#E8344E]" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"}`}
+                        className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${active ? "bg-[#03C75A] text-white border-[#03C75A]" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"}`}
                         data-testid={`tab-transfer-${tab}`}
                       >
                         {labels[tab]}
@@ -2898,7 +2898,7 @@ export default function AdminPage() {
                   })}
                   <button
                     onClick={toggleTransferSound}
-                    className={`ml-auto flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors ${transferSoundEnabled ? "bg-[#E8344E]/10 text-[#E8344E] border-[#E8344E]/30" : "bg-gray-100 text-gray-400 border-gray-200"}`}
+                    className={`ml-auto flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors ${transferSoundEnabled ? "bg-[#03C75A]/10 text-[#03C75A] border-[#03C75A]/30" : "bg-gray-100 text-gray-400 border-gray-200"}`}
                     title={transferSoundEnabled ? "대체출고 알림 소리 켜짐" : "대체출고 알림 소리 꺼짐"}
                     data-testid="button-toggle-transfer-sound"
                   >
@@ -2915,7 +2915,7 @@ export default function AdminPage() {
                       placeholder="회원명 또는 종목명 검색..."
                       value={transferSearch}
                       onChange={(e) => setTransferSearch(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#E8344E]/30 focus:border-[#E8344E]"
+                      className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#03C75A]/30 focus:border-[#03C75A]"
                       data-testid="input-transfer-search"
                     />
                   </div>
@@ -2936,7 +2936,7 @@ export default function AdminPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="border-[#E8344E]/40 text-[#E8344E] hover:bg-[#E8344E]/5 text-xs"
+                      className="border-[#03C75A]/40 text-[#03C75A] hover:bg-[#03C75A]/5 text-xs"
                       onClick={() => {
                         const allIds = filteredTransfers.map((t) => t.id);
                         const allSelected = allIds.every((id) => selectedTransferIds.has(id));
@@ -2957,8 +2957,8 @@ export default function AdminPage() {
 
                 {/* 일괄 처리 액션바 */}
                 {selectedTransferIds.size > 0 && (
-                  <div className="flex items-center gap-2 p-3 bg-[#E8344E]/5 border border-[#E8344E]/20 rounded-lg flex-wrap">
-                    <span className="text-sm font-medium text-[#E8344E]">{selectedTransferIds.size}건 선택됨</span>
+                  <div className="flex items-center gap-2 p-3 bg-[#03C75A]/5 border border-[#03C75A]/20 rounded-lg flex-wrap">
+                    <span className="text-sm font-medium text-[#03C75A]">{selectedTransferIds.size}건 선택됨</span>
                     <div className="flex items-center gap-1.5 ml-auto flex-wrap">
                       <Button
                         size="sm"
@@ -3007,7 +3007,7 @@ export default function AdminPage() {
                 <>
                 <div className="md:hidden space-y-3">
                   {filteredTransfers.map((tr) => (
-                    <div key={tr.id} className={`rounded-md border bg-white p-4 space-y-3 ${selectedTransferIds.has(tr.id) ? "border-[#E8344E]/50 bg-[#E8344E]/3" : "border-gray-200"}`} data-testid={`row-transfer-${tr.id}`}>
+                    <div key={tr.id} className={`rounded-md border bg-white p-4 space-y-3 ${selectedTransferIds.has(tr.id) ? "border-[#03C75A]/50 bg-[#03C75A]/3" : "border-gray-200"}`} data-testid={`row-transfer-${tr.id}`}>
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <input
@@ -3018,7 +3018,7 @@ export default function AdminPage() {
                               e.target.checked ? next.add(tr.id) : next.delete(tr.id);
                               setSelectedTransferIds(next);
                             }}
-                            className="w-4 h-4 accent-[#E8344E] cursor-pointer shrink-0"
+                            className="w-4 h-4 accent-[#03C75A] cursor-pointer shrink-0"
                             data-testid={`checkbox-transfer-${tr.id}`}
                           />
                           <div className="flex items-center gap-1.5">
@@ -3038,7 +3038,7 @@ export default function AdminPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm font-medium text-gray-700">{getUserName(tr.userId)}</p>
                           {getUserManagerCode(tr.userId) && (
-                            <Badge variant="outline" className="border-[#E8344E]/40 text-[#E8344E] bg-[#E8344E]/5 font-mono text-xs">{getUserManagerCode(tr.userId)}</Badge>
+                            <Badge variant="outline" className="border-[#03C75A]/40 text-[#03C75A] bg-[#03C75A]/5 font-mono text-xs">{getUserManagerCode(tr.userId)}</Badge>
                           )}
                         </div>
                         <p className="text-sm text-gray-700 font-mono font-medium">{getUserPhone(tr.userId)} · <span className="text-gray-500">ID: {getUserUsername(tr.userId)}</span></p>
@@ -3127,7 +3127,7 @@ export default function AdminPage() {
                           <TableHead className="w-10 text-center">
                             <input
                               type="checkbox"
-                              className="w-4 h-4 accent-[#E8344E] cursor-pointer"
+                              className="w-4 h-4 accent-[#03C75A] cursor-pointer"
                               checked={filteredTransfers.length > 0 && filteredTransfers.every((t) => selectedTransferIds.has(t.id))}
                               onChange={(e) => {
                                 if (e.target.checked) {
@@ -3160,7 +3160,7 @@ export default function AdminPage() {
                       </TableHeader>
                       <TableBody>
                         {filteredTransfers.map((tr) => (
-                          <TableRow key={tr.id} className={`border-gray-200 ${selectedTransferIds.has(tr.id) ? "bg-[#E8344E]/3" : ""}`} data-testid={`row-transfer-${tr.id}`}>
+                          <TableRow key={tr.id} className={`border-gray-200 ${selectedTransferIds.has(tr.id) ? "bg-[#03C75A]/3" : ""}`} data-testid={`row-transfer-${tr.id}`}>
                             <TableCell className="text-center">
                               <input
                                 type="checkbox"
@@ -3170,7 +3170,7 @@ export default function AdminPage() {
                                   e.target.checked ? next.add(tr.id) : next.delete(tr.id);
                                   setSelectedTransferIds(next);
                                 }}
-                                className="w-4 h-4 accent-[#E8344E] cursor-pointer"
+                                className="w-4 h-4 accent-[#03C75A] cursor-pointer"
                                 data-testid={`checkbox-transfer-${tr.id}`}
                               />
                             </TableCell>
@@ -3189,7 +3189,7 @@ export default function AdminPage() {
                             </TableCell>
                             <TableCell>
                               {getUserManagerCode(tr.userId)
-                                ? <Badge variant="outline" className="border-[#E8344E]/40 text-[#E8344E] bg-[#E8344E]/5 font-mono text-xs">{getUserManagerCode(tr.userId)}</Badge>
+                                ? <Badge variant="outline" className="border-[#03C75A]/40 text-[#03C75A] bg-[#03C75A]/5 font-mono text-xs">{getUserManagerCode(tr.userId)}</Badge>
                                 : <span className="text-gray-300 text-xs">-</span>}
                             </TableCell>
                             <TableCell className="font-medium text-gray-700">{getUserName(tr.userId)}</TableCell>
@@ -3302,7 +3302,7 @@ export default function AdminPage() {
           {activeSection === "chat" && (
             <>
               <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                <MessageSquare className="w-5 h-5 text-[#E8344E]" />
+                <MessageSquare className="w-5 h-5 text-[#03C75A]" />
                 <div>
                   <h2 className="text-base sm:text-lg font-bold text-gray-900">1:1 고객 상담</h2>
                   <p className="text-xs sm:text-sm text-gray-500">회원 문의에 실시간으로 응답합니다</p>
@@ -3349,20 +3349,20 @@ export default function AdminPage() {
                       ) : filtered.map((room: any) => (
                         <div
                           key={room.id}
-                          className={`px-3 py-3 cursor-pointer hover-elevate ${selectedChatRoom === room.id ? "bg-[#E8344E]/20" : ""}`}
+                          className={`px-3 py-3 cursor-pointer hover-elevate ${selectedChatRoom === room.id ? "bg-[#03C75A]/20" : ""}`}
                           onClick={() => setSelectedChatRoom(room.id)}
                           data-testid={`chat-room-${room.id}`}
                         >
                           <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-[#E8344E]/20 flex items-center justify-center shrink-0">
-                              <span className="text-xs font-bold text-[#E8344E]">{(room.userName || "?").charAt(0)}</span>
+                            <div className="w-8 h-8 rounded-full bg-[#03C75A]/20 flex items-center justify-center shrink-0">
+                              <span className="text-xs font-bold text-[#03C75A]">{(room.userName || "?").charAt(0)}</span>
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-1.5 min-w-0">
                                   <p className="text-sm font-medium truncate text-gray-700">{room.userName}</p>
                                   {room.userManagerCode && (
-                                    <span className="text-[10px] bg-[#E8344E]/10 text-[#E8344E] px-1 py-0.5 rounded font-medium shrink-0">{room.userManagerCode}</span>
+                                    <span className="text-[10px] bg-[#03C75A]/10 text-[#03C75A] px-1 py-0.5 rounded font-medium shrink-0">{room.userManagerCode}</span>
                                   )}
                                 </div>
                                 {room.unreadCount > 0 ? (
@@ -3397,8 +3397,8 @@ export default function AdminPage() {
                         <button onClick={() => setSelectedChatRoom(null)} className="sm:hidden p-1 text-gray-500" data-testid="button-chat-back">
                           <ChevronLeft className="w-5 h-5" />
                         </button>
-                        <div className="w-7 h-7 rounded-full bg-[#E8344E]/20 flex items-center justify-center">
-                          <span className="text-xs font-bold text-[#E8344E]">
+                        <div className="w-7 h-7 rounded-full bg-[#03C75A]/20 flex items-center justify-center">
+                          <span className="text-xs font-bold text-[#03C75A]">
                             {((chatRooms || []).find((r: any) => r.id === selectedChatRoom)?.userName || "?").charAt(0)}
                           </span>
                         </div>
@@ -3426,7 +3426,7 @@ export default function AdminPage() {
                                     {isAdmin ? "상담원" : ((chatRooms || []).find((r: any) => r.id === selectedChatRoom)?.userName || "회원")}
                                   </span>
                                   <div className={`flex items-end gap-1.5 ${isAdmin ? "flex-row-reverse" : "flex-row"}`}>
-                                    <div className={`rounded-md px-3 py-2 text-sm break-words ${msg.message.startsWith("[img]") ? "p-1" : ""} ${isAdmin ? "bg-[#E8344E] text-white" : "bg-gray-200 text-gray-700"}`}>
+                                    <div className={`rounded-md px-3 py-2 text-sm break-words ${msg.message.startsWith("[img]") ? "p-1" : ""} ${isAdmin ? "bg-[#03C75A] text-white" : "bg-gray-200 text-gray-700"}`}>
                                       {msg.message.startsWith("[img]") ? (
                                         <img src={msg.message.slice(5)} alt="이미지" className="max-w-full max-h-56 rounded cursor-pointer" onClick={() => setViewingImage(msg.message.slice(5))} />
                                       ) : (
@@ -3471,7 +3471,7 @@ export default function AdminPage() {
                             variant="ghost"
                             onClick={() => adminChatImageRef.current?.click()}
                             disabled={chatImageUploading}
-                            className="shrink-0 text-gray-500 hover:text-[#E8344E]"
+                            className="shrink-0 text-gray-500 hover:text-[#03C75A]"
                             data-testid="button-admin-attach-image"
                             title="이미지 첨부"
                           >
@@ -3495,7 +3495,7 @@ export default function AdminPage() {
                             size="icon"
                             onClick={handleChatSend}
                             disabled={!chatInput.trim()}
-                            className="bg-[#E8344E] border-[#E8344E]"
+                            className="bg-[#03C75A] border-[#03C75A]"
                             data-testid="button-admin-send"
                           >
                             <Send className="w-4 h-4" />
@@ -3513,7 +3513,7 @@ export default function AdminPage() {
             <>
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
-                  <ShieldAlert className="w-5 h-5 text-[#E8344E]" />
+                  <ShieldAlert className="w-5 h-5 text-[#03C75A]" />
                   <h2 className="text-lg font-bold text-gray-800">도메인 대체 설정</h2>
                 </div>
                 <Badge variant="outline" className="border-gray-200 text-gray-500">
@@ -3556,7 +3556,7 @@ export default function AdminPage() {
               {/* 공유 링크 */}
               <Card className="p-4 bg-white border-gray-200">
                 <div className="flex items-center gap-2 mb-3">
-                  <ExternalLink className="w-4 h-4 text-[#E8344E]" />
+                  <ExternalLink className="w-4 h-4 text-[#03C75A]" />
                   <h3 className="text-sm font-bold text-gray-700">사용자 공유 링크</h3>
                   <Badge className="bg-green-50 text-green-700 border border-green-200 text-[10px]">항상 작동</Badge>
                 </div>
@@ -3610,7 +3610,7 @@ export default function AdminPage() {
                   </div>
                 </div>
                 <Button
-                  className="mt-3 bg-[#E8344E] border-[#E8344E] text-white"
+                  className="mt-3 bg-[#03C75A] border-[#03C75A] text-white"
                   disabled={!newFbUrl.trim() || addFallbackMutation.isPending}
                   onClick={() => addFallbackMutation.mutate()}
                   data-testid="button-add-fallback"
@@ -3641,7 +3641,7 @@ export default function AdminPage() {
                       >
                         <div className="flex items-start gap-3">
                           {/* 순위 번호 */}
-                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${idx === 0 ? "bg-[#E8344E] text-white" : idx === 1 ? "bg-orange-400 text-white" : "bg-gray-200 text-gray-600"}`}>
+                          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${idx === 0 ? "bg-[#03C75A] text-white" : idx === 1 ? "bg-orange-400 text-white" : "bg-gray-200 text-gray-600"}`}>
                             {idx + 1}
                           </div>
 
@@ -3690,7 +3690,7 @@ export default function AdminPage() {
                                     <Badge variant="outline" className="text-[10px] text-gray-400 border-gray-200">비활성</Badge>
                                   )}
                                   {idx === 0 && fb.isActive && (
-                                    <Badge className="text-[10px] bg-[#E8344E]/10 text-[#E8344E] border border-[#E8344E]/30">현재 사용 중</Badge>
+                                    <Badge className="text-[10px] bg-[#03C75A]/10 text-[#03C75A] border border-[#03C75A]/30">현재 사용 중</Badge>
                                   )}
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-1">
@@ -3811,7 +3811,7 @@ export default function AdminPage() {
                       <div key={fb.id} className="flex items-center gap-2">
                         <span className="text-gray-400 text-xs">→</span>
                         <div className={`px-3 py-2 rounded-lg border text-xs font-mono max-w-[160px] truncate ${fb.isActive ? "bg-white border-gray-300 text-gray-700" : "bg-gray-50 border-gray-200 text-gray-400 line-through"}`} title={fb.url}>
-                          <span className={`font-bold mr-1 ${idx === 0 ? "text-[#E8344E]" : "text-gray-400"}`}>{idx + 1}.</span>
+                          <span className={`font-bold mr-1 ${idx === 0 ? "text-[#03C75A]" : "text-gray-400"}`}>{idx + 1}.</span>
                           {fb.label || fb.url.replace(/^https?:\/\//, "")}
                         </div>
                         {!fb.isActive && <span className="text-[10px] text-gray-400">(비활성)</span>}
@@ -3966,7 +3966,7 @@ export default function AdminPage() {
                       refetchDomainGroups();
                       toast({ title: "저장 완료", description: "도메인 그룹이 저장되었습니다" });
                     }}
-                    className="bg-[#E8344E] border-[#E8344E] text-white"
+                    className="bg-[#03C75A] border-[#03C75A] text-white"
                     data-testid="button-add-domain-group"
                   >
                     <Plus className="w-4 h-4 mr-1" /> 추가
@@ -4058,7 +4058,7 @@ export default function AdminPage() {
                   >전체 해제</Button>
                   <Button
                     size="sm"
-                    className="bg-[#E8344E] text-white text-xs"
+                    className="bg-[#03C75A] text-white text-xs"
                     disabled={bulkSelectedDomains.length === 0 || !bulkCode.trim()}
                     onClick={async () => {
                       if (!bulkCode.trim() || bulkSelectedDomains.length === 0) return;
@@ -4096,8 +4096,8 @@ export default function AdminPage() {
                           data-testid={`button-bulk-select-${g.domain}`}
                           className={`px-3 py-1.5 rounded-md border text-xs font-mono transition-all ${
                             selected
-                              ? "bg-[#E8344E] border-[#E8344E] text-white"
-                              : "bg-white border-gray-200 text-gray-600 hover:border-[#E8344E] hover:text-[#E8344E]"
+                              ? "bg-[#03C75A] border-[#03C75A] text-white"
+                              : "bg-white border-gray-200 text-gray-600 hover:border-[#03C75A] hover:text-[#03C75A]"
                           }`}
                         >
                           {g.domain}
@@ -4185,7 +4185,7 @@ export default function AdminPage() {
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-bold text-gray-800">주식 이전 관리</h2>
                   {pendingMemberTransferCount > 0 && (
-                    <Badge className="bg-[#E8344E] text-white border-[#E8344E]">{pendingMemberTransferCount}건 대기</Badge>
+                    <Badge className="bg-[#03C75A] text-white border-[#03C75A]">{pendingMemberTransferCount}건 대기</Badge>
                   )}
                 </div>
               </div>
@@ -4204,7 +4204,7 @@ export default function AdminPage() {
                     <button
                       key={tab}
                       onClick={() => setMemberTransferTab(tab)}
-                      className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${active ? "bg-[#E8344E] text-white border-[#E8344E]" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"}`}
+                      className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border font-medium transition-colors ${active ? "bg-[#03C75A] text-white border-[#03C75A]" : "bg-white text-gray-500 border-gray-200 hover:border-gray-300"}`}
                       data-testid={`tab-member-transfer-${tab}`}
                     >
                       {labels[tab]}
@@ -4221,7 +4221,7 @@ export default function AdminPage() {
                     placeholder="보내는 회원 또는 종목명..."
                     value={memberTransferSearch}
                     onChange={(e) => setMemberTransferSearch(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#E8344E]/30 focus:border-[#E8344E]"
+                    className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#03C75A]/30 focus:border-[#03C75A]"
                     data-testid="input-member-transfer-search"
                   />
                 </div>
@@ -4349,7 +4349,7 @@ export default function AdminPage() {
                   <Button
                     onClick={() => addBlockedIpMutation.mutate()}
                     disabled={!newBlockIp.trim() || addBlockedIpMutation.isPending}
-                    className="bg-[#E8344E] hover:bg-[#c92b42] text-white"
+                    className="bg-[#03C75A] hover:bg-[#c92b42] text-white"
                     data-testid="button-add-block-ip"
                   >
                     {addBlockedIpMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Ban className="w-4 h-4 mr-1" />차단 추가</>}
