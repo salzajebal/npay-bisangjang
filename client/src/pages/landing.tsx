@@ -129,7 +129,6 @@ const RANKING_TABS = ["일반종목", "거래많은", "상승률 높은", "상�
 const NAV_LINKS = [
   { label: "공모주 IPO 캘린더", href: "/ipo-calendar" },
   { label: "서비스소개", href: "#tips" },
-  { label: "자주하는 질문", href: "#tips" },
   { label: "이벤트", href: "#news" },
   { label: "공지사항", href: "#news" },
 ];
@@ -381,10 +380,6 @@ function Header({ user, searchQuery, onSearchChange, onSearchFocus }: {
                 {link.label}
               </a>
             ))}
-            <NavDropdown label="회사소개" items={[
-              { label: "회사소개", href: "#tips" },
-              { label: "채용", href: "#tips" },
-            ]} />
             <Link href="/my-stocks">
               <span className="text-[13px] text-[#03C75A] font-bold px-3 py-1.5 ml-1 whitespace-nowrap border border-[#03C75A] rounded-full hover:bg-[#03C75A] hover:text-white transition-colors cursor-pointer" data-testid="link-nav-my-stocks">
                 공모주 마이페이지
