@@ -184,7 +184,6 @@ export default function MyStocksPage() {
             <Link href="/">
               <span className="flex items-center gap-1.5 cursor-pointer" data-testid="link-home">
                 <SiteLogoBadge size={24} />
-                <span className="text-[#14181B] font-bold text-[15px] tracking-tight">pay 비상장</span>
               </span>
             </Link>
             <span className="text-[#9D9FA0] text-sm">|</span>

@@ -332,7 +332,6 @@ export default function DashboardPage() {
           <>
             <SiteLogoBadge size={28} />
             <div className="flex flex-col min-w-0">
-              <span className="font-bold text-sm truncate">pay 비상장</span>
               <span className="text-[11px] text-muted-foreground">내 계좌</span>
             </div>
             {isMobile && (

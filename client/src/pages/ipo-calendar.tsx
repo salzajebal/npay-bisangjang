@@ -787,7 +787,6 @@ export default function IPOCalendarPage() {
         <div className="max-w-[1200px] mx-auto px-4 py-8">
           <div className="flex items-center gap-1.5 mb-4">
             <SiteLogoBadge size={22} />
-            <span className="text-sm font-bold text-[#14181B]">pay <span className="text-[#03C75A]">비상장</span></span>
           </div>
           <p className="text-[11px] text-[#9D9FA0] leading-relaxed">
             Npay 비상장은 비상장주식 거래 정보를 제공하며, 투자 판단에 대한 책임은 투자자 본인에게 있습니다.

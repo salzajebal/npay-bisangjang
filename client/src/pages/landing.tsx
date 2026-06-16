@@ -1893,7 +1893,6 @@ function Footer() {
       <div className="max-w-[1200px] mx-auto px-4 py-8">
         <div className="flex items-center gap-1.5 mb-4">
           <SiteLogoBadge size={22} />
-          <span className="text-sm font-bold text-[#14181B] tracking-tight">pay 비상장</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 text-xs">

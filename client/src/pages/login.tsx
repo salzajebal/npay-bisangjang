@@ -194,7 +194,6 @@ export default function LoginPage() {
           </Link>
           <div className="flex items-center justify-center gap-2.5 mb-4">
             <SiteLogoBadge size={36} />
-            <span className="font-bold text-lg tracking-tight">pay 비상장</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight">{showTransferPanel ? "Npay 비상장" : "로그인"}</h1>
           <p className="text-sm text-muted-foreground mt-1">비상장 주식 관리 시스템</p>
