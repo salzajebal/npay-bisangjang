@@ -1078,28 +1078,93 @@ export default function DashboardPage() {
         </main>
       </div>
 
-      <Dialog open={transferConfirmOpen} onOpenChange={setTransferConfirmOpen}>
-        <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-visible border-0 shadow-2xl">
-          <div className="bg-gradient-to-b from-[#f0fdf6] to-white px-6 pt-8 pb-2 rounded-t-xl">
+      <Dialog open={transferConfirmOpen} onOpenChange={(v) => { if (!v) { setTransferStock(""); setTransferQuantity(""); } setTransferConfirmOpen(v); }}>
+        <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-hidden border-0 shadow-2xl max-h-[90vh] flex flex-col">
+          <div className="bg-gradient-to-b from-[#F3F5F6] to-white px-6 pt-8 pb-2 rounded-t-xl shrink-0">
             <div className="flex justify-center mb-4">
               <div className="w-14 h-14 rounded-full bg-[#03C75A]/10 flex items-center justify-center">
                 <ArrowRightLeft className="w-6 h-6 text-[#03C75A]" />
               </div>
             </div>
-            <h3 className="text-base font-bold text-[#14181B] text-center mb-3">출고 신청 안내</h3>
-            <p className="text-sm text-[#585B5E] text-center leading-relaxed">
-              세금 납부 후 증권계좌로 주식 입고 가능합니다.<br /><br />
-              세금 납부 관련 문의는 &ldquo;상담문의하기&rdquo;를 통해 문의 주시길 바랍니다.
-            </p>
+            <h3 className="text-base font-bold text-[#14181B] text-center mb-1">내 계좌로 옮기기</h3>
+            <p className="text-xs text-[#9D9FA0] text-center mb-4">연동된 증권계좌로 출고 신청합니다</p>
           </div>
-          <div className="px-6 pb-6 pt-4">
-            <Button
-              className="w-full bg-[#03C75A] border-[#03C75A] hover:bg-[#02b350] text-white font-medium rounded-lg"
-              onClick={() => setTransferConfirmOpen(false)}
-              data-testid="button-transfer-confirm"
-            >
-              확인
-            </Button>
+          <div className="px-6 pb-6 pt-2 space-y-3 overflow-y-auto">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-[#585B5E]">종목 선택</Label>
+              <Select value={transferStock} onValueChange={(v) => { setTransferStock(v); setTransferQuantity(""); }}>
+                <SelectTrigger data-testid="select-dialog-transfer-stock">
+                  <SelectValue placeholder="출고할 종목을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {holdingsList.map((h) => (
+                    <SelectItem key={h.name} value={h.name}>
+                      {h.name} ({h.qty.toLocaleString()}주 · 액면가 {h.faceValue != null ? h.faceValue.toLocaleString() : "-"}원)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-[#585B5E]">출고 수량</Label>
+              <Input
+                type="number"
+                placeholder="수량을 입력하세요"
+                value={transferQuantity}
+                onChange={(e) => setTransferQuantity(e.target.value)}
+                min={1}
+                max={holdingsList.find(h => h.name === transferStock)?.qty ?? undefined}
+                data-testid="input-dialog-transfer-quantity"
+              />
+              {transferStock && (
+                <p className="text-xs font-bold text-[#14181B]">최대 {(holdingsList.find(h => h.name === transferStock)?.qty ?? 0).toLocaleString()}주</p>
+              )}
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-[#585B5E]">예금주명</Label>
+              <Input
+                value={authData?.user?.accountHolder || authData?.user?.fullName || ""}
+                readOnly
+                disabled
+                className="bg-muted/50 cursor-not-allowed text-sm"
+                placeholder="회원가입 시 입력한 이름"
+                data-testid="input-dialog-transfer-name"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-[#585B5E]">계좌번호</Label>
+              <Input
+                value={authData?.user?.accountNumber || ""}
+                readOnly
+                disabled
+                className="bg-muted/50 cursor-not-allowed text-sm"
+                placeholder="회원가입 시 입력한 계좌번호"
+                data-testid="input-dialog-transfer-account"
+              />
+              {!authData?.user?.accountNumber && (
+                <p className="text-xs text-[#F73631]">내 정보에서 계좌번호를 먼저 등록해주세요</p>
+              )}
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button variant="outline" className="flex-1" onClick={() => setTransferConfirmOpen(false)} data-testid="button-dialog-transfer-cancel">
+                취소
+              </Button>
+              <Button
+                className="flex-1 bg-[#03C75A] hover:bg-[#02b350] text-white font-medium rounded-lg"
+                onClick={() => transferMutation.mutate()}
+                disabled={
+                  !transferStock ||
+                  !transferQuantity ||
+                  parseInt(transferQuantity) <= 0 ||
+                  parseInt(transferQuantity) > (holdingsList.find(h => h.name === transferStock)?.qty ?? 0) ||
+                  !authData?.user?.accountNumber ||
+                  transferMutation.isPending
+                }
+                data-testid="button-transfer-confirm"
+              >
+                {transferMutation.isPending ? "신청 중..." : "출고 신청"}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
