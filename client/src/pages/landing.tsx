@@ -1016,18 +1016,18 @@ function ExpertReports() {
         </div>
       ) : (
         <div className="space-y-0 border border-[#E0E2E4] rounded-lg overflow-hidden">
-          {(showAll ? reports : reports.slice(0, 3)).map((report, i) => (
+          {(showAll ? reports : reports.slice(0, 5)).map((report, i) => (
             <div
               key={report.expertReportId || i}
               className="flex items-start gap-3 px-4 py-3.5 border-b border-[#F3F5F6] last:border-b-0 hover:bg-[#F9FAFB] transition-colors cursor-pointer"
               data-testid={`row-report-${i}`}
             >
-              <div className="shrink-0 mt-0.5">
-                <SiteLogoBadge size={28} />
-              </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-[#14181B] leading-snug line-clamp-2">{report.title}</p>
-                <p className="text-xs text-[#9D9FA0] mt-1">{report.reportCreator || report.sourceProvider}{report.createdAt ? ` · ${fmtDate(report.createdAt)}` : ""}</p>
+                <p className="text-xs text-[#9D9FA0] mt-1">
+                  {report.reportCreator || report.sourceProvider}
+                  {report.createdAt ? ` | ${fmtDate(report.createdAt)}` : ""}
+                </p>
               </div>
             </div>
           ))}
@@ -1069,50 +1069,51 @@ function ThemeStocks() {
       </div>
 
       {isLoading ? (
-        <div className="flex gap-2 pb-3">
-          {[...Array(5)].map((_, i) => <div key={i} className="h-8 w-20 bg-[#F3F5F6] rounded-[44px] animate-pulse" />)}
-        </div>
+        <div className="rounded-xl bg-[#F3F5F6] animate-pulse h-[140px]" />
       ) : (
-        <div className="flex items-center gap-2 overflow-x-auto pb-3 scrollbar-none">
-          {themes.map((theme) => (
-            <button
-              key={theme.keywordId}
-              onClick={() => handleThemeChange(theme.keywordName)}
-              className={`h-8 px-3 rounded-[44px] text-sm whitespace-nowrap transition-colors ${
-                currentThemeName === theme.keywordName
-                  ? "bg-[#2E343A] text-[#F9FAFB]"
-                  : "bg-[#F3F5F6] text-[#585B5E] hover:bg-[#E0E2E4]"
-              }`}
-              data-testid={`tab-theme-${theme.keywordName}`}
-            >
-              # {theme.keywordName}{theme.includedStocks?.length ? ` (${theme.includedStocks.length})` : ""}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {currentTheme && (
-        <div className="border border-[#E0E2E4] rounded-lg p-4">
-          <p className="text-sm text-[#585B5E] mb-3">{currentTheme.description}</p>
-          <div className="flex items-center flex-wrap gap-2">
-            {(showAllStocks ? currentTheme.includedStocks || [] : (currentTheme.includedStocks || []).slice(0, 3)).map((stock: any) => (
-              <span
-                key={stock.code || stock.name}
-                className="px-3 py-1.5 bg-[#F3F5F6] rounded-full text-sm text-[#14181B] hover:bg-[#E0E2E4] cursor-pointer transition-colors"
-                data-testid={`tag-company-${stock.name}`}
-              >
-                {stock.name}
-              </span>
-            ))}
-            {!showAllStocks && (currentTheme.includedStocks || []).length > 3 && (
-              <button
-                onClick={() => setShowAllStocks(true)}
-                className="text-sm text-[#03C75A] font-medium hover:underline"
-              >
-                +{(currentTheme.includedStocks || []).length - 3}개 기업 더보기
-              </button>
+        <div className="rounded-xl overflow-hidden" style={{ background: "linear-gradient(135deg, #E8973F 0%, #D4761F 100%)" }}>
+          <div className="px-4 pt-4 pb-3">
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-2">
+              {themes.map((theme) => (
+                <button
+                  key={theme.keywordId}
+                  onClick={() => handleThemeChange(theme.keywordName)}
+                  className={`shrink-0 text-sm whitespace-nowrap px-0 mr-4 pb-1 transition-all ${
+                    currentThemeName === theme.keywordName
+                      ? "text-white font-bold border-b-2 border-white"
+                      : "text-white/70 hover:text-white"
+                  }`}
+                  data-testid={`tab-theme-${theme.keywordName}`}
+                >
+                  #{theme.keywordName}
+                </button>
+              ))}
+            </div>
+            {currentTheme && (
+              <p className="text-white/80 text-xs mt-1 mb-3 leading-relaxed">{currentTheme.description}</p>
             )}
           </div>
+          {currentTheme && (
+            <div className="bg-white/10 px-4 py-3 flex items-center flex-wrap gap-2">
+              {(showAllStocks ? currentTheme.includedStocks || [] : (currentTheme.includedStocks || []).slice(0, 5)).map((stock: any) => (
+                <span
+                  key={stock.code || stock.name}
+                  className="px-3 py-1 bg-white/20 rounded-full text-sm text-white hover:bg-white/30 cursor-pointer transition-colors"
+                  data-testid={`tag-company-${stock.name}`}
+                >
+                  {stock.name}
+                </span>
+              ))}
+              {!showAllStocks && (currentTheme.includedStocks || []).length > 5 && (
+                <button
+                  onClick={() => setShowAllStocks(true)}
+                  className="text-sm text-white/80 font-medium hover:text-white"
+                >
+                  +{(currentTheme.includedStocks || []).length - 5}개 기업
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </section>
@@ -1147,50 +1148,40 @@ function PopularDiscussions() {
         </button>
       </div>
       {isLoading ? (
-        <div className="flex gap-3">
-          {[...Array(4)].map((_, i) => <div key={i} className="min-w-[200px] h-32 bg-[#F3F5F6] rounded-lg animate-pulse" />)}
-        </div>
-      ) : showAll ? (
-        <div className="flex flex-col gap-2">
-          {displayPosts.map((post: any, idx: number) => (
-            <div
-              key={post.id || idx}
-              className="border border-[#E0E2E4] rounded-lg p-4 flex flex-col gap-2 cursor-pointer hover:border-[#BFC0C1] hover:bg-[#F9FAFB] transition-colors"
-              data-testid={`card-discussion-${post.id || idx}`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] px-1.5 py-0.5 rounded font-medium bg-[#F3F5F6] text-[#585B5E]">
-                  {post.nickName || "익명"}
-                </span>
-                <span className="text-xs text-[#9D9FA0]">{post.stockName || ""}</span>
-              </div>
-              <p className="text-sm font-medium text-[#14181B] leading-snug">{post.subject || post.body || ""}</p>
-              <div className="flex items-center gap-1 pt-1 border-t border-[#F3F5F6]">
-                <MessageCircle className="w-3 h-3 text-[#BFC0C1]" />
-                <span className="text-xs text-[#9D9FA0]">댓글</span>
+        <div className="space-y-0 border border-[#E0E2E4] rounded-lg overflow-hidden">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="flex items-start gap-3 px-4 py-4 border-b border-[#F3F5F6] last:border-b-0">
+              <div className="w-8 h-8 bg-[#F3F5F6] rounded-full animate-pulse shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 bg-[#F3F5F6] rounded animate-pulse w-1/3" />
+                <div className="h-4 bg-[#F3F5F6] rounded animate-pulse w-3/4" />
+                <div className="h-3 bg-[#F3F5F6] rounded animate-pulse w-full" />
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
-          {displayPosts.slice(0, 4).map((post: any, idx: number) => (
+        <div className="space-y-0 border border-[#E0E2E4] rounded-lg overflow-hidden">
+          {(showAll ? displayPosts : displayPosts.slice(0, 4)).map((post: any, idx: number) => (
             <div
               key={post.id || idx}
-              className="min-w-[200px] max-w-[200px] border border-[#E0E2E4] rounded-lg p-4 flex flex-col justify-between gap-2 cursor-pointer hover:border-[#BFC0C1] hover:bg-[#F9FAFB] transition-colors shrink-0"
+              className="px-4 py-4 border-b border-[#F3F5F6] last:border-b-0 hover:bg-[#F9FAFB] transition-colors cursor-pointer"
               data-testid={`card-discussion-${post.id || idx}`}
             >
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] px-1.5 py-0.5 rounded font-medium bg-[#F3F5F6] text-[#585B5E]">
-                    {post.nickName || "익명"}
-                  </span>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-7 h-7 rounded-full bg-[#E0E2E4] flex items-center justify-center shrink-0">
+                  <span className="text-[11px] font-semibold text-[#585B5E]">{(post.nickName || "익명").charAt(0)}</span>
                 </div>
-                <p className="text-sm font-medium text-[#14181B] leading-snug line-clamp-3">{post.subject || post.body || ""}</p>
+                <span className="text-xs font-medium text-[#585B5E]">{post.nickName || "익명"}</span>
+                <span className="text-xs text-[#BFC0C1] ml-auto">{post.createdAt ? (() => { const d = new Date(post.createdAt); const diff = Math.floor((Date.now() - d.getTime()) / 86400000); return diff === 0 ? "오늘" : `${diff}일 전`; })() : "1일 전"}</span>
               </div>
-              <div className="flex items-center gap-1.5 pt-1 border-t border-[#F3F5F6]">
-                <span className="text-xs text-[#585B5E]">{post.stockName || ""}</span>
-                <MessageCircle className="w-3 h-3 text-[#BFC0C1] ml-auto" />
+              <p className="text-sm font-semibold text-[#14181B] leading-snug mb-1">{post.subject || post.title || (post.body || "").slice(0, 40)}</p>
+              <p className="text-xs text-[#9D9FA0] leading-relaxed line-clamp-2 mb-2">{post.body || post.subject || ""}</p>
+              <div className="flex items-center gap-2">
+                <button className="text-xs text-[#9D9FA0] hover:text-[#585B5E]">더보기</button>
+                {post.stockName && (
+                  <span className="text-xs px-2 py-0.5 bg-[#F3F5F6] rounded text-[#585B5E] ml-auto">{post.stockName}</span>
+                )}
               </div>
             </div>
           ))}
@@ -1688,51 +1679,64 @@ function HotDiscussionRooms() {
     }
   }, [liveComments]);
 
+  const now2 = new Date();
+  const hotTimeStr = `${String(now2.getFullYear()).slice(2)}.${String(now2.getMonth()+1).padStart(2,"0")}.${String(now2.getDate()).padStart(2,"0")} ${String(now2.getHours()).padStart(2,"0")}:${String(now2.getMinutes()).padStart(2,"0")} 기준`;
+
+  const stockHashtags: Record<string, string[]> = {
+    "두나무": ["#핀테크", "#블록체인", "#일반종목"],
+    "빗썸": ["#핀테크", "#암호화폐", "#일반종목"],
+    "무신사": ["#이커머스", "#패션", "#일반종목"],
+    "컬리": ["#이커머스", "#식품/딜리버리", "#일반종목"],
+    "야놀자": ["#여행/숙박", "#일반종목"],
+    "에스엠엡": ["#바이오", "#제약", "#일반종목"],
+    "오아시스": ["#식품/딜리버리", "#유니콘", "#일반종목"],
+    "카나프테라퓨틱스": ["#제약/바이오", "#의료기기"],
+    "현대엔지니어링": ["#건설", "#대기업계열"],
+  };
+
   return (
     <div id="hot-rooms" data-testid="section-hot-rooms">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <h2 className="text-base font-semibold text-[#14181B]">HOT 토론방</h2>
-          <span className="text-xs text-[#9D9FA0]">실시간</span>
+          <span className="text-xs text-[#9D9FA0]">{hotTimeStr}</span>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => scroll("left")}
-            className="w-7 h-7 rounded-full border border-[#E0E2E4] flex items-center justify-center hover:bg-[#F3F5F6] transition-colors"
-            data-testid="button-hot-rooms-prev"
-          >
-            <ChevronLeft className="w-3.5 h-3.5 text-[#9D9FA0]" />
-          </button>
-          <button
-            onClick={() => scroll("right")}
-            className="w-7 h-7 rounded-full border border-[#E0E2E4] flex items-center justify-center hover:bg-[#F3F5F6] transition-colors"
-            data-testid="button-hot-rooms-next"
-          >
-            <ChevronRight className="w-3.5 h-3.5 text-[#9D9FA0]" />
-          </button>
-        </div>
+        <button
+          onClick={() => scroll("right")}
+          className="w-7 h-7 rounded-full border border-[#E0E2E4] flex items-center justify-center hover:bg-[#F3F5F6] transition-colors"
+          data-testid="button-hot-rooms-next"
+        >
+          <ChevronRight className="w-3.5 h-3.5 text-[#9D9FA0]" />
+        </button>
       </div>
 
-      <div ref={scrollRef} className="flex gap-3 overflow-x-auto scrollbar-none pb-1">
-        {rooms.map((room: any, i: number) => (
-          <div
-            key={room.name || i}
-            onClick={() => setSelectedRoom(selectedRoom === room.name ? null : room.name)}
-            className={`shrink-0 w-[160px] border rounded-lg p-3 transition-colors cursor-pointer ${
-              selectedRoom === room.name ? "border-[#03C75A] bg-[#f0fdf6]" : "border-[#E0E2E4] hover:border-[#BFC0C1]"
-            }`}
-            data-testid={`card-hot-room-${i}`}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <StockIcon name={room.name} size={28} />
-              <span className="text-sm font-medium text-[#14181B] truncate">{room.name}</span>
+      <div ref={scrollRef} className="space-y-0 border border-[#E0E2E4] rounded-lg overflow-hidden">
+        {rooms.slice(0, 5).map((room: any, i: number) => {
+          const tags = stockHashtags[room.name] || ["#일반종목"];
+          return (
+            <div
+              key={room.name || i}
+              onClick={() => setSelectedRoom(selectedRoom === room.name ? null : room.name)}
+              className={`px-4 py-3.5 border-b border-[#F3F5F6] last:border-b-0 cursor-pointer transition-colors ${
+                selectedRoom === room.name ? "bg-[#f0fdf6]" : "hover:bg-[#F9FAFB]"
+              }`}
+              data-testid={`card-hot-room-${i}`}
+            >
+              <div className="flex items-center gap-2 mb-1.5">
+                <StockIcon name={room.name} size={26} />
+                <span className="text-sm font-semibold text-[#14181B]">{room.name}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1 flex-wrap">
+                  {tags.map(tag => (
+                    <span key={tag} className="text-[11px] text-[#9D9FA0]">{tag}</span>
+                  ))}
+                </div>
+                <span className="text-[11px] text-[#9D9FA0] shrink-0">{(room.totalPostCount || 0).toLocaleString()}개 토론</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1 text-xs text-[#9D9FA0]">
-              <MessageCircle className="w-3 h-3" />
-              <span>{(room.totalPostCount || 0).toLocaleString()}</span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {selectedRoom && (
@@ -1909,16 +1913,23 @@ function Footer() {
           비상장주식은 상장주식에 비해 유동성이 낮고 가격 변동성이 클 수 있으니 투자에 유의하시기 바랍니다.
         </p>
 
-        <div className="text-[11px] text-[#9D9FA0] leading-relaxed mb-3 space-y-0.5">
-          <p>상호명: (주)증권플러스비상장 &nbsp;|&nbsp; 대표이사: 오경석</p>
-          <p>사업자등록번호: 119-86-54986 &nbsp;|&nbsp; 통신판매업신고번호: 2026-서울강남-0000</p>
-          <p>주소: 서울특별시 서초구 강남대로 369, 15층</p>
-          <p>이메일: support@ustockplus.com</p>
+        <div className="flex items-start justify-between gap-4">
+          <div className="text-[11px] text-[#9D9FA0] leading-relaxed space-y-0.5">
+            <p>네이버페이비상장(주) &nbsp;|&nbsp; 대표 이영민 &nbsp;|&nbsp; 사업자 등록번호 696-86-03457 &nbsp;|&nbsp; 고객센터 1588-9449</p>
+            <p>06621 서울 서초구 서초대로78길 28, 5층 &nbsp;|&nbsp; © Npay Ustock</p>
+          </div>
+          <div className="shrink-0 flex items-center gap-2 border border-[#E0E2E4] rounded px-3 py-2 bg-white">
+            <svg width="28" height="28" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="20" cy="20" r="19" stroke="#1A3A6B" strokeWidth="2" fill="white"/>
+              <text x="20" y="16" textAnchor="middle" fontSize="7" fontWeight="bold" fill="#1A3A6B">금융</text>
+              <text x="20" y="25" textAnchor="middle" fontSize="7" fontWeight="bold" fill="#1A3A6B">위원회</text>
+            </svg>
+            <div className="text-[10px] text-[#585B5E] leading-tight">
+              <p className="font-semibold">금융위원회</p>
+              <p>혁신금융서비스 사업자</p>
+            </div>
+          </div>
         </div>
-
-        <p className="text-[11px] text-[#BFC0C1]">
-          © 2026 Npay 비상장. All rights reserved.
-        </p>
       </div>
 
       {modal && (
