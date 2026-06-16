@@ -1945,6 +1945,64 @@ function Footer() {
   );
 }
 
+const POPUP_STORAGE_KEY = "npay_popup_hidden";
+
+function LandingPopup() {
+  const [visible, setVisible] = useState(false);
+  const [dontShow, setDontShow] = useState(false);
+
+  useEffect(() => {
+    const hidden = localStorage.getItem(POPUP_STORAGE_KEY);
+    if (!hidden) setVisible(true);
+  }, []);
+
+  const handleClose = () => {
+    if (dontShow) localStorage.setItem(POPUP_STORAGE_KEY, "1");
+    setVisible(false);
+  };
+
+  if (!visible) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60" data-testid="popup-landing">
+      <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden max-w-[360px] w-full mx-4">
+        <a
+          href="https://ustock.naver.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid="link-popup-npay"
+          className="block"
+        >
+          <img
+            src="/img/popup-banner.png"
+            alt="Npay비상장 일반회원전용 이동하기"
+            className="w-full"
+          />
+        </a>
+        <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-[#E0E2E4]">
+          <label className="flex items-center gap-2 cursor-pointer select-none text-[13px] text-[#585B5E]" data-testid="label-dont-show-again">
+            <input
+              type="checkbox"
+              checked={dontShow}
+              onChange={(e) => setDontShow(e.target.checked)}
+              className="w-4 h-4 accent-[#03C75A] cursor-pointer"
+              data-testid="checkbox-dont-show-again"
+            />
+            다시열람하지 않기
+          </label>
+          <button
+            onClick={handleClose}
+            className="text-[13px] font-medium text-[#14181B] hover:text-[#03C75A] transition-colors px-2 py-1"
+            data-testid="button-popup-close"
+          >
+            닫기
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TradePage() {
   const { data: user } = useQuery<UserType | null>({
     queryKey: ["/api/auth/me"],
@@ -1974,6 +2032,7 @@ export default function TradePage() {
 
   return (
     <div className="min-h-screen bg-white" data-testid="page-landing">
+      <LandingPopup />
       <Header
         user={user ?? null}
         searchQuery={searchQuery}
