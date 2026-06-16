@@ -2050,7 +2050,13 @@ export default function TradePage() {
           </div>
         )}
 
-        {!isSearchMode && <BannerCarousel />}
+        {!isSearchMode && (
+          <div className="mb-4">
+            <a href="#news" className="inline-flex items-center gap-1.5 bg-[#03C75A] text-white text-sm font-semibold px-4 py-1.5 rounded-full hover:bg-[#02b350] transition-colors" data-testid="banner-update-btn">
+              업데이트 보러가기! <ChevronRight className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        )}
 
         <div className={`flex flex-col lg:flex-row gap-6 mt-2 ${isSearchMode ? "hidden" : ""}`}>
           <div className="flex-1 min-w-0 space-y-8">
