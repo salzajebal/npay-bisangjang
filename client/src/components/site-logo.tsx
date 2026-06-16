@@ -1,22 +1,25 @@
 export function SiteLogo({ className = "" }: { className?: string }) {
-  return (
-    <div className={`flex items-center gap-1.5 ${className}`}>
-      <SiteLogoBadge size={28} />
-      <span className="font-bold text-[15px] text-[#14181B] whitespace-nowrap tracking-tight">pay 비상장</span>
-    </div>
-  );
+  return <SiteLogoBadge size={28} className={className} />;
 }
 
 export function SiteLogoBadge({ className = "", size = 32 }: { className?: string; size?: number }) {
-  const r = size * 0.22;
+  const paySize = Math.round(size * 0.38);
   return (
-    <div
-      className={`shrink-0 inline-flex items-center justify-center rounded-full ${className}`}
-      style={{ width: size, height: size, background: "#03C75A" }}
-    >
-      <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <text x="11" y="17" textAnchor="middle" fontFamily="Arial,sans-serif" fontWeight="900" fontSize="18" fill="white">N</text>
-      </svg>
+    <div className={`shrink-0 inline-flex items-center overflow-hidden rounded-[6px] ${className}`} style={{ height: size * 0.75 }}>
+      <div
+        className="inline-flex items-center justify-center h-full"
+        style={{ width: size * 0.95, background: "#03C75A" }}
+      >
+        <svg width={size * 0.5} height={size * 0.6} viewBox="0 0 20 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <text x="10" y="21" textAnchor="middle" fontFamily="'Arial Black',Arial,sans-serif" fontWeight="900" fontSize="22" fill="white">N</text>
+        </svg>
+      </div>
+      <div
+        className="inline-flex items-center justify-center h-full"
+        style={{ background: "#14181B", paddingLeft: size * 0.16, paddingRight: size * 0.16 }}
+      >
+        <span style={{ fontSize: paySize, fontWeight: 800, color: "#ffffff", letterSpacing: "-0.01em", lineHeight: 1, whiteSpace: "nowrap" }}>pay 비상장</span>
+      </div>
     </div>
   );
 }

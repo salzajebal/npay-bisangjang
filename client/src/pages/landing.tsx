@@ -127,12 +127,11 @@ const QUICK_CATEGORIES = [
 const RANKING_TABS = ["일반종목", "거래많은", "상승률 높은", "상장준비 시작", "예상시총 높은", "매출이 상승한"];
 
 const NAV_LINKS = [
-  { label: "종목랭킹", href: "#rankings" },
-  { label: "뉴스", href: "#news" },
-  { label: "전문가리포트", href: "#reports" },
-  { label: "테마", href: "#themes" },
-  { label: "토론", href: "#discussions" },
   { label: "공모주 IPO 캘린더", href: "/ipo-calendar" },
+  { label: "서비스소개", href: "#tips" },
+  { label: "자주하는 질문", href: "#tips" },
+  { label: "이벤트", href: "#news" },
+  { label: "공지사항", href: "#news" },
 ];
 
 function useWatchlist(user: UserType | null) {
@@ -303,6 +302,27 @@ function WatchlistSection({
   );
 }
 
+function NavDropdown({ label, items }: { label: string; items: { label: string; href: string }[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <button className="text-[13px] text-[#585B5E] px-2 py-1 whitespace-nowrap hover:text-[#14181B] transition-colors flex items-center gap-0.5">
+        {label}
+        <ChevronRight className="w-3 h-3 rotate-90 opacity-60" />
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 bg-white border border-[#E0E2E4] rounded-lg shadow-lg py-1 z-50 min-w-[120px]">
+          {items.map((item) => (
+            <a key={item.label} href={item.href} className="block px-4 py-2 text-[13px] text-[#585B5E] hover:bg-[#F3F5F6] hover:text-[#14181B] whitespace-nowrap">
+              {item.label}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Header({ user, searchQuery, onSearchChange, onSearchFocus }: {
   user: UserType | null;
   searchQuery: string;
@@ -321,9 +341,8 @@ function Header({ user, searchQuery, onSearchChange, onSearchFocus }: {
       <div className="max-w-[1200px] mx-auto px-4">
         <div className="flex items-center justify-between gap-4 h-14">
           <Link href="/" data-testid="link-home">
-            <div className="flex items-center gap-1.5 shrink-0 cursor-pointer">
-              <SiteLogoBadge size={28} />
-              <span className="text-[#14181B] font-bold text-[15px] whitespace-nowrap tracking-tight">pay 비상장</span>
+            <div className="shrink-0 cursor-pointer">
+              <SiteLogoBadge size={32} />
             </div>
           </Link>
 
@@ -351,19 +370,23 @@ function Header({ user, searchQuery, onSearchChange, onSearchFocus }: {
             </div>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-3 shrink-0">
+          <nav className="hidden lg:flex items-center gap-1 shrink-0">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
-                className="text-[13px] text-[#585B5E] px-1 py-1 whitespace-nowrap hover:text-[#14181B] transition-colors"
+                className="text-[13px] text-[#585B5E] px-2 py-1 whitespace-nowrap hover:text-[#14181B] transition-colors"
                 data-testid={`link-nav-${link.label}`}
               >
                 {link.label}
               </a>
             ))}
+            <NavDropdown label="회사소개" items={[
+              { label: "회사소개", href: "#tips" },
+              { label: "채용", href: "#tips" },
+            ]} />
             <Link href="/my-stocks">
-              <span className="text-[13px] text-[#03C75A] font-bold px-3 py-1.5 whitespace-nowrap border border-[#03C75A] rounded-full hover:bg-[#03C75A] hover:text-white transition-colors cursor-pointer" data-testid="link-nav-my-stocks">
+              <span className="text-[13px] text-[#03C75A] font-bold px-3 py-1.5 ml-1 whitespace-nowrap border border-[#03C75A] rounded-full hover:bg-[#03C75A] hover:text-white transition-colors cursor-pointer" data-testid="link-nav-my-stocks">
                 공모주 마이페이지
               </span>
             </Link>
@@ -672,7 +695,7 @@ function StockRankings({
 
   const activeGroup = uniqueGroups.find(g => g.name === activeTab);
   const allStocks: StockRow[] = (activeGroup?.rows || []).map(r => rowToStockRow(r, activeTab));
-  const displayStocks = showAll ? allStocks : allStocks.slice(0, 5);
+  const displayStocks = showAll ? allStocks : allStocks.slice(0, 10);
 
   const cols = getColDefs(activeTab);
 
@@ -1174,6 +1197,138 @@ function PopularDiscussions() {
         </div>
       )}
     </section>
+  );
+}
+
+function IPOUpcomingSidebar() {
+  const [activeTab, setActiveTab] = useState<"진행중" | "예정">("예정");
+
+  const { data: ipoData, isLoading } = useQuery<any[]>({
+    queryKey: ["/api/ipo-stocks"],
+  });
+
+  const now = new Date();
+  const allIpos: any[] = (ipoData || []).filter((s: any) => s.isActive);
+
+  const ongoing = allIpos.filter((s: any) => {
+    if (s.subscriptionStatus === "청약진행중") return true;
+    const end = s.endDate ? new Date(s.endDate) : null;
+    return end && end >= now && s.startDate && new Date(s.startDate) <= now;
+  });
+  const upcoming = allIpos.filter((s: any) => {
+    if (s.subscriptionStatus === "청약예정") return true;
+    const start = s.startDate ? new Date(s.startDate) : null;
+    return start && start > now;
+  });
+
+  const fallbackUpcoming = [
+    { stockName: "스트라드비전", startDate: "2026-06-18", endDate: "2026-06-19", priceMin: 12000, priceMax: 14000, competitionRate: null },
+    { stockName: "저스텍", startDate: "2026-06-18", endDate: "2026-06-19", priceMin: 10500, priceMax: 12500, competitionRate: null },
+    { stockName: "빅웨이브로보틱스", startDate: "2026-06-18", endDate: "2026-06-20", priceMin: 22000, priceMax: 27000, competitionRate: null },
+  ];
+
+  const displayed = activeTab === "진행중" ? ongoing : (upcoming.length > 0 ? upcoming : fallbackUpcoming);
+
+  function dday(dateStr: string) {
+    const d = new Date(dateStr);
+    const diff = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (diff === 0) return "D-Day";
+    if (diff > 0) return `D-${diff}`;
+    return `D+${Math.abs(diff)}`;
+  }
+
+  function fmtDate(s: string) {
+    try {
+      const d = new Date(s);
+      return `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, "0")}`;
+    } catch { return s; }
+  }
+
+  return (
+    <div className="bg-white border border-[#E0E2E4] rounded-lg overflow-hidden" data-testid="sidebar-ipo-upcoming">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#F3F5F6]">
+        <span className="text-sm font-semibold text-[#14181B]">다가오는 청약 종목</span>
+        <Link href="/ipo-calendar">
+          <span className="text-xs text-[#9D9FA0] hover:text-[#585B5E] cursor-pointer flex items-center gap-0.5">
+            IPO 캘린더 보기 <ChevronRight className="w-3 h-3" />
+          </span>
+        </Link>
+      </div>
+
+      <div className="flex border-b border-[#F3F5F6]">
+        <button
+          onClick={() => setActiveTab("진행중")}
+          className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-1 ${activeTab === "진행중" ? "border-[#03C75A] text-[#03C75A]" : "border-transparent text-[#9D9FA0]"}`}
+          data-testid="sidebar-tab-ongoing"
+        >
+          청약진행중
+          {ongoing.length > 0 && <span className="text-[10px] bg-[#03C75A] text-white rounded-full w-4 h-4 flex items-center justify-center">{ongoing.length}</span>}
+        </button>
+        <button
+          onClick={() => setActiveTab("예정")}
+          className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-1 ${activeTab === "예정" ? "border-[#03C75A] text-[#03C75A]" : "border-transparent text-[#9D9FA0]"}`}
+          data-testid="sidebar-tab-upcoming"
+        >
+          청약예정
+          <span className="text-[10px] bg-[#03C75A] text-white rounded-full w-4 h-4 flex items-center justify-center">{upcoming.length > 0 ? upcoming.length : fallbackUpcoming.length}</span>
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="p-4 space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex gap-3 items-center">
+              <div className="w-10 h-10 rounded-full bg-[#F3F5F6] animate-pulse shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3 bg-[#F3F5F6] rounded animate-pulse w-24" />
+                <div className="h-3 bg-[#F3F5F6] rounded animate-pulse w-32" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : displayed.length === 0 ? (
+        <div className="p-6 text-center text-sm text-[#9D9FA0]">해당 종목이 없습니다</div>
+      ) : (
+        <div className="divide-y divide-[#F3F5F6]">
+          {displayed.map((ipo: any, i: number) => {
+            const name = ipo.stockName || ipo.name || "";
+            const startStr = ipo.startDate ? fmtDate(ipo.startDate) : "";
+            const endStr = ipo.endDate ? fmtDate(ipo.endDate) : "";
+            const ddayStr = ipo.startDate ? dday(ipo.startDate) : (ipo.dDay || "");
+            const priceRange = ipo.priceMin && ipo.priceMax
+              ? `공모가 ${ipo.priceMin.toLocaleString()}~${ipo.priceMax.toLocaleString()}원`
+              : (ipo.priceRange || "공모가 미정");
+            return (
+              <div key={i} className="px-4 py-3 hover:bg-[#F9FAFB] transition-colors cursor-pointer" data-testid={`sidebar-ipo-card-${i}`}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] font-bold text-[#03C75A]">{ddayStr || "예정"}</span>
+                  <span className="text-[11px] text-[#9D9FA0]">{startStr}{endStr && startStr !== endStr ? ` ~ ${endStr}` : ""} 예정</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <StockIcon name={name} size={36} />
+                    <div>
+                      <p className="text-sm font-semibold text-[#14181B]">{name}</p>
+                      <p className="text-[11px] text-[#585B5E]">{priceRange}</p>
+                      {ipo.competitionRate && <p className="text-[11px] text-[#9D9FA0]">기관경쟁률 {ipo.competitionRate}</p>}
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-[#BFC0C1] shrink-0" />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="px-4 py-3 border-t border-[#F3F5F6]">
+        <Link href="/ipo-calendar">
+          <span className="w-full flex items-center justify-center gap-1 text-sm text-[#585B5E] hover:text-[#14181B] cursor-pointer py-1">
+            종목 더보기 <ChevronRight className="w-3.5 h-3.5" />
+          </span>
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -1910,6 +2065,7 @@ export default function TradePage() {
           </div>
 
           <aside className="hidden lg:flex lg:flex-col lg:w-[340px] shrink-0 space-y-6">
+            <IPOUpcomingSidebar />
             <MyHoldings />
             <Tips />
             <HotDiscussionRooms />
