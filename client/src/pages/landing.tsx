@@ -71,11 +71,11 @@ const ALL_SEARCH_STOCKS = Object.entries(STOCK_CODES).map(([name, code]) => ({ n
 
 const BANNER_SLIDES = [
   {
-    accent: "#E8344E",
-    tagBg: "#fff0f2",
+    accent: "#03C75A",
+    tagBg: "#f0fdf6",
     tag: "NEW",
-    title: "증권플러스 비상장",
-    subtitle: "Npay 비상장으로!",
+    title: "Npay 비상장",
+    subtitle: "네이버페이 비상장으로!",
     icon: (
       <div className="flex flex-col gap-1.5 items-center">
         <div className="bg-gray-100 rounded-xl px-2.5 py-1.5 flex items-center gap-1.5">
@@ -243,22 +243,22 @@ function WatchlistSection({
   }, [watchlistKey]);
 
   return (
-    <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm" data-testid="watchlist-section">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
+    <div className="bg-white border border-[#E0E2E4] rounded-lg overflow-hidden" data-testid="watchlist-section">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#F3F5F6]">
         <div className="flex items-center gap-2">
           <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-          <span className="font-bold text-sm text-gray-900">내 관심종목</span>
+          <span className="font-semibold text-sm text-[#14181B]">내 관심종목</span>
         </div>
-        <span className="text-xs text-gray-400">{watchlistNames.length}개</span>
+        <span className="text-xs text-[#9D9FA0]">{watchlistNames.length}개</span>
       </div>
 
       {!user && (
         <div className="px-4 py-5 text-center">
-          <Star className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-          <p className="text-sm text-gray-500 mb-3">로그인하면<br />관심종목을 확인할 수 있습니다</p>
+          <Star className="w-8 h-8 text-[#E0E2E4] mx-auto mb-2" />
+          <p className="text-sm text-[#585B5E] mb-3">로그인하면<br />관심종목을 확인할 수 있습니다</p>
           <button
             onClick={() => setLocation("/login")}
-            className="text-xs text-[#E8344E] font-semibold border border-[#E8344E] rounded-full px-4 py-1.5 hover:bg-[#E8344E] hover:text-white transition-colors"
+            className="text-xs text-[#03C75A] font-semibold border border-[#03C75A] rounded-full px-4 py-1.5 hover:bg-[#03C75A] hover:text-white transition-colors"
             data-testid="watchlist-login-btn"
           >
             로그인하기
@@ -268,23 +268,23 @@ function WatchlistSection({
 
       {user && watchlistNames.length === 0 && (
         <div className="px-4 py-5 text-center">
-          <Star className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-          <p className="text-sm text-gray-400">관심종목이 없습니다<br />종목 옆 ★를 눌러 추가하세요</p>
+          <Star className="w-8 h-8 text-[#E0E2E4] mx-auto mb-2" />
+          <p className="text-sm text-[#9D9FA0]">관심종목이 없습니다<br />종목 옆 ★를 눌러 추가하세요</p>
         </div>
       )}
 
       {user && watchlistNames.length > 0 && (
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-[#F3F5F6]">
           {watchlistNames.map((name) => {
             const p = priceMap[name];
             return (
               <div key={name} className="flex items-center gap-3 px-4 py-2.5" data-testid={`watchlist-item-${name}`}>
                 <StockIcon name={name} size={32} />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-gray-900 truncate">{name}</div>
-                  <div className="text-xs text-gray-400">{p ? `${p.currentPrice.toLocaleString()}원` : "미제공"}</div>
+                  <div className="text-sm font-semibold text-[#14181B] truncate">{name}</div>
+                  <div className="text-xs text-[#9D9FA0]">{p ? `${p.currentPrice.toLocaleString()}원` : "미제공"}</div>
                 </div>
-                <div className={`text-xs font-semibold ${!p ? "text-gray-400" : p.changePercent >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                <div className={`text-xs font-semibold ${!p ? "text-[#9D9FA0]" : p.changePercent >= 0 ? "text-[#F73631]" : "text-[#007EFF]"}`}>
                   {!p ? "미제공" : `${p.changePercent >= 0 ? "+" : ""}${p.changePercent.toFixed(2)}%`}
                 </div>
                 <button
@@ -317,13 +317,13 @@ function Header({ user, searchQuery, onSearchChange, onSearchFocus }: {
   };
 
   return (
-    <header className="sticky top-0 z-[9999] bg-white border-b border-[#eee]" data-testid="header">
+    <header className="sticky top-0 z-[9999] bg-white border-b border-[#E0E2E4]" data-testid="header">
       <div className="max-w-[1200px] mx-auto px-4">
         <div className="flex items-center justify-between gap-4 h-14">
           <Link href="/" data-testid="link-home">
             <div className="flex items-center gap-1.5 shrink-0 cursor-pointer">
               <SiteLogoBadge size={28} />
-              <span className="text-[#222] font-bold text-base whitespace-nowrap">증권플러스 <span className="text-[#E8344E]">비상장</span></span>
+              <span className="text-[#14181B] font-bold text-[15px] whitespace-nowrap tracking-tight">pay 비상장</span>
             </div>
           </Link>
 
@@ -336,7 +336,7 @@ function Header({ user, searchQuery, onSearchChange, onSearchFocus }: {
                 onChange={e => onSearchChange(e.target.value)}
                 onFocus={onSearchFocus}
                 placeholder="종목명·초성·코드 검색"
-                className="w-full h-9 pl-9 pr-8 rounded-lg bg-[#f5f5f5] border-none text-sm text-[#222] placeholder-[#999] outline-none focus:ring-1 focus:ring-[#E8344E]"
+                className="w-full h-9 pl-9 pr-8 rounded-lg bg-[#F3F5F6] border-none text-sm text-[#14181B] placeholder-[#9D9FA0] outline-none focus:ring-1 focus:ring-[#03C75A]"
                 data-testid="input-search"
               />
               {searchQuery.length > 0 && (
@@ -356,14 +356,14 @@ function Header({ user, searchQuery, onSearchChange, onSearchFocus }: {
               <a
                 key={link.label}
                 href={link.href}
-                className="text-[13px] text-[#666] px-1 py-1 whitespace-nowrap hover:text-[#222] transition-colors"
+                className="text-[13px] text-[#585B5E] px-1 py-1 whitespace-nowrap hover:text-[#14181B] transition-colors"
                 data-testid={`link-nav-${link.label}`}
               >
                 {link.label}
               </a>
             ))}
             <Link href="/my-stocks">
-              <span className="text-[13px] text-[#E8344E] font-bold px-3 py-1.5 whitespace-nowrap border border-[#E8344E] rounded-full hover:bg-[#E8344E] hover:text-white transition-colors cursor-pointer" data-testid="link-nav-my-stocks">
+              <span className="text-[13px] text-[#03C75A] font-bold px-3 py-1.5 whitespace-nowrap border border-[#03C75A] rounded-full hover:bg-[#03C75A] hover:text-white transition-colors cursor-pointer" data-testid="link-nav-my-stocks">
                 공모주 마이페이지
               </span>
             </Link>
@@ -373,14 +373,14 @@ function Header({ user, searchQuery, onSearchChange, onSearchFocus }: {
             {user ? (
               <>
                 <Link href="/dashboard">
-                  <span className="flex items-center gap-1 text-sm text-[#666] hover:text-[#222] cursor-pointer" data-testid="link-dashboard">
+                  <span className="flex items-center gap-1 text-sm text-[#585B5E] hover:text-[#14181B] cursor-pointer" data-testid="link-dashboard">
                     <User className="w-4 h-4" />
                     {user.fullName}
                   </span>
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-1 text-sm text-[#666] hover:text-[#E8344E] transition-colors"
+                  className="flex items-center gap-1 text-sm text-[#585B5E] hover:text-[#F73631] transition-colors"
                   data-testid="button-logout"
                 >
                   <LogOut className="w-4 h-4" />
@@ -389,13 +389,13 @@ function Header({ user, searchQuery, onSearchChange, onSearchFocus }: {
             ) : (
               <>
                 <Link href="/login">
-                  <span className="flex items-center gap-1 text-sm text-white bg-[#E8344E] px-3 py-1.5 rounded-md hover:bg-[#d42e45] transition-colors cursor-pointer" data-testid="link-login">
+                  <span className="flex items-center gap-1 text-sm text-white bg-[#03C75A] px-3 py-1.5 rounded-md hover:bg-[#02b350] transition-colors cursor-pointer" data-testid="link-login">
                     <LogIn className="w-3.5 h-3.5" />
                     로그인
                   </span>
                 </Link>
                 <Link href="/register">
-                  <span className="text-sm text-[#666] hover:text-[#222] cursor-pointer" data-testid="link-register">
+                  <span className="text-sm text-[#585B5E] hover:text-[#14181B] cursor-pointer" data-testid="link-register">
                     회원가입
                   </span>
                 </Link>
@@ -414,14 +414,14 @@ function Header({ user, searchQuery, onSearchChange, onSearchFocus }: {
       </div>
 
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-t border-[#eee] px-4 py-3 space-y-2">
+        <div className="lg:hidden bg-white border-t border-[#E0E2E4] px-4 py-3 space-y-2">
           <div className="md:hidden mb-3">
             <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9D9FA0]" />
               <input
                 type="text"
                 placeholder="종목명·초성·코드 검색"
-                className="w-full h-9 pl-9 pr-3 rounded-lg bg-[#f5f5f5] border-none text-sm text-[#222] placeholder-[#999] outline-none"
+                className="w-full h-9 pl-9 pr-3 rounded-lg bg-[#F3F5F6] border-none text-sm text-[#14181B] placeholder-[#9D9FA0] outline-none"
                 data-testid="input-search-mobile"
               />
             </div>
@@ -430,42 +430,42 @@ function Header({ user, searchQuery, onSearchChange, onSearchFocus }: {
             <a
               key={link.label}
               href={link.href}
-              className="block text-sm text-[#666] py-2 hover:text-[#222]"
+              className="block text-sm text-[#585B5E] py-2 hover:text-[#14181B]"
               data-testid={`link-mobile-nav-${link.label}`}
             >
               {link.label}
             </a>
           ))}
           <Link href="/dashboard">
-            <span className="block text-sm text-[#E8344E] font-bold py-2 cursor-pointer" data-testid="link-mobile-nav-member-transfer">
+            <span className="block text-sm text-[#03C75A] font-bold py-2 cursor-pointer" data-testid="link-mobile-nav-member-transfer">
               주식 이전 신청
             </span>
           </Link>
           <Link href="/my-stocks">
-            <span className="block text-sm text-[#E8344E] font-bold py-2 cursor-pointer" data-testid="link-mobile-nav-my-stocks">
+            <span className="block text-sm text-[#03C75A] font-bold py-2 cursor-pointer" data-testid="link-mobile-nav-my-stocks">
               공모주 마이페이지
             </span>
           </Link>
           <Link href="/chat">
-            <span className="block text-sm text-[#E8344E] font-bold py-2 cursor-pointer" data-testid="link-mobile-nav-chat">
+            <span className="block text-sm text-[#03C75A] font-bold py-2 cursor-pointer" data-testid="link-mobile-nav-chat">
               상담문의하기
             </span>
           </Link>
-          <div className="border-t border-[#eee] pt-3 flex items-center gap-3">
+          <div className="border-t border-[#E0E2E4] pt-3 flex items-center gap-3">
             {user ? (
               <>
                 <Link href="/dashboard">
-                  <span className="text-sm text-[#222] font-medium cursor-pointer" data-testid="link-mobile-dashboard">{user.fullName}</span>
+                  <span className="text-sm text-[#14181B] font-medium cursor-pointer" data-testid="link-mobile-dashboard">{user.fullName}</span>
                 </Link>
-                <button onClick={handleLogout} className="text-sm text-[#E8344E]" data-testid="button-mobile-logout">로그아웃</button>
+                <button onClick={handleLogout} className="text-sm text-[#03C75A]" data-testid="button-mobile-logout">로그아웃</button>
               </>
             ) : (
               <>
                 <Link href="/login">
-                  <span className="text-sm text-white bg-[#E8344E] px-4 py-1.5 rounded-md cursor-pointer" data-testid="link-mobile-login">로그인</span>
+                  <span className="text-sm text-white bg-[#03C75A] px-4 py-1.5 rounded-md cursor-pointer" data-testid="link-mobile-login">로그인</span>
                 </Link>
                 <Link href="/register">
-                  <span className="text-sm text-[#666] cursor-pointer" data-testid="link-mobile-register">회원가입</span>
+                  <span className="text-sm text-[#585B5E] cursor-pointer" data-testid="link-mobile-register">회원가입</span>
                 </Link>
               </>
             )}
@@ -482,11 +482,11 @@ function fmtPrice(price: number | null): string {
 }
 
 function fmtChange(change: number | null): { text: string; cls: string } {
-  if (change === null) return { text: "미제공", cls: "text-[#999]" };
-  if (change === 0) return { text: "0%", cls: "text-[#999]" };
+  if (change === null) return { text: "미제공", cls: "text-[#9D9FA0]" };
+  if (change === 0) return { text: "0%", cls: "text-[#9D9FA0]" };
   return {
     text: `${change > 0 ? "+" : ""}${change}%`,
-    cls: change > 0 ? "text-[#f04452]" : "text-[#3182f6]",
+    cls: change > 0 ? "text-[#F73631]" : "text-[#007EFF]",
   };
 }
 
@@ -537,38 +537,38 @@ function getCells(stock: StockRow, tab: string): ReactNode[] {
   switch (tab) {
     case "상승률 높은":
       return [
-        <span className="text-[#999]">미제공</span>,
-        <span className="text-[#999]">미제공</span>,
-        <span className="text-[#666]">{stock.category}</span>,
+        <span className="text-[#9D9FA0]">미제공</span>,
+        <span className="text-[#9D9FA0]">미제공</span>,
+        <span className="text-[#585B5E]">{stock.category}</span>,
       ];
     case "상장준비 시작":
       return [
-        <span className="text-[#999] tabular-nums">{stock.ipoDate ?? "—"}</span>,
-        <span className="text-[#999]">{stock.reviewType ?? "—"}</span>,
-        <span className="text-[#666]">{stock.category}</span>,
+        <span className="text-[#9D9FA0] tabular-nums">{stock.ipoDate ?? "—"}</span>,
+        <span className="text-[#9D9FA0]">{stock.reviewType ?? "—"}</span>,
+        <span className="text-[#585B5E]">{stock.category}</span>,
       ];
     case "예상시총 높은": {
       const capStr = stock.marketCapStr ?? "미제공";
-      const capCls = capStr === "미제공" ? "text-[#999]" : "text-[#222] font-medium";
+      const capCls = capStr === "미제공" ? "text-[#9D9FA0]" : "text-[#14181B] font-medium";
       return [
         <span className={`tabular-nums ${capCls}`}>{capStr}</span>,
-        <span className={stock.orders !== null ? "text-[#666] tabular-nums" : "text-[#999]"}>{fmtOrders(stock.orders)}</span>,
-        <span className="text-[#666]">{stock.category}</span>,
+        <span className={stock.orders !== null ? "text-[#585B5E] tabular-nums" : "text-[#9D9FA0]"}>{fmtOrders(stock.orders)}</span>,
+        <span className="text-[#585B5E]">{stock.category}</span>,
       ];
     }
     case "매출이 상승한":
       return [
-        <span className="text-[#999] tabular-nums">{stock.fiscalYear ?? "—"}</span>,
-        <span className="text-[#f04452] font-medium tabular-nums">{stock.revenueGrowthStr ?? "—"}</span>,
-        <span className="text-[#666]">{stock.category}</span>,
+        <span className="text-[#9D9FA0] tabular-nums">{stock.fiscalYear ?? "—"}</span>,
+        <span className="text-[#F73631] font-medium tabular-nums">{stock.revenueGrowthStr ?? "—"}</span>,
+        <span className="text-[#585B5E]">{stock.category}</span>,
       ];
     default: {
       const ch = fmtChange(stock.change);
       return [
-        <span className={stock.price !== null ? "text-[#222] font-medium tabular-nums" : "text-[#999]"}>{fmtPrice(stock.price)}</span>,
+        <span className={stock.price !== null ? "text-[#14181B] font-medium tabular-nums" : "text-[#9D9FA0]"}>{fmtPrice(stock.price)}</span>,
         <span className={`tabular-nums font-medium ${ch.cls}`}>{ch.text}</span>,
-        <span className={stock.orders !== null ? "text-[#666] tabular-nums" : "text-[#999]"}>{fmtOrders(stock.orders)}</span>,
-        <span className="text-[#666]">{stock.category}</span>,
+        <span className={stock.orders !== null ? "text-[#585B5E] tabular-nums" : "text-[#9D9FA0]"}>{fmtOrders(stock.orders)}</span>,
+        <span className="text-[#585B5E]">{stock.category}</span>,
       ];
     }
   }
@@ -577,35 +577,35 @@ function getCells(stock: StockRow, tab: string): ReactNode[] {
 function getMobileSub(stock: StockRow, tab: string): ReactNode {
   switch (tab) {
     case "상승률 높은":
-      return <span className="text-[11px] text-[#999]">상승률 미제공 · {stock.category}</span>;
+      return <span className="text-[11px] text-[#9D9FA0]">상승률 미제공 · {stock.category}</span>;
     case "상장준비 시작":
-      return <span className="text-[11px] text-[#999]">{stock.ipoDate ?? "—"} · {stock.reviewType} · {stock.category}</span>;
+      return <span className="text-[11px] text-[#9D9FA0]">{stock.ipoDate ?? "—"} · {stock.reviewType} · {stock.category}</span>;
     case "예상시총 높은":
-      return <span className="text-[11px] text-[#999]">{stock.marketCapStr ?? "미제공"} · {stock.category}</span>;
+      return <span className="text-[11px] text-[#9D9FA0]">{stock.marketCapStr ?? "미제공"} · {stock.category}</span>;
     case "매출이 상승한":
-      return <span className="text-[11px] text-[#999]">{stock.fiscalYear} · {stock.category}</span>;
+      return <span className="text-[11px] text-[#9D9FA0]">{stock.fiscalYear} · {stock.category}</span>;
     default:
-      return <span className="text-[11px] text-[#999]">{fmtOrders(stock.orders)} · {stock.category}</span>;
+      return <span className="text-[11px] text-[#9D9FA0]">{fmtOrders(stock.orders)} · {stock.category}</span>;
   }
 }
 
 function getMobileRight(stock: StockRow, tab: string): ReactNode {
   switch (tab) {
     case "상승률 높은":
-      return <p className="text-sm text-[#999]">미제공</p>;
+      return <p className="text-sm text-[#9D9FA0]">미제공</p>;
     case "상장준비 시작":
       return null;
     case "예상시총 높은": {
       const capStr = stock.marketCapStr ?? "미제공";
-      return <p className={`text-sm tabular-nums ${capStr === "미제공" ? "text-[#999]" : "text-[#222] font-medium"}`}>{capStr}</p>;
+      return <p className={`text-sm tabular-nums ${capStr === "미제공" ? "text-[#9D9FA0]" : "text-[#14181B] font-medium"}`}>{capStr}</p>;
     }
     case "매출이 상승한":
-      return <p className="text-sm text-[#f04452] font-medium tabular-nums">{stock.revenueGrowthStr ?? "—"}</p>;
+      return <p className="text-sm text-[#F73631] font-medium tabular-nums">{stock.revenueGrowthStr ?? "—"}</p>;
     default: {
       const ch = fmtChange(stock.change);
       return (
         <>
-          <p className={`text-sm font-medium tabular-nums ${stock.price !== null ? "text-[#222]" : "text-[#999]"}`}>{fmtPrice(stock.price)}</p>
+          <p className={`text-sm font-medium tabular-nums ${stock.price !== null ? "text-[#14181B]" : "text-[#9D9FA0]"}`}>{fmtPrice(stock.price)}</p>
           <p className={`text-xs tabular-nums font-medium ${ch.cls}`}>{ch.text}</p>
         </>
       );
@@ -687,12 +687,12 @@ function StockRankings({
     <section id="rankings" data-testid="section-stock-rankings">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-lg font-bold text-[#222]">종목 순위</h2>
-          <span className="text-xs text-[#999]">{timeStr}</span>
+          <h2 className="text-[22px] font-semibold text-[#14181B]">종목 순위</h2>
+          <span className="text-xs text-[#9D9FA0]">{timeStr}</span>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowAll(v => !v)} className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-rankings-all">
-            {showAll ? "접기" : "더보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAll ? "rotate-90" : ""}`} />
+          <button onClick={() => setShowAll(v => !v)} className="text-sm text-[#9D9FA0] flex items-center gap-0.5 hover:text-[#585B5E]" data-testid="link-rankings-all">
+            {showAll ? "접기" : "전체보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAll ? "rotate-90" : ""}`} />
           </button>
         </div>
       </div>
@@ -702,10 +702,10 @@ function StockRankings({
           <button
             key={tab}
             onClick={() => { setActiveTab(tab); setShowAll(false); }}
-            className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
+            className={`h-8 px-3 rounded-[44px] text-sm whitespace-nowrap transition-colors ${
               activeTab === tab
-                ? "bg-[#333] text-white"
-                : "bg-[#f5f5f5] text-[#666] hover:bg-[#eee]"
+                ? "bg-[#2E343A] text-[#F9FAFB]"
+                : "bg-[#F3F5F6] text-[#585B5E] hover:bg-[#E0E2E4]"
             }`}
             data-testid={`tab-ranking-${tab}`}
           >
@@ -715,28 +715,28 @@ function StockRankings({
       </div>
 
       {activeTab === "상승률 높은" && (
-        <div className="text-xs text-[#666] mb-2 flex items-center gap-1">
+        <div className="text-xs text-[#585B5E] mb-2 flex items-center gap-1">
           <span>3개월 전 대비</span>
           <ChevronRight className="w-3 h-3" />
         </div>
       )}
 
       {rankingLoading && (
-        <div className="border border-[#eee] rounded-lg overflow-hidden">
+        <div className="border border-[#E0E2E4] rounded-lg overflow-hidden">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-[#f5f5f5] last:border-b-0">
-              <div className="w-5 h-4 bg-gray-100 rounded animate-pulse" />
-              <div className="w-8 h-8 bg-gray-100 rounded-full animate-pulse" />
-              <div className="flex-1 h-4 bg-gray-100 rounded animate-pulse" />
-              <div className="w-20 h-4 bg-gray-100 rounded animate-pulse" />
+            <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-[#F3F5F6] last:border-b-0">
+              <div className="w-5 h-4 bg-[#F3F5F6] rounded animate-pulse" />
+              <div className="w-8 h-8 bg-[#F3F5F6] rounded-full animate-pulse" />
+              <div className="flex-1 h-4 bg-[#F3F5F6] rounded animate-pulse" />
+              <div className="w-20 h-4 bg-[#F3F5F6] rounded animate-pulse" />
             </div>
           ))}
         </div>
       )}
 
-      {!rankingLoading && <div className="border border-[#eee] rounded-lg overflow-hidden">
+      {!rankingLoading && <div className="border border-[#E0E2E4] rounded-lg overflow-hidden">
         {/* Desktop header */}
-        <div className={`hidden sm:grid ${gridCols} gap-0 px-4 py-2.5 bg-[#fafafa] text-xs text-[#999] border-b border-[#eee]`}>
+        <div className={`hidden sm:grid ${gridCols} gap-0 px-4 py-2.5 bg-[#F9FAFB] text-xs text-[#9D9FA0] border-b border-[#E0E2E4]`}>
           <span></span>
           <span className="font-medium">종목명</span>
           {cols.map((col, i) => (
@@ -755,11 +755,11 @@ function StockRankings({
           return (
             <div
               key={`d-${stock.name}-${idx}`}
-              className={`hidden sm:grid ${gridCols} gap-0 px-4 py-3 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors items-center`}
+              className={`hidden sm:grid ${gridCols} gap-0 px-4 py-3 border-b border-[#F3F5F6] last:border-b-0 hover:bg-[#F9FAFB] transition-colors items-center`}
               data-testid={`row-stock-${idx}`}
             >
               <span
-                className="text-sm text-[#999] font-medium cursor-pointer"
+                className="text-sm text-[#9D9FA0] font-medium cursor-pointer"
                 onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
               >{idx + 1}</span>
               <div
@@ -768,9 +768,9 @@ function StockRankings({
               >
                 <StockIcon name={stock.name} size={32} />
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-medium text-[#222]">{stock.name}</span>
+                  <span className="text-sm font-medium text-[#14181B]">{stock.name}</span>
                   {stock.isIPO && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded border border-[#ccc] text-[#999] font-medium leading-none">IPO</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded border border-[#E0E2E4] text-[#9D9FA0] font-medium leading-none">IPO</span>
                   )}
                 </div>
               </div>
@@ -790,7 +790,7 @@ function StockRankings({
                 title={starred ? "관심종목 해제" : "관심종목 추가"}
               >
                 <Star
-                  className={`w-4 h-4 transition-colors ${starred ? "text-yellow-400 fill-yellow-400" : "text-gray-300 hover:text-yellow-300"}`}
+                  className={`w-4 h-4 transition-colors ${starred ? "text-yellow-400 fill-yellow-400" : "text-[#E0E2E4] hover:text-yellow-300"}`}
                 />
               </button>
             </div>
@@ -803,10 +803,10 @@ function StockRankings({
           return (
             <div
               key={`m-${stock.name}-${idx}`}
-              className="sm:hidden flex items-center gap-3 px-3 py-3 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors"
+              className="sm:hidden flex items-center gap-3 px-3 py-3 border-b border-[#F3F5F6] last:border-b-0 hover:bg-[#F9FAFB] transition-colors"
               data-testid={`row-stock-mobile-${idx}`}
             >
-              <span className="text-xs text-[#999] font-medium w-5 shrink-0 text-center">{idx + 1}</span>
+              <span className="text-xs text-[#9D9FA0] font-medium w-5 shrink-0 text-center">{idx + 1}</span>
               <div
                 className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
                 onClick={() => navigate(`/stock/${encodeURIComponent(stock.name)}`)}
@@ -814,9 +814,9 @@ function StockRankings({
                 <StockIcon name={stock.name} size={28} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-medium text-[#222] truncate">{stock.name}</span>
+                    <span className="text-sm font-medium text-[#14181B] truncate">{stock.name}</span>
                     {stock.isIPO && (
-                      <span className="text-[10px] px-1 py-0.5 rounded border border-[#ccc] text-[#999] font-medium leading-none shrink-0">IPO</span>
+                      <span className="text-[10px] px-1 py-0.5 rounded border border-[#E0E2E4] text-[#9D9FA0] font-medium leading-none shrink-0">IPO</span>
                     )}
                   </div>
                   {getMobileSub(stock, activeTab)}
@@ -831,7 +831,7 @@ function StockRankings({
                 data-testid={`btn-star-mobile-${idx}`}
               >
                 <Star
-                  className={`w-4 h-4 transition-colors ${starred ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+                  className={`w-4 h-4 transition-colors ${starred ? "text-yellow-400 fill-yellow-400" : "text-[#E0E2E4]"}`}
                 />
               </button>
             </div>
@@ -907,7 +907,7 @@ function MajorNews() {
   });
 
   const fallbackNews = [
-    { title: "카나프테라퓨틱스, 공모 청약 시작...바이오 IPO 관심 집중", source: "한국경제", date: "2026.03.05", color: "#E8344E" },
+    { title: "카나프테라퓨틱스, 공모 청약 시작...바이오 IPO 관심 집중", source: "한국경제", date: "2026.03.05", color: "#F73631" },
     { title: "두나무, 4분기 영업이익 전년비 120% 증가", source: "매일경제", date: "2026.02.14", color: "#333" },
     { title: "무신사, 해외 시장 진출 가속화...동남아 공략", source: "조선비즈", date: "2026.02.13", color: "#111" },
     { title: "비상장 주식 거래, 2026년 규제 변화 전망", source: "서울경제", date: "2026.02.12", color: "#1976D2" },
@@ -919,29 +919,29 @@ function MajorNews() {
   return (
     <section id="news" data-testid="section-major-news">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-bold text-[#222]">주요 뉴스</h2>
-        <button className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-news-all" onClick={(e) => e.preventDefault()}>
-          더보기 <ChevronRight className="w-3.5 h-3.5" />
+        <h2 className="text-[22px] font-semibold text-[#14181B]">주요 뉴스</h2>
+        <button className="text-sm text-[#9D9FA0] flex items-center gap-0.5 hover:text-[#585B5E]" data-testid="link-news-all" onClick={(e) => e.preventDefault()}>
+          전체보기 <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </div>
-      <div className="space-y-0 border border-[#eee] rounded-lg overflow-hidden">
+      <div className="space-y-0 border border-[#E0E2E4] rounded-lg overflow-hidden">
         {(news as any[]).slice(0, 5).map((item: any, i: number) => (
           <a
             key={i}
             href={item.url || item.link || `https://search.naver.com/search.naver?query=${encodeURIComponent(item.title)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-start gap-3 px-4 py-3.5 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer"
+            className="flex items-start gap-3 px-4 py-3.5 border-b border-[#F3F5F6] last:border-b-0 hover:bg-[#F9FAFB] transition-colors cursor-pointer"
             data-testid={`row-news-${i}`}
           >
             <div className="shrink-0 mt-0.5">
               <PublisherLogo publisher={item.publisher || item.source || ""} size={28} />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium text-[#222] leading-snug line-clamp-2">{item.title}</p>
-              <p className="text-xs text-[#999] mt-1">{item.publisher || item.source} · {item.publishedAt || item.date}</p>
+              <p className="text-sm font-medium text-[#14181B] leading-snug line-clamp-2">{item.title}</p>
+              <p className="text-xs text-[#9D9FA0] mt-1">{item.publisher || item.source} · {item.publishedAt || item.date}</p>
             </div>
-            <ExternalLink className="w-3.5 h-3.5 text-[#ccc] shrink-0 mt-1" />
+            <ExternalLink className="w-3.5 h-3.5 text-[#BFC0C1] shrink-0 mt-1" />
           </a>
         ))}
       </div>
@@ -974,37 +974,37 @@ function ExpertReports() {
   return (
     <section id="reports" data-testid="section-expert-reports">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-bold text-[#222]">전문가 리포트</h2>
-        <button onClick={() => setShowAll(v => !v)} className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-reports-all">
-          {showAll ? "접기" : "더보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAll ? "rotate-90" : ""}`} />
+        <h2 className="text-[22px] font-semibold text-[#14181B]">전문가 리포트</h2>
+        <button onClick={() => setShowAll(v => !v)} className="text-sm text-[#9D9FA0] flex items-center gap-0.5 hover:text-[#585B5E]" data-testid="link-reports-all">
+          {showAll ? "접기" : "전체보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAll ? "rotate-90" : ""}`} />
         </button>
       </div>
       {isLoading ? (
-        <div className="border border-[#eee] rounded-lg overflow-hidden">
+        <div className="border border-[#E0E2E4] rounded-lg overflow-hidden">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-3.5 border-b border-[#f5f5f5] last:border-b-0">
-              <div className="w-7 h-7 bg-gray-100 rounded-full animate-pulse shrink-0" />
+            <div key={i} className="flex items-center gap-3 px-4 py-3.5 border-b border-[#F3F5F6] last:border-b-0">
+              <div className="w-7 h-7 bg-[#F3F5F6] rounded-full animate-pulse shrink-0" />
               <div className="flex-1 space-y-1.5">
-                <div className="h-4 bg-gray-100 rounded animate-pulse w-3/4" />
-                <div className="h-3 bg-gray-100 rounded animate-pulse w-1/3" />
+                <div className="h-4 bg-[#F3F5F6] rounded animate-pulse w-3/4" />
+                <div className="h-3 bg-[#F3F5F6] rounded animate-pulse w-1/3" />
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="space-y-0 border border-[#eee] rounded-lg overflow-hidden">
+        <div className="space-y-0 border border-[#E0E2E4] rounded-lg overflow-hidden">
           {(showAll ? reports : reports.slice(0, 3)).map((report, i) => (
             <div
               key={report.expertReportId || i}
-              className="flex items-start gap-3 px-4 py-3.5 border-b border-[#f5f5f5] last:border-b-0 hover:bg-[#fafafa] transition-colors cursor-pointer"
+              className="flex items-start gap-3 px-4 py-3.5 border-b border-[#F3F5F6] last:border-b-0 hover:bg-[#F9FAFB] transition-colors cursor-pointer"
               data-testid={`row-report-${i}`}
             >
               <div className="shrink-0 mt-0.5">
                 <SiteLogoBadge size={28} />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-medium text-[#222] leading-snug line-clamp-2">{report.title}</p>
-                <p className="text-xs text-[#999] mt-1">{report.reportCreator || report.sourceProvider}{report.createdAt ? ` · ${fmtDate(report.createdAt)}` : ""}</p>
+                <p className="text-sm font-medium text-[#14181B] leading-snug line-clamp-2">{report.title}</p>
+                <p className="text-xs text-[#9D9FA0] mt-1">{report.reportCreator || report.sourceProvider}{report.createdAt ? ` · ${fmtDate(report.createdAt)}` : ""}</p>
               </div>
             </div>
           ))}
@@ -1035,19 +1035,19 @@ function ThemeStocks() {
   return (
     <section id="themes" data-testid="section-theme-stocks">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-bold text-[#222]">테마별 종목</h2>
+        <h2 className="text-[22px] font-semibold text-[#14181B]">테마별 종목</h2>
         <button
-          className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]"
+          className="text-sm text-[#9D9FA0] flex items-center gap-0.5 hover:text-[#585B5E]"
           data-testid="link-themes-all"
           onClick={() => setShowAllStocks(v => !v)}
         >
-          {showAllStocks ? "접기" : "더보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAllStocks ? "rotate-90" : ""}`} />
+          {showAllStocks ? "접기" : "전체보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAllStocks ? "rotate-90" : ""}`} />
         </button>
       </div>
 
       {isLoading ? (
         <div className="flex gap-2 pb-3">
-          {[...Array(5)].map((_, i) => <div key={i} className="h-8 w-20 bg-gray-100 rounded-full animate-pulse" />)}
+          {[...Array(5)].map((_, i) => <div key={i} className="h-8 w-20 bg-[#F3F5F6] rounded-[44px] animate-pulse" />)}
         </div>
       ) : (
         <div className="flex items-center gap-2 overflow-x-auto pb-3 scrollbar-none">
@@ -1055,10 +1055,10 @@ function ThemeStocks() {
             <button
               key={theme.keywordId}
               onClick={() => handleThemeChange(theme.keywordName)}
-              className={`px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
+              className={`h-8 px-3 rounded-[44px] text-sm whitespace-nowrap transition-colors ${
                 currentThemeName === theme.keywordName
-                  ? "bg-[#E8344E] text-white"
-                  : "bg-gradient-to-r from-[#fff3e0] to-[#fff8e1] text-[#996600] border border-[#ffe0b2] hover:from-[#ffe0b2] hover:to-[#fff3e0]"
+                  ? "bg-[#2E343A] text-[#F9FAFB]"
+                  : "bg-[#F3F5F6] text-[#585B5E] hover:bg-[#E0E2E4]"
               }`}
               data-testid={`tab-theme-${theme.keywordName}`}
             >
@@ -1069,13 +1069,13 @@ function ThemeStocks() {
       )}
 
       {currentTheme && (
-        <div className="border border-[#eee] rounded-lg p-4">
-          <p className="text-sm text-[#666] mb-3">{currentTheme.description}</p>
+        <div className="border border-[#E0E2E4] rounded-lg p-4">
+          <p className="text-sm text-[#585B5E] mb-3">{currentTheme.description}</p>
           <div className="flex items-center flex-wrap gap-2">
             {(showAllStocks ? currentTheme.includedStocks || [] : (currentTheme.includedStocks || []).slice(0, 3)).map((stock: any) => (
               <span
                 key={stock.code || stock.name}
-                className="px-3 py-1.5 bg-[#f5f5f5] rounded-full text-sm text-[#222] hover:bg-[#eee] cursor-pointer transition-colors"
+                className="px-3 py-1.5 bg-[#F3F5F6] rounded-full text-sm text-[#14181B] hover:bg-[#E0E2E4] cursor-pointer transition-colors"
                 data-testid={`tag-company-${stock.name}`}
               >
                 {stock.name}
@@ -1084,7 +1084,7 @@ function ThemeStocks() {
             {!showAllStocks && (currentTheme.includedStocks || []).length > 3 && (
               <button
                 onClick={() => setShowAllStocks(true)}
-                className="text-sm text-[#E8344E] font-medium hover:underline"
+                className="text-sm text-[#03C75A] font-medium hover:underline"
               >
                 +{(currentTheme.includedStocks || []).length - 3}개 기업 더보기
               </button>
@@ -1118,33 +1118,33 @@ function PopularDiscussions() {
   return (
     <section id="discussions" data-testid="section-popular-discussions">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-bold text-[#222]">인기 토론</h2>
-        <button onClick={() => setShowAll(v => !v)} className="text-sm text-[#999] flex items-center gap-0.5 hover:text-[#666]" data-testid="link-discussions-all">
-          {showAll ? "접기" : "더보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAll ? "rotate-90" : ""}`} />
+        <h2 className="text-[22px] font-semibold text-[#14181B]">인기 토론</h2>
+        <button onClick={() => setShowAll(v => !v)} className="text-sm text-[#9D9FA0] flex items-center gap-0.5 hover:text-[#585B5E]" data-testid="link-discussions-all">
+          {showAll ? "접기" : "전체보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAll ? "rotate-90" : ""}`} />
         </button>
       </div>
       {isLoading ? (
         <div className="flex gap-3">
-          {[...Array(4)].map((_, i) => <div key={i} className="min-w-[200px] h-32 bg-gray-100 rounded-xl animate-pulse" />)}
+          {[...Array(4)].map((_, i) => <div key={i} className="min-w-[200px] h-32 bg-[#F3F5F6] rounded-lg animate-pulse" />)}
         </div>
       ) : showAll ? (
         <div className="flex flex-col gap-2">
           {displayPosts.map((post: any, idx: number) => (
             <div
               key={post.id || idx}
-              className="border border-[#eee] rounded-xl p-4 flex flex-col gap-2 cursor-pointer hover:border-[#ddd] hover:bg-[#fafafa] transition-colors"
+              className="border border-[#E0E2E4] rounded-lg p-4 flex flex-col gap-2 cursor-pointer hover:border-[#BFC0C1] hover:bg-[#F9FAFB] transition-colors"
               data-testid={`card-discussion-${post.id || idx}`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-[11px] px-1.5 py-0.5 rounded font-medium bg-[#FFF0F0] text-[#E8344E]">
+                <span className="text-[11px] px-1.5 py-0.5 rounded font-medium bg-[#F3F5F6] text-[#585B5E]">
                   {post.nickName || "익명"}
                 </span>
-                <span className="text-xs text-[#999]">{post.stockName || ""}</span>
+                <span className="text-xs text-[#9D9FA0]">{post.stockName || ""}</span>
               </div>
-              <p className="text-sm font-medium text-[#222] leading-snug">{post.subject || post.body || ""}</p>
-              <div className="flex items-center gap-1 pt-1 border-t border-[#f5f5f5]">
-                <MessageCircle className="w-3 h-3 text-[#ccc]" />
-                <span className="text-xs text-[#bbb]">댓글</span>
+              <p className="text-sm font-medium text-[#14181B] leading-snug">{post.subject || post.body || ""}</p>
+              <div className="flex items-center gap-1 pt-1 border-t border-[#F3F5F6]">
+                <MessageCircle className="w-3 h-3 text-[#BFC0C1]" />
+                <span className="text-xs text-[#9D9FA0]">댓글</span>
               </div>
             </div>
           ))}
@@ -1154,20 +1154,20 @@ function PopularDiscussions() {
           {displayPosts.slice(0, 4).map((post: any, idx: number) => (
             <div
               key={post.id || idx}
-              className="min-w-[200px] max-w-[200px] border border-[#eee] rounded-xl p-4 flex flex-col justify-between gap-2 cursor-pointer hover:border-[#ddd] hover:bg-[#fafafa] transition-colors shrink-0"
+              className="min-w-[200px] max-w-[200px] border border-[#E0E2E4] rounded-lg p-4 flex flex-col justify-between gap-2 cursor-pointer hover:border-[#BFC0C1] hover:bg-[#F9FAFB] transition-colors shrink-0"
               data-testid={`card-discussion-${post.id || idx}`}
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] px-1.5 py-0.5 rounded font-medium bg-[#FFF0F0] text-[#E8344E]">
+                  <span className="text-[11px] px-1.5 py-0.5 rounded font-medium bg-[#F3F5F6] text-[#585B5E]">
                     {post.nickName || "익명"}
                   </span>
                 </div>
-                <p className="text-sm font-medium text-[#222] leading-snug line-clamp-3">{post.subject || post.body || ""}</p>
+                <p className="text-sm font-medium text-[#14181B] leading-snug line-clamp-3">{post.subject || post.body || ""}</p>
               </div>
-              <div className="flex items-center gap-1.5 pt-1 border-t border-[#f5f5f5]">
-                <span className="text-xs text-[#666]">{post.stockName || ""}</span>
-                <MessageCircle className="w-3 h-3 text-[#ccc] ml-auto" />
+              <div className="flex items-center gap-1.5 pt-1 border-t border-[#F3F5F6]">
+                <span className="text-xs text-[#585B5E]">{post.stockName || ""}</span>
+                <MessageCircle className="w-3 h-3 text-[#BFC0C1] ml-auto" />
               </div>
             </div>
           ))}
@@ -1236,16 +1236,16 @@ function MyHoldings() {
     return (
       <div data-testid="section-my-holdings">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-bold text-[#222]">내 보유종목</h2>
+          <h2 className="text-base font-semibold text-[#14181B]">내 보유종목</h2>
         </div>
-        <div className="border border-[#eee] rounded-lg p-6 text-center">
-          <div className="w-12 h-12 rounded-full bg-[#f5f5f5] flex items-center justify-center mx-auto mb-3">
-            <User className="w-6 h-6 text-[#ccc]" />
+        <div className="border border-[#E0E2E4] rounded-lg p-6 text-center">
+          <div className="w-12 h-12 rounded-full bg-[#F3F5F6] flex items-center justify-center mx-auto mb-3">
+            <User className="w-6 h-6 text-[#BFC0C1]" />
           </div>
-          <p className="text-sm text-[#999] mb-3">로그인하면 보유종목을 확인할 수 있습니다</p>
+          <p className="text-sm text-[#9D9FA0] mb-3">로그인하면 보유종목을 확인할 수 있습니다</p>
           <a
             href="/login"
-            className="inline-flex items-center gap-1.5 text-sm text-white bg-[#E8344E] rounded-full px-5 py-2 hover:bg-[#d42e45] transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-white bg-[#03C75A] rounded-full px-5 py-2 hover:bg-[#02b350] transition-colors"
             data-testid="link-login-holdings"
           >
             <LogIn className="w-3.5 h-3.5" />
@@ -1259,28 +1259,28 @@ function MyHoldings() {
   return (
     <div data-testid="section-my-holdings">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-base font-bold text-[#222]">내 보유종목</h2>
-        <a href="/my-stocks" className="text-xs text-[#E8344E] flex items-center gap-0.5 hover:underline" data-testid="link-my-dashboard">
+        <h2 className="text-base font-semibold text-[#14181B]">내 보유종목</h2>
+        <a href="/my-stocks" className="text-xs text-[#03C75A] flex items-center gap-0.5 hover:underline" data-testid="link-my-dashboard">
           마이페이지 <ChevronRight className="w-3 h-3" />
         </a>
       </div>
 
       {holdingsList.length === 0 ? (
-        <div className="border border-[#eee] rounded-lg p-6 text-center">
-          <p className="text-sm text-[#999] mb-1">보유 중인 종목이 없습니다</p>
-          <p className="text-xs text-[#ccc]">입고된 주식이 여기에 표시됩니다</p>
+        <div className="border border-[#E0E2E4] rounded-lg p-6 text-center">
+          <p className="text-sm text-[#9D9FA0] mb-1">보유 중인 종목이 없습니다</p>
+          <p className="text-xs text-[#BFC0C1]">입고된 주식이 여기에 표시됩니다</p>
         </div>
       ) : (
         <>
-          <div className="bg-[#f8f9fa] rounded-lg p-3.5 mb-3">
+          <div className="bg-[#F3F5F6] rounded-lg p-3.5 mb-3">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-[#999]">총 평가금액</span>
-              <span className={`text-xs font-bold tabular-nums ${totalProfit > 0 ? "text-[#f04452]" : totalProfit < 0 ? "text-[#3182f6]" : "text-[#666]"}`}>
+              <span className="text-xs text-[#9D9FA0]">총 평가금액</span>
+              <span className={`text-xs font-bold tabular-nums ${totalProfit > 0 ? "text-[#F73631]" : totalProfit < 0 ? "text-[#007EFF]" : "text-[#585B5E]"}`}>
                 {totalProfit > 0 ? "+" : ""}{totalProfitPct.toFixed(2)}%
               </span>
             </div>
-            <p className="text-lg font-bold text-[#222] tabular-nums">{totalEval.toLocaleString()}원</p>
-            <p className={`text-xs tabular-nums ${totalProfit > 0 ? "text-[#f04452]" : totalProfit < 0 ? "text-[#3182f6]" : "text-[#999]"}`}>
+            <p className="text-lg font-bold text-[#14181B] tabular-nums">{totalEval.toLocaleString()}원</p>
+            <p className={`text-xs tabular-nums ${totalProfit > 0 ? "text-[#F73631]" : totalProfit < 0 ? "text-[#007EFF]" : "text-[#9D9FA0]"}`}>
               {totalProfit > 0 ? "+" : ""}{totalProfit.toLocaleString()}원
             </p>
           </div>
@@ -1290,20 +1290,20 @@ function MyHoldings() {
               <a
                 key={h.name}
                 href="/my-stocks"
-                className="border border-[#eee] rounded-lg p-3 hover:border-[#ddd] transition-colors cursor-pointer block"
+                className="border border-[#E0E2E4] rounded-lg p-3 hover:border-[#BFC0C1] transition-colors cursor-pointer block"
                 data-testid={`card-holding-${h.name}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     <StockIcon name={h.name} size={36} />
                     <div>
-                      <span className="text-sm font-bold text-[#222]">{h.name}</span>
-                      <p className="text-xs text-[#999]">{h.qty.toLocaleString()}주 · 평균 {h.avgPrice.toLocaleString()}원</p>
+                      <span className="text-sm font-bold text-[#14181B]">{h.name}</span>
+                      <p className="text-xs text-[#9D9FA0]">{h.qty.toLocaleString()}주 · 평균 {h.avgPrice.toLocaleString()}원</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold text-[#222] tabular-nums">{h.currentPrice.toLocaleString()}원</p>
-                    <p className={`text-xs font-medium tabular-nums ${h.profitPct > 0 ? "text-[#f04452]" : h.profitPct < 0 ? "text-[#3182f6]" : "text-[#999]"}`}>
+                    <p className="text-sm font-bold text-[#14181B] tabular-nums">{h.currentPrice.toLocaleString()}원</p>
+                    <p className={`text-xs font-medium tabular-nums ${h.profitPct > 0 ? "text-[#F73631]" : h.profitPct < 0 ? "text-[#007EFF]" : "text-[#9D9FA0]"}`}>
                       {h.profitPct > 0 ? "+" : ""}{h.profitPct.toFixed(2)}%
                       <span className="ml-1 text-[10px]">({h.profitLoss > 0 ? "+" : ""}{h.profitLoss.toLocaleString()}원)</span>
                     </p>
@@ -1314,7 +1314,7 @@ function MyHoldings() {
           </div>
 
           <div className="mt-4 text-center">
-            <a href="/my-stocks" className="inline-flex items-center gap-1 text-sm text-[#666] border border-[#eee] rounded-full px-5 py-2 hover:bg-[#fafafa] transition-colors" data-testid="link-more-holdings">
+            <a href="/my-stocks" className="inline-flex items-center gap-1 text-sm text-[#585B5E] border border-[#E0E2E4] rounded-full px-5 py-2 hover:bg-[#F9FAFB] transition-colors" data-testid="link-more-holdings">
               상세보기 <ChevronRight className="w-3.5 h-3.5" />
             </a>
           </div>
@@ -1343,33 +1343,33 @@ function MobileHoldingsSection() {
   const holdingNames = Object.entries(holdingsMap).filter(([, q]) => q > 0).map(([name]) => name);
 
   return (
-    <div className="lg:hidden border border-[#eee] rounded-2xl overflow-hidden" data-testid="mobile-holdings-section">
-      <div className="px-4 py-3 flex items-center justify-between border-b border-[#f5f5f5]">
-        <span className="text-sm font-bold text-[#222]">내 보유종목</span>
+    <div className="lg:hidden border border-[#E0E2E4] rounded-lg overflow-hidden" data-testid="mobile-holdings-section">
+      <div className="px-4 py-3 flex items-center justify-between border-b border-[#F3F5F6]">
+        <span className="text-sm font-semibold text-[#14181B]">내 보유종목</span>
         {authData?.user && (
-          <a href="/my-stocks" className="text-xs text-[#E8344E] flex items-center gap-0.5 hover:underline">
+          <a href="/my-stocks" className="text-xs text-[#03C75A] flex items-center gap-0.5 hover:underline">
             전체보기 <ChevronRight className="w-3 h-3" />
           </a>
         )}
       </div>
       {!authData?.user ? (
         <div className="px-4 py-4 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#f5f5f5] flex items-center justify-center shrink-0">
-            <User className="w-4 h-4 text-[#ccc]" />
+          <div className="w-8 h-8 rounded-full bg-[#F3F5F6] flex items-center justify-center shrink-0">
+            <User className="w-4 h-4 text-[#BFC0C1]" />
           </div>
-          <p className="text-sm text-[#999] flex-1">로그인하면 보유종목을 확인할 수 있습니다</p>
-          <a href="/login" className="text-xs text-white bg-[#E8344E] rounded-full px-3 py-1.5 shrink-0">로그인</a>
+          <p className="text-sm text-[#9D9FA0] flex-1">로그인하면 보유종목을 확인할 수 있습니다</p>
+          <a href="/login" className="text-xs text-white bg-[#03C75A] rounded-full px-3 py-1.5 shrink-0">로그인</a>
         </div>
       ) : holdingNames.length === 0 ? (
         <div className="px-4 py-4">
-          <p className="text-sm text-[#999]">보유 중인 종목이 없습니다</p>
+          <p className="text-sm text-[#9D9FA0]">보유 중인 종목이 없습니다</p>
         </div>
       ) : (
         <div className="flex gap-4 px-4 py-3 overflow-x-auto scrollbar-none">
           {holdingNames.slice(0, 6).map((name) => (
             <a key={name} href="/my-stocks" className="flex flex-col items-center gap-1 shrink-0">
               <StockIcon name={name} size={36} />
-              <span className="text-[10px] text-[#444] font-medium max-w-[44px] text-center truncate">{name}</span>
+              <span className="text-[10px] text-[#585B5E] font-medium max-w-[44px] text-center truncate">{name}</span>
             </a>
           ))}
         </div>
@@ -1383,9 +1383,9 @@ function Tips() {
 
   const tips = [
     {
-      icon: <Search className="w-5 h-5 text-[#E8344E]" />,
+      icon: <Search className="w-5 h-5 text-[#03C75A]" />,
       title: "이것만 따라하세요!",
-      desc: "증권플러스 비상장 이용가이드",
+      desc: "Npay 비상장 이용가이드",
       content: [
         { step: "1. 회원가입", detail: "증권플러스 비상장 사이트에서 간편하게 회원가입을 진행합니다. 이름, 아이디, 비밀번호, 계좌정보를 입력하면 완료됩니다." },
         { step: "2. 종목 탐색", detail: "메인 페이지에서 비상장 종목 순위, 테마별 종목, 전문가 리포트 등을 확인하며 관심 종목을 찾아보세요." },
@@ -1406,7 +1406,7 @@ function Tips() {
       ],
     },
     {
-      icon: <span className="text-[11px] font-black text-white bg-[#E8344E] rounded px-1 py-0.5 leading-none">101</span>,
+      icon: <span className="text-[11px] font-black text-white bg-[#2E343A] rounded px-1 py-0.5 leading-none">101</span>,
       title: "꼭 알아야 할 비상장 기본상식!",
       desc: "비상장 주식 101",
       content: [
@@ -1420,31 +1420,31 @@ function Tips() {
 
   return (
     <div id="tips" data-testid="section-tips">
-      <h2 className="text-base font-bold text-[#222] mb-3">비상장 꿀팁</h2>
-      <div className="space-y-0 border border-[#eee] rounded-lg overflow-hidden">
+      <h2 className="text-base font-semibold text-[#14181B] mb-3">비상장 꿀팁</h2>
+      <div className="space-y-0 border border-[#E0E2E4] rounded-lg overflow-hidden">
         {tips.map((tip, i) => (
-          <div key={i} className="border-b border-[#f5f5f5] last:border-b-0">
+          <div key={i} className="border-b border-[#F3F5F6] last:border-b-0">
             <button
               onClick={() => setOpenTip(openTip === i ? null : i)}
-              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-[#fafafa] transition-colors cursor-pointer text-left"
+              className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-[#F9FAFB] transition-colors cursor-pointer text-left"
               data-testid={`row-tip-${i}`}
             >
-              <div className="w-9 h-9 rounded-lg bg-[#f5f5f5] flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-lg bg-[#F3F5F6] flex items-center justify-center shrink-0">
                 {tip.icon}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#222]">{tip.title}</p>
-                <p className="text-xs text-[#999]">{tip.desc}</p>
+                <p className="text-sm font-medium text-[#14181B]">{tip.title}</p>
+                <p className="text-xs text-[#9D9FA0]">{tip.desc}</p>
               </div>
-              <ChevronRight className={`w-4 h-4 text-[#ccc] shrink-0 transition-transform ${openTip === i ? "rotate-90" : ""}`} />
+              <ChevronRight className={`w-4 h-4 text-[#BFC0C1] shrink-0 transition-transform ${openTip === i ? "rotate-90" : ""}`} />
             </button>
             {openTip === i && (
-              <div className="px-4 pb-4 pt-1 bg-[#fafafa]">
+              <div className="px-4 pb-4 pt-1 bg-[#F9FAFB]">
                 <div className="space-y-3">
                   {tip.content.map((item, j) => (
                     <div key={j} className="pl-12">
-                      <p className="text-sm font-medium text-[#333] mb-0.5">{item.step}</p>
-                      <p className="text-xs text-[#666] leading-relaxed">{item.detail}</p>
+                      <p className="text-sm font-medium text-[#2E343A] mb-0.5">{item.step}</p>
+                      <p className="text-xs text-[#585B5E] leading-relaxed">{item.detail}</p>
                     </div>
                   ))}
                 </div>
@@ -1537,23 +1537,23 @@ function HotDiscussionRooms() {
     <div id="hot-rooms" data-testid="section-hot-rooms">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-bold text-[#222]">HOT 토론방</h2>
-          <span className="text-xs text-[#999]">실시간</span>
+          <h2 className="text-base font-semibold text-[#14181B]">HOT 토론방</h2>
+          <span className="text-xs text-[#9D9FA0]">실시간</span>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => scroll("left")}
-            className="w-7 h-7 rounded-full border border-[#eee] flex items-center justify-center hover:bg-[#f5f5f5] transition-colors"
+            className="w-7 h-7 rounded-full border border-[#E0E2E4] flex items-center justify-center hover:bg-[#F3F5F6] transition-colors"
             data-testid="button-hot-rooms-prev"
           >
-            <ChevronLeft className="w-3.5 h-3.5 text-[#999]" />
+            <ChevronLeft className="w-3.5 h-3.5 text-[#9D9FA0]" />
           </button>
           <button
             onClick={() => scroll("right")}
-            className="w-7 h-7 rounded-full border border-[#eee] flex items-center justify-center hover:bg-[#f5f5f5] transition-colors"
+            className="w-7 h-7 rounded-full border border-[#E0E2E4] flex items-center justify-center hover:bg-[#F3F5F6] transition-colors"
             data-testid="button-hot-rooms-next"
           >
-            <ChevronRight className="w-3.5 h-3.5 text-[#999]" />
+            <ChevronRight className="w-3.5 h-3.5 text-[#9D9FA0]" />
           </button>
         </div>
       </div>
@@ -1564,15 +1564,15 @@ function HotDiscussionRooms() {
             key={room.name || i}
             onClick={() => setSelectedRoom(selectedRoom === room.name ? null : room.name)}
             className={`shrink-0 w-[160px] border rounded-lg p-3 transition-colors cursor-pointer ${
-              selectedRoom === room.name ? "border-[#E8344E] bg-[#fef2f2]" : "border-[#eee] hover:border-[#ddd]"
+              selectedRoom === room.name ? "border-[#03C75A] bg-[#f0fdf6]" : "border-[#E0E2E4] hover:border-[#BFC0C1]"
             }`}
             data-testid={`card-hot-room-${i}`}
           >
             <div className="flex items-center gap-2 mb-2">
               <StockIcon name={room.name} size={28} />
-              <span className="text-sm font-medium text-[#222] truncate">{room.name}</span>
+              <span className="text-sm font-medium text-[#14181B] truncate">{room.name}</span>
             </div>
-            <div className="flex items-center gap-1 text-xs text-[#999]">
+            <div className="flex items-center gap-1 text-xs text-[#9D9FA0]">
               <MessageCircle className="w-3 h-3" />
               <span>{(room.totalPostCount || 0).toLocaleString()}</span>
             </div>
@@ -1581,20 +1581,20 @@ function HotDiscussionRooms() {
       </div>
 
       {selectedRoom && (
-        <div className="mt-3 border border-[#eee] rounded-lg overflow-hidden" data-testid="discussion-panel">
-          <div className="flex items-center justify-between px-4 py-2.5 bg-[#fafafa] border-b border-[#eee]">
+        <div className="mt-3 border border-[#E0E2E4] rounded-lg overflow-hidden" data-testid="discussion-panel">
+          <div className="flex items-center justify-between px-4 py-2.5 bg-[#F9FAFB] border-b border-[#E0E2E4]">
             <div className="flex items-center gap-2">
               <StockIcon name={selectedRoom} size={22} />
-              <span className="text-sm font-bold text-[#222]">{selectedRoom} 토론방</span>
+              <span className="text-sm font-bold text-[#14181B]">{selectedRoom} 토론방</span>
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E8344E] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E8344E]" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#03C75A] opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#03C75A]" />
               </span>
-              <span className="text-[10px] text-[#E8344E]">LIVE</span>
+              <span className="text-[10px] text-[#03C75A]">LIVE</span>
             </div>
             <button
               onClick={() => setSelectedRoom(null)}
-              className="text-xs text-[#999] hover:text-[#666]"
+              className="text-xs text-[#9D9FA0] hover:text-[#585B5E]"
               data-testid="button-close-discussion"
             >
               <X className="w-4 h-4" />
@@ -1607,28 +1607,28 @@ function HotDiscussionRooms() {
                 className={`flex items-start gap-2 py-1.5 ${i === 0 ? "animate-fade-in" : ""}`}
                 data-testid={`comment-${i}`}
               >
-                <div className="w-6 h-6 rounded-full bg-[#f0f0f0] flex items-center justify-center shrink-0 mt-0.5">
-                  <User className="w-3 h-3 text-[#999]" />
+                <div className="w-6 h-6 rounded-full bg-[#F3F5F6] flex items-center justify-center shrink-0 mt-0.5">
+                  <User className="w-3 h-3 text-[#9D9FA0]" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-medium text-[#555]">{comment.user}</span>
-                    <span className="text-[10px] text-[#bbb]">{comment.time}</span>
+                    <span className="text-xs font-medium text-[#585B5E]">{comment.user}</span>
+                    <span className="text-[10px] text-[#BFC0C1]">{comment.time}</span>
                   </div>
-                  <p className="text-[13px] text-[#333] leading-snug">{comment.text}</p>
+                  <p className="text-[13px] text-[#14181B] leading-snug">{comment.text}</p>
                 </div>
               </div>
             ))}
           </div>
-          <div className="px-4 py-2.5 border-t border-[#eee] bg-[#fafafa]">
+          <div className="px-4 py-2.5 border-t border-[#E0E2E4] bg-[#F9FAFB]">
             <div className="flex items-center gap-2">
               <input
                 type="text"
                 placeholder="토론에 참여하세요..."
-                className="flex-1 h-8 px-3 rounded-lg bg-white border border-[#eee] text-xs outline-none focus:border-[#E8344E]"
+                className="flex-1 h-8 px-3 rounded-lg bg-white border border-[#E0E2E4] text-xs outline-none focus:border-[#03C75A]"
                 data-testid="input-discussion"
               />
-              <button className="h-8 px-3 bg-[#E8344E] text-white text-xs rounded-lg hover:bg-[#d42e45] transition-colors" data-testid="button-send-discussion">
+              <button className="h-8 px-3 bg-[#03C75A] text-white text-xs rounded-lg hover:bg-[#02b350] transition-colors" data-testid="button-send-discussion">
                 전송
               </button>
             </div>
@@ -1734,36 +1734,36 @@ function Footer() {
   const modal = openModal ? FOOTER_MODALS[openModal] : null;
 
   return (
-    <footer className="bg-[#fafafa] border-t border-[#eee] mt-12" data-testid="footer">
+    <footer className="bg-[#F9FAFB] border-t border-[#E0E2E4] mt-12" data-testid="footer">
       <div className="max-w-[1200px] mx-auto px-4 py-8">
         <div className="flex items-center gap-1.5 mb-4">
           <SiteLogoBadge size={22} />
-          <span className="text-sm font-bold text-[#222]">증권플러스 <span className="text-[#E8344E]">비상장</span></span>
+          <span className="text-sm font-bold text-[#14181B] tracking-tight">pay 비상장</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4 text-xs">
-          <button onClick={() => setOpenModal("terms")} className="text-[#666] hover:text-[#222]" data-testid="link-footer-terms">이용약관</button>
-          <button onClick={() => setOpenModal("policy")} className="text-[#666] hover:text-[#222]" data-testid="link-footer-policy">서비스 운영정책</button>
-          <button onClick={() => setOpenModal("privacy")} className="text-[#222] font-bold hover:text-[#000]" data-testid="link-footer-privacy">개인정보처리방침</button>
-          <button onClick={() => setOpenModal("investment")} className="text-[#666] hover:text-[#222]" data-testid="link-footer-investment">투자 유의 안내</button>
-          <button onClick={() => setOpenModal("about")} className="text-[#666] hover:text-[#222]" data-testid="link-footer-about">회사소개</button>
-          <button onClick={() => setOpenModal("careers")} className="text-[#666] hover:text-[#222]" data-testid="link-footer-careers">채용공고</button>
+          <button onClick={() => setOpenModal("terms")} className="text-[#585B5E] hover:text-[#14181B]" data-testid="link-footer-terms">이용약관</button>
+          <button onClick={() => setOpenModal("policy")} className="text-[#585B5E] hover:text-[#14181B]" data-testid="link-footer-policy">서비스 운영정책</button>
+          <button onClick={() => setOpenModal("privacy")} className="text-[#14181B] font-bold hover:text-[#000]" data-testid="link-footer-privacy">개인정보처리방침</button>
+          <button onClick={() => setOpenModal("investment")} className="text-[#585B5E] hover:text-[#14181B]" data-testid="link-footer-investment">투자 유의 안내</button>
+          <button onClick={() => setOpenModal("about")} className="text-[#585B5E] hover:text-[#14181B]" data-testid="link-footer-about">회사소개</button>
+          <button onClick={() => setOpenModal("careers")} className="text-[#585B5E] hover:text-[#14181B]" data-testid="link-footer-careers">채용공고</button>
         </div>
 
-        <p className="text-[11px] text-[#999] leading-relaxed mb-2">
-          증권플러스 비상장은 비상장주식 거래 정보를 제공하며, 투자 판단에 대한 책임은 투자자 본인에게 있습니다.
+        <p className="text-[11px] text-[#9D9FA0] leading-relaxed mb-2">
+          Npay 비상장은 비상장주식 거래 정보를 제공하며, 투자 판단에 대한 책임은 투자자 본인에게 있습니다.
           비상장주식은 상장주식에 비해 유동성이 낮고 가격 변동성이 클 수 있으니 투자에 유의하시기 바랍니다.
         </p>
 
-        <div className="text-[11px] text-[#999] leading-relaxed mb-3 space-y-0.5">
+        <div className="text-[11px] text-[#9D9FA0] leading-relaxed mb-3 space-y-0.5">
           <p>상호명: (주)증권플러스비상장 &nbsp;|&nbsp; 대표이사: 오경석</p>
           <p>사업자등록번호: 119-86-54986 &nbsp;|&nbsp; 통신판매업신고번호: 2026-서울강남-0000</p>
           <p>주소: 서울특별시 서초구 강남대로 369, 15층</p>
           <p>이메일: support@ustockplus.com</p>
         </div>
 
-        <p className="text-[11px] text-[#bbb]">
-          © 2026 증권플러스 비상장. All rights reserved.
+        <p className="text-[11px] text-[#BFC0C1]">
+          © 2026 Npay 비상장. All rights reserved.
         </p>
       </div>
 

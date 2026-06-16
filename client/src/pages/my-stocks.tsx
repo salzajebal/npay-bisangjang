@@ -178,20 +178,20 @@ export default function MyStocksPage() {
 
   return (
     <div className="min-h-screen bg-white" data-testid="page-my-stocks">
-      <header className="border-b border-[#eee]">
+      <header className="border-b border-[#E0E2E4]">
         <div className="max-w-[1200px] mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/">
               <span className="flex items-center gap-1.5 cursor-pointer" data-testid="link-home">
                 <SiteLogoBadge size={24} />
-                <span className="text-[#222] font-bold text-base">증권플러스 <span className="text-[#E8344E]">비상장</span></span>
+                <span className="text-[#14181B] font-bold text-[15px] tracking-tight">pay 비상장</span>
               </span>
             </Link>
-            <span className="text-[#999] text-sm">|</span>
-            <span className="text-[#222] text-sm font-medium" data-testid="text-page-title">공모주 마이페이지</span>
+            <span className="text-[#9D9FA0] text-sm">|</span>
+            <span className="text-[#14181B] text-sm font-medium" data-testid="text-page-title">공모주 마이페이지</span>
           </div>
           <Link href="/">
-            <span className="flex items-center gap-1 text-sm text-[#666] hover:text-[#222] cursor-pointer" data-testid="link-back-home">
+            <span className="flex items-center gap-1 text-sm text-[#585B5E] hover:text-[#14181B] cursor-pointer" data-testid="link-back-home">
               <ArrowLeft className="w-4 h-4" />
               홈으로
             </span>
@@ -201,24 +201,24 @@ export default function MyStocksPage() {
 
       <main className="max-w-[1200px] mx-auto px-4 py-6">
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-[#222]" data-testid="text-greeting">{user.fullName}님의 보유 종목</h1>
+          <h1 className="text-xl font-bold text-[#14181B]" data-testid="text-greeting">{user.fullName}님의 보유 종목</h1>
         </div>
 
-        <div className="bg-[#f8f9fa] rounded-lg p-5 mb-6">
+        <div className="bg-[#F3F5F6] rounded-lg p-5 mb-6">
           <div className="flex flex-wrap gap-6 mb-3">
             <div>
-              <p className="text-xs text-[#999] mb-1">보유 종목수</p>
-              <p className="text-lg font-bold text-[#222]" data-testid="text-holdings-count">{holdings.length}개</p>
+              <p className="text-xs text-[#9D9FA0] mb-1">보유 종목수</p>
+              <p className="text-lg font-bold text-[#14181B]" data-testid="text-holdings-count">{holdings.length}개</p>
             </div>
             <div>
-              <p className="text-xs text-[#999] mb-1">총 평가금액</p>
-              <p className="text-lg font-bold text-[#222]" data-testid="text-total-value">{totalEval.toLocaleString()}원</p>
+              <p className="text-xs text-[#9D9FA0] mb-1">총 평가금액</p>
+              <p className="text-lg font-bold text-[#14181B]" data-testid="text-total-value">{totalEval.toLocaleString()}원</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 pt-3 border-t border-[#eee]">
+          <div className="flex items-center gap-3 pt-3 border-t border-[#E0E2E4]">
             <div>
-              <p className="text-xs text-[#999] mb-1">평가손익</p>
-              <p className={`text-lg font-bold tabular-nums ${totalProfit >= 0 ? "text-[#f04452]" : "text-[#3182f6]"}`} data-testid="text-total-profit">
+              <p className="text-xs text-[#9D9FA0] mb-1">평가손익</p>
+              <p className={`text-lg font-bold tabular-nums ${totalProfit >= 0 ? "text-[#F73631]" : "text-[#007EFF]"}`} data-testid="text-total-profit">
                 {totalProfit >= 0 ? "+" : ""}{totalProfit.toLocaleString()}원
                 <span className="text-sm ml-1">({totalProfitPct >= 0 ? "+" : ""}{totalProfitPct.toFixed(2)}%)</span>
               </p>
@@ -237,23 +237,23 @@ export default function MyStocksPage() {
             <div className="w-14 h-14 rounded-full bg-[#f5f5f5] flex items-center justify-center mb-3">
               <Package className="w-6 h-6 text-[#ccc]" />
             </div>
-            <p className="text-sm text-[#999]" data-testid="text-no-holdings">보유 중인 종목이 없습니다</p>
+            <p className="text-sm text-[#9D9FA0]" data-testid="text-no-holdings">보유 중인 종목이 없습니다</p>
             <p className="text-xs text-[#bbb] mt-1">관리자가 주식을 입고하면 여기에 표시됩니다</p>
           </div>
         ) : (
           <>
-          <div className="border border-[#eee] rounded-lg overflow-hidden hidden sm:block">
+          <div className="border border-[#E0E2E4] rounded-lg overflow-hidden hidden sm:block">
             <Table>
               <TableHeader>
-                <TableRow className="bg-[#f8f9fa]">
-                  <TableHead className="text-xs text-[#666] font-medium">종목명</TableHead>
-                  <TableHead className="text-xs text-[#666] font-medium text-center">카테고리</TableHead>
-                  <TableHead className="text-xs text-[#666] font-medium text-right">보유수량</TableHead>
-                  <TableHead className="text-xs text-[#666] font-medium text-right">액면가</TableHead>
-                  <TableHead className="text-xs text-[#666] font-medium text-right">현재가</TableHead>
-                  <TableHead className="text-xs text-[#666] font-medium text-right">평가금액</TableHead>
-                  <TableHead className="text-xs text-[#666] font-medium text-right">평가손익</TableHead>
-                  <TableHead className="text-xs text-[#666] font-medium text-right">수익률</TableHead>
+                <TableRow className="bg-[#F9FAFB]">
+                  <TableHead className="text-xs text-[#585B5E] font-medium">종목명</TableHead>
+                  <TableHead className="text-xs text-[#585B5E] font-medium text-center">카테고리</TableHead>
+                  <TableHead className="text-xs text-[#585B5E] font-medium text-right">보유수량</TableHead>
+                  <TableHead className="text-xs text-[#585B5E] font-medium text-right">액면가</TableHead>
+                  <TableHead className="text-xs text-[#585B5E] font-medium text-right">현재가</TableHead>
+                  <TableHead className="text-xs text-[#585B5E] font-medium text-right">평가금액</TableHead>
+                  <TableHead className="text-xs text-[#585B5E] font-medium text-right">평가손익</TableHead>
+                  <TableHead className="text-xs text-[#585B5E] font-medium text-right">수익률</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -262,20 +262,20 @@ export default function MyStocksPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <StockIcon name={h.name} size={28} />
-                        <span className="text-sm font-medium text-[#222]">{h.name}</span>
+                        <span className="text-sm font-medium text-[#14181B]">{h.name}</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge variant="outline" className="text-xs">{h.category}</Badge>
                     </TableCell>
-                    <TableCell className="text-right text-sm text-[#222] tabular-nums">{h.qty.toLocaleString()}주</TableCell>
-                    <TableCell className="text-right text-sm text-[#222] tabular-nums">{h.faceValue != null ? h.faceValue.toLocaleString() : "-"}원</TableCell>
-                    <TableCell className="text-right text-sm text-[#222] tabular-nums">{h.currentPrice.toLocaleString()}원</TableCell>
-                    <TableCell className="text-right text-sm font-medium text-[#222] tabular-nums">{h.evalAmount.toLocaleString()}원</TableCell>
-                    <TableCell className={`text-right text-sm font-semibold tabular-nums ${h.profitLoss >= 0 ? "text-[#f04452]" : "text-[#3182f6]"}`}>
+                    <TableCell className="text-right text-sm text-[#14181B] tabular-nums">{h.qty.toLocaleString()}주</TableCell>
+                    <TableCell className="text-right text-sm text-[#14181B] tabular-nums">{h.faceValue != null ? h.faceValue.toLocaleString() : "-"}원</TableCell>
+                    <TableCell className="text-right text-sm text-[#14181B] tabular-nums">{h.currentPrice.toLocaleString()}원</TableCell>
+                    <TableCell className="text-right text-sm font-medium text-[#14181B] tabular-nums">{h.evalAmount.toLocaleString()}원</TableCell>
+                    <TableCell className={`text-right text-sm font-semibold tabular-nums ${h.profitLoss >= 0 ? "text-[#F73631]" : "text-[#007EFF]"}`}>
                       {h.profitLoss >= 0 ? "+" : ""}{h.profitLoss.toLocaleString()}원
                     </TableCell>
-                    <TableCell className={`text-right text-sm font-semibold tabular-nums ${h.profitPct >= 0 ? "text-[#f04452]" : "text-[#3182f6]"}`}>
+                    <TableCell className={`text-right text-sm font-semibold tabular-nums ${h.profitPct >= 0 ? "text-[#F73631]" : "text-[#007EFF]"}`}>
                       {h.profitPct >= 0 ? "+" : ""}{h.profitPct.toFixed(2)}%
                     </TableCell>
                   </TableRow>
@@ -285,29 +285,29 @@ export default function MyStocksPage() {
           </div>
           <div className="sm:hidden space-y-3">
             {holdings.map((h) => (
-              <div key={h.name} className="border border-[#eee] rounded-lg p-3" data-testid={`card-holding-${h.name}`}>
+              <div key={h.name} className="border border-[#E0E2E4] rounded-lg p-3" data-testid={`card-holding-${h.name}`}>
                 <div className="flex items-center justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <StockIcon name={h.name} size={28} />
                     <div className="min-w-0">
-                      <span className="text-sm font-medium text-[#222] truncate block">{h.name}</span>
+                      <span className="text-sm font-medium text-[#14181B] truncate block">{h.name}</span>
                       <Badge variant="outline" className="text-[10px] mt-0.5">{h.category}</Badge>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className={`text-sm font-semibold tabular-nums ${h.profitPct >= 0 ? "text-[#f04452]" : "text-[#3182f6]"}`}>
+                    <p className={`text-sm font-semibold tabular-nums ${h.profitPct >= 0 ? "text-[#F73631]" : "text-[#007EFF]"}`}>
                       {h.profitPct >= 0 ? "+" : ""}{h.profitPct.toFixed(2)}%
                     </p>
-                    <p className={`text-xs tabular-nums ${h.profitLoss >= 0 ? "text-[#f04452]" : "text-[#3182f6]"}`}>
+                    <p className={`text-xs tabular-nums ${h.profitLoss >= 0 ? "text-[#F73631]" : "text-[#007EFF]"}`}>
                       {h.profitLoss >= 0 ? "+" : ""}{h.profitLoss.toLocaleString()}원
                     </p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                  <div className="flex justify-between"><span className="text-[#999]">보유수량</span><span className="text-[#222] tabular-nums">{h.qty.toLocaleString()}주</span></div>
-                  <div className="flex justify-between"><span className="text-[#999]">현재가</span><span className="text-[#222] tabular-nums">{h.currentPrice.toLocaleString()}원</span></div>
-                  <div className="flex justify-between"><span className="text-[#999]">액면가</span><span className="text-[#222] tabular-nums">{h.faceValue != null ? h.faceValue.toLocaleString() : "-"}원</span></div>
-                  <div className="flex justify-between"><span className="text-[#999]">평가금액</span><span className="text-[#222] tabular-nums">{h.evalAmount.toLocaleString()}원</span></div>
+                  <div className="flex justify-between"><span className="text-[#9D9FA0]">보유수량</span><span className="text-[#14181B] tabular-nums">{h.qty.toLocaleString()}주</span></div>
+                  <div className="flex justify-between"><span className="text-[#9D9FA0]">현재가</span><span className="text-[#14181B] tabular-nums">{h.currentPrice.toLocaleString()}원</span></div>
+                  <div className="flex justify-between"><span className="text-[#9D9FA0]">액면가</span><span className="text-[#14181B] tabular-nums">{h.faceValue != null ? h.faceValue.toLocaleString() : "-"}원</span></div>
+                  <div className="flex justify-between"><span className="text-[#9D9FA0]">평가금액</span><span className="text-[#14181B] tabular-nums">{h.evalAmount.toLocaleString()}원</span></div>
                 </div>
               </div>
             ))}
@@ -315,7 +315,7 @@ export default function MyStocksPage() {
           <div className="mt-4 flex flex-wrap justify-center gap-3">
             <Button
               variant="outline"
-              className="gap-2 border-[#E8344E] text-[#E8344E]"
+              className="gap-2 border-[#03C75A] text-[#03C75A]"
               onClick={() => setTransferConfirmOpen(true)}
               data-testid="button-transfer-from-mystocks"
             >
@@ -323,7 +323,7 @@ export default function MyStocksPage() {
               내 계좌로 옮기기
             </Button>
             <Button
-              className="gap-2 bg-[#E8344E] border-[#E8344E] text-white font-semibold hover:bg-[#c9243d]"
+              className="gap-2 bg-[#03C75A] border-[#03C75A] text-white font-semibold hover:bg-[#02b350]"
               disabled={sellFetchingPrice}
               onClick={async () => {
                 setSellFetchingPrice(true);
@@ -362,22 +362,22 @@ export default function MyStocksPage() {
           </>
         )}
 
-        <div className="mt-8 border-t border-[#eee] pt-6">
-          <h2 className="text-base font-bold text-[#222] mb-4" data-testid="text-tx-history-title">입고/출고 내역</h2>
+        <div className="mt-8 border-t border-[#E0E2E4] pt-6">
+          <h2 className="text-base font-bold text-[#14181B] mb-4" data-testid="text-tx-history-title">입고/출고 내역</h2>
           {txList.length === 0 ? (
-            <p className="text-sm text-[#999]">거래 내역이 없습니다</p>
+            <p className="text-sm text-[#9D9FA0]">거래 내역이 없습니다</p>
           ) : (
             <>
-            <div className="border border-[#eee] rounded-lg overflow-hidden hidden sm:block">
+            <div className="border border-[#E0E2E4] rounded-lg overflow-hidden hidden sm:block">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-[#f8f9fa]">
-                    <TableHead className="text-xs text-[#666] font-medium">날짜</TableHead>
-                    <TableHead className="text-xs text-[#666] font-medium">구분</TableHead>
-                    <TableHead className="text-xs text-[#666] font-medium">종목명</TableHead>
-                    <TableHead className="text-xs text-[#666] font-medium text-right">수량</TableHead>
-                    <TableHead className="text-xs text-[#666] font-medium text-right">단가</TableHead>
-                    <TableHead className="text-xs text-[#666] font-medium text-right">총금액</TableHead>
+                  <TableRow className="bg-[#F9FAFB]">
+                    <TableHead className="text-xs text-[#585B5E] font-medium">날짜</TableHead>
+                    <TableHead className="text-xs text-[#585B5E] font-medium">구분</TableHead>
+                    <TableHead className="text-xs text-[#585B5E] font-medium">종목명</TableHead>
+                    <TableHead className="text-xs text-[#585B5E] font-medium text-right">수량</TableHead>
+                    <TableHead className="text-xs text-[#585B5E] font-medium text-right">단가</TableHead>
+                    <TableHead className="text-xs text-[#585B5E] font-medium text-right">총금액</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -386,23 +386,23 @@ export default function MyStocksPage() {
                     const totalTx = tx.quantity * tx.pricePerShare;
                     return (
                     <TableRow key={tx.id} data-testid={`row-tx-${tx.id}`}>
-                      <TableCell className="text-xs text-[#666]">
+                      <TableCell className="text-xs text-[#585B5E]">
                         {tx.createdAt ? new Date(tx.createdAt).toLocaleDateString("ko-KR") : "-"}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={tx.type === "in" ? "default" : "secondary"} className={tx.type === "in" ? "bg-[#E8344E] text-white text-xs" : "text-xs"}>
+                        <Badge variant={tx.type === "in" ? "default" : "secondary"} className={tx.type === "in" ? "bg-[#03C75A] text-white text-xs" : "text-xs"}>
                           {tx.type === "in" ? "입고" : "출고"}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <StockIcon name={tx.stockName} size={22} />
-                          <span className="text-sm text-[#222]">{tx.stockName}</span>
+                          <span className="text-sm text-[#14181B]">{tx.stockName}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right text-sm text-[#222]">{tx.quantity.toLocaleString()}주</TableCell>
-                      <TableCell className="text-right text-sm text-[#222]">{unitPrice.toLocaleString()}원</TableCell>
-                      <TableCell className="text-right text-sm font-medium text-[#222]">{totalTx.toLocaleString()}원</TableCell>
+                      <TableCell className="text-right text-sm text-[#14181B]">{tx.quantity.toLocaleString()}주</TableCell>
+                      <TableCell className="text-right text-sm text-[#14181B]">{unitPrice.toLocaleString()}원</TableCell>
+                      <TableCell className="text-right text-sm font-medium text-[#14181B]">{totalTx.toLocaleString()}원</TableCell>
                     </TableRow>
                     );
                   })}
@@ -414,26 +414,26 @@ export default function MyStocksPage() {
                 const unitPrice = tx.type === "out" ? tx.pricePerShare : (priceData[tx.stockName]?.currentPrice ?? tx.pricePerShare);
                 const totalTx = tx.quantity * tx.pricePerShare;
                 return (
-                <div key={tx.id} className="border border-[#eee] rounded-lg p-3" data-testid={`card-tx-${tx.id}`}>
+                <div key={tx.id} className="border border-[#E0E2E4] rounded-lg p-3" data-testid={`card-tx-${tx.id}`}>
                   <div className="flex items-center gap-3">
-                    <Badge variant={tx.type === "in" ? "default" : "secondary"} className={tx.type === "in" ? "bg-[#E8344E] text-white text-xs shrink-0" : "text-xs shrink-0"}>
+                    <Badge variant={tx.type === "in" ? "default" : "secondary"} className={tx.type === "in" ? "bg-[#03C75A] text-white text-xs shrink-0" : "text-xs shrink-0"}>
                       {tx.type === "in" ? "입고" : "출고"}
                     </Badge>
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       <StockIcon name={tx.stockName} size={22} />
                       <div className="min-w-0">
-                        <span className="text-sm text-[#222] truncate block">{tx.stockName}</span>
-                        <span className="text-[11px] text-[#999]">{tx.createdAt ? new Date(tx.createdAt).toLocaleDateString("ko-KR") : "-"}</span>
+                        <span className="text-sm text-[#14181B] truncate block">{tx.stockName}</span>
+                        <span className="text-[11px] text-[#9D9FA0]">{tx.createdAt ? new Date(tx.createdAt).toLocaleDateString("ko-KR") : "-"}</span>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-sm text-[#222]">{tx.quantity.toLocaleString()}주</p>
-                      <p className="text-xs text-[#666]">{unitPrice.toLocaleString()}원</p>
+                      <p className="text-sm text-[#14181B]">{tx.quantity.toLocaleString()}주</p>
+                      <p className="text-xs text-[#585B5E]">{unitPrice.toLocaleString()}원</p>
                     </div>
                   </div>
-                  <div className="mt-2 pt-2 border-t border-[#f0f0f0] flex justify-between items-center">
-                    <span className="text-xs text-[#999]">총금액</span>
-                    <span className={`text-sm font-bold ${tx.type === "out" ? "text-[#E8344E]" : "text-[#222]"}`}>{totalTx.toLocaleString()}원</span>
+                  <div className="mt-2 pt-2 border-t border-[#F3F5F6] flex justify-between items-center">
+                    <span className="text-xs text-[#9D9FA0]">총금액</span>
+                    <span className={`text-sm font-bold ${tx.type === "out" ? "text-[#F73631]" : "text-[#14181B]"}`}>{totalTx.toLocaleString()}원</span>
                   </div>
                 </div>
                 );
@@ -443,21 +443,21 @@ export default function MyStocksPage() {
           )}
         </div>
 
-        <div className="mt-8 border-t border-[#eee] pt-6">
+        <div className="mt-8 border-t border-[#E0E2E4] pt-6">
           <div className="flex items-center gap-2 mb-4">
-            <Clock className="w-4 h-4 text-[#E8344E]" />
-            <h2 className="text-base font-bold text-[#222]">출고 신청 목록</h2>
+            <Clock className="w-4 h-4 text-[#03C75A]" />
+            <h2 className="text-base font-bold text-[#14181B]">출고 신청 목록</h2>
           </div>
           {myTransfers.length === 0 ? (
-            <p className="text-sm text-[#999]" data-testid="text-no-transfers">출고 신청 내역이 없습니다</p>
+            <p className="text-sm text-[#9D9FA0]" data-testid="text-no-transfers">출고 신청 내역이 없습니다</p>
           ) : (
             <div className="space-y-3">
               {myTransfers.map((tr) => (
-                <div key={tr.id} className="border border-[#eee] rounded-lg p-4 space-y-2" data-testid={`transfer-card-${tr.id}`}>
+                <div key={tr.id} className="border border-[#E0E2E4] rounded-lg p-4 space-y-2" data-testid={`transfer-card-${tr.id}`}>
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-2">
                       <StockIcon name={tr.stockName} size={22} />
-                      <span className="font-medium text-sm text-[#222]">{tr.stockName} {tr.quantity.toLocaleString()}주</span>
+                      <span className="font-medium text-sm text-[#14181B]">{tr.stockName} {tr.quantity.toLocaleString()}주</span>
                     </div>
                     {tr.status === "pending" && (
                       <Badge variant="secondary" className="gap-1 text-xs"><Clock className="w-3 h-3" />결제대기중</Badge>
@@ -473,35 +473,35 @@ export default function MyStocksPage() {
                     )}
                   </div>
                   {tr.currentPrice > 0 && (
-                    <div className="bg-[#f8f9fa] rounded-md p-2 space-y-1">
+                    <div className="bg-[#F3F5F6] rounded-md p-2 space-y-1">
                       <div className="flex justify-between text-xs">
-                        <span className="text-[#999]">매입단가</span>
+                        <span className="text-[#9D9FA0]">매입단가</span>
                         <span className="tabular-nums">{tr.purchasePrice.toLocaleString()}원</span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className="text-[#999]">현재시세</span>
+                        <span className="text-[#9D9FA0]">현재시세</span>
                         <span className="tabular-nums font-medium">{tr.currentPrice.toLocaleString()}원</span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className="text-[#999]">수익률</span>
-                        <span className={`tabular-nums font-bold ${parseFloat(tr.profitRate) > 0 ? "text-[#f04452]" : parseFloat(tr.profitRate) < 0 ? "text-[#3182f6]" : ""}`}>
+                        <span className="text-[#9D9FA0]">수익률</span>
+                        <span className={`tabular-nums font-bold ${parseFloat(tr.profitRate) > 0 ? "text-[#F73631]" : parseFloat(tr.profitRate) < 0 ? "text-[#007EFF]" : ""}`}>
                           {parseFloat(tr.profitRate) > 0 ? "+" : ""}{parseFloat(tr.profitRate).toFixed(2)}%
                         </span>
                       </div>
-                      <div className="flex justify-between text-sm pt-1 border-t border-[#eee]">
-                        <span className="text-[#999] font-medium">평가금액</span>
+                      <div className="flex justify-between text-sm pt-1 border-t border-[#E0E2E4]">
+                        <span className="text-[#9D9FA0] font-medium">평가금액</span>
                         <span className="tabular-nums font-bold">{tr.totalAmount.toLocaleString()}원</span>
                       </div>
                     </div>
                   )}
-                  <p className="text-xs text-[#999]">
+                  <p className="text-xs text-[#9D9FA0]">
                     {tr.status === "approved"
-                      ? <strong className="font-bold text-[#555]">승인 처리 되었습니다. 등록 된 계좌로 상장 당일 순차적으로 이동 될 예정입니다</strong>
-                      : <strong className="font-bold text-[#555]">대금결제는 담당 자문회사를 통해 납부해주시면 됩니다.</strong>}
+                      ? <strong className="font-bold text-[#585B5E]">승인 처리 되었습니다. 등록 된 계좌로 상장 당일 순차적으로 이동 될 예정입니다</strong>
+                      : <strong className="font-bold text-[#585B5E]">대금결제는 담당 자문회사를 통해 납부해주시면 됩니다.</strong>}
                   </p>
-                  <p className="text-xs text-[#bbb]">{new Date(tr.createdAt).toLocaleString("ko-KR")}</p>
+                  <p className="text-xs text-[#BFC0C1]">{new Date(tr.createdAt).toLocaleString("ko-KR")}</p>
                   {tr.adminMemo && (
-                    <p className="text-xs text-[#999] bg-[#f8f9fa] rounded p-1.5">관리자 메모: {tr.adminMemo}</p>
+                    <p className="text-xs text-[#9D9FA0] bg-[#F3F5F6] rounded p-1.5">관리자 메모: {tr.adminMemo}</p>
                   )}
                 </div>
               ))}
@@ -513,19 +513,19 @@ export default function MyStocksPage() {
       {/* 확정매도 다이얼로그 */}
       <Dialog open={sellDialogOpen} onOpenChange={(v) => { if (!v) { setSellStock(""); setSellQty(""); setFrozenPrices({}); } setSellDialogOpen(v); }}>
         <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-hidden border-0 shadow-2xl max-h-[90vh] flex flex-col">
-          <div className="bg-gradient-to-b from-[#fff0f2] to-white px-6 pt-8 pb-2 rounded-t-xl shrink-0">
+          <div className="bg-gradient-to-b from-[#f0fdf6] to-white px-6 pt-8 pb-2 rounded-t-xl shrink-0">
             <div className="flex justify-center mb-4">
-              <div className="w-14 h-14 rounded-full bg-[#E8344E]/10 flex items-center justify-center">
-                <Lock className="w-6 h-6 text-[#E8344E]" />
+              <div className="w-14 h-14 rounded-full bg-[#03C75A]/10 flex items-center justify-center">
+                <Lock className="w-6 h-6 text-[#03C75A]" />
               </div>
             </div>
-            <h3 className="text-base font-bold text-[#222] text-center mb-1">확정매도</h3>
-            <p className="text-xs text-[#999] text-center mb-4">현재 시세로 주식을 매도합니다</p>
+            <h3 className="text-base font-bold text-[#14181B] text-center mb-1">확정매도</h3>
+            <p className="text-xs text-[#9D9FA0] text-center mb-4">현재 시세로 주식을 매도합니다</p>
           </div>
           <div className="px-6 pb-6 pt-2 space-y-3 overflow-y-auto">
             {holdings.length > 1 && (
               <div className="space-y-1.5">
-                <Label className="text-xs text-[#555]">종목 선택</Label>
+                <Label className="text-xs text-[#585B5E]">종목 선택</Label>
                 <Select value={sellStock} onValueChange={(v) => { setSellStock(v); setSellQty(String(holdings.find(h => h.name === v)?.qty ?? "")); }}>
                   <SelectTrigger data-testid="select-sell-stock">
                     <SelectValue placeholder="매도할 종목을 선택하세요" />
@@ -541,19 +541,19 @@ export default function MyStocksPage() {
               </div>
             )}
             {sellStock && (
-              <div className="bg-[#f8f9fa] rounded-lg p-3 space-y-1.5">
+              <div className="bg-[#F3F5F6] rounded-lg p-3 space-y-1.5">
                 <div className="flex justify-between text-xs">
-                  <span className="text-[#999]">확정 매도가</span>
-                  <span className="font-bold text-[#E8344E] tabular-nums">{(frozenPrices[sellStock] ?? 0).toLocaleString()}원</span>
+                  <span className="text-[#9D9FA0]">확정 매도가</span>
+                  <span className="font-bold text-[#03C75A] tabular-nums">{(frozenPrices[sellStock] ?? 0).toLocaleString()}원</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-[#999]">보유 수량</span>
+                  <span className="text-[#9D9FA0]">보유 수량</span>
                   <span className="tabular-nums">{(holdings.find(h => h.name === sellStock)?.qty ?? 0).toLocaleString()}주</span>
                 </div>
               </div>
             )}
             <div className="space-y-1.5">
-              <Label className="text-xs text-[#555]">매도 수량</Label>
+              <Label className="text-xs text-[#585B5E]">매도 수량</Label>
               <Input
                 type="number"
                 placeholder="수량을 입력하세요"
@@ -564,20 +564,20 @@ export default function MyStocksPage() {
                 data-testid="input-sell-quantity"
               />
               {sellStock && (
-                <p className="text-xs text-[#999]">최대 {(holdings.find(h => h.name === sellStock)?.qty ?? 0).toLocaleString()}주</p>
+                <p className="text-xs text-[#9D9FA0]">최대 {(holdings.find(h => h.name === sellStock)?.qty ?? 0).toLocaleString()}주</p>
               )}
             </div>
-            <div className="bg-[#E8344E]/5 border border-[#E8344E]/20 rounded-lg p-3 space-y-1.5">
+            <div className="bg-[#03C75A]/5 border border-[#03C75A]/20 rounded-lg p-3 space-y-1.5">
               <div className="flex justify-between text-sm">
-                <span className="text-[#555] font-medium">총 매도금액</span>
-                <span className="font-bold text-[#E8344E] tabular-nums text-base">
+                <span className="text-[#585B5E] font-medium">총 매도금액</span>
+                <span className="font-bold text-[#03C75A] tabular-nums text-base">
                   {sellStock && sellQty && parseInt(sellQty) > 0
                     ? ((frozenPrices[sellStock] ?? 0) * parseInt(sellQty)).toLocaleString() + "원"
                     : "—"}
                 </span>
               </div>
               {sellStock && sellQty && parseInt(sellQty) > 0 && (
-                <div className="flex justify-between text-xs text-[#999]">
+                <div className="flex justify-between text-xs text-[#9D9FA0]">
                   <span>{(frozenPrices[sellStock] ?? 0).toLocaleString()}원 × {parseInt(sellQty).toLocaleString()}주</span>
                 </div>
               )}
@@ -593,7 +593,7 @@ export default function MyStocksPage() {
                 취소
               </Button>
               <Button
-                className="flex-1 bg-[#E8344E] hover:bg-[#c9243d] text-white font-medium rounded-lg"
+                className="flex-1 bg-[#03C75A] hover:bg-[#02b350] text-white font-medium rounded-lg"
                 disabled={
                   !sellStock ||
                   !sellQty ||
@@ -614,18 +614,18 @@ export default function MyStocksPage() {
 
       <Dialog open={transferConfirmOpen} onOpenChange={(v) => { if (!v) { setTransferStock(""); setTransferQuantity(""); } setTransferConfirmOpen(v); }}>
         <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-hidden border-0 shadow-2xl max-h-[90vh] flex flex-col">
-          <div className="bg-gradient-to-b from-[#f8f9fa] to-white px-6 pt-8 pb-2 rounded-t-xl shrink-0">
+          <div className="bg-gradient-to-b from-[#F3F5F6] to-white px-6 pt-8 pb-2 rounded-t-xl shrink-0">
             <div className="flex justify-center mb-4">
-              <div className="w-14 h-14 rounded-full bg-[#E8344E]/10 flex items-center justify-center">
-                <ArrowRightLeft className="w-6 h-6 text-[#E8344E]" />
+              <div className="w-14 h-14 rounded-full bg-[#03C75A]/10 flex items-center justify-center">
+                <ArrowRightLeft className="w-6 h-6 text-[#03C75A]" />
               </div>
             </div>
-            <h3 className="text-base font-bold text-[#222] text-center mb-1">내 계좌로 옮기기</h3>
-            <p className="text-xs text-[#999] text-center mb-4">연동된 증권계좌로 출고 신청합니다</p>
+            <h3 className="text-base font-bold text-[#14181B] text-center mb-1">내 계좌로 옮기기</h3>
+            <p className="text-xs text-[#9D9FA0] text-center mb-4">연동된 증권계좌로 출고 신청합니다</p>
           </div>
           <div className="px-6 pb-6 pt-2 space-y-3 overflow-y-auto">
             <div className="space-y-1.5">
-              <Label className="text-xs text-[#555]">종목 선택</Label>
+              <Label className="text-xs text-[#585B5E]">종목 선택</Label>
               <Select value={transferStock} onValueChange={(v) => { setTransferStock(v); setTransferQuantity(""); }}>
                 <SelectTrigger data-testid="select-mystocks-transfer-stock">
                   <SelectValue placeholder="출고할 종목을 선택하세요" />
@@ -640,7 +640,7 @@ export default function MyStocksPage() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-[#555]">출고 수량</Label>
+              <Label className="text-xs text-[#585B5E]">출고 수량</Label>
               <Input
                 type="number"
                 placeholder="수량을 입력하세요"
@@ -651,11 +651,11 @@ export default function MyStocksPage() {
                 data-testid="input-mystocks-transfer-quantity"
               />
               {transferStock && (
-                <p className="text-xs font-bold text-[#222]">최대 {(holdings.find(h => h.name === transferStock)?.qty ?? 0).toLocaleString()}주</p>
+                <p className="text-xs font-bold text-[#14181B]">최대 {(holdings.find(h => h.name === transferStock)?.qty ?? 0).toLocaleString()}주</p>
               )}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-[#555]">예금주명</Label>
+              <Label className="text-xs text-[#585B5E]">예금주명</Label>
               <Input
                 value={user.accountHolder || user.fullName || ""}
                 readOnly
@@ -666,7 +666,7 @@ export default function MyStocksPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-[#555]">계좌번호</Label>
+              <Label className="text-xs text-[#585B5E]">계좌번호</Label>
               <Input
                 value={user.accountNumber || ""}
                 readOnly
@@ -676,7 +676,7 @@ export default function MyStocksPage() {
                 data-testid="input-mystocks-transfer-account"
               />
               {!user.accountNumber && (
-                <p className="text-xs text-[#E8344E]">내 정보에서 계좌번호를 먼저 등록해주세요</p>
+                <p className="text-xs text-[#F73631]">내 정보에서 계좌번호를 먼저 등록해주세요</p>
               )}
             </div>
             <div className="flex gap-2 pt-1">
@@ -684,7 +684,7 @@ export default function MyStocksPage() {
                 취소
               </Button>
               <Button
-                className="flex-1 bg-[#E8344E] hover:bg-[#c9243d] text-white font-medium rounded-lg"
+                className="flex-1 bg-[#03C75A] hover:bg-[#02b350] text-white font-medium rounded-lg"
                 onClick={() => {
                   setTransferConfirmOpen(false);
                   toast({

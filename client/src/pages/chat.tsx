@@ -169,7 +169,7 @@ export default function ChatPage() {
     <div className="flex flex-col h-screen bg-background" data-testid="page-chat">
       <header
         className="h-14 shrink-0 flex items-center gap-3 px-4 text-white"
-        style={{ backgroundColor: "#E8344E" }}
+        style={{ backgroundColor: "#03C75A" }}
         data-testid="chat-header"
       >
         <Link href="/dashboard">
@@ -233,7 +233,7 @@ export default function ChatPage() {
                       msg.message.startsWith("[img]") ? "p-1" : ""
                     } ${
                       isUser
-                        ? "bg-[#E8344E] text-white"
+                        ? "bg-[#03C75A] text-white"
                         : "bg-muted text-foreground"
                     }`}
                     data-testid={`chat-bubble-${msg.id}`}
@@ -269,7 +269,7 @@ export default function ChatPage() {
             variant="ghost"
             onClick={() => imageInputRef.current?.click()}
             disabled={!wsConnected || uploading}
-            className="shrink-0 text-gray-500 hover:text-[#E8344E]"
+            className="shrink-0 text-gray-500 hover:text-[#03C75A]"
             data-testid="button-attach-image"
             title="이미지 첨부"
           >
@@ -294,7 +294,7 @@ export default function ChatPage() {
             size="icon"
             onClick={handleSend}
             disabled={!wsConnected || !inputText.trim()}
-            className="bg-[#E8344E] border-[#E8344E]"
+            className="bg-[#03C75A] border-[#03C75A] hover:bg-[#02b350]"
             data-testid="button-send-message"
           >
             <Send className="w-4 h-4" />

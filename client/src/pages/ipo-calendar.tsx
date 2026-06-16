@@ -22,7 +22,7 @@ const IPO_STATUS_LEGEND = [
   { label: "심사승인", dot: "#EF5350" },
   { label: "신고서제출", dot: "#EC407A" },
   { label: "수요예측", dot: "#9C6FD6" },
-  { label: "공모청약", dot: "#E8344E" },
+  { label: "공모청약", dot: "#03C75A" },
   { label: "상장", dot: "#1565C0" },
   { label: "환불", dot: "#9E9E9E" },
   { label: "배정", dot: "#8BC34A" },
@@ -397,33 +397,33 @@ function UpcomingSidebar() {
 
   return (
     <div data-testid="upcoming-sidebar">
-      <h3 className="text-base font-bold text-[#222] mb-3">다가오는 청약 종목</h3>
-      <div className="flex items-center gap-0 border-b border-[#eee] mb-3">
+      <h3 className="text-base font-bold text-[#14181B] mb-3">다가오는 청약 종목</h3>
+      <div className="flex items-center gap-0 border-b border-[#E0E2E4] mb-3">
         <button
           onClick={() => setActiveTab("청약진행중")}
           className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${
-            activeTab === "청약진행중" ? "border-[#E8344E] text-[#E8344E]" : "border-transparent text-[#999]"
+            activeTab === "청약진행중" ? "border-[#03C75A] text-[#03C75A]" : "border-transparent text-[#9D9FA0]"
           }`}
           data-testid="tab-sidebar-ongoing"
         >
           청약진행중
-          {ongoing.length > 0 && <span className="text-[10px] bg-[#E8344E] text-white rounded-full w-4 h-4 flex items-center justify-center">{ongoing.length}</span>}
+          {ongoing.length > 0 && <span className="text-[10px] bg-[#03C75A] text-white rounded-full w-4 h-4 flex items-center justify-center">{ongoing.length}</span>}
         </button>
         <button
           onClick={() => setActiveTab("청약예정")}
           className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${
-            activeTab === "청약예정" ? "border-[#E8344E] text-[#E8344E]" : "border-transparent text-[#999]"
+            activeTab === "청약예정" ? "border-[#03C75A] text-[#03C75A]" : "border-transparent text-[#9D9FA0]"
           }`}
           data-testid="tab-sidebar-upcoming"
         >
           청약예정
-          <span className="text-[10px] bg-[#E8344E] text-white rounded-full w-4 h-4 flex items-center justify-center">{upcoming.length}</span>
+          <span className="text-[10px] bg-[#03C75A] text-white rounded-full w-4 h-4 flex items-center justify-center">{upcoming.length}</span>
         </button>
       </div>
       {isLoading ? (
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="border border-[#eee] rounded-lg p-3">
+            <div key={i} className="border border-[#E0E2E4] rounded-lg p-3">
               <div className="h-4 w-24 bg-gray-100 rounded animate-pulse mb-2" />
               <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
             </div>
@@ -432,26 +432,26 @@ function UpcomingSidebar() {
       ) : (
         <div className="space-y-3">
           {filtered.map((ipo: any, i: number) => (
-            <div key={i} className="border border-[#eee] rounded-lg p-3 hover:border-[#ddd] transition-colors cursor-pointer" data-testid={`sidebar-ipo-${i}`}>
+            <div key={i} className="border border-[#E0E2E4] rounded-lg p-3 hover:border-[#BFC0C1] transition-colors cursor-pointer" data-testid={`sidebar-ipo-${i}`}>
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold text-[#E8344E]">{ipo.dDay || "진행중"}</span>
-                <span className="text-[11px] text-[#999]">{ipo.date}</span>
+                <span className="text-xs font-bold text-[#03C75A]">{ipo.dDay || "진행중"}</span>
+                <span className="text-[11px] text-[#9D9FA0]">{ipo.date}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <StockIcon name={ipo.name} size={32} />
                   <div>
-                    <span className="text-sm font-bold text-[#222]">{ipo.name}</span>
-                    <p className="text-[11px] text-[#666]">공모가 {ipo.priceRange}</p>
-                    <p className="text-[11px] text-[#999]">기관경쟁률 {ipo.competition}</p>
+                    <span className="text-sm font-bold text-[#14181B]">{ipo.name}</span>
+                    <p className="text-[11px] text-[#585B5E]">공모가 {ipo.priceRange}</p>
+                    <p className="text-[11px] text-[#9D9FA0]">기관경쟁률 {ipo.competition}</p>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[#ccc] shrink-0" />
+                <ChevronRight className="w-4 h-4 text-[#BFC0C1] shrink-0" />
               </div>
             </div>
           ))}
           {filtered.length === 0 && (
-            <p className="text-sm text-[#999] text-center py-6">해당 종목이 없습니다</p>
+            <p className="text-sm text-[#9D9FA0] text-center py-6">해당 종목이 없습니다</p>
           )}
         </div>
       )}
@@ -462,32 +462,32 @@ function UpcomingSidebar() {
 function PreTradeSection() {
   return (
     <div data-testid="section-pretrade">
-      <div className="bg-[#f8f9fa] py-8 px-4 mb-8">
+      <div className="bg-[#F3F5F6] py-8 px-4 mb-8">
         <div className="max-w-[1200px] mx-auto">
-          <h2 className="text-base sm:text-lg font-bold text-[#222] mb-6">청약 전에도 비상장 주식으로 미리 거래할 수 있어요!</h2>
+          <h2 className="text-base sm:text-lg font-bold text-[#14181B] mb-6">청약 전에도 비상장 주식으로 미리 거래할 수 있어요!</h2>
           <div className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-1 bg-white rounded-lg p-4 sm:p-5 border border-[#eee]">
+            <div className="flex-1 bg-white rounded-lg p-4 sm:p-5 border border-[#E0E2E4]">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-[#222]">지금 거래 많은 IPO 종목 TOP5</h3>
-                <span className="text-[11px] text-[#999]">02.15 14:55 기준</span>
+                <h3 className="text-sm font-bold text-[#14181B]">지금 거래 많은 IPO 종목 TOP5</h3>
+                <span className="text-[11px] text-[#9D9FA0]">02.15 14:55 기준</span>
               </div>
               <div className="space-y-3">
                 {TOP5_IPO_STOCKS.map((stock) => (
                   <div key={stock.rank} className="flex items-center justify-between" data-testid={`top5-stock-${stock.rank}`}>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-[#222] w-5 text-center">{stock.rank}</span>
+                      <span className="text-sm font-bold text-[#14181B] w-5 text-center">{stock.rank}</span>
                       <StockIcon name={stock.name} size={32} />
                       <div>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-medium text-[#222]">{stock.name}</span>
-                          <span className="text-[10px] text-[#E8344E] border border-[#E8344E] rounded px-1">{stock.tag}</span>
+                          <span className="text-sm font-medium text-[#14181B]">{stock.name}</span>
+                          <span className="text-[10px] text-[#03C75A] border border-[#03C75A] rounded px-1">{stock.tag}</span>
                         </div>
-                        <div className="flex items-center gap-1 text-[11px] text-[#666]">
+                        <div className="flex items-center gap-1 text-[11px] text-[#585B5E]">
                           <span>{stock.category}</span>
                           {stock.price > 0 && (
                             <>
                               <span>{stock.price.toLocaleString()}원</span>
-                              <span className={stock.change < 0 ? "text-[#3182f6]" : stock.change > 0 ? "text-[#f04452]" : "text-[#666]"}>
+                              <span className={stock.change < 0 ? "text-[#007EFF]" : stock.change > 0 ? "text-[#F73631]" : "text-[#585B5E]"}>
                                 {stock.change > 0 ? "+" : ""}{stock.change}%
                               </span>
                             </>
@@ -497,58 +497,58 @@ function PreTradeSection() {
                     </div>
                     <div className="text-right">
                       {stock.tradable && (
-                        <span className="text-[10px] text-[#E8344E] font-medium">지금 매수가능</span>
+                        <span className="text-[10px] text-[#03C75A] font-medium">지금 매수가능</span>
                       )}
-                      <p className="text-[10px] text-[#999]">{stock.tradeTime}</p>
+                      <p className="text-[10px] text-[#9D9FA0]">{stock.tradeTime}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="lg:w-[380px] bg-white rounded-lg p-4 sm:p-5 border-2 border-[#E8344E]">
+            <div className="lg:w-[380px] bg-white rounded-lg p-4 sm:p-5 border-2 border-[#03C75A]">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-[#222]">비상장 주식일 때 미리 샀다면?</h3>
+                <h3 className="text-sm font-bold text-[#14181B]">비상장 주식일 때 미리 샀다면?</h3>
                 <div className="flex items-center gap-1">
-                  <button className="w-6 h-6 rounded border border-[#eee] flex items-center justify-center" data-testid="button-compare-prev">
-                    <ChevronLeft className="w-3 h-3 text-[#999]" />
+                  <button className="w-6 h-6 rounded border border-[#E0E2E4] flex items-center justify-center" data-testid="button-compare-prev">
+                    <ChevronLeft className="w-3 h-3 text-[#9D9FA0]" />
                   </button>
-                  <button className="w-6 h-6 rounded border border-[#eee] flex items-center justify-center" data-testid="button-compare-next">
-                    <ChevronRight className="w-3 h-3 text-[#999]" />
+                  <button className="w-6 h-6 rounded border border-[#E0E2E4] flex items-center justify-center" data-testid="button-compare-next">
+                    <ChevronRight className="w-3 h-3 text-[#9D9FA0]" />
                   </button>
                 </div>
               </div>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <StockIcon name="코스모로보틱스" size={28} />
-                  <span className="text-sm font-medium text-[#222]">더핑크퐁컴퍼니</span>
+                  <span className="text-sm font-medium text-[#14181B]">더핑크퐁컴퍼니</span>
                 </div>
-                <span className="text-[11px] text-[#999]">25.11.18 상장</span>
+                <span className="text-[11px] text-[#9D9FA0]">25.11.18 상장</span>
               </div>
               <div className="flex flex-col items-center py-4">
-                <p className="text-xs text-[#999] mb-1">공모가 대비</p>
-                <p className="text-3xl font-bold text-[#E8344E] mb-1">153.33%</p>
-                <p className="text-xs text-[#666]">더 저렴했어요!</p>
+                <p className="text-xs text-[#9D9FA0] mb-1">공모가 대비</p>
+                <p className="text-3xl font-bold text-[#F73631] mb-1">153.33%</p>
+                <p className="text-xs text-[#585B5E]">더 저렴했어요!</p>
               </div>
               <div className="flex items-end justify-between px-2 mt-4">
                 <div className="flex flex-col items-center">
-                  <div className="w-10 h-8 bg-[#FFE0E6] rounded-t" />
-                  <p className="text-[10px] text-[#666] mt-1">비상장 가격</p>
-                  <p className="text-xs font-bold text-[#E8344E]">15,000원</p>
+                  <div className="w-10 h-8 bg-[#d6f5e5] rounded-t" />
+                  <p className="text-[10px] text-[#585B5E] mt-1">비상장 가격</p>
+                  <p className="text-xs font-bold text-[#03C75A]">15,000원</p>
                 </div>
                 <div className="flex flex-col items-center">
-                  <div className="w-10 h-16 bg-[#FFCDD2] rounded-t" />
-                  <p className="text-[10px] text-[#666] mt-1">확정 공모가</p>
-                  <p className="text-xs font-bold text-[#E8344E]">38,000원</p>
+                  <div className="w-10 h-16 bg-[#a8e9c9] rounded-t" />
+                  <p className="text-[10px] text-[#585B5E] mt-1">확정 공모가</p>
+                  <p className="text-xs font-bold text-[#03C75A]">38,000원</p>
                 </div>
                 <div className="flex flex-col items-center">
-                  <div className="w-10 h-24 bg-[#EF9A9A] rounded-t" />
-                  <p className="text-[10px] text-[#666] mt-1">상장 후 최고가</p>
-                  <p className="text-xs font-bold text-[#E8344E]">61,500원</p>
+                  <div className="w-10 h-24 bg-[#03C75A] rounded-t" />
+                  <p className="text-[10px] text-[#585B5E] mt-1">상장 후 최고가</p>
+                  <p className="text-xs font-bold text-[#03C75A]">61,500원</p>
                 </div>
               </div>
-              <p className="text-[9px] text-[#bbb] mt-4 leading-relaxed">
-                ※ 비상장 가격은 증권플러스 비상장의 최저가 기준이며, 상장 후 최고가는 최근 52주 내 가격 기준입니다.
+              <p className="text-[9px] text-[#BFC0C1] mt-4 leading-relaxed">
+                ※ 비상장 가격은 Npay 비상장의 최저가 기준이며, 상장 후 최고가는 최근 52주 내 가격 기준입니다.
               </p>
             </div>
           </div>
@@ -558,16 +558,16 @@ function PreTradeSection() {
       <div className="max-w-[1200px] mx-auto px-4 mb-8">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-sm sm:text-base font-bold text-[#222]">이제 막 상장준비를 시작한, 눈여겨 볼 종목</h3>
-            <span className="text-[11px] text-[#999]">02.15 14:30 기준</span>
-            <Info className="w-3.5 h-3.5 text-[#ccc]" />
+            <h3 className="text-sm sm:text-base font-bold text-[#14181B]">이제 막 상장준비를 시작한, 눈여겨 볼 종목</h3>
+            <span className="text-[11px] text-[#9D9FA0]">02.15 14:30 기준</span>
+            <Info className="w-3.5 h-3.5 text-[#BFC0C1]" />
           </div>
           <div className="flex items-center gap-1">
-            <button className="w-6 h-6 rounded border border-[#eee] flex items-center justify-center" data-testid="button-prep-prev">
-              <ChevronLeft className="w-3 h-3 text-[#999]" />
+            <button className="w-6 h-6 rounded border border-[#E0E2E4] flex items-center justify-center" data-testid="button-prep-prev">
+              <ChevronLeft className="w-3 h-3 text-[#9D9FA0]" />
             </button>
-            <button className="w-6 h-6 rounded border border-[#eee] flex items-center justify-center" data-testid="button-prep-next">
-              <ChevronRight className="w-3 h-3 text-[#999]" />
+            <button className="w-6 h-6 rounded border border-[#E0E2E4] flex items-center justify-center" data-testid="button-prep-next">
+              <ChevronRight className="w-3 h-3 text-[#9D9FA0]" />
             </button>
           </div>
         </div>
@@ -575,7 +575,7 @@ function PreTradeSection() {
           {IPO_PREP_STOCKS.map((stock, i) => (
             <div
               key={i}
-              className="min-w-[140px] border border-[#eee] rounded-lg p-3 hover:border-[#ddd] transition-colors cursor-pointer shrink-0"
+              className="min-w-[140px] border border-[#E0E2E4] rounded-lg p-3 hover:border-[#BFC0C1] transition-colors cursor-pointer shrink-0"
               data-testid={`prep-stock-${i}`}
             >
               <div className="flex items-center justify-center mb-2">
@@ -583,12 +583,12 @@ function PreTradeSection() {
               </div>
               {stock.tradable && (
                 <div className="flex justify-center mb-1">
-                  <span className="text-[9px] text-[#E8344E] border border-[#E8344E] rounded px-1.5 py-0.5 font-medium">지금 매수가능</span>
+                  <span className="text-[9px] text-[#03C75A] border border-[#03C75A] rounded px-1.5 py-0.5 font-medium">지금 매수가능</span>
                 </div>
               )}
-              <p className="text-xs font-medium text-[#222] text-center truncate mb-0.5">{stock.name}</p>
-              <p className="text-[10px] text-[#999] text-center">{stock.category}</p>
-              <p className="text-[10px] text-[#999] text-center mt-1">{stock.date}</p>
+              <p className="text-xs font-medium text-[#14181B] text-center truncate mb-0.5">{stock.name}</p>
+              <p className="text-[10px] text-[#9D9FA0] text-center">{stock.category}</p>
+              <p className="text-[10px] text-[#9D9FA0] text-center mt-1">{stock.date}</p>
             </div>
           ))}
         </div>
@@ -606,24 +606,24 @@ function FAQSection() {
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-8" data-testid="section-faq">
-      <h2 className="text-lg font-bold text-[#222] mb-6">IPO, 이런게 궁금해요!</h2>
+      <h2 className="text-lg font-bold text-[#14181B] mb-6">IPO, 이런게 궁금해요!</h2>
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-1">
-          <h3 className="text-sm font-bold text-[#222] mb-4">IPO 공모주 청약의 모든 것</h3>
-          <div className="border border-[#eee] rounded-lg overflow-hidden">
+          <h3 className="text-sm font-bold text-[#14181B] mb-4">IPO 공모주 청약의 모든 것</h3>
+          <div className="border border-[#E0E2E4] rounded-lg overflow-hidden">
             {FAQ_ITEMS.map((item, i) => (
-              <div key={i} className="border-b border-[#eee] last:border-b-0">
+              <div key={i} className="border-b border-[#E0E2E4] last:border-b-0">
                 <button
                   onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                  className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-[#fafafa] transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-[#F9FAFB] transition-colors"
                   data-testid={`faq-toggle-${i}`}
                 >
-                  <span className="text-sm text-[#222]">{item.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-[#999] shrink-0 transition-transform ${openIndex === i ? "rotate-180" : ""}`} />
+                  <span className="text-sm text-[#14181B]">{item.q}</span>
+                  <ChevronDown className={`w-4 h-4 text-[#9D9FA0] shrink-0 transition-transform ${openIndex === i ? "rotate-180" : ""}`} />
                 </button>
                 {openIndex === i && (
                   <div className="px-4 pb-4">
-                    <p className="text-sm text-[#666] leading-relaxed">{item.a}</p>
+                    <p className="text-sm text-[#585B5E] leading-relaxed">{item.a}</p>
                   </div>
                 )}
               </div>
@@ -632,7 +632,7 @@ function FAQSection() {
         </div>
 
         <div className="lg:w-[380px]">
-          <h3 className="text-sm font-bold text-[#222] mb-4">IPO News 모아보기</h3>
+          <h3 className="text-sm font-bold text-[#14181B] mb-4">IPO News 모아보기</h3>
           <div className="space-y-3">
             {(newsItems || IPO_NEWS.map((n, i) => ({ ...n, id: i }))).slice(0, 5).map((news: any, i: number) => (
               <a
@@ -640,15 +640,15 @@ function FAQSection() {
                 href={news.link || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-start gap-3 py-2 hover:bg-[#fafafa] rounded px-2 transition-colors"
+                className="flex items-start gap-3 py-2 hover:bg-[#F9FAFB] rounded px-2 transition-colors"
                 data-testid={`ipo-news-${i}`}
               >
-                <div className="w-8 h-8 rounded bg-[#f5f5f5] flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-[10px] font-bold text-[#999]">N</span>
+                <div className="w-8 h-8 rounded bg-[#F3F5F6] flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-[10px] font-bold text-[#9D9FA0]">N</span>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm text-[#222] line-clamp-2 leading-snug mb-0.5">{news.title}</p>
-                  <p className="text-[11px] text-[#999]">{news.publisher} | {news.publishedAt || news.date}</p>
+                  <p className="text-sm text-[#14181B] line-clamp-2 leading-snug mb-0.5">{news.title}</p>
+                  <p className="text-[11px] text-[#9D9FA0]">{news.publisher} | {news.publishedAt || news.date}</p>
                 </div>
               </a>
             ))}
@@ -665,18 +665,18 @@ export default function IPOCalendarPage() {
 
   return (
     <div className="min-h-screen bg-white" data-testid="page-ipo-calendar">
-      <header className="border-b border-[#eee]">
+      <header className="border-b border-[#E0E2E4]">
         <div className="max-w-[1200px] mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/">
               <span className="flex items-center gap-1.5 cursor-pointer" data-testid="link-home">
                 <SiteLogoBadge size={24} />
-                <span className="text-[#222] font-bold text-base">증권플러스 <span className="text-[#E8344E]">비상장</span></span>
+                <span className="text-[#14181B] font-bold text-base">pay <span className="text-[#03C75A]">비상장</span></span>
               </span>
             </Link>
           </div>
           <Link href="/">
-            <span className="flex items-center gap-1 text-sm text-[#666] hover:text-[#222] cursor-pointer" data-testid="link-back-home">
+            <span className="flex items-center gap-1 text-sm text-[#585B5E] hover:text-[#14181B] cursor-pointer" data-testid="link-back-home">
               <ArrowLeft className="w-4 h-4" />
               홈으로
             </span>
@@ -685,11 +685,11 @@ export default function IPOCalendarPage() {
       </header>
 
       <div className="max-w-[1200px] mx-auto px-4">
-        <div className="flex items-center gap-2 sm:gap-4 border-b border-[#eee] overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-2 sm:gap-4 border-b border-[#E0E2E4] overflow-x-auto scrollbar-none">
           <button
             onClick={() => setActivePageTab("calendar")}
             className={`py-4 text-sm sm:text-base font-bold border-b-2 transition-colors whitespace-nowrap ${
-              activePageTab === "calendar" ? "border-[#222] text-[#222]" : "border-transparent text-[#999]"
+              activePageTab === "calendar" ? "border-[#14181B] text-[#14181B]" : "border-transparent text-[#9D9FA0]"
             }`}
             data-testid="tab-page-calendar"
           >
@@ -698,7 +698,7 @@ export default function IPOCalendarPage() {
           <button
             onClick={() => setActivePageTab("pretrade")}
             className={`py-4 text-sm sm:text-base border-b-2 transition-colors whitespace-nowrap ${
-              activePageTab === "pretrade" ? "border-[#222] text-[#222] font-bold" : "border-transparent text-[#999]"
+              activePageTab === "pretrade" ? "border-[#14181B] text-[#14181B] font-bold" : "border-transparent text-[#9D9FA0]"
             }`}
             data-testid="tab-page-pretrade"
           >
@@ -707,7 +707,7 @@ export default function IPOCalendarPage() {
           <button
             onClick={() => setActivePageTab("faq")}
             className={`py-4 text-sm sm:text-base border-b-2 transition-colors whitespace-nowrap ${
-              activePageTab === "faq" ? "border-[#222] text-[#222] font-bold" : "border-transparent text-[#999]"
+              activePageTab === "faq" ? "border-[#14181B] text-[#14181B] font-bold" : "border-transparent text-[#9D9FA0]"
             }`}
             data-testid="tab-page-faq"
           >
@@ -720,12 +720,12 @@ export default function IPOCalendarPage() {
         <div className="max-w-[1200px] mx-auto px-4 py-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-[#222]">2026년 {calMonth}월</h2>
-              <Info className="w-4 h-4 text-[#ccc]" />
+              <h2 className="text-lg font-bold text-[#14181B]">2026년 {calMonth}월</h2>
+              <Info className="w-4 h-4 text-[#BFC0C1]" />
             </div>
             <div className="flex items-center gap-1">
               <button
-                className="px-2 py-1 rounded border border-[#eee] text-xs text-[#666] disabled:opacity-40"
+                className="px-2 py-1 rounded border border-[#E0E2E4] text-xs text-[#585B5E] disabled:opacity-40"
                 data-testid="button-cal-prev"
                 onClick={() => setCalMonth(m => Math.max(3, m - 1))}
                 disabled={calMonth === 3}
@@ -733,12 +733,12 @@ export default function IPOCalendarPage() {
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
               <button
-                className="px-3 py-1 rounded border border-[#eee] text-xs text-[#666]"
+                className="px-3 py-1 rounded border border-[#E0E2E4] text-xs text-[#585B5E]"
                 data-testid="button-cal-today"
                 onClick={() => setCalMonth(5)}
               >오늘</button>
               <button
-                className="px-2 py-1 rounded border border-[#eee] text-xs text-[#666] disabled:opacity-40"
+                className="px-2 py-1 rounded border border-[#E0E2E4] text-xs text-[#585B5E] disabled:opacity-40"
                 data-testid="button-cal-next"
                 onClick={() => setCalMonth(m => Math.min(5, m + 1))}
                 disabled={calMonth === 5}
@@ -752,7 +752,7 @@ export default function IPOCalendarPage() {
             {IPO_STATUS_LEGEND.map(({ label, dot }) => (
               <span
                 key={label}
-                className="inline-flex items-center gap-1 text-[12px] text-[#555] px-2.5 py-1 rounded-full border border-[#e0e0e0] bg-white"
+                className="inline-flex items-center gap-1 text-[12px] text-[#585B5E] px-2.5 py-1 rounded-full border border-[#E0E2E4] bg-white"
               >
                 <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: dot }} />
                 {label}
@@ -766,12 +766,12 @@ export default function IPOCalendarPage() {
             </div>
           </div>
 
-          <div className="mt-8 border-t border-[#eee] pt-6">
-            <div className="flex items-center gap-1.5 mb-2 text-[#999]">
+          <div className="mt-8 border-t border-[#E0E2E4] pt-6">
+            <div className="flex items-center gap-1.5 mb-2 text-[#9D9FA0]">
               <Info className="w-3.5 h-3.5" />
               <span className="text-xs font-medium">유의사항</span>
             </div>
-            <ul className="text-[11px] text-[#999] space-y-1 list-disc pl-4">
+            <ul className="text-[11px] text-[#9D9FA0] space-y-1 list-disc pl-4">
               <li>모든 정보는 정보 제공을 위한 것으로, 투자 권유를 목적으로 하지 않습니다.</li>
               <li>제공되는 정보는 오류 또는 지연이 발생할 수 있으며, 증권플러스비상장 주식회사는 제공된 정보에 의한 투자 결과에 대해 법적인 책임을 지지 않습니다.</li>
             </ul>
@@ -783,16 +783,16 @@ export default function IPOCalendarPage() {
 
       {activePageTab === "faq" && <FAQSection />}
 
-      <footer className="border-t border-[#eee] mt-8 bg-[#fafafa]">
+      <footer className="border-t border-[#E0E2E4] mt-8 bg-[#F9FAFB]">
         <div className="max-w-[1200px] mx-auto px-4 py-8">
           <div className="flex items-center gap-1.5 mb-4">
             <SiteLogoBadge size={22} />
-            <span className="text-sm font-bold text-[#222]">증권플러스 <span className="text-[#E8344E]">비상장</span></span>
+            <span className="text-sm font-bold text-[#14181B]">pay <span className="text-[#03C75A]">비상장</span></span>
           </div>
-          <p className="text-[11px] text-[#999] leading-relaxed">
-            증권플러스 비상장은 비상장주식 거래 정보를 제공하며, 투자 판단에 대한 책임은 투자자 본인에게 있습니다.
+          <p className="text-[11px] text-[#9D9FA0] leading-relaxed">
+            Npay 비상장은 비상장주식 거래 정보를 제공하며, 투자 판단에 대한 책임은 투자자 본인에게 있습니다.
           </p>
-          <p className="text-[11px] text-[#bbb] mt-2">© 2026 증권플러스 비상장. All rights reserved.</p>
+          <p className="text-[11px] text-[#BFC0C1] mt-2">© 2026 Npay 비상장. All rights reserved.</p>
         </div>
       </footer>
 

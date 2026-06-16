@@ -194,9 +194,9 @@ export default function LoginPage() {
           </Link>
           <div className="flex items-center justify-center gap-2.5 mb-4">
             <SiteLogoBadge size={36} />
-            <span className="font-bold text-lg">증권플러스 비상장</span>
+            <span className="font-bold text-lg tracking-tight">pay 비상장</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">{showTransferPanel ? "증권플러스 비상장" : "로그인"}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{showTransferPanel ? "Npay 비상장" : "로그인"}</h1>
           <p className="text-sm text-muted-foreground mt-1">비상장 주식 관리 시스템</p>
         </div>
 
@@ -249,7 +249,7 @@ export default function LoginPage() {
             <>
               <Card className="p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <ArrowRightLeft className="w-5 h-5 text-[#E8344E]" />
+                  <ArrowRightLeft className="w-5 h-5 text-[#03C75A]" />
                   <h2 className="text-lg font-semibold">타사 대체출고 신청</h2>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
@@ -315,7 +315,7 @@ export default function LoginPage() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-[#E8344E] border-[#E8344E]"
+                    className="w-full bg-[#03C75A] border-[#03C75A] hover:bg-[#02b350]"
                     disabled={transferMutation.isPending || loginHoldings.length === 0 || !transferStock}
                     data-testid="button-submit-transfer"
                   >
@@ -334,7 +334,7 @@ export default function LoginPage() {
 
               <Card className="p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <Clock className="w-5 h-5 text-[#E8344E]" />
+                  <Clock className="w-5 h-5 text-[#03C75A]" />
                   <h2 className="text-lg font-semibold">대체출고 신청 목록</h2>
                 </div>
                 {myTransfers.length === 0 ? (

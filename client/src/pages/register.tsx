@@ -80,7 +80,7 @@ export default function RegisterPage() {
           </Link>
           <div className="flex items-center justify-center gap-2.5 mb-4">
             <SiteLogoBadge size={36} />
-            <span className="font-bold text-lg">증권플러스 비상장</span>
+            <span className="font-bold text-lg tracking-tight">pay 비상장</span>
           </div>
           <h1 className="text-2xl font-bold tracking-tight">회원가입</h1>
           <p className="text-sm text-muted-foreground mt-1">비상장 주식 관리 시스템</p>
@@ -204,7 +204,7 @@ export default function RegisterPage() {
                 name="accountNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>계좌번호 <span className="font-normal text-[#666]">(ISA 계좌번호가 아닌, 종합위탁 계좌번호를 입력해 주시기 바랍니다.)</span></FormLabel>
+                    <FormLabel>계좌번호 <span className="font-normal text-[#585B5E]">(ISA 계좌번호가 아닌, 종합위탁 계좌번호를 입력해 주시기 바랍니다.)</span></FormLabel>
                     <FormControl>
                       <Input
                         placeholder="증권 계좌번호를 입력하세요"

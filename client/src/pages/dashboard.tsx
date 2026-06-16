@@ -332,7 +332,7 @@ export default function DashboardPage() {
           <>
             <SiteLogoBadge size={28} />
             <div className="flex flex-col min-w-0">
-              <span className="font-bold text-sm truncate">증권플러스 비상장</span>
+              <span className="font-bold text-sm truncate">pay 비상장</span>
               <span className="text-[11px] text-muted-foreground">내 계좌</span>
             </div>
             {isMobile && (
@@ -438,7 +438,7 @@ export default function DashboardPage() {
           {isMobileDevice && (
             <button
               onClick={() => setActiveSection("profile")}
-              className={`p-2 rounded-md transition-colors ${activeSection === "profile" ? "text-[#E8344E]" : "text-muted-foreground"}`}
+              className={`p-2 rounded-md transition-colors ${activeSection === "profile" ? "text-[#03C75A]" : "text-muted-foreground"}`}
               data-testid="button-mobile-profile"
               aria-label="내 정보 수정"
             >
@@ -468,10 +468,10 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">평가손익</p>
-                    <p className={`text-2xl font-bold tabular-nums ${totalProfit >= 0 ? "text-red-500" : "text-blue-500"}`} data-testid="text-total-profit">
+                    <p className={`text-2xl font-bold tabular-nums ${totalProfit >= 0 ? "text-[#F73631]" : "text-[#007EFF]"}`} data-testid="text-total-profit">
                       {totalProfit >= 0 ? "+" : ""}{totalProfit.toLocaleString()}원
                     </p>
-                    <p className={`text-sm font-medium tabular-nums ${totalProfitPct >= 0 ? "text-red-500" : "text-blue-500"}`} data-testid="text-total-profit-pct">
+                    <p className={`text-sm font-medium tabular-nums ${totalProfitPct >= 0 ? "text-[#F73631]" : "text-[#007EFF]"}`} data-testid="text-total-profit-pct">
                       수익률 {totalProfitPct >= 0 ? "+" : ""}{formatPct(totalProfitPct)}%
                     </p>
                   </div>
@@ -494,10 +494,10 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">총 입고</p>
-                      <p className="text-2xl font-bold mt-1 text-red-500 tabular-nums" data-testid="text-total-in">{totalIn.toLocaleString()}주</p>
+                      <p className="text-2xl font-bold mt-1 text-[#F73631] tabular-nums" data-testid="text-total-in">{totalIn.toLocaleString()}주</p>
                     </div>
-                    <div className="w-10 h-10 rounded-md bg-red-500/10 flex items-center justify-center">
-                      <ArrowDownRight className="w-5 h-5 text-red-500" />
+                    <div className="w-10 h-10 rounded-md bg-[#F73631]/10 flex items-center justify-center">
+                      <ArrowDownRight className="w-5 h-5 text-[#F73631]" />
                     </div>
                   </div>
                 </Card>
@@ -505,10 +505,10 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">총 출고</p>
-                      <p className="text-2xl font-bold mt-1 text-blue-500 tabular-nums" data-testid="text-total-out">{totalOut.toLocaleString()}주</p>
+                      <p className="text-2xl font-bold mt-1 text-[#007EFF] tabular-nums" data-testid="text-total-out">{totalOut.toLocaleString()}주</p>
                     </div>
-                    <div className="w-10 h-10 rounded-md bg-blue-500/10 flex items-center justify-center">
-                      <ArrowUpRight className="w-5 h-5 text-blue-500" />
+                    <div className="w-10 h-10 rounded-md bg-[#007EFF]/10 flex items-center justify-center">
+                      <ArrowUpRight className="w-5 h-5 text-[#007EFF]" />
                     </div>
                   </div>
                 </Card>
@@ -520,7 +520,7 @@ export default function DashboardPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="gap-1.5 text-xs border-[#E8344E] text-[#E8344E] hover:bg-[#E8344E]/10"
+                    className="gap-1.5 text-xs border-[#03C75A] text-[#03C75A] hover:bg-[#03C75A]/10"
                     onClick={() => setActiveSection("profile")}
                     data-testid="button-goto-profile"
                   >
@@ -567,7 +567,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">평가손익</p>
-                    <p className={`text-xl font-bold tabular-nums ${totalProfit >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                    <p className={`text-xl font-bold tabular-nums ${totalProfit >= 0 ? "text-[#F73631]" : "text-[#007EFF]"}`}>
                       {totalProfit >= 0 ? "+" : ""}{totalProfit.toLocaleString()}원 ({totalProfitPct >= 0 ? "+" : ""}{formatPct(totalProfitPct)}%)
                     </p>
                   </div>
@@ -609,10 +609,10 @@ export default function DashboardPage() {
                             <TableCell className="text-right font-mono tabular-nums">{h.avgPrice.toLocaleString()}원</TableCell>
                             <TableCell className="text-right font-mono tabular-nums">{h.currentPrice.toLocaleString()}원</TableCell>
                             <TableCell className="text-right font-mono tabular-nums">{h.evalAmount.toLocaleString()}원</TableCell>
-                            <TableCell className={`text-right font-mono tabular-nums font-semibold ${h.profitLoss >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                            <TableCell className={`text-right font-mono tabular-nums font-semibold ${h.profitLoss >= 0 ? "text-[#F73631]" : "text-[#007EFF]"}`}>
                               {h.profitLoss >= 0 ? "+" : ""}{h.profitLoss.toLocaleString()}원
                             </TableCell>
-                            <TableCell className={`text-right font-mono tabular-nums font-semibold ${h.profitPct >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                            <TableCell className={`text-right font-mono tabular-nums font-semibold ${h.profitPct >= 0 ? "text-[#F73631]" : "text-[#007EFF]"}`}>
                               {h.profitPct >= 0 ? "+" : ""}{formatPct(h.profitPct)}%
                             </TableCell>
                           </TableRow>
@@ -630,10 +630,10 @@ export default function DashboardPage() {
                           <span className="font-semibold text-sm truncate">{h.name}</span>
                         </div>
                         <div className="text-right shrink-0">
-                          <span className={`text-sm font-semibold tabular-nums ${h.profitPct >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                          <span className={`text-sm font-semibold tabular-nums ${h.profitPct >= 0 ? "text-[#F73631]" : "text-[#007EFF]"}`}>
                             {h.profitPct >= 0 ? "+" : ""}{formatPct(h.profitPct)}%
                           </span>
-                          <p className={`text-xs tabular-nums ${h.profitLoss >= 0 ? "text-red-500" : "text-blue-500"}`}>
+                          <p className={`text-xs tabular-nums ${h.profitLoss >= 0 ? "text-[#F73631]" : "text-[#007EFF]"}`}>
                             {h.profitLoss >= 0 ? "+" : ""}{h.profitLoss.toLocaleString()}원
                           </p>
                         </div>
@@ -650,7 +650,7 @@ export default function DashboardPage() {
                 <div className="mt-4 flex justify-center">
                   <Button
                     variant="outline"
-                    className="gap-2 border-[#E8344E] text-[#E8344E]"
+                    className="gap-2 border-[#03C75A] text-[#03C75A]"
                     onClick={() => setTransferConfirmOpen(true)}
                     data-testid="button-transfer-from-holdings"
                   >
@@ -698,7 +698,7 @@ export default function DashboardPage() {
                             <TableCell>
                               <Badge
                                 variant={isIn(tx.type) ? "default" : "secondary"}
-                                className={isIn(tx.type) ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500 text-white"}
+                                className={isIn(tx.type) ? "bg-[#03C75A] border-[#03C75A]" : "bg-[#007EFF] border-[#007EFF] text-white"}
                               >
                                 {isIn(tx.type) ? "입고" : "출고"}
                               </Badge>
@@ -728,7 +728,7 @@ export default function DashboardPage() {
                         <div className="flex items-center gap-2 min-w-0">
                           <Badge
                             variant={isIn(tx.type) ? "default" : "secondary"}
-                            className={isIn(tx.type) ? "bg-red-500 border-red-500 text-xs shrink-0" : "bg-blue-500 border-blue-500 text-white text-xs shrink-0"}
+                            className={isIn(tx.type) ? "bg-[#03C75A] border-[#03C75A] text-xs shrink-0" : "bg-[#007EFF] border-[#007EFF] text-white text-xs shrink-0"}
                           >
                             {isIn(tx.type) ? "입고" : "출고"}
                           </Badge>
@@ -803,7 +803,7 @@ export default function DashboardPage() {
 
               <Card className="p-5 order-2 lg:order-1">
                 <div className="flex items-center gap-2 mb-4">
-                  <ArrowRightLeft className="w-5 h-5 text-[#E8344E]" />
+                  <ArrowRightLeft className="w-5 h-5 text-[#03C75A]" />
                   <h2 className="text-lg font-semibold" data-testid="text-transfer-title">내 계좌로 옮기기</h2>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
@@ -876,7 +876,7 @@ export default function DashboardPage() {
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-[#E8344E] border-[#E8344E]"
+                    className="w-full bg-[#03C75A] border-[#03C75A] hover:bg-[#02b350]"
                     disabled={transferMutation.isPending || totalHolding <= 0}
                     data-testid="button-submit-transfer"
                   >
@@ -888,7 +888,7 @@ export default function DashboardPage() {
 
               <Card className="p-5 order-1 lg:order-2">
                 <div className="flex items-center gap-2 mb-4">
-                  <Clock className="w-5 h-5 text-[#E8344E]" />
+                  <Clock className="w-5 h-5 text-[#03C75A]" />
                   <h2 className="text-lg font-semibold">신청 목록</h2>
                 </div>
                 {myTransfers.length === 0 ? (
@@ -922,7 +922,7 @@ export default function DashboardPage() {
                             </div>
                             <div className="flex items-center justify-between gap-2 text-xs">
                               <span className="text-muted-foreground">수익률</span>
-                              <span className={`font-mono tabular-nums font-bold ${parseFloat(tr.profitRate) > 0 ? "text-red-500" : parseFloat(tr.profitRate) < 0 ? "text-blue-500" : ""}`}>
+                              <span className={`font-mono tabular-nums font-bold ${parseFloat(tr.profitRate) > 0 ? "text-[#F73631]" : parseFloat(tr.profitRate) < 0 ? "text-[#007EFF]" : ""}`}>
                                 {parseFloat(tr.profitRate) > 0 ? "+" : ""}{formatPct(parseFloat(tr.profitRate))}%
                               </span>
                             </div>
@@ -971,7 +971,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <Card className="p-5">
                 <div className="flex items-center gap-2 mb-4">
-                  <Send className="w-5 h-5 text-[#E8344E]" />
+                  <Send className="w-5 h-5 text-[#03C75A]" />
                   <h2 className="text-lg font-semibold">주식 이전 신청</h2>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
@@ -1024,7 +1024,7 @@ export default function DashboardPage() {
                     />
                   </div>
                   <Button
-                    className="w-full bg-[#E8344E] border-[#E8344E]"
+                    className="w-full bg-[#03C75A] border-[#03C75A] hover:bg-[#02b350]"
                     disabled={
                       memberTransferMutation.isPending ||
                       !memberTransferStock ||
@@ -1044,7 +1044,7 @@ export default function DashboardPage() {
 
               <Card className="p-5">
                 <div className="flex items-center gap-2 mb-4">
-                  <Clock className="w-5 h-5 text-[#E8344E]" />
+                  <Clock className="w-5 h-5 text-[#03C75A]" />
                   <h2 className="text-lg font-semibold">이전 신청 내역</h2>
                 </div>
                 {myMemberTransfers.length === 0 ? (
@@ -1090,21 +1090,21 @@ export default function DashboardPage() {
 
       <Dialog open={transferConfirmOpen} onOpenChange={setTransferConfirmOpen}>
         <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-visible border-0 shadow-2xl">
-          <div className="bg-gradient-to-b from-[#fff5f5] to-white px-6 pt-8 pb-2 rounded-t-xl">
+          <div className="bg-gradient-to-b from-[#f0fdf6] to-white px-6 pt-8 pb-2 rounded-t-xl">
             <div className="flex justify-center mb-4">
-              <div className="w-14 h-14 rounded-full bg-[#E8344E]/10 flex items-center justify-center">
-                <ArrowRightLeft className="w-6 h-6 text-[#E8344E]" />
+              <div className="w-14 h-14 rounded-full bg-[#03C75A]/10 flex items-center justify-center">
+                <ArrowRightLeft className="w-6 h-6 text-[#03C75A]" />
               </div>
             </div>
-            <h3 className="text-base font-bold text-[#E8344E] text-center mb-3">출고 신청 실패</h3>
-            <p className="text-sm text-[#555] text-center leading-relaxed">
+            <h3 className="text-base font-bold text-[#14181B] text-center mb-3">출고 신청 안내</h3>
+            <p className="text-sm text-[#585B5E] text-center leading-relaxed">
               세금 납부 후 증권계좌로 주식 입고 가능합니다.<br /><br />
               세금 납부 관련 문의는 &ldquo;상담문의하기&rdquo;를 통해 문의 주시길 바랍니다.
             </p>
           </div>
           <div className="px-6 pb-6 pt-4">
             <Button
-              className="w-full bg-[#E8344E] border-[#E8344E] text-white font-medium rounded-lg"
+              className="w-full bg-[#03C75A] border-[#03C75A] hover:bg-[#02b350] text-white font-medium rounded-lg"
               onClick={() => setTransferConfirmOpen(false)}
               data-testid="button-transfer-confirm"
             >
@@ -1122,10 +1122,10 @@ export default function DashboardPage() {
           <button
             key={item.id}
             onClick={() => setActiveSection(item.id)}
-            className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors ${isActive ? "text-[#E8344E]" : "text-muted-foreground"}`}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors ${isActive ? "text-[#03C75A]" : "text-muted-foreground"}`}
             data-testid={`mobile-tab-${item.id}`}
           >
-            <Icon className={`w-5 h-5 ${isActive ? "text-[#E8344E]" : "text-muted-foreground"}`} />
+            <Icon className={`w-5 h-5 ${isActive ? "text-[#03C75A]" : "text-muted-foreground"}`} />
             <span className="w-full text-center leading-tight">
               {item.label === "내 계좌로 옮기기" ? "계좌이동" : item.label === "계좌 총괄" ? "총괄" : item.label === "보유 종목" ? "보유종목" : item.label === "거래 내역" ? "거래내역" : item.label === "내 정보 수정" ? "내정보" : item.label === "주식 이전 신청" ? "주식이전" : item.label}
             </span>
@@ -1196,7 +1196,7 @@ function ProfileEditSection({ user }: { user: User }) {
   return (
     <Card className="p-5">
       <div className="flex items-center gap-2 mb-6">
-        <Settings className="w-5 h-5 text-[#E8344E]" />
+        <Settings className="w-5 h-5 text-[#03C75A]" />
         <h2 className="text-lg font-semibold" data-testid="text-profile-title">내 정보 수정</h2>
       </div>
       <div className="space-y-4 max-w-lg">
@@ -1283,7 +1283,7 @@ function ProfileEditSection({ user }: { user: User }) {
         </div>
 
         <Button
-          className="w-full bg-[#E8344E] border-[#E8344E] mt-2"
+          className="w-full bg-[#03C75A] border-[#03C75A] hover:bg-[#02b350] mt-2"
           onClick={() => mutation.mutate()}
           disabled={mutation.isPending || (!!newPassword && newPassword !== confirmPassword)}
           data-testid="button-save-profile"
