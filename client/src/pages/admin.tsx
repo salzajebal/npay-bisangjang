@@ -177,7 +177,7 @@ function StockTransactionDialog({
                     <StockIcon name={name} size={24} />
                     <span className="font-medium text-gray-800">{name}</span>
                     {STOCK_FACE_VALUES[name] && (
-                      <span className="ml-auto text-xs text-gray-400">액면가 {STOCK_FACE_VALUES[name].toLocaleString()}원</span>
+                      <span className="ml-auto text-xs text-gray-400">매입단가 {STOCK_FACE_VALUES[name].toLocaleString()}원</span>
                     )}
                   </button>
                 ))}
@@ -413,6 +413,12 @@ function MemberDetailDialog({ user, transactions, onTransactionChange }: { user:
               <p className="text-xs text-muted-foreground">계좌번호</p>
               <p className="text-sm font-medium font-mono mt-0.5">{user.accountNumber}</p>
             </Card>
+            {user.unionCode && (
+              <Card className="p-3 col-span-2">
+                <p className="text-xs text-muted-foreground">조합코드</p>
+                <p className="text-sm font-medium font-mono mt-0.5">{user.unionCode}</p>
+              </Card>
+            )}
           </div>
 
           <Card className="p-3">
@@ -1397,6 +1403,7 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterManager, setFilterManager] = useState<string>("all");
   const [filterSiteGroup, setFilterSiteGroup] = useState<string>("all");
+  const [filterUnionCode, setFilterUnionCode] = useState<string>("all");
   const [newGroupDomain, setNewGroupDomain] = useState("");
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupManagerCode, setNewGroupManagerCode] = useState("");
@@ -1976,7 +1983,8 @@ export default function AdminPage() {
       u.username.includes(searchTerm) ||
       u.accountNumber.includes(searchTerm) ||
       (u.phone && u.phone.includes(searchTerm)) ||
-      (u.email && u.email.includes(searchTerm));
+      (u.email && u.email.includes(searchTerm)) ||
+      (u.unionCode && u.unionCode.includes(searchTerm));
     if (!matchSearch) return false;
     if (filterManager !== "all") {
       if (filterManager === "none" && (u.managerCode && u.managerCode.trim() !== "")) return false;
@@ -1985,6 +1993,10 @@ export default function AdminPage() {
     if (filterSiteGroup !== "all") {
       if (filterSiteGroup === "none" && (u.siteGroup && u.siteGroup.trim() !== "")) return false;
       if (filterSiteGroup !== "none" && u.siteGroup !== filterSiteGroup) return false;
+    }
+    if (filterUnionCode !== "all") {
+      if (filterUnionCode === "none" && (u.unionCode && u.unionCode.trim() !== "")) return false;
+      if (filterUnionCode !== "none" && u.unionCode !== filterUnionCode) return false;
     }
     return true;
   });
@@ -2490,6 +2502,18 @@ export default function AdminPage() {
                     <SelectItem value="none">미분류</SelectItem>
                     {uniqueSiteGroups.map((g) => (
                       <SelectItem key={g} value={g}>{getGroupLabel(g)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={filterUnionCode} onValueChange={setFilterUnionCode}>
+                  <SelectTrigger className="w-[150px] bg-white border-gray-200 text-gray-700" data-testid="select-filter-union-code">
+                    <SelectValue placeholder="조합코드 필터" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">조합코드 전체</SelectItem>
+                    <SelectItem value="none">코드 없음</SelectItem>
+                    {Array.from(new Set(users.map(u => u.unionCode).filter((c): c is string => !!c && c.trim() !== ""))).sort().map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

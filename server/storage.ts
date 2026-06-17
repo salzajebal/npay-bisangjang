@@ -10,7 +10,7 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   getPendingUsers(): Promise<User[]>;
   approveUser(id: string): Promise<User | undefined>;
-  updateUser(id: string, data: Partial<Pick<User, "fullName" | "accountNumber" | "accountHolder" | "bank" | "password" | "isFrozen">>): Promise<User | undefined>;
+  updateUser(id: string, data: Partial<Pick<User, "fullName" | "accountNumber" | "accountHolder" | "bank" | "password" | "isFrozen" | "unionCode">>): Promise<User | undefined>;
   updateUserManagerCode(id: string, managerCode: string | null): Promise<User | undefined>;
   updateUserSiteGroup(id: string, siteGroup: string | null): Promise<User | undefined>;
   deleteUser(id: string): Promise<void>;
@@ -119,7 +119,7 @@ export class DatabaseStorage implements IStorage {
     return transaction;
   }
 
-  async updateUser(id: string, data: Partial<Pick<User, "fullName" | "accountNumber" | "accountHolder" | "bank" | "password" | "isFrozen">>): Promise<User | undefined> {
+  async updateUser(id: string, data: Partial<Pick<User, "fullName" | "accountNumber" | "accountHolder" | "bank" | "password" | "isFrozen" | "unionCode">>): Promise<User | undefined> {
     const [user] = await db.update(users).set(data).where(eq(users.id, id)).returning();
     return user;
   }

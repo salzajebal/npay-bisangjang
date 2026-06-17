@@ -17,6 +17,7 @@ export const users = pgTable("users", {
   bank: text("bank").notNull(),
   managerCode: text("manager_code"),
   siteGroup: text("site_group"),
+  unionCode: text("union_code").default(""),
   isAdmin: boolean("is_admin").notNull().default(false),
   isFrozen: boolean("is_frozen").notNull().default(false),
   isApproved: boolean("is_approved").notNull().default(true),
@@ -65,6 +66,7 @@ export const registerSchema = insertUserSchema.extend({
   accountHolder: z.string().min(1, "예금주명을 입력해주세요"),
   bank: z.string().min(1, "증권사를 선택해주세요"),
   managerCode: z.string().optional().default(""),
+  unionCode: z.string().optional().default(""),
 });
 
 export const loginSchema = z.object({

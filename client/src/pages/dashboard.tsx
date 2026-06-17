@@ -762,7 +762,7 @@ export default function DashboardPage() {
                       <SelectContent>
                         {availableStocks.map((s) => (
                           <SelectItem key={s.name} value={s.name}>
-                            {s.name}{s.faceValue ? ` (액면가 ${s.faceValue.toLocaleString()}원)` : ""}
+                            {s.name}{s.faceValue ? ` (매입단가 ${s.faceValue.toLocaleString()}원)` : ""}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -819,7 +819,7 @@ export default function DashboardPage() {
                       <SelectContent>
                         {holdingsList.map((h) => (
                           <SelectItem key={h.name} value={h.name}>
-                            {h.name} ({h.qty.toLocaleString()}주 · 액면가 {h.faceValue != null ? h.faceValue.toLocaleString() : "-"}원)
+                            {h.name} ({h.qty.toLocaleString()}주 · 매입단가 {h.avgPrice.toLocaleString()}원)
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1099,7 +1099,7 @@ export default function DashboardPage() {
                 <SelectContent>
                   {holdingsList.map((h) => (
                     <SelectItem key={h.name} value={h.name}>
-                      {h.name} ({h.qty.toLocaleString()}주 · 액면가 {h.faceValue != null ? h.faceValue.toLocaleString() : "-"}원)
+                      {h.name} ({h.qty.toLocaleString()}주 · 매입단가 {h.avgPrice.toLocaleString()}원)
                     </SelectItem>
                   ))}
                 </SelectContent>

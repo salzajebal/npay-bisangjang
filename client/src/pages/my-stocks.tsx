@@ -248,7 +248,7 @@ export default function MyStocksPage() {
                   <TableHead className="text-xs text-[#585B5E] font-medium">종목명</TableHead>
                   <TableHead className="text-xs text-[#585B5E] font-medium text-center">카테고리</TableHead>
                   <TableHead className="text-xs text-[#585B5E] font-medium text-right">보유수량</TableHead>
-                  <TableHead className="text-xs text-[#585B5E] font-medium text-right">액면가</TableHead>
+                  <TableHead className="text-xs text-[#585B5E] font-medium text-right">매입단가</TableHead>
                   <TableHead className="text-xs text-[#585B5E] font-medium text-right">현재가</TableHead>
                   <TableHead className="text-xs text-[#585B5E] font-medium text-right">평가금액</TableHead>
                   <TableHead className="text-xs text-[#585B5E] font-medium text-right">평가손익</TableHead>
@@ -268,7 +268,7 @@ export default function MyStocksPage() {
                       <Badge variant="outline" className="text-xs">{h.category}</Badge>
                     </TableCell>
                     <TableCell className="text-right text-sm text-[#14181B] tabular-nums">{h.qty.toLocaleString()}주</TableCell>
-                    <TableCell className="text-right text-sm text-[#14181B] tabular-nums">{h.faceValue != null ? h.faceValue.toLocaleString() : "-"}원</TableCell>
+                    <TableCell className="text-right text-sm text-[#14181B] tabular-nums">{h.avgPrice.toLocaleString()}원</TableCell>
                     <TableCell className="text-right text-sm text-[#14181B] tabular-nums">{h.currentPrice.toLocaleString()}원</TableCell>
                     <TableCell className="text-right text-sm font-medium text-[#14181B] tabular-nums">{h.evalAmount.toLocaleString()}원</TableCell>
                     <TableCell className={`text-right text-sm font-semibold tabular-nums ${h.profitLoss >= 0 ? "text-[#F73631]" : "text-[#007EFF]"}`}>
@@ -305,7 +305,7 @@ export default function MyStocksPage() {
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                   <div className="flex justify-between"><span className="text-[#9D9FA0]">보유수량</span><span className="text-[#14181B] tabular-nums">{h.qty.toLocaleString()}주</span></div>
                   <div className="flex justify-between"><span className="text-[#9D9FA0]">현재가</span><span className="text-[#14181B] tabular-nums">{h.currentPrice.toLocaleString()}원</span></div>
-                  <div className="flex justify-between"><span className="text-[#9D9FA0]">액면가</span><span className="text-[#14181B] tabular-nums">{h.faceValue != null ? h.faceValue.toLocaleString() : "-"}원</span></div>
+                  <div className="flex justify-between"><span className="text-[#9D9FA0]">매입단가</span><span className="text-[#14181B] tabular-nums">{h.avgPrice.toLocaleString()}원</span></div>
                   <div className="flex justify-between"><span className="text-[#9D9FA0]">평가금액</span><span className="text-[#14181B] tabular-nums">{h.evalAmount.toLocaleString()}원</span></div>
                 </div>
               </div>
@@ -596,7 +596,7 @@ export default function MyStocksPage() {
                 <SelectContent>
                   {holdings.map((h) => (
                     <SelectItem key={h.name} value={h.name}>
-                      {h.name} ({h.qty.toLocaleString()}주 · 액면가 {h.faceValue != null ? h.faceValue.toLocaleString() : "-"}원)
+                      {h.name} ({h.qty.toLocaleString()}주 · 매입단가 {h.avgPrice.toLocaleString()}원)
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -203,11 +203,28 @@ export default function RegisterPage() {
                 name="accountNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>계좌번호 <span className="font-normal text-[#585B5E]">(ISA 계좌번호가 아닌, 종합위탁 계좌번호를 입력해 주시기 바랍니다.)</span></FormLabel>
+                    <FormLabel>계좌번호 <span className="font-normal text-[#585B5E]">(CMA, ISA 계좌가 아닌, 일반종합계좌를 입력해 주시기 바랍니다.)</span></FormLabel>
                     <FormControl>
                       <Input
                         placeholder="증권 계좌번호를 입력하세요"
                         data-testid="input-account-number"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="unionCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>조합코드 <span className="font-normal text-[#585B5E]">(조합원 코드가 있으신 경우 입력해주세요.)</span></FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="조합코드를 입력하세요 (선택사항)"
+                        data-testid="input-union-code"
                         {...field}
                       />
                     </FormControl>
