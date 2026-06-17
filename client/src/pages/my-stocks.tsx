@@ -67,7 +67,7 @@ export default function MyStocksPage() {
       return res.json();
     },
     onSuccess: () => {
-      toast({ title: "신청 완료", description: "내 계좌로 옮기기 신청 접수가 완료 되었습니다. 연동된 증권계좌로 순차적으로 입고를 진행합니다." });
+      toast({ title: "신청완료", description: "내 계좌로 옮기기 신청 접수가 완료 되었습니다.\n\n신청하신 내역은 상장일 전까지 연동된 증권 계좌로 순차 입고될 예정입니다." });
       setTransferConfirmOpen(false);
       setTransferStock("");
       setTransferQuantity("");
