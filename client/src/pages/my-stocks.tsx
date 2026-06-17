@@ -321,42 +321,6 @@ export default function MyStocksPage() {
               <ArrowRightLeft className="w-4 h-4" />
               내 계좌로 옮기기
             </Button>
-            <Button
-              className="gap-2 bg-[#03C75A] border-[#03C75A] text-white font-semibold hover:bg-[#02b350]"
-              disabled={sellFetchingPrice}
-              onClick={async () => {
-                setSellFetchingPrice(true);
-                try {
-                  const stockNames = holdings.map(h => h.name);
-                  const res = await fetch("/api/stocks/prices", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                    body: JSON.stringify({ stockNames }),
-                  });
-                  const freshPrices = await res.json();
-                  const frozen: Record<string, number> = {};
-                  holdings.forEach(h => {
-                    frozen[h.name] = (freshPrices[h.name]?.currentPrice || h.currentPrice) as number;
-                  });
-                  setFrozenPrices(frozen);
-                } catch {
-                  const frozen: Record<string, number> = {};
-                  holdings.forEach(h => { frozen[h.name] = h.currentPrice; });
-                  setFrozenPrices(frozen);
-                } finally {
-                  setSellFetchingPrice(false);
-                }
-                const first = holdings[0];
-                setSellStock(first?.name ?? "");
-                setSellQty(String(first?.qty ?? ""));
-                setSellDialogOpen(true);
-              }}
-              data-testid="button-confirmed-sell-mystocks"
-            >
-              <Lock className="w-4 h-4" />
-              {sellFetchingPrice ? "가격 확인 중..." : "확정매도"}
-            </Button>
           </div>
           </>
         )}
