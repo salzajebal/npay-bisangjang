@@ -1,6 +1,6 @@
 import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, type LoginLog, type DomainFallbackUrl, type InsertDomainFallbackUrl, type BlockedIp, type StockMemberTransfer, type InsertStockMemberTransfer, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups, loginLogs, domainFallbackUrls, blockedIps, stockMemberTransfers } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql, asc } from "drizzle-orm";
+import { eq, desc, and, sql, asc, inArray } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -188,7 +188,10 @@ export class DatabaseStorage implements IStorage {
 
   async getPendingTransferRequestsByUserId(userId: string): Promise<TransferRequest[]> {
     return db.select().from(transferRequests)
-      .where(and(eq(transferRequests.userId, userId), eq(transferRequests.status, "pending")));
+      .where(and(
+        eq(transferRequests.userId, userId),
+        inArray(transferRequests.status, ["pending", "approved", "held"])
+      ));
   }
 
   async deleteTransferRequest(id: string, userId: string): Promise<boolean> {

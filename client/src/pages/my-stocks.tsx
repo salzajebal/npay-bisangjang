@@ -79,7 +79,9 @@ export default function MyStocksPage() {
   });
 
   const txList = (transactions || []);
-  const inTx = txList.filter(tx => tx.type === "in");
+  const isInType = (t: string) => t === "in" || t === "입고";
+  const isOutType = (t: string) => t === "out" || t === "출고" || t === "내 계좌로 옮기기" || t === "주식이전";
+  const inTx = txList.filter(tx => isInType(tx.type));
 
   const holdingsMap = new Map<string, { qty: number; totalCost: number; category: string }>();
   for (const tx of inTx) {
@@ -89,7 +91,7 @@ export default function MyStocksPage() {
     holdingsMap.set(tx.stockName, existing);
   }
 
-  for (const tx of txList.filter(t => t.type === "out")) {
+  for (const tx of txList.filter(t => isOutType(t.type))) {
     const existing = holdingsMap.get(tx.stockName);
     if (existing) {
       existing.qty -= tx.quantity;
