@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { GlobalNav } from "@/components/global-nav";
 import {
   Search,
   ChevronRight,
@@ -2033,12 +2034,7 @@ export default function TradePage() {
   return (
     <div className="min-h-screen bg-white" data-testid="page-landing">
       <LandingPopup />
-      <Header
-        user={user ?? null}
-        searchQuery={searchQuery}
-        onSearchChange={(v) => { setSearchQuery(v); setIsSearchMode(true); }}
-        onSearchFocus={() => setIsSearchMode(true)}
-      />
+      <GlobalNav />
 
       <main className="max-w-[1200px] mx-auto px-4 py-4">
         {/* 모바일 검색바 */}
