@@ -52,14 +52,23 @@ interface CalEvent {
   isBar: boolean;
 }
 
-const STATUS_LEGEND = [
-  { label: "심사청구",   icon: "●", color: "#9D9FA0", bg: "#F9FAFB", border: "#E0E2E4" },
-  { label: "수요예측",   icon: "○", color: "#3D5AFE", bg: "#E8EAF6", border: "#9FA8DA" },
-  { label: "공모청약",   icon: "■", color: "#c0392b", bg: "#FCDDE1", border: "#EF9A9A" },
-  { label: "청약예정",   icon: "■", color: "#6c3483", bg: "#D7C8E8", border: "#CE93D8" },
-  { label: "환불",       icon: "─", color: "#b7601e", bg: "#FFF8E1", border: "#FFD54F" },
-  { label: "배정",       icon: "✦", color: "#33691e", bg: "#F1F8E9", border: "#AED581" },
-  { label: "상장",       icon: "●", color: "#004d40", bg: "#E0F2F1", border: "#80CBC4" },
+// Naver 스타일 2행 레전드
+// Row 1: 상태 진행 단계 배지 (원형 도트 + 텍스트)
+const BADGE_LEGEND = [
+  { label: "주관사선정",   dotColor: "#FFFBC0", borderColor: "#E8D97C" },
+  { label: "기술평가통과", dotColor: "#F1D5FC", borderColor: "#C78FE8" },
+  { label: "심사청구",     dotColor: "#FCEAD5", borderColor: "#E8B87C" },
+  { label: "심사승인",     dotColor: "#E1FEF6", borderColor: "#6FD9B8" },
+  { label: "신고서제출",   dotColor: "#FCD5EF", borderColor: "#E87CC8" },
+];
+// Row 2: 이벤트 타입 아이콘 (기존 스타일 유지)
+const ICON_LEGEND = [
+  { label: "수요예측", icon: "○", color: "#3D5AFE", bg: "#E8EAF6", border: "#9FA8DA" },
+  { label: "공모청약", icon: "■", color: "#c0392b", bg: "#FCDDE1", border: "#EF9A9A" },
+  { label: "청약예정", icon: "■", color: "#6c3483", bg: "#D7C8E8", border: "#CE93D8" },
+  { label: "환불",     icon: "─", color: "#b7601e", bg: "#FFF8E1", border: "#FFD54F" },
+  { label: "배정",     icon: "✦", color: "#33691e", bg: "#F1F8E9", border: "#AED581" },
+  { label: "상장",     icon: "●", color: "#14181B", bg: "#F3F5F6", border: "#C5C7CB" },
 ];
 
 const FAQ_ITEMS = [
@@ -132,15 +141,17 @@ function getMonthWeeks(year: number, month: number): Date[][] {
 }
 
 const IPO_STATE_MAP: Record<string, { label: string; color: string; bgColor: string; iconType: CalEvent["iconType"]; isBar: boolean }> = {
-  "EXAMINATION_REQUESTED":     { label: "심사청구",   color: "#9D9FA0", bgColor: "transparent", iconType: "dot",       isBar: false },
-  "EXAMINATION_APPROVED":      { label: "심사승인",   color: "#9D9FA0", bgColor: "transparent", iconType: "dot",       isBar: false },
-  "REPORT_SUBMITTED":          { label: "신고서제출", color: "#9D9FA0", bgColor: "transparent", iconType: "dot",       isBar: false },
-  "DEMAND_FORECAST":           { label: "수요예측",   color: "#3D5AFE", bgColor: "#E8EAF6",     iconType: "circle",    isBar: true  },
-  "OFFER_SUBSCRIPTION":        { label: "공모청약",   color: "#c0392b", bgColor: "#FCDDE1",     iconType: "square",    isBar: true  },
-  "TO_BE_OFFER_SUBSCRIPTION":  { label: "청약예정",   color: "#6c3483", bgColor: "#D7C8E8",     iconType: "square",    isBar: true  },
-  "REFUND":                    { label: "환불",       color: "#b7601e", bgColor: "#FFF1E0",     iconType: "dash",      isBar: false },
-  "ALLOCATION":                { label: "배정",       color: "#33691e", bgColor: "#F1F8E9",     iconType: "snowflake", isBar: false },
-  "LISTING":                   { label: "상장",       color: "#004d40", bgColor: "#E0F2F1",     iconType: "dot",       isBar: false },
+  "UNDERWRITER_SELECTED":      { label: "주관사선정",   color: "#A08C10", bgColor: "#FFFBC0",     iconType: "dot",       isBar: false },
+  "TECHNICAL_EVALUATION_PASSED":{ label: "기술평가통과", color: "#8B4FBF", bgColor: "#F1D5FC",    iconType: "dot",       isBar: false },
+  "EXAMINATION_REQUESTED":     { label: "심사청구",     color: "#B07840", bgColor: "#FCEAD5",     iconType: "dot",       isBar: false },
+  "EXAMINATION_APPROVED":      { label: "심사승인",     color: "#2D9B7A", bgColor: "#E1FEF6",     iconType: "dot",       isBar: false },
+  "REPORT_SUBMITTED":          { label: "신고서제출",   color: "#BF4FAA", bgColor: "#FCD5EF",     iconType: "dot",       isBar: false },
+  "DEMAND_FORECAST":           { label: "수요예측",     color: "#3D5AFE", bgColor: "#E8EAF6",     iconType: "circle",    isBar: true  },
+  "OFFER_SUBSCRIPTION":        { label: "공모청약",     color: "#c0392b", bgColor: "#FCDDE1",     iconType: "square",    isBar: true  },
+  "TO_BE_OFFER_SUBSCRIPTION":  { label: "청약예정",     color: "#6c3483", bgColor: "#D7C8E8",     iconType: "square",    isBar: true  },
+  "REFUND":                    { label: "환불",         color: "#b7601e", bgColor: "#FFF1E0",     iconType: "dash",      isBar: false },
+  "ALLOCATION":                { label: "배정",         color: "#33691e", bgColor: "#F1F8E9",     iconType: "snowflake", isBar: false },
+  "LISTING":                   { label: "상장",         color: "#14181B", bgColor: "#F3F5F6",     iconType: "dot",       isBar: false },
 };
 
 function buildDbCalEvents(dbStocks: IpoStock[]): CalEvent[] {
@@ -520,13 +531,26 @@ function CalendarSection() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {STATUS_LEGEND.map(({ label, icon, color, bg, border }) => (
-              <span key={label} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border" style={{ backgroundColor: bg, borderColor: border, color: "#585B5E" }}>
-                <span style={{ color }} className="text-[9px] leading-none">{icon}</span>
-                {label}
-              </span>
-            ))}
+          {/* Naver 스타일 2행 레전드 */}
+          <div className="flex flex-col gap-1.5 mb-4">
+            {/* Row 1: 단계 배지 - Naver와 동일: 흰 배경 + 회색 테두리 + 컬러 도트 */}
+            <div className="flex flex-wrap gap-1.5">
+              {BADGE_LEGEND.map(({ label, dotColor }) => (
+                <span key={label} className="inline-flex items-center gap-1.5 text-[12px] px-3 py-1 rounded-full border border-[#E0E2E4] bg-white" style={{ color: "#585B5E" }}>
+                  <span className="w-3 h-3 rounded-full shrink-0 inline-block" style={{ backgroundColor: dotColor }} />
+                  {label}
+                </span>
+              ))}
+            </div>
+            {/* Row 2: 이벤트 아이콘 */}
+            <div className="flex flex-wrap gap-1.5">
+              {ICON_LEGEND.map(({ label, icon, color, bg, border }) => (
+                <span key={label} className="inline-flex items-center gap-1 text-[12px] px-2.5 py-1 rounded-full border" style={{ backgroundColor: bg, borderColor: border, color: "#585B5E" }}>
+                  <span style={{ color }} className="text-[10px] leading-none font-bold">{icon}</span>
+                  {label}
+                </span>
+              ))}
+            </div>
           </div>
 
           {isLoading ? (
