@@ -46,6 +46,7 @@ interface CalEvent {
   status: string;
   priceRange: string;
   competition: string;
+  logoUrl?: string | null;
 }
 
 const STATUS_LEGEND = [
@@ -154,6 +155,7 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
       color: "#c0392b", bgColor: "#FCDDE1", status: "공모청약",
       priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice),
       competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness.toLocaleString()}:1` : "-",
+      logoUrl: ipo.logoUrl || null,
     });
   }
 
@@ -166,6 +168,7 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
       color: "#6c3483", bgColor: "#D7C8E8", status: "청약예정",
       priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice),
       competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness.toLocaleString()}:1` : "-",
+      logoUrl: ipo.logoUrl || null,
     });
   }
 
@@ -180,6 +183,7 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
       status: stateInfo.label,
       priceRange: "-",
       competition: "-",
+      logoUrl: stock.logoUrl || null,
     });
   }
 
@@ -193,6 +197,7 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
       status: "상장",
       priceRange: stock.finalOfferPrice ? `${stock.finalOfferPrice.toLocaleString()}원` : "-",
       competition: stock.changeRateFromLowestPrice != null ? `${stock.changeRateFromLowestPrice > 0 ? "+" : ""}${stock.changeRateFromLowestPrice}%` : "-",
+      logoUrl: stock.logoUrl || null,
     });
   }
 
@@ -284,10 +289,26 @@ function CalendarGrid({ year, month, events }: { year: number; month: number; ev
                         <div
                           key={col}
                           style={{ flex: span, backgroundColor: ev.bgColor, borderRadius: isStart && isEnd ? 4 : isStart ? "4px 0 0 4px" : isEnd ? "0 4px 4px 0" : 0, marginLeft: isStart ? 1 : 0, marginRight: isEnd ? 1 : 0 }}
-                          className="h-[22px] flex items-center px-1.5 overflow-hidden"
+                          className="h-[22px] flex items-center px-1 gap-1 overflow-hidden"
                           title={`${ev.name} (${ev.status})`}
                         >
-                          {isStart && <span className="text-[10px] font-medium truncate leading-none" style={{ color: ev.color }}>{ev.name}</span>}
+                          {isStart && (
+                            <>
+                              {ev.logoUrl ? (
+                                <img
+                                  src={ev.logoUrl}
+                                  alt=""
+                                  className="w-[14px] h-[14px] rounded-full object-cover shrink-0 bg-white"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                                />
+                              ) : (
+                                <span className="w-[14px] h-[14px] rounded-full shrink-0 flex items-center justify-center text-[8px] font-bold" style={{ backgroundColor: ev.color + "33", color: ev.color }}>
+                                  {ev.name.charAt(0)}
+                                </span>
+                              )}
+                              <span className="text-[10px] font-medium truncate leading-none" style={{ color: ev.color }}>{ev.name}</span>
+                            </>
+                          )}
                         </div>
                       );
                       col += span;
