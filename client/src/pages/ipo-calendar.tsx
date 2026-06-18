@@ -1,254 +1,44 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import {
-  ChevronRight,
-  ChevronLeft,
-  ChevronDown,
-  ExternalLink,
-  ArrowLeft,
-  Info,
-} from "lucide-react";
+import { ChevronRight, ChevronLeft, ChevronDown, ArrowLeft, Info } from "lucide-react";
 import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
-import { getQueryFn } from "@/lib/queryClient";
 
-type PageTab = "calendar" | "pretrade" | "faq";
+type PageTab = "calendar" | "faq";
 
-const IPO_STATUS_LEGEND = [
-  { label: "주관사신청", dot: "#FFC107" },
-  { label: "기술평가통과", dot: "#CE93D8" },
-  { label: "심사청구", dot: "#E57373" },
-  { label: "심사승인", dot: "#EF5350" },
-  { label: "신고서제출", dot: "#EC407A" },
-  { label: "수요예측", dot: "#9C6FD6" },
-  { label: "공모청약", dot: "#03C75A" },
-  { label: "상장", dot: "#1565C0" },
-  { label: "환불", dot: "#9E9E9E" },
-  { label: "배정", dot: "#8BC34A" },
-];
+interface IpoItem {
+  koreanName: string;
+  offeringStartAt?: string;
+  offeringEndAt?: string;
+  listingAt?: string;
+  minExpectedOfferPrice?: number;
+  maxExpectedOfferPrice?: number;
+  finalOfferPrice?: number;
+  instCompetitiveness?: number;
+  logoUrl?: string;
+}
 
-const MARCH_CALENDAR_EVENTS = [
-  { name: "카나프테라퓨틱스", day: 2, endDay: 4, color: "#D7C8E8", status: "수요예측" },
-  { name: "에스팀", day: 3, endDay: 4, color: "#FCDDE1", status: "공모청약" },
-  { name: "엑스비스", day: 3, endDay: 4, color: "#FCDDE1", status: "공모청약" },
-  { name: "카나프테라퓨틱스", day: 5, endDay: 6, color: "#FCDDE1", status: "공모청약" },
-  { name: "에스팀", day: 5, endDay: 5, color: "#9E9E9E", status: "환불" },
-  { name: "엑스비스", day: 5, endDay: 5, color: "#9E9E9E", status: "환불" },
-  { name: "에스팀", day: 6, endDay: 6, color: "#8BC34A", status: "배정" },
-  { name: "엑스비스", day: 6, endDay: 6, color: "#8BC34A", status: "배정" },
-  { name: "한패스", day: 9, endDay: 13, color: "#D7C8E8", status: "수요예측" },
-  { name: "아이엠바이오로직스", day: 9, endDay: 10, color: "#D7C8E8", status: "수요예측" },
-  { name: "에스팀", day: 10, endDay: 10, color: "#1565C0", status: "상장" },
-  { name: "아이엠바이오로직스", day: 11, endDay: 12, color: "#FCDDE1", status: "공모청약" },
-  { name: "엑스비스", day: 11, endDay: 11, color: "#1565C0", status: "상장" },
-  { name: "카나프테라퓨틱스", day: 9, endDay: 9, color: "#9E9E9E", status: "환불" },
-  { name: "카나프테라퓨틱스", day: 10, endDay: 10, color: "#8BC34A", status: "배정" },
-  { name: "아이엠바이오로직스", day: 13, endDay: 13, color: "#9E9E9E", status: "환불" },
-  { name: "카나프테라퓨틱스", day: 17, endDay: 17, color: "#1565C0", status: "상장" },
-  { name: "아이엠바이오로직스", day: 16, endDay: 16, color: "#8BC34A", status: "배정" },
-  { name: "스카이랩스", day: 16, endDay: 20, color: "#E8E8E8", status: "심사청구" },
-  { name: "한패스", day: 19, endDay: 19, color: "#9E9E9E", status: "환불" },
-  { name: "한패스", day: 19, endDay: 19, color: "#8BC34A", status: "배정" },
-  { name: "리센스메디컬", day: 16, endDay: 18, color: "#D7C8E8", status: "수요예측" },
-  { name: "리센스메디컬", day: 19, endDay: 20, color: "#FCDDE1", status: "공모청약" },
-  { name: "신한제17호기업인수목적", day: 19, endDay: 20, color: "#FCDDE1", status: "공모청약" },
-  { name: "레메디", day: 23, endDay: 27, color: "#D7C8E8", status: "수요예측" },
-  { name: "아이엠바이오로직스", day: 24, endDay: 24, color: "#1565C0", status: "상장" },
-  { name: "인벤테라", day: 23, endDay: 24, color: "#FCDDE1", status: "공모청약" },
-  { name: "채비", day: 23, endDay: 27, color: "#D7C8E8", status: "수요예측" },
-  { name: "교보20호기업인수목적", day: 25, endDay: 26, color: "#FCDDE1", status: "공모청약" },
-  { name: "파워큐브세미", day: 25, endDay: 27, color: "#E8E8E8", status: "심사청구" },
-  { name: "한패스", day: 25, endDay: 25, color: "#1565C0", status: "상장" },
-  { name: "레메디", day: 30, endDay: 31, color: "#FCDDE1", status: "공모청약" },
-  { name: "코스모로보틱스", day: 30, endDay: 31, color: "#D7C8E8", status: "수요예측" },
-];
+interface IpoCalendarData {
+  toBeIPOList: IpoItem[];
+  beingIPOList: IpoItem[];
+  toBeListingList: IpoItem[];
+}
 
-const APRIL_CALENDAR_EVENTS = [
-  // === 크로스월 (3월 30일=-2, 3월 31일=-1) ===
-  { name: "대신밸런스20호기업인수목적", day: -2, endDay: -2, color: "#D7C8E8", status: "수요예측" },
-  { name: "리센스메디컬", day: -1, endDay: -1, color: "#1565C0", status: "상장" },
+interface CalEvent {
+  name: string;
+  start: Date;
+  end: Date;
+  color: string;
+  status: string;
+  priceRange: string;
+  competition: string;
+}
 
-  // === 1주차: 4월 1~3일 ===
-  { name: "신한제17호기업인수목적", day: 1, endDay: 2, color: "#FCDDE1", status: "공모청약" },
-  { name: "인벤테라", day: 2, endDay: 2, color: "#E8E8E8", status: "심사청구" },
-  { name: "스트라드비젼", day: 2, endDay: 2, color: "#E8E8E8", status: "심사청구" },
-  { name: "저스틱", day: 2, endDay: 2, color: "#E8E8E8", status: "심사청구" },
-  { name: "쑴레드", day: 2, endDay: 2, color: "#E8E8E8", status: "심사청구" },
-  { name: "교보20호기업인수목적", day: 2, endDay: 3, color: "#FCDDE1", status: "공모청약" },
-  { name: "에이치엠지노믹스", day: 3, endDay: 3, color: "#E8E8E8", status: "심사청구" },
-
-  // === 2주차: 4월 6~10일 ===
-  { name: "키움히어로제2호기업인수목적", day: 6, endDay: 9, color: "#D7C8E8", status: "수요예측" },
-  { name: "크리에이츠", day: 6, endDay: 6, color: "#E8E8E8", status: "심사청구" },
-  { name: "파스피스스튜디오", day: 6, endDay: 7, color: "#E8E8E8", status: "심사청구" },
-  { name: "대신챌런스20호기업인수목적", day: 7, endDay: 8, color: "#D7C8E8", status: "수요예측" },
-  { name: "공토닉스", day: 8, endDay: 8, color: "#E8E8E8", status: "심사청구" },
-  { name: "스트라드비젼", day: 9, endDay: 9, color: "#E8E8E8", status: "심사청구" },
-  { name: "앤드립", day: 9, endDay: 9, color: "#E8E8E8", status: "심사청구" },
-  { name: "채비", day: 10, endDay: 13, color: "#FCDDE1", status: "공모청약" },
-  { name: "엠바디", day: 10, endDay: 10, color: "#E8E8E8", status: "심사청구" },
-
-  // === 3주차: 4월 13~17일 ===
-  { name: "메드인", day: 13, endDay: 13, color: "#E8E8E8", status: "심사청구" },
-  { name: "글로벌테크놀로지", day: 13, endDay: 13, color: "#E8E8E8", status: "심사청구" },
-  { name: "신한제18호기업인수목적", day: 14, endDay: 15, color: "#D7C8E8", status: "수요예측" },
-  { name: "키움히어로제2호기업인수목적", day: 14, endDay: 14, color: "#D7C8E8", status: "수요예측" },
-  { name: "와이즈돌래낸컴퍼니", day: 15, endDay: 15, color: "#E8E8E8", status: "심사청구" },
-  { name: "코스모로보틱스", day: 16, endDay: 17, color: "#D7C8E8", status: "수요예측" },
-  { name: "브릴스", day: 16, endDay: 16, color: "#E8E8E8", status: "심사청구" },
-  { name: "레몬헬스케어", day: 17, endDay: 17, color: "#E8E8E8", status: "심사청구" },
-  { name: "키움히어로제2호기업인수목적", day: 17, endDay: 17, color: "#9E9E9E", status: "환불" },
-  { name: "키움히어로제2호기업인수목적", day: 17, endDay: 17, color: "#8BC34A", status: "배정" },
-
-  // === 4주차: 4월 20~24일 ===
-  { name: "코스모로보틱스", day: 20, endDay: 21, color: "#FCDDE1", status: "공모청약" },
-  { name: "채비", day: 20, endDay: 20, color: "#FCDDE1", status: "공모청약" },
-  { name: "신한제18호기업인수목적", day: 20, endDay: 23, color: "#FCDDE1", status: "공모청약" },
-  { name: "쑴레드", day: 22, endDay: 22, color: "#FCDDE1", status: "공모청약" },
-  { name: "채비", day: 23, endDay: 23, color: "#9E9E9E", status: "환불" },
-  { name: "신한제18호기업인수목적", day: 23, endDay: 23, color: "#9E9E9E", status: "환불" },
-  { name: "신한제18호기업인수목적", day: 23, endDay: 23, color: "#8BC34A", status: "배정" },
-  { name: "키움히어로제2호기업인수목적", day: 23, endDay: 23, color: "#1565C0", status: "상장" },
-
-  // === 5주차: 4월 27~30일 ===
-  { name: "쑴레드", day: 27, endDay: 28, color: "#FCDDE1", status: "공모청약" },
-  { name: "코스모로보틱스", day: 27, endDay: 27, color: "#D7C8E8", status: "수요예측" },
-  { name: "스트라드비젼", day: 28, endDay: 28, color: "#E8E8E8", status: "심사청구" },
-  { name: "마키나락스", day: 28, endDay: 28, color: "#E8E8E8", status: "심사청구" },
-  { name: "채비", day: 29, endDay: 29, color: "#1565C0", status: "상장" },
-  { name: "코스모로보틱스", day: 30, endDay: 30, color: "#9E9E9E", status: "환불" },
-  { name: "코스모로보틱스", day: 30, endDay: 30, color: "#8BC34A", status: "배정" },
-  { name: "신한제18호기업인수목적", day: 30, endDay: 30, color: "#1565C0", status: "상장" },
-];
-
-const MAY_CALENDAR_EVENTS = [
-  // === 크로스월 (4월 27일=-4, 28일=-3, 29일=-2, 30일=-1) ===
-  { name: "쏠레드", day: -4, endDay: -3, color: "#D7C8E8", status: "수요예측" },
-  { name: "코스모로보틱스", day: -4, endDay: -3, color: "#D7C8E8", status: "수요예측" },
-  { name: "메리츠제2호기업인수목적", day: -4, endDay: -4, color: "#D7C8E8", status: "수요예측" },
-  { name: "마키나락스", day: -3, endDay: -2, color: "#D7C8E8", status: "수요예측" },
-  { name: "채비", day: -2, endDay: -2, color: "#1565C0", status: "상장" },
-  { name: "코스모로보틱스", day: -1, endDay: -1, color: "#1565C0", status: "상장" },
-  { name: "신한제18호기업인수목적", day: -1, endDay: -1, color: "#1565C0", status: "상장" },
-  { name: "텔레픽스", day: -1, endDay: -1, color: "#E8E8E8", status: "심사청구" },
-  { name: "엘곤", day: -1, endDay: -1, color: "#E8E8E8", status: "심사청구" },
-  { name: "바로팡", day: -1, endDay: -1, color: "#E8E8E8", status: "심사청구" },
-  { name: "모바이스", day: -1, endDay: -1, color: "#E8E8E8", status: "심사청구" },
-
-  // === 2주차: 5월 4~8일 ===
-  { name: "마키나락스", day: 4, endDay: 6, color: "#FCDDE1", status: "공모청약" },
-  { name: "쏠레드", day: 4, endDay: 6, color: "#FCDDE1", status: "공모청약" },
-  { name: "쏠레드", day: 8, endDay: 8, color: "#9E9E9E", status: "환불" },
-  { name: "쏠레드", day: 8, endDay: 8, color: "#8BC34A", status: "배정" },
-
-  // === 3주차: 5월 11~15일 ===
-  { name: "마키나락스", day: 11, endDay: 12, color: "#9E9E9E", status: "환불" },
-  { name: "코스모로보틱스", day: 11, endDay: 12, color: "#FCDDE1", status: "공모청약" },
-  { name: "피스피스스튜디오", day: 14, endDay: 15, color: "#D7C8E8", status: "수요예측" },
-  { name: "쏠레드", day: 14, endDay: 14, color: "#1565C0", status: "상장" },
-  { name: "마키나락스", day: 14, endDay: 14, color: "#8BC34A", status: "배정" },
-  { name: "마키나락스", day: 15, endDay: 15, color: "#1565C0", status: "상장" },
-
-  // === 4주차: 5월 18~22일 ===
-  { name: "피스피스스튜디오", day: 18, endDay: 20, color: "#FCDDE1", status: "공모청약" },
-  { name: "저스틱", day: 18, endDay: 19, color: "#D7C8E8", status: "수요예측" },
-  { name: "대신밸런스20호기업인수목적", day: 18, endDay: 21, color: "#D7C8E8", status: "수요예측" },
-  { name: "매드업", day: 20, endDay: 21, color: "#FCDDE1", status: "공모청약" },
-  { name: "레몬헬스케어", day: 20, endDay: 21, color: "#FCDDE1", status: "공모청약" },
-  { name: "대신밸런스20호기업인수목적", day: 22, endDay: 22, color: "#9E9E9E", status: "환불" },
-
-  // === 5주차: 5월 25~29일 ===
-  { name: "레몬헬스케어", day: 25, endDay: 26, color: "#FCDDE1", status: "공모청약" },
-  { name: "매드업", day: 25, endDay: 27, color: "#FCDDE1", status: "공모청약" },
-  { name: "대신밸런스20호기업인수목적", day: 25, endDay: 28, color: "#FCDDE1", status: "공모청약" },
-  { name: "피스피스스튜디오", day: 26, endDay: 26, color: "#9E9E9E", status: "환불" },
-  { name: "대신밸런스20호기업인수목적", day: 28, endDay: 28, color: "#9E9E9E", status: "환불" },
-  { name: "대신밸런스20호기업인수목적", day: 28, endDay: 28, color: "#8BC34A", status: "배정" },
-  { name: "저스틱", day: 29, endDay: 29, color: "#1565C0", status: "상장" },
-  { name: "피스피스스튜디오", day: 29, endDay: 29, color: "#8BC34A", status: "배정" },
-  { name: "피스피스스튜디오", day: 29, endDay: 29, color: "#1565C0", status: "상장" },
-];
-
-const JUNE_CALENDAR_EVENTS = [
-  // === 1주차: 6월 1~5일 ===
-  { name: "대신밸런스20호기업인수목적", day: 2, endDay: 2, color: "#1565C0", status: "상장" },
-  { name: "피스피스스튜디오", day: 3, endDay: 3, color: "#1565C0", status: "상장" },
-  { name: "매드업", day: 3, endDay: 4, color: "#E8E8E8", status: "심사청구" },
-
-  // === 2주차: 6월 8~12일 ===
-  { name: "스트라드비젼", day: 9, endDay: 10, color: "#D7C8E8", status: "수요예측" },
-  { name: "저스텍", day: 9, endDay: 10, color: "#D7C8E8", status: "수요예측" },
-  { name: "빅웨이브로보틱스", day: 10, endDay: 11, color: "#D7C8E8", status: "수요예측" },
-  { name: "레몬헬스케어", day: 11, endDay: 12, color: "#E8E8E8", status: "심사청구" },
-  { name: "레메디", day: 11, endDay: 12, color: "#E8E8E8", status: "심사청구" },
-
-  // === 3주차: 6월 15~19일 ===
-  { name: "한국제16호기업인수목적", day: 16, endDay: 17, color: "#D7C8E8", status: "수요예측" },
-  { name: "매드업", day: 16, endDay: 17, color: "#D7C8E8", status: "수요예측" },
-  { name: "스트라드비젼", day: 17, endDay: 18, color: "#FCDDE1", status: "공모청약" },
-  { name: "저스텍", day: 17, endDay: 18, color: "#FCDDE1", status: "공모청약" },
-  { name: "빅웨이브로보틱스", day: 18, endDay: 19, color: "#FCDDE1", status: "공모청약" },
-  { name: "에이치엘지노믹스", day: 18, endDay: 19, color: "#E8E8E8", status: "심사청구" },
-  { name: "케이앤에스아이앤씨", day: 18, endDay: 19, color: "#E8E8E8", status: "심사청구" },
-  { name: "스트라드비젼", day: 19, endDay: 19, color: "#9E9E9E", status: "환불" },
-  { name: "저스텍", day: 19, endDay: 19, color: "#9E9E9E", status: "환불" },
-  { name: "스트라드비젼", day: 19, endDay: 19, color: "#8BC34A", status: "배정" },
-  { name: "저스텍", day: 19, endDay: 19, color: "#8BC34A", status: "배정" },
-
-  // === 4주차: 6월 22~26일 ===
-  { name: "빅웨이브로보틱스", day: 23, endDay: 23, color: "#9E9E9E", status: "환불" },
-  { name: "빅웨이브로보틱스", day: 23, endDay: 23, color: "#8BC34A", status: "배정" },
-  { name: "스트라드비젼", day: 24, endDay: 24, color: "#1565C0", status: "상장" },
-  { name: "저스텍", day: 24, endDay: 24, color: "#1565C0", status: "상장" },
-  { name: "한국제16호기업인수목적", day: 23, endDay: 24, color: "#FCDDE1", status: "공모청약" },
-  { name: "매드업", day: 23, endDay: 24, color: "#FCDDE1", status: "공모청약" },
-  { name: "레몬헬스케어", day: 25, endDay: 26, color: "#FCDDE1", status: "공모청약" },
-  { name: "레메디", day: 25, endDay: 26, color: "#FCDDE1", status: "공모청약" },
-  { name: "빅웨이브로보틱스", day: 25, endDay: 25, color: "#1565C0", status: "상장" },
-  { name: "매드업", day: 25, endDay: 25, color: "#9E9E9E", status: "환불" },
-  { name: "한국제16호기업인수목적", day: 25, endDay: 25, color: "#9E9E9E", status: "환불" },
-  { name: "매드업", day: 25, endDay: 25, color: "#8BC34A", status: "배정" },
-  { name: "한국제16호기업인수목적", day: 25, endDay: 25, color: "#8BC34A", status: "배정" },
-  { name: "레몬헬스케어", day: 26, endDay: 26, color: "#9E9E9E", status: "환불" },
-  { name: "레메디", day: 26, endDay: 26, color: "#9E9E9E", status: "환불" },
-  { name: "레몬헬스케어", day: 26, endDay: 26, color: "#8BC34A", status: "배정" },
-  { name: "레메디", day: 26, endDay: 26, color: "#8BC34A", status: "배정" },
-
-  // === 5주차: 6월 29~30일 ===
-  { name: "매드업", day: 30, endDay: 30, color: "#1565C0", status: "상장" },
-  { name: "한국제16호기업인수목적", day: 30, endDay: 30, color: "#1565C0", status: "상장" },
-  { name: "에이치엘지노믹스", day: 30, endDay: 30, color: "#FCDDE1", status: "공모청약" },
-  { name: "케이앤에스아이앤씨", day: 29, endDay: 30, color: "#FCDDE1", status: "공모청약" },
-];
-
-const UPCOMING_IPO_LIST = [
-  { name: "리센스메디컬", dDay: 1, date: "03.19 ~ 03.20", priceRange: "11,000원", competition: "1352.63:1", status: "청약예정" },
-  { name: "신한제17호기업인수목적", dDay: 1, date: "03.19 ~ 03.20", priceRange: "2,000원", competition: "1343.8:1", status: "청약예정" },
-  { name: "인벤테라", dDay: 5, date: "03.23 예정", priceRange: "12,100 ~ 16,600원", competition: "-", status: "청약예정" },
-  { name: "교보20호기업인수목적", dDay: 5, date: "03.23 예정", priceRange: "2,000원", competition: "-", status: "청약예정" },
-  { name: "레메디", dDay: 12, date: "03.30 예정", priceRange: "12,000 ~ 15,000원", competition: "-", status: "청약예정" },
-  { name: "채비", dDay: 14, date: "04.01 ~ 04.02", priceRange: "12,300 ~ 15,300원", competition: "-", status: "청약예정" },
-  { name: "키움히어로제2호기업인수목적", dDay: 19, date: "04.06 예정", priceRange: "2,000원", competition: "-", status: "청약예정" },
-  { name: "코스모로보틱스", dDay: 22, date: "04.09 ~ 04.10", priceRange: "5,300 ~ 6,000원", competition: "-", status: "청약예정" },
-];
-
-const TOP5_IPO_STOCKS = [
-  { rank: 1, name: "무신사", category: "일반", tag: "IPO", price: 24400, change: -0.41, tradable: true, tradeTime: "15분 전 체결" },
-  { rank: 2, name: "레몬헬스케어", category: "전문", tag: "IPO", price: 0, change: 0, tradable: true, tradeTime: "4시간 전 체결" },
-  { rank: 3, name: "스트라드비젼", category: "전문", tag: "IPO", price: 0, change: 0, tradable: true, tradeTime: "4시간 전 체결" },
-  { rank: 4, name: "덕산넵코어스", category: "전문", tag: "IPO", price: 0, change: 0, tradable: true, tradeTime: "1시간 전 체결" },
-  { rank: 5, name: "케이피항공산업", category: "전문", tag: "IPO", price: 0, change: 0, tradable: true, tradeTime: "44분 전 체결" },
-];
-
-const IPO_PREP_STOCKS = [
-  { name: "스카이랩스", category: "전문", date: "26.01.30 심사청구", tradable: true },
-  { name: "레메디", category: "전문", date: "26.01.30 심사청구", tradable: true },
-  { name: "파워큐브세미", category: "전문", date: "26.01.16 심사청구", tradable: false },
-  { name: "넥스트젠바이오사이언스", category: "전문", date: "25.12.23 심사청구", tradable: false },
-  { name: "피스피스스튜디오", category: "전문", date: "25.12.17 심사청구", tradable: false },
-  { name: "빅웨이브로보틱스", category: "전문", date: "25.12.16 심사청구", tradable: false },
-  { name: "메타넷엑스", category: "전문", date: "25.12.09 심사청구", tradable: false },
+const STATUS_LEGEND = [
+  { label: "청약예정", color: "#D7C8E8" },
+  { label: "공모청약", color: "#FCDDE1" },
+  { label: "상장예정", color: "#BBDEFB" },
 ];
 
 const FAQ_ITEMS = [
@@ -259,140 +49,182 @@ const FAQ_ITEMS = [
   { q: "공모주에 참여할지 말지 결정하는 데에 도움이 되는 기준이 있나요?", a: "기관 경쟁률, 의무보유 확약 비율, 기업의 재무 상태와 성장성, 동종 업계 대비 밸류에이션 등을 종합적으로 고려하여 판단하시는 것이 좋습니다." },
 ];
 
-const IPO_NEWS = [
-  { title: "에스팀·엑스비스 청약 마감, 경쟁률 400대 1 돌파", publisher: "매일경제", date: "2026.03.04" },
-  { title: "카나프테라퓨틱스, 수요예측 흥행…공모가 상단 확정", publisher: "블로터", date: "2026.03.03" },
-  { title: "카나프테라퓨틱스, 공모 청약 시작...바이오 IPO 흥행", publisher: "파이낸셜뉴스", date: "2026.03.05" },
-  { title: "아이엠바이오로직스 수요예측 3월 시작…기관 관심 집중", publisher: "한국경제", date: "2026.03.02" },
-  { title: "레메디, 3월말 공모청약 앞두고 기업가치 재평가", publisher: "더스탁(The Stock)", date: "2026.03.01" },
-];
+function fmtMD(iso?: string): string {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    return `${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+  } catch { return ""; }
+}
 
-function CalendarView({ month }: { month: number }) {
+function fmtPrice(min?: number, max?: number, final?: number): string {
+  if (final && final > 0) return `${final.toLocaleString()}원`;
+  if (min && max && min !== max) return `${min.toLocaleString()} ~ ${max.toLocaleString()}원`;
+  if (min) return `${min.toLocaleString()}원`;
+  return "-";
+}
+
+function fmtDDay(dateStr?: string): string | null {
+  if (!dateStr) return null;
+  try {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const target = new Date(dateStr); target.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((target.getTime() - today.getTime()) / 86400000);
+    return diff > 0 ? `D-${diff}` : diff === 0 ? "D-Day" : "완료";
+  } catch { return null; }
+}
+
+function sameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function dateInRange(d: Date, start: Date, end: Date) {
+  const t = d.getTime(); return t >= start.getTime() && t <= end.getTime();
+}
+
+function getMonthWeeks(year: number, month: number): Date[][] {
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const mon = new Date(firstDay);
+  const dow = firstDay.getDay();
+  mon.setDate(firstDay.getDate() - (dow === 0 ? 6 : dow - 1));
+  const weeks: Date[][] = [];
+  const cur = new Date(mon);
+  while (true) {
+    const week: Date[] = [];
+    for (let i = 0; i < 5; i++) {
+      week.push(new Date(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+    weeks.push(week);
+    cur.setDate(cur.getDate() + 2);
+    if (week[4] >= lastDay) break;
+    if (weeks.length > 6) break;
+  }
+  return weeks;
+}
+
+function buildCalEvents(data: IpoCalendarData): CalEvent[] {
+  const events: CalEvent[] = [];
+  for (const ipo of data.beingIPOList || []) {
+    if (!ipo.koreanName || !ipo.offeringStartAt || !ipo.offeringEndAt) continue;
+    events.push({ name: ipo.koreanName, start: new Date(ipo.offeringStartAt), end: new Date(ipo.offeringEndAt), color: "#FCDDE1", status: "공모청약", priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice), competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness}:1` : "-" });
+  }
+  for (const ipo of data.toBeIPOList || []) {
+    if (!ipo.koreanName || !ipo.offeringStartAt || !ipo.offeringEndAt) continue;
+    events.push({ name: ipo.koreanName, start: new Date(ipo.offeringStartAt), end: new Date(ipo.offeringEndAt), color: "#D7C8E8", status: "청약예정", priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice), competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness}:1` : "-" });
+  }
+  for (const ipo of data.toBeListingList || []) {
+    if (!ipo.koreanName) continue;
+    const dateStr = ipo.listingAt || ipo.offeringEndAt;
+    if (!dateStr) continue;
+    events.push({ name: ipo.koreanName, start: new Date(dateStr), end: new Date(dateStr), color: "#BBDEFB", status: "상장예정", priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice), competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness}:1` : "-" });
+  }
+  return events;
+}
+
+function CalendarView({ year, month, events }: { year: number; month: number; events: CalEvent[] }) {
+  const weeks = useMemo(() => getMonthWeeks(year, month), [year, month]);
   const dayNames = ["월", "화", "수", "목", "금"];
-  const MARCH_WEEKS = [
-    [2, 3, 4, 5, 6],
-    [9, 10, 11, 12, 13],
-    [16, 17, 18, 19, 20],
-    [23, 24, 25, 26, 27],
-    [30, 31, 0, 0, 0],
-  ];
-  const APRIL_WEEKS = [
-    [-2, -1, 1, 2, 3],
-    [6, 7, 8, 9, 10],
-    [13, 14, 15, 16, 17],
-    [20, 21, 22, 23, 24],
-    [27, 28, 29, 30, 0],
-  ];
-  const MAY_WEEKS = [
-    [-4, -3, -2, -1, 1],
-    [4, 5, 6, 7, 8],
-    [11, 12, 13, 14, 15],
-    [18, 19, 20, 21, 22],
-    [25, 26, 27, 28, 29],
-  ];
-  const JUNE_WEEKS = [
-    [1, 2, 3, 4, 5],
-    [8, 9, 10, 11, 12],
-    [15, 16, 17, 18, 19],
-    [22, 23, 24, 25, 26],
-    [29, 30, 0, 0, 0],
-  ];
-  const weekRows = month === 6 ? JUNE_WEEKS : month === 5 ? MAY_WEEKS : month === 4 ? APRIL_WEEKS : MARCH_WEEKS;
-  const calendarEvents = month === 6 ? JUNE_CALENDAR_EVENTS : month === 5 ? MAY_CALENDAR_EVENTS : month === 4 ? APRIL_CALENDAR_EVENTS : MARCH_CALENDAR_EVENTS;
-  const prevMonthLastDay = month === 6 ? 31 : month === 5 ? 30 : 31;
 
-  function getEventsForWeek(week: number[]) {
-    const validDays = week.filter(d => d !== 0);
-    const weekFirst = validDays[0];
-    const weekLast = validDays[validDays.length - 1];
-    const weekEvents = calendarEvents.filter(e =>
-      week.some(d => d !== 0 && d >= e.day && d <= e.endDay)
+  function getWeekLanes(week: Date[]) {
+    const weekFirst = week[0].getTime();
+    const weekLast = week[4].getTime();
+    const applicable = events.filter(ev =>
+      ev.start.getTime() <= weekLast && ev.end.getTime() >= weekFirst
     );
-    const lanes: (typeof MARCH_CALENDAR_EVENTS[0] | null)[][] = [];
-    weekEvents.forEach(ev => {
-      const evStart = Math.max(ev.day, weekFirst);
-      const evEnd = Math.min(ev.endDay, weekLast);
+    const lanes: (CalEvent | null)[][] = [];
+    for (const ev of applicable) {
+      const evStart = ev.start.getTime() > weekFirst ? ev.start : week[0];
+      const evEnd = ev.end.getTime() < weekLast ? ev.end : week[4];
       let placed = false;
       for (const lane of lanes) {
         let canPlace = true;
-        for (let d = evStart; d <= evEnd; d++) {
-          const idx = week.indexOf(d);
-          if (idx >= 0 && lane[idx] !== null) { canPlace = false; break; }
+        for (let i = 0; i < 5; i++) {
+          if (dateInRange(week[i], evStart, evEnd) && lane[i] !== null) { canPlace = false; break; }
         }
         if (canPlace) {
-          for (let d = evStart; d <= evEnd; d++) {
-            const idx = week.indexOf(d);
-            if (idx >= 0) lane[idx] = ev;
+          for (let i = 0; i < 5; i++) {
+            if (dateInRange(week[i], evStart, evEnd)) lane[i] = ev;
           }
-          placed = true;
-          break;
+          placed = true; break;
         }
       }
       if (!placed) {
-        const newLane: (typeof MARCH_CALENDAR_EVENTS[0] | null)[] = week.map(() => null);
-        for (let d = evStart; d <= evEnd; d++) {
-          const idx = week.indexOf(d);
-          if (idx >= 0) newLane[idx] = ev;
+        const newLane: (CalEvent | null)[] = [null, null, null, null, null];
+        for (let i = 0; i < 5; i++) {
+          if (dateInRange(week[i], evStart, evEnd)) newLane[i] = ev;
         }
         lanes.push(newLane);
       }
-    });
+    }
     return lanes;
   }
 
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+
   return (
-    <div className="border border-[#e0e0e0]" data-testid="calendar-grid">
-      <div className="grid grid-cols-5 bg-[#fafafa] border-b border-[#e0e0e0]">
+    <div className="border border-[#E0E2E4] rounded-lg overflow-hidden" data-testid="calendar-grid">
+      <div className="grid grid-cols-5 bg-[#fafafa] border-b border-[#E0E2E4]">
         {dayNames.map(d => (
-          <div key={d} className="px-3 py-2.5 text-[13px] text-[#555] font-medium text-center border-r border-[#e0e0e0] last:border-r-0">{d}</div>
+          <div key={d} className="px-2 py-2.5 text-[13px] text-[#555] font-medium text-center border-r border-[#E0E2E4] last:border-r-0">{d}</div>
         ))}
       </div>
-      {weekRows.map((week, wi) => {
-        const lanes = getEventsForWeek(week);
+      {weeks.map((week, wi) => {
+        const lanes = getWeekLanes(week);
         return (
-          <div key={wi} className="border-b border-[#e0e0e0] last:border-b-0">
+          <div key={wi} className="border-b border-[#E0E2E4] last:border-b-0">
             <div className="grid grid-cols-5">
-              {week.map((day, di) => (
-                <div key={di} className="border-r border-[#e0e0e0] last:border-r-0 px-3 pt-2">
-                  <div className={`text-[13px] text-right ${day < 0 ? "text-[#ccc]" : "text-[#555]"}`}>
-                    {day < 0 ? prevMonthLastDay + 1 + day : day > 0 ? day : ""}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="py-1 px-1" style={{ minHeight: Math.max(lanes.length * 26 + 4, 50) }}>
-              {lanes.map((lane, li) => (
-                <div key={li} className="flex h-[24px] mb-[2px]">
-                  {(() => {
-                    const cells: JSX.Element[] = [];
-                    let col = 0;
-                    while (col < 5) {
-                      const ev = lane[col];
-                      if (!ev) {
-                        cells.push(<div key={col} style={{ flex: 1 }} />);
-                        col++;
-                      } else {
-                        let span = 1;
-                        while (col + span < 5 && lane[col + span] === ev) span++;
-                        cells.push(
-                          <div
-                            key={col}
-                            className="flex items-center gap-1 px-1.5 rounded-sm truncate mx-[1px]"
-                            style={{ backgroundColor: ev.color, flex: span, height: 22 }}
-                            title={`${ev.name} - ${ev.status}`}
-                          >
-                            <StockIcon name={ev.name} size={16} />
-                            <span className="text-[11px] text-[#333] font-medium truncate">{ev.name}</span>
-                          </div>
-                        );
-                        col += span;
+              {week.map((day, di) => {
+                const isThisMonth = day.getMonth() === month;
+                const isToday = sameDay(day, today);
+                return (
+                  <div key={di} className="border-r border-[#E0E2E4] last:border-r-0 px-2 pt-2 pb-1">
+                    <div className={`text-[12px] text-right ${isThisMonth ? "text-[#555]" : "text-[#ccc]"}`}>
+                      {isToday
+                        ? <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#03C75A] text-white text-[11px] font-bold">{day.getDate()}</span>
+                        : day.getDate()
                       }
-                    }
-                    return cells;
-                  })()}
-                </div>
-              ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+            {lanes.length > 0 && (
+              <div className="pb-1 px-1" style={{ minHeight: lanes.length * 26 }}>
+                {lanes.map((lane, li) => {
+                  const cells: JSX.Element[] = [];
+                  let col = 0;
+                  while (col < 5) {
+                    const ev = lane[col];
+                    if (!ev) {
+                      cells.push(<div key={col} style={{ flex: 1 }} />);
+                      col++;
+                    } else {
+                      let span = 1;
+                      while (col + span < 5 && lane[col + span] === ev) span++;
+                      const isStart = col === 0 || lane[col - 1] !== ev;
+                      const isEnd = col + span >= 5 || lane[col + span] !== ev;
+                      cells.push(
+                        <div
+                          key={col}
+                          style={{ flex: span, backgroundColor: ev.color, borderRadius: isStart && isEnd ? 4 : isStart ? "4px 0 0 4px" : isEnd ? "0 4px 4px 0" : 0, marginLeft: isStart ? 1 : 0, marginRight: isEnd ? 1 : 0 }}
+                          className="h-[22px] flex items-center px-1.5 overflow-hidden"
+                          title={`${ev.name} (${ev.status})`}
+                        >
+                          {isStart && <span className="text-[10px] text-[#333] font-medium truncate leading-none">{ev.name}</span>}
+                        </div>
+                      );
+                      col += span;
+                    }
+                  }
+                  return (
+                    <div key={li} className="flex mb-[2px]">{cells}</div>
+                  );
+                })}
+              </div>
+            )}
+            {lanes.length === 0 && <div style={{ minHeight: 32 }} />}
           </div>
         );
       })}
@@ -400,256 +232,145 @@ function CalendarView({ month }: { month: number }) {
   );
 }
 
-function UpcomingSidebar() {
-  const [activeTab, setActiveTab] = useState("청약예정");
+function CalendarSection() {
+  const today = new Date();
+  const [calYear, setCalYear] = useState(today.getFullYear());
+  const [calMonth, setCalMonth] = useState(today.getMonth());
 
-  const { data: ipoData, isLoading } = useQuery<{ data: { toBeIPOList: any[]; beingIPOList: any[]; toBeListingList: any[] } }>({
+  const { data: ipoApiData, isLoading } = useQuery<{ data: IpoCalendarData }>({
     queryKey: ["/api/market/ipo-calendar"],
     refetchInterval: 5 * 60 * 1000,
   });
 
-  const fmtDate = (iso?: string) => {
-    if (!iso) return "";
-    try {
-      const d = new Date(iso);
-      return `${String(d.getMonth() + 1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`;
-    } catch { return iso; }
-  };
+  const events = useMemo(() => {
+    if (!ipoApiData?.data) return [];
+    return buildCalEvents(ipoApiData.data);
+  }, [ipoApiData]);
 
-  const fmtPrice = (min?: number, max?: number, final?: number) => {
-    if (final && final > 0) return `${final.toLocaleString()}원`;
-    if (min && max) return `${min.toLocaleString()} ~ ${max.toLocaleString()}원`;
-    if (min) return `${min.toLocaleString()}원`;
-    return "-";
-  };
+  const allItems = useMemo(() => {
+    if (!ipoApiData?.data) return [];
+    const d = ipoApiData.data;
+    return [
+      ...(d.beingIPOList || []).map(i => ({ ...i, _status: "공모청약" as const })),
+      ...(d.toBeIPOList || []).map(i => ({ ...i, _status: "청약예정" as const })),
+      ...(d.toBeListingList || []).map(i => ({ ...i, _status: "상장예정" as const })),
+    ].filter(i => i.koreanName);
+  }, [ipoApiData]);
 
-  const fmtDDay = (dateStr?: string) => {
-    if (!dateStr) return null;
-    try {
-      const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
-      return diff >= 0 ? `D-${diff}` : "완료";
-    } catch { return null; }
-  };
+  const monthName = `${calYear}년 ${calMonth + 1}월`;
 
-  const fallbackUpcoming = UPCOMING_IPO_LIST.filter(i => i.status === "청약예정");
-  const fallbackOngoing = UPCOMING_IPO_LIST.filter(i => i.status === "청약진행중");
-
-  const apiUpcoming = (ipoData?.data?.toBeIPOList || []).map((ipo: any) => ({
-    name: ipo.koreanName,
-    dDay: fmtDDay(ipo.offeringStartAt),
-    date: `${fmtDate(ipo.offeringStartAt)} ~ ${fmtDate(ipo.offeringEndAt)}`,
-    priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice),
-    competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness}:1` : "-",
-  }));
-
-  const apiOngoing = (ipoData?.data?.beingIPOList || []).map((ipo: any) => ({
-    name: ipo.koreanName,
-    dDay: null,
-    date: `${fmtDate(ipo.offeringStartAt)} ~ ${fmtDate(ipo.offeringEndAt)}`,
-    priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice),
-    competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness}:1` : "-",
-  }));
-
-  const upcoming = apiUpcoming.length > 0 ? apiUpcoming : fallbackUpcoming.map(i => ({ ...i, dDay: `D-${i.dDay}` }));
-  const ongoing = apiOngoing.length > 0 ? apiOngoing : fallbackOngoing;
-  const filtered = activeTab === "청약예정" ? upcoming : ongoing;
+  function prevMonth() {
+    if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); }
+    else setCalMonth(m => m - 1);
+  }
+  function nextMonth() {
+    if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); }
+    else setCalMonth(m => m + 1);
+  }
+  function goToday() { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); }
 
   return (
-    <div data-testid="upcoming-sidebar">
-      <h3 className="text-base font-bold text-[#14181B] mb-3">다가오는 청약 종목</h3>
-      <div className="flex items-center gap-0 border-b border-[#E0E2E4] mb-3">
-        <button
-          onClick={() => setActiveTab("청약진행중")}
-          className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${
-            activeTab === "청약진행중" ? "border-[#03C75A] text-[#03C75A]" : "border-transparent text-[#9D9FA0]"
-          }`}
-          data-testid="tab-sidebar-ongoing"
-        >
-          청약진행중
-          {ongoing.length > 0 && <span className="text-[10px] bg-[#03C75A] text-white rounded-full w-4 h-4 flex items-center justify-center">{ongoing.length}</span>}
-        </button>
-        <button
-          onClick={() => setActiveTab("청약예정")}
-          className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${
-            activeTab === "청약예정" ? "border-[#03C75A] text-[#03C75A]" : "border-transparent text-[#9D9FA0]"
-          }`}
-          data-testid="tab-sidebar-upcoming"
-        >
-          청약예정
-          <span className="text-[10px] bg-[#03C75A] text-white rounded-full w-4 h-4 flex items-center justify-center">{upcoming.length}</span>
-        </button>
-      </div>
-      {isLoading ? (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="border border-[#E0E2E4] rounded-lg p-3">
-              <div className="h-4 w-24 bg-gray-100 rounded animate-pulse mb-2" />
-              <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+    <div className="max-w-[1200px] mx-auto px-4 py-6">
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-[#14181B]">{monthName}</h2>
+              <Info className="w-4 h-4 text-[#BFC0C1]" />
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {filtered.map((ipo: any, i: number) => (
-            <div key={i} className="border border-[#E0E2E4] rounded-lg p-3 hover:border-[#BFC0C1] transition-colors cursor-pointer" data-testid={`sidebar-ipo-${i}`}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-bold text-[#03C75A]">{ipo.dDay || "진행중"}</span>
-                <span className="text-[11px] text-[#9D9FA0]">{ipo.date}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <StockIcon name={ipo.name} size={32} />
-                  <div>
-                    <span className="text-sm font-bold text-[#14181B]">{ipo.name}</span>
-                    <p className="text-[11px] text-[#585B5E]">공모가 {ipo.priceRange}</p>
-                    <p className="text-[11px] text-[#9D9FA0]">기관경쟁률 {ipo.competition}</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-[#BFC0C1] shrink-0" />
+            <div className="flex items-center gap-1">
+              <button onClick={prevMonth} className="px-2 py-1 rounded border border-[#E0E2E4] text-xs text-[#585B5E] hover:bg-[#F9FAFB]" data-testid="button-cal-prev">
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <button onClick={goToday} className="px-3 py-1 rounded border border-[#E0E2E4] text-xs text-[#585B5E] hover:bg-[#F9FAFB]" data-testid="button-cal-today">오늘</button>
+              <button onClick={nextMonth} className="px-2 py-1 rounded border border-[#E0E2E4] text-xs text-[#585B5E] hover:bg-[#F9FAFB]" data-testid="button-cal-next">
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {STATUS_LEGEND.map(({ label, color }) => (
+              <span key={label} className="inline-flex items-center gap-1.5 text-[12px] text-[#585B5E] px-2.5 py-1 rounded-full border border-[#E0E2E4] bg-white">
+                <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: color }} />
+                {label}
+              </span>
+            ))}
+          </div>
+
+          {isLoading ? (
+            <div className="border border-[#E0E2E4] rounded-lg overflow-hidden animate-pulse">
+              <div className="h-10 bg-[#fafafa] border-b border-[#E0E2E4]" />
+              {[...Array(5)].map((_, i) => <div key={i} className="h-20 border-b border-[#E0E2E4] last:border-b-0 bg-white" />)}
+            </div>
+          ) : (
+            <div className="min-w-0 overflow-x-auto">
+              <div className="min-w-[480px]">
+                <CalendarView year={calYear} month={calMonth} events={events} />
               </div>
             </div>
-          ))}
-          {filtered.length === 0 && (
-            <p className="text-sm text-[#9D9FA0] text-center py-6">해당 종목이 없습니다</p>
           )}
-        </div>
-      )}
-    </div>
-  );
-}
 
-function PreTradeSection() {
-  return (
-    <div data-testid="section-pretrade">
-      <div className="bg-[#F3F5F6] py-8 px-4 mb-8">
-        <div className="max-w-[1200px] mx-auto">
-          <h2 className="text-base sm:text-lg font-bold text-[#14181B] mb-6">청약 전에도 비상장 주식으로 미리 거래할 수 있어요!</h2>
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-1 bg-white rounded-lg p-4 sm:p-5 border border-[#E0E2E4]">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-[#14181B]">지금 거래 많은 IPO 종목 TOP5</h3>
-                <span className="text-[11px] text-[#9D9FA0]">02.15 14:55 기준</span>
-              </div>
-              <div className="space-y-3">
-                {TOP5_IPO_STOCKS.map((stock) => (
-                  <div key={stock.rank} className="flex items-center justify-between" data-testid={`top5-stock-${stock.rank}`}>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-[#14181B] w-5 text-center">{stock.rank}</span>
-                      <StockIcon name={stock.name} size={32} />
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-medium text-[#14181B]">{stock.name}</span>
-                          <span className="text-[10px] text-[#03C75A] border border-[#03C75A] rounded px-1">{stock.tag}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-[11px] text-[#585B5E]">
-                          <span>{stock.category}</span>
-                          {stock.price > 0 && (
-                            <>
-                              <span>{stock.price.toLocaleString()}원</span>
-                              <span className={stock.change < 0 ? "text-[#007EFF]" : stock.change > 0 ? "text-[#F73631]" : "text-[#585B5E]"}>
-                                {stock.change > 0 ? "+" : ""}{stock.change}%
-                              </span>
-                            </>
-                          )}
-                        </div>
+          <div className="mt-6 border-t border-[#E0E2E4] pt-4">
+            <div className="flex items-center gap-1.5 mb-2 text-[#9D9FA0]">
+              <Info className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium">유의사항</span>
+            </div>
+            <ul className="text-[11px] text-[#9D9FA0] space-y-1 list-disc pl-4">
+              <li>모든 정보는 정보 제공을 위한 것으로, 투자 권유를 목적으로 하지 않습니다.</li>
+              <li>제공되는 정보는 오류 또는 지연이 발생할 수 있으며, 책임을 지지 않습니다.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="lg:w-[300px] shrink-0">
+          <h3 className="text-base font-bold text-[#14181B] mb-3">청약 종목 현황</h3>
+
+          {isLoading ? (
+            <div className="space-y-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="border border-[#E0E2E4] rounded-lg p-3 animate-pulse">
+                  <div className="h-3 w-16 bg-gray-100 rounded mb-2" />
+                  <div className="h-4 w-28 bg-gray-100 rounded mb-1" />
+                  <div className="h-3 w-full bg-gray-100 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : allItems.length === 0 ? (
+            <div className="border border-[#E0E2E4] rounded-lg p-6 text-center">
+              <p className="text-sm text-[#9D9FA0]">현재 청약 일정이 없습니다</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {allItems.map((ipo, i) => {
+                const statusColor = ipo._status === "공모청약" ? "#FCDDE1" : ipo._status === "청약예정" ? "#D7C8E8" : "#BBDEFB";
+                const dateStr = ipo._status === "상장예정"
+                  ? (ipo.listingAt || ipo.offeringEndAt ? fmtMD(ipo.listingAt || ipo.offeringEndAt) + " 상장" : "")
+                  : ipo.offeringStartAt && ipo.offeringEndAt
+                    ? `${fmtMD(ipo.offeringStartAt)} ~ ${fmtMD(ipo.offeringEndAt)}`
+                    : "";
+                const dday = ipo._status === "공모청약" ? "진행중" : fmtDDay(ipo.offeringStartAt);
+                const price = fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice);
+                return (
+                  <div key={i} className="border border-[#E0E2E4] rounded-lg p-3 hover:border-[#BFC0C1] transition-colors cursor-pointer" data-testid={`sidebar-ipo-${i}`}>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-[11px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: statusColor, color: "#333" }}>{ipo._status}</span>
+                      {dday && <span className="text-[11px] font-bold text-[#03C75A]">{dday}</span>}
+                      <span className="text-[10px] text-[#9D9FA0] ml-auto">{dateStr}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <StockIcon name={ipo.koreanName} size={28} />
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-[#14181B] truncate">{ipo.koreanName}</p>
+                        {price !== "-" && <p className="text-[11px] text-[#585B5E]">공모가 {price}</p>}
+                        {ipo.instCompetitiveness && <p className="text-[11px] text-[#9D9FA0]">기관경쟁률 {ipo.instCompetitiveness}:1</p>}
                       </div>
                     </div>
-                    <div className="text-right">
-                      {stock.tradable && (
-                        <span className="text-[10px] text-[#03C75A] font-medium">지금 매수가능</span>
-                      )}
-                      <p className="text-[10px] text-[#9D9FA0]">{stock.tradeTime}</p>
-                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
-
-            <div className="lg:w-[380px] bg-white rounded-lg p-4 sm:p-5 border-2 border-[#03C75A]">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-[#14181B]">비상장 주식일 때 미리 샀다면?</h3>
-                <div className="flex items-center gap-1">
-                  <button className="w-6 h-6 rounded border border-[#E0E2E4] flex items-center justify-center" data-testid="button-compare-prev">
-                    <ChevronLeft className="w-3 h-3 text-[#9D9FA0]" />
-                  </button>
-                  <button className="w-6 h-6 rounded border border-[#E0E2E4] flex items-center justify-center" data-testid="button-compare-next">
-                    <ChevronRight className="w-3 h-3 text-[#9D9FA0]" />
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <StockIcon name="코스모로보틱스" size={28} />
-                  <span className="text-sm font-medium text-[#14181B]">더핑크퐁컴퍼니</span>
-                </div>
-                <span className="text-[11px] text-[#9D9FA0]">25.11.18 상장</span>
-              </div>
-              <div className="flex flex-col items-center py-4">
-                <p className="text-xs text-[#9D9FA0] mb-1">공모가 대비</p>
-                <p className="text-3xl font-bold text-[#F73631] mb-1">153.33%</p>
-                <p className="text-xs text-[#585B5E]">더 저렴했어요!</p>
-              </div>
-              <div className="flex items-end justify-between px-2 mt-4">
-                <div className="flex flex-col items-center">
-                  <div className="w-10 h-8 bg-[#d6f5e5] rounded-t" />
-                  <p className="text-[10px] text-[#585B5E] mt-1">비상장 가격</p>
-                  <p className="text-xs font-bold text-[#03C75A]">15,000원</p>
-                </div>
-                <div className="flex flex-col items-center">
-                  <div className="w-10 h-16 bg-[#a8e9c9] rounded-t" />
-                  <p className="text-[10px] text-[#585B5E] mt-1">확정 공모가</p>
-                  <p className="text-xs font-bold text-[#03C75A]">38,000원</p>
-                </div>
-                <div className="flex flex-col items-center">
-                  <div className="w-10 h-24 bg-[#03C75A] rounded-t" />
-                  <p className="text-[10px] text-[#585B5E] mt-1">상장 후 최고가</p>
-                  <p className="text-xs font-bold text-[#03C75A]">61,500원</p>
-                </div>
-              </div>
-              <p className="text-[9px] text-[#BFC0C1] mt-4 leading-relaxed">
-                ※ 비상장 가격은 Npay 비상장의 최저가 기준이며, 상장 후 최고가는 최근 52주 내 가격 기준입니다.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-[1200px] mx-auto px-4 mb-8">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-sm sm:text-base font-bold text-[#14181B]">이제 막 상장준비를 시작한, 눈여겨 볼 종목</h3>
-            <span className="text-[11px] text-[#9D9FA0]">02.15 14:30 기준</span>
-            <Info className="w-3.5 h-3.5 text-[#BFC0C1]" />
-          </div>
-          <div className="flex items-center gap-1">
-            <button className="w-6 h-6 rounded border border-[#E0E2E4] flex items-center justify-center" data-testid="button-prep-prev">
-              <ChevronLeft className="w-3 h-3 text-[#9D9FA0]" />
-            </button>
-            <button className="w-6 h-6 rounded border border-[#E0E2E4] flex items-center justify-center" data-testid="button-prep-next">
-              <ChevronRight className="w-3 h-3 text-[#9D9FA0]" />
-            </button>
-          </div>
-        </div>
-        <div className="flex gap-3 overflow-x-auto pb-2">
-          {IPO_PREP_STOCKS.map((stock, i) => (
-            <div
-              key={i}
-              className="min-w-[140px] border border-[#E0E2E4] rounded-lg p-3 hover:border-[#BFC0C1] transition-colors cursor-pointer shrink-0"
-              data-testid={`prep-stock-${i}`}
-            >
-              <div className="flex items-center justify-center mb-2">
-                <StockIcon name={stock.name} size={36} />
-              </div>
-              {stock.tradable && (
-                <div className="flex justify-center mb-1">
-                  <span className="text-[9px] text-[#03C75A] border border-[#03C75A] rounded px-1.5 py-0.5 font-medium">지금 매수가능</span>
-                </div>
-              )}
-              <p className="text-xs font-medium text-[#14181B] text-center truncate mb-0.5">{stock.name}</p>
-              <p className="text-[10px] text-[#9D9FA0] text-center">{stock.category}</p>
-              <p className="text-[10px] text-[#9D9FA0] text-center mt-1">{stock.date}</p>
-            </div>
-          ))}
+          )}
         </div>
       </div>
     </div>
@@ -693,7 +414,7 @@ function FAQSection() {
         <div className="lg:w-[380px]">
           <h3 className="text-sm font-bold text-[#14181B] mb-4">IPO News 모아보기</h3>
           <div className="space-y-3">
-            {(newsItems || IPO_NEWS.map((n, i) => ({ ...n, id: i }))).slice(0, 5).map((news: any, i: number) => (
+            {(newsItems || []).slice(0, 5).map((news: any, i: number) => (
               <a
                 key={i}
                 href={news.link || "#"}
@@ -711,6 +432,9 @@ function FAQSection() {
                 </div>
               </a>
             ))}
+            {(!newsItems || newsItems.length === 0) && (
+              <p className="text-sm text-[#9D9FA0] text-center py-4">뉴스를 불러오는 중입니다...</p>
+            )}
           </div>
         </div>
       </div>
@@ -720,19 +444,16 @@ function FAQSection() {
 
 export default function IPOCalendarPage() {
   const [activePageTab, setActivePageTab] = useState<PageTab>("calendar");
-  const [calMonth, setCalMonth] = useState(6);
 
   return (
     <div className="min-h-screen bg-white" data-testid="page-ipo-calendar">
       <header className="border-b border-[#E0E2E4]">
         <div className="max-w-[1200px] mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/">
-              <span className="flex items-center gap-1.5 cursor-pointer" data-testid="link-home">
-                <SiteLogoBadge size={24} />
-              </span>
-            </Link>
-          </div>
+          <Link href="/">
+            <span className="flex items-center gap-1.5 cursor-pointer" data-testid="link-home">
+              <SiteLogoBadge size={24} />
+            </span>
+          </Link>
           <Link href="/">
             <span className="flex items-center gap-1 text-sm text-[#585B5E] hover:text-[#14181B] cursor-pointer" data-testid="link-back-home">
               <ArrowLeft className="w-4 h-4" />
@@ -743,30 +464,17 @@ export default function IPOCalendarPage() {
       </header>
 
       <div className="max-w-[1200px] mx-auto px-4">
-        <div className="flex items-center gap-2 sm:gap-4 border-b border-[#E0E2E4] overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-4 border-b border-[#E0E2E4]">
           <button
             onClick={() => setActivePageTab("calendar")}
-            className={`py-4 text-sm sm:text-base font-bold border-b-2 transition-colors whitespace-nowrap ${
-              activePageTab === "calendar" ? "border-[#14181B] text-[#14181B]" : "border-transparent text-[#9D9FA0]"
-            }`}
+            className={`py-4 text-sm sm:text-base font-bold border-b-2 transition-colors whitespace-nowrap ${activePageTab === "calendar" ? "border-[#14181B] text-[#14181B]" : "border-transparent text-[#9D9FA0]"}`}
             data-testid="tab-page-calendar"
           >
             공모주 IPO 캘린더
           </button>
           <button
-            onClick={() => setActivePageTab("pretrade")}
-            className={`py-4 text-sm sm:text-base border-b-2 transition-colors whitespace-nowrap ${
-              activePageTab === "pretrade" ? "border-[#14181B] text-[#14181B] font-bold" : "border-transparent text-[#9D9FA0]"
-            }`}
-            data-testid="tab-page-pretrade"
-          >
-            청약 전 거래
-          </button>
-          <button
             onClick={() => setActivePageTab("faq")}
-            className={`py-4 text-sm sm:text-base border-b-2 transition-colors whitespace-nowrap ${
-              activePageTab === "faq" ? "border-[#14181B] text-[#14181B] font-bold" : "border-transparent text-[#9D9FA0]"
-            }`}
+            className={`py-4 text-sm sm:text-base border-b-2 transition-colors whitespace-nowrap ${activePageTab === "faq" ? "border-[#14181B] text-[#14181B] font-bold" : "border-transparent text-[#9D9FA0]"}`}
             data-testid="tab-page-faq"
           >
             FAQ
@@ -774,71 +482,7 @@ export default function IPOCalendarPage() {
         </div>
       </div>
 
-      {activePageTab === "calendar" && (
-        <div className="max-w-[1200px] mx-auto px-4 py-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-[#14181B]">2026년 {calMonth}월</h2>
-              <Info className="w-4 h-4 text-[#BFC0C1]" />
-            </div>
-            <div className="flex items-center gap-1">
-              <button
-                className="px-2 py-1 rounded border border-[#E0E2E4] text-xs text-[#585B5E] disabled:opacity-40"
-                data-testid="button-cal-prev"
-                onClick={() => setCalMonth(m => Math.max(3, m - 1))}
-                disabled={calMonth === 3}
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
-              <button
-                className="px-3 py-1 rounded border border-[#E0E2E4] text-xs text-[#585B5E]"
-                data-testid="button-cal-today"
-                onClick={() => setCalMonth(6)}
-              >오늘</button>
-              <button
-                className="px-2 py-1 rounded border border-[#E0E2E4] text-xs text-[#585B5E] disabled:opacity-40"
-                data-testid="button-cal-next"
-                onClick={() => setCalMonth(m => Math.min(6, m + 1))}
-                disabled={calMonth === 6}
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 mb-5">
-            {IPO_STATUS_LEGEND.map(({ label, dot }) => (
-              <span
-                key={label}
-                className="inline-flex items-center gap-1 text-[12px] text-[#585B5E] px-2.5 py-1 rounded-full border border-[#E0E2E4] bg-white"
-              >
-                <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: dot }} />
-                {label}
-              </span>
-            ))}
-          </div>
-
-          <div className="min-w-0 overflow-x-auto">
-            <div className="min-w-[500px]">
-              <CalendarView month={calMonth} />
-            </div>
-          </div>
-
-          <div className="mt-8 border-t border-[#E0E2E4] pt-6">
-            <div className="flex items-center gap-1.5 mb-2 text-[#9D9FA0]">
-              <Info className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">유의사항</span>
-            </div>
-            <ul className="text-[11px] text-[#9D9FA0] space-y-1 list-disc pl-4">
-              <li>모든 정보는 정보 제공을 위한 것으로, 투자 권유를 목적으로 하지 않습니다.</li>
-              <li>제공되는 정보는 오류 또는 지연이 발생할 수 있으며, 증권플러스비상장 주식회사는 제공된 정보에 의한 투자 결과에 대해 법적인 책임을 지지 않습니다.</li>
-            </ul>
-          </div>
-        </div>
-      )}
-
-      {activePageTab === "pretrade" && <PreTradeSection />}
-
+      {activePageTab === "calendar" && <CalendarSection />}
       {activePageTab === "faq" && <FAQSection />}
 
       <footer className="border-t border-[#E0E2E4] mt-8 bg-[#F9FAFB]">
