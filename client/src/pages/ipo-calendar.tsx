@@ -467,7 +467,10 @@ function CalendarGrid({ year, month, events }: { year: number; month: number; ev
                       >
                         {isStart && (
                           <>
-                            <IpoEventIcon type={ev.iconType} color={ev.color} />
+                            {ev.logoUrl
+                              ? <img src={ev.logoUrl} alt="" className="w-[14px] h-[14px] rounded-sm object-cover shrink-0 mr-0.5" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                              : <span className="inline-flex items-center justify-center w-[14px] h-[14px] rounded-sm shrink-0 mr-0.5 text-[8px] font-bold text-white" style={{ backgroundColor: ev.color }}>{ev.name.charAt(0)}</span>
+                            }
                             <span className="text-[11px] font-medium truncate leading-none" style={{ color: ev.color }}>{ev.name}</span>
                           </>
                         )}
@@ -494,10 +497,13 @@ function CalendarGrid({ year, month, events }: { year: number; month: number; ev
                       {dots.slice(0, 6).map((ev, ei) => (
                         <div
                           key={ei}
-                          className="flex items-center gap-0 py-[2px] min-w-0"
+                          className="flex items-center gap-0.5 py-[2px] min-w-0"
                           title={`${ev.name} (${ev.status})`}
                         >
-                          <IpoEventIcon type={ev.iconType} color={ev.color} />
+                          {ev.logoUrl
+                            ? <img src={ev.logoUrl} alt="" className="w-[13px] h-[13px] rounded-sm object-cover shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                            : <IpoEventIcon type={ev.iconType} color={ev.color} />
+                          }
                           <span className="text-[11px] text-[#585B5E] truncate leading-snug">{ev.name}</span>
                         </div>
                       ))}
