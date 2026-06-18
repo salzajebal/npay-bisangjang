@@ -144,6 +144,34 @@ const IPO_STATE_MAP: Record<string, { label: string; color: string; bgColor: str
   "LISTING":                   { label: "상장",       color: "#004d40", bgColor: "#E0F2F1" },
 };
 
+function buildDbCalEvents(dbStocks: IpoStock[]): CalEvent[] {
+  const events: CalEvent[] = [];
+  for (const stock of dbStocks) {
+    if (!stock.stockName || !stock.startDate || !stock.endDate) continue;
+    const start = new Date(stock.startDate);
+    const end = new Date(stock.endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) continue;
+
+    let color = "#c0392b", bgColor = "#FCDDE1", status = "공모청약";
+    if (stock.subscriptionStatus === "청약예정") {
+      color = "#6c3483"; bgColor = "#D7C8E8"; status = "청약예정";
+    } else if (stock.subscriptionStatus === "청약진행중") {
+      color = "#c0392b"; bgColor = "#FCDDE1"; status = "공모청약";
+    }
+
+    events.push({
+      name: stock.stockName, start, end,
+      color, bgColor, status,
+      priceRange: stock.priceMin && stock.priceMax
+        ? `${stock.priceMin.toLocaleString()} ~ ${stock.priceMax.toLocaleString()}원`
+        : "-",
+      competition: stock.competitionRate || "-",
+      logoUrl: null,
+    });
+  }
+  return events;
+}
+
 function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
   const events: CalEvent[] = [];
 
@@ -338,8 +366,20 @@ function CalendarSection() {
     refetchInterval: 5 * 60 * 1000,
   });
 
+  const { data: dbStocks = [] } = useQuery<IpoStock[]>({
+    queryKey: ["/api/ipo-stocks"],
+  });
+
   const naverData = ipoApiData?.naverData;
-  const events = useMemo(() => naverData ? buildCalEvents(naverData) : [], [naverData]);
+
+  const events = useMemo(() => {
+    const naverEvents = naverData ? buildCalEvents(naverData) : [];
+    const dbEvents = buildDbCalEvents(dbStocks);
+    // 중복 제거: DB 종목명이 Naver에도 있으면 DB 우선
+    const naverNames = new Set(dbEvents.map(e => e.name));
+    const filteredNaver = naverEvents.filter(e => !naverNames.has(e.name));
+    return [...dbEvents, ...filteredNaver];
+  }, [naverData, dbStocks]);
 
   const beingIPO = naverData?.beingIPOList || [];
   const toBeIPO = naverData?.toBeIPOList || [];
@@ -358,7 +398,44 @@ function CalendarSection() {
   }
   function goToday() { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); }
 
-  const currentSidebarItems = sidebarTab === "being" ? beingIPO : toBeIPO;
+  // DB 종목을 사이드바 형식으로 변환
+  const dbBeingIPO = dbStocks
+    .filter(s => s.subscriptionStatus === "청약진행중")
+    .map(s => ({
+      stockName: s.stockName,
+      stockCode: s.id,
+      closedDate: s.endDate,
+      offeringStartAt: s.startDate,
+      minExpectedOfferPrice: s.priceMin,
+      maxExpectedOfferPrice: s.priceMax,
+      finalOfferPrice: null,
+      instCompetitiveness: s.competitionRate ? parseFloat(s.competitionRate) : null,
+      logoUrl: null,
+      _fromDb: true,
+    }));
+
+  const dbToBeIPO = dbStocks
+    .filter(s => s.subscriptionStatus === "청약예정")
+    .map(s => ({
+      stockName: s.stockName,
+      stockCode: s.id,
+      closedDate: s.endDate,
+      offeringStartAt: s.startDate,
+      minExpectedOfferPrice: s.priceMin,
+      maxExpectedOfferPrice: s.priceMax,
+      finalOfferPrice: null,
+      instCompetitiveness: s.competitionRate ? parseFloat(s.competitionRate) : null,
+      logoUrl: null,
+      _fromDb: true,
+    }));
+
+  // Naver 데이터와 합치되 DB에 있는 종목은 제외
+  const dbBeingNames = new Set(dbBeingIPO.map(s => s.stockName));
+  const dbToBeNames = new Set(dbToBeIPO.map(s => s.stockName));
+  const mergedBeingIPO = [...dbBeingIPO, ...beingIPO.filter((s: any) => !dbBeingNames.has(s.stockName))];
+  const mergedToBeIPO = [...dbToBeIPO, ...toBeIPO.filter((s: any) => !dbToBeNames.has(s.stockName))];
+
+  const currentSidebarItems = sidebarTab === "being" ? mergedBeingIPO : mergedToBeIPO;
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-6">
@@ -454,14 +531,14 @@ function CalendarSection() {
               className={`flex-1 py-2.5 text-[13px] font-bold border-b-2 transition-colors ${sidebarTab === "being" ? "border-[#14181B] text-[#14181B]" : "border-transparent text-[#9D9FA0]"}`}
               data-testid="sidebar-tab-being"
             >
-              청약진행중 {beingIPO.length}
+              청약진행중 {mergedBeingIPO.length}
             </button>
             <button
               onClick={() => setSidebarTab("tobe")}
               className={`flex-1 py-2.5 text-[13px] font-bold border-b-2 transition-colors ${sidebarTab === "tobe" ? "border-[#14181B] text-[#14181B]" : "border-transparent text-[#9D9FA0]"}`}
               data-testid="sidebar-tab-tobe"
             >
-              청약예정 {toBeIPO.length}
+              청약예정 {mergedToBeIPO.length}
             </button>
           </div>
 
