@@ -307,4 +307,10 @@
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
   }
+
+  /* 한국어 단어 중간 줄바꿈 방지 */
+  body {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
 }
