@@ -1,28 +1,39 @@
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ChevronLeft, ChevronDown, ArrowLeft, Info } from "lucide-react";
+import { ChevronRight, ChevronLeft, ChevronDown, ArrowLeft, Info, ExternalLink } from "lucide-react";
 import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
 
 type PageTab = "calendar" | "faq";
 
-interface IpoItem {
-  koreanName: string;
+interface NaverIpoItem {
+  stockName: string;
+  stockCode: string;
+  logoUrl?: string | null;
+  closedDate?: string;
   offeringStartAt?: string;
-  offeringEndAt?: string;
-  listingAt?: string;
   minExpectedOfferPrice?: number;
   maxExpectedOfferPrice?: number;
-  finalOfferPrice?: number;
-  instCompetitiveness?: number;
-  logoUrl?: string;
+  finalOfferPrice?: number | null;
+  instCompetitiveness?: number | null;
+  ipoDetailState?: string;
+  hasSellBoard?: boolean;
+  isAvail?: boolean;
 }
 
-interface IpoCalendarData {
-  toBeIPOList: IpoItem[];
-  beingIPOList: IpoItem[];
-  toBeListingList: IpoItem[];
+interface NaverIpoCalendarData {
+  beingIPOList: NaverIpoItem[];
+  toBeIPOList: NaverIpoItem[];
+  readyToIpoStocks: any[];
+  ipoNews: any[];
+  popularStocks: any[];
+  newlyListedStocks: any[];
+}
+
+interface IpoCalendarApiResponse {
+  naverData: NaverIpoCalendarData;
+  lastUpdated: string | null;
 }
 
 interface CalEvent {
@@ -38,7 +49,6 @@ interface CalEvent {
 const STATUS_LEGEND = [
   { label: "청약예정", color: "#D7C8E8" },
   { label: "공모청약", color: "#FCDDE1" },
-  { label: "상장예정", color: "#BBDEFB" },
 ];
 
 const FAQ_ITEMS = [
@@ -57,7 +67,7 @@ function fmtMD(iso?: string): string {
   } catch { return ""; }
 }
 
-function fmtPrice(min?: number, max?: number, final?: number): string {
+function fmtPrice(min?: number, max?: number, final?: number | null): string {
   if (final && final > 0) return `${final.toLocaleString()}원`;
   if (min && max && min !== max) return `${min.toLocaleString()} ~ ${max.toLocaleString()}원`;
   if (min) return `${min.toLocaleString()}원`;
@@ -72,6 +82,12 @@ function fmtDDay(dateStr?: string): string | null {
     const diff = Math.ceil((target.getTime() - today.getTime()) / 86400000);
     return diff > 0 ? `D-${diff}` : diff === 0 ? "D-Day" : "완료";
   } catch { return null; }
+}
+
+function addDays(dateStr: string, days: number): Date {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d;
 }
 
 function sameDay(a: Date, b: Date) {
@@ -104,22 +120,39 @@ function getMonthWeeks(year: number, month: number): Date[][] {
   return weeks;
 }
 
-function buildCalEvents(data: IpoCalendarData): CalEvent[] {
+function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
   const events: CalEvent[] = [];
-  for (const ipo of data.beingIPOList || []) {
-    if (!ipo.koreanName || !ipo.offeringStartAt || !ipo.offeringEndAt) continue;
-    events.push({ name: ipo.koreanName, start: new Date(ipo.offeringStartAt), end: new Date(ipo.offeringEndAt), color: "#FCDDE1", status: "공모청약", priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice), competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness}:1` : "-" });
+
+  for (const ipo of naverData.beingIPOList || []) {
+    if (!ipo.stockName || !ipo.closedDate) continue;
+    const end = new Date(ipo.closedDate);
+    const start = addDays(ipo.closedDate, -1);
+    events.push({
+      name: ipo.stockName,
+      start,
+      end,
+      color: "#FCDDE1",
+      status: "공모청약",
+      priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice),
+      competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness.toLocaleString()}:1` : "-",
+    });
   }
-  for (const ipo of data.toBeIPOList || []) {
-    if (!ipo.koreanName || !ipo.offeringStartAt || !ipo.offeringEndAt) continue;
-    events.push({ name: ipo.koreanName, start: new Date(ipo.offeringStartAt), end: new Date(ipo.offeringEndAt), color: "#D7C8E8", status: "청약예정", priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice), competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness}:1` : "-" });
+
+  for (const ipo of naverData.toBeIPOList || []) {
+    if (!ipo.stockName || !ipo.offeringStartAt) continue;
+    const start = new Date(ipo.offeringStartAt);
+    const end = addDays(ipo.offeringStartAt, 1);
+    events.push({
+      name: ipo.stockName,
+      start,
+      end,
+      color: "#D7C8E8",
+      status: "청약예정",
+      priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice),
+      competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness.toLocaleString()}:1` : "-",
+    });
   }
-  for (const ipo of data.toBeListingList || []) {
-    if (!ipo.koreanName) continue;
-    const dateStr = ipo.listingAt || ipo.offeringEndAt;
-    if (!dateStr) continue;
-    events.push({ name: ipo.koreanName, start: new Date(dateStr), end: new Date(dateStr), color: "#BBDEFB", status: "상장예정", priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice), competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness}:1` : "-" });
-  }
+
   return events;
 }
 
@@ -237,25 +270,17 @@ function CalendarSection() {
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
 
-  const { data: ipoApiData, isLoading } = useQuery<{ data: IpoCalendarData }>({
+  const { data: ipoApiData, isLoading } = useQuery<IpoCalendarApiResponse>({
     queryKey: ["/api/market/ipo-calendar"],
     refetchInterval: 5 * 60 * 1000,
   });
 
-  const events = useMemo(() => {
-    if (!ipoApiData?.data) return [];
-    return buildCalEvents(ipoApiData.data);
-  }, [ipoApiData]);
+  const naverData = ipoApiData?.naverData;
 
-  const allItems = useMemo(() => {
-    if (!ipoApiData?.data) return [];
-    const d = ipoApiData.data;
-    return [
-      ...(d.beingIPOList || []).map(i => ({ ...i, _status: "공모청약" as const })),
-      ...(d.toBeIPOList || []).map(i => ({ ...i, _status: "청약예정" as const })),
-      ...(d.toBeListingList || []).map(i => ({ ...i, _status: "상장예정" as const })),
-    ].filter(i => i.koreanName);
-  }, [ipoApiData]);
+  const events = useMemo(() => {
+    if (!naverData) return [];
+    return buildCalEvents(naverData);
+  }, [naverData]);
 
   const monthName = `${calYear}년 ${calMonth + 1}월`;
 
@@ -268,6 +293,12 @@ function CalendarSection() {
     else setCalMonth(m => m + 1);
   }
   function goToday() { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); }
+
+  const beingIPO = naverData?.beingIPOList || [];
+  const toBeIPO = naverData?.toBeIPOList || [];
+  const readyIPO = naverData?.readyToIpoStocks || [];
+  const ipoNews = naverData?.ipoNews || [];
+  const hasItems = beingIPO.length > 0 || toBeIPO.length > 0;
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-6">
@@ -311,6 +342,37 @@ function CalendarSection() {
             </div>
           )}
 
+          {ipoNews.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-sm font-bold text-[#14181B] mb-3">IPO 뉴스</h3>
+              <div className="space-y-2">
+                {ipoNews.slice(0, 5).map((news: any, i: number) => (
+                  <a
+                    key={i}
+                    href={news.landingUrl || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-3 p-3 border border-[#E0E2E4] rounded-lg hover:border-[#BFC0C1] hover:bg-[#F9FAFB] transition-colors"
+                    data-testid={`ipo-news-${i}`}
+                  >
+                    {news.logoUrl ? (
+                      <img src={news.logoUrl} alt="" className="w-8 h-8 rounded object-cover shrink-0 mt-0.5" />
+                    ) : (
+                      <div className="w-8 h-8 rounded bg-[#F3F5F6] flex items-center justify-center shrink-0 mt-0.5">
+                        <span className="text-[10px] font-bold text-[#9D9FA0]">N</span>
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-[#14181B] line-clamp-2 leading-snug mb-0.5">{news.title}</p>
+                      <p className="text-[11px] text-[#9D9FA0]">{news.mediaIssuerName} | {news.publishedAt ? new Date(news.publishedAt).toLocaleDateString("ko-KR") : ""}</p>
+                    </div>
+                    <ExternalLink className="w-3.5 h-3.5 text-[#BFC0C1] shrink-0 mt-1" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="mt-6 border-t border-[#E0E2E4] pt-4">
             <div className="flex items-center gap-1.5 mb-2 text-[#9D9FA0]">
               <Info className="w-3.5 h-3.5" />
@@ -319,14 +381,77 @@ function CalendarSection() {
             <ul className="text-[11px] text-[#9D9FA0] space-y-1 list-disc pl-4">
               <li>모든 정보는 정보 제공을 위한 것으로, 투자 권유를 목적으로 하지 않습니다.</li>
               <li>제공되는 정보는 오류 또는 지연이 발생할 수 있으며, 책임을 지지 않습니다.</li>
+              <li>데이터 출처: Npay 비상장 (ustock.naver.com)</li>
             </ul>
           </div>
         </div>
 
         <div className="lg:w-[300px] shrink-0">
-          <h3 className="text-base font-bold text-[#14181B] mb-3">청약 종목 현황</h3>
+          {beingIPO.length > 0 && (
+            <div className="mb-5">
+              <h3 className="text-base font-bold text-[#14181B] mb-3">공모청약 진행중</h3>
+              <div className="space-y-2">
+                {beingIPO.map((ipo, i) => {
+                  const price = fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice);
+                  return (
+                    <div key={i} className="border border-[#E0E2E4] rounded-lg p-3 hover:border-[#BFC0C1] transition-colors cursor-pointer" data-testid={`sidebar-being-${i}`}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-[#FCDDE1] text-[#c0392b]">공모청약</span>
+                        <span className="text-[11px] font-bold text-[#03C75A]">진행중</span>
+                        {ipo.closedDate && <span className="text-[10px] text-[#9D9FA0] ml-auto">~{fmtMD(ipo.closedDate)}</span>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StockIcon name={ipo.stockName} logoUrl={ipo.logoUrl || undefined} size={28} />
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-[#14181B] truncate">{ipo.stockName}</p>
+                          {price !== "-" && <p className="text-[11px] text-[#585B5E]">공모가 {price}</p>}
+                          {ipo.instCompetitiveness != null && (
+                            <p className="text-[11px] text-[#9D9FA0]">기관경쟁률 {Number(ipo.instCompetitiveness).toLocaleString()}:1</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-          {isLoading ? (
+          {toBeIPO.length > 0 && (
+            <div className="mb-5">
+              <h3 className="text-base font-bold text-[#14181B] mb-3">청약예정</h3>
+              <div className="space-y-2">
+                {toBeIPO.slice(0, 6).map((ipo, i) => {
+                  const price = fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice);
+                  const dday = fmtDDay(ipo.offeringStartAt);
+                  return (
+                    <div key={i} className="border border-[#E0E2E4] rounded-lg p-3 hover:border-[#BFC0C1] transition-colors cursor-pointer" data-testid={`sidebar-tobe-${i}`}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-[#D7C8E8] text-[#6c3483]">청약예정</span>
+                        {dday && <span className="text-[11px] font-bold text-[#03C75A]">{dday}</span>}
+                        {ipo.offeringStartAt && <span className="text-[10px] text-[#9D9FA0] ml-auto">{fmtMD(ipo.offeringStartAt)} ~</span>}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StockIcon name={ipo.stockName} logoUrl={ipo.logoUrl || undefined} size={28} />
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-[#14181B] truncate">{ipo.stockName}</p>
+                          {price !== "-" && <p className="text-[11px] text-[#585B5E]">희망가 {price}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {!isLoading && !hasItems && (
+            <div className="border border-[#E0E2E4] rounded-lg p-6 text-center">
+              <p className="text-sm text-[#9D9FA0]">현재 청약 일정이 없습니다</p>
+            </div>
+          )}
+
+          {isLoading && (
             <div className="space-y-3">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="border border-[#E0E2E4] rounded-lg p-3 animate-pulse">
@@ -336,39 +461,30 @@ function CalendarSection() {
                 </div>
               ))}
             </div>
-          ) : allItems.length === 0 ? (
-            <div className="border border-[#E0E2E4] rounded-lg p-6 text-center">
-              <p className="text-sm text-[#9D9FA0]">현재 청약 일정이 없습니다</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {allItems.map((ipo, i) => {
-                const statusColor = ipo._status === "공모청약" ? "#FCDDE1" : ipo._status === "청약예정" ? "#D7C8E8" : "#BBDEFB";
-                const dateStr = ipo._status === "상장예정"
-                  ? (ipo.listingAt || ipo.offeringEndAt ? fmtMD(ipo.listingAt || ipo.offeringEndAt) + " 상장" : "")
-                  : ipo.offeringStartAt && ipo.offeringEndAt
-                    ? `${fmtMD(ipo.offeringStartAt)} ~ ${fmtMD(ipo.offeringEndAt)}`
-                    : "";
-                const dday = ipo._status === "공모청약" ? "진행중" : fmtDDay(ipo.offeringStartAt);
-                const price = fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice);
-                return (
-                  <div key={i} className="border border-[#E0E2E4] rounded-lg p-3 hover:border-[#BFC0C1] transition-colors cursor-pointer" data-testid={`sidebar-ipo-${i}`}>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-[11px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: statusColor, color: "#333" }}>{ipo._status}</span>
-                      {dday && <span className="text-[11px] font-bold text-[#03C75A]">{dday}</span>}
-                      <span className="text-[10px] text-[#9D9FA0] ml-auto">{dateStr}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <StockIcon name={ipo.koreanName} size={28} />
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-[#14181B] truncate">{ipo.koreanName}</p>
-                        {price !== "-" && <p className="text-[11px] text-[#585B5E]">공모가 {price}</p>}
-                        {ipo.instCompetitiveness && <p className="text-[11px] text-[#9D9FA0]">기관경쟁률 {ipo.instCompetitiveness}:1</p>}
+          )}
+
+          {readyIPO.length > 0 && (
+            <div className="mt-2">
+              <h3 className="text-sm font-bold text-[#14181B] mb-2">상장 준비 중</h3>
+              <div className="border border-[#E0E2E4] rounded-lg overflow-hidden">
+                {readyIPO.slice(0, 6).map((ipo: any, i: number) => {
+                  const stateLabel: Record<string, string> = {
+                    "EXAMINATION_REQUESTED": "심사청구",
+                    "DEMAND_FORECAST": "수요예측",
+                    "APPROVED": "상장승인",
+                  };
+                  const label = stateLabel[ipo.ipoState] || ipo.ipoState || "준비중";
+                  return (
+                    <div key={i} className="flex items-center gap-2 px-3 py-2.5 border-b border-[#E0E2E4] last:border-b-0" data-testid={`ready-ipo-${i}`}>
+                      <StockIcon name={ipo.stockName} logoUrl={ipo.logoUrl || undefined} size={24} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium text-[#14181B] truncate">{ipo.stockName}</p>
                       </div>
+                      <span className="text-[10px] text-[#9D9FA0] shrink-0 bg-[#F3F5F6] px-1.5 py-0.5 rounded">{label}</span>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
@@ -380,9 +496,11 @@ function CalendarSection() {
 function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
-  const { data: newsItems } = useQuery<any[]>({
-    queryKey: ["/api/stocks/news"],
+  const { data: ipoApiData } = useQuery<IpoCalendarApiResponse>({
+    queryKey: ["/api/market/ipo-calendar"],
   });
+
+  const ipoNews = ipoApiData?.naverData?.ipoNews || [];
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-8" data-testid="section-faq">
@@ -414,25 +532,29 @@ function FAQSection() {
         <div className="lg:w-[380px]">
           <h3 className="text-sm font-bold text-[#14181B] mb-4">IPO News 모아보기</h3>
           <div className="space-y-3">
-            {(newsItems || []).slice(0, 5).map((news: any, i: number) => (
+            {ipoNews.slice(0, 6).map((news: any, i: number) => (
               <a
                 key={i}
-                href={news.link || "#"}
+                href={news.landingUrl || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-start gap-3 py-2 hover:bg-[#F9FAFB] rounded px-2 transition-colors"
-                data-testid={`ipo-news-${i}`}
+                data-testid={`faq-news-${i}`}
               >
-                <div className="w-8 h-8 rounded bg-[#F3F5F6] flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-[10px] font-bold text-[#9D9FA0]">N</span>
-                </div>
+                {news.logoUrl ? (
+                  <img src={news.logoUrl} alt="" className="w-8 h-8 rounded object-cover shrink-0 mt-0.5" />
+                ) : (
+                  <div className="w-8 h-8 rounded bg-[#F3F5F6] flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-[10px] font-bold text-[#9D9FA0]">N</span>
+                  </div>
+                )}
                 <div className="min-w-0">
                   <p className="text-sm text-[#14181B] line-clamp-2 leading-snug mb-0.5">{news.title}</p>
-                  <p className="text-[11px] text-[#9D9FA0]">{news.publisher} | {news.publishedAt || news.date}</p>
+                  <p className="text-[11px] text-[#9D9FA0]">{news.mediaIssuerName} | {news.publishedAt ? new Date(news.publishedAt).toLocaleDateString("ko-KR") : ""}</p>
                 </div>
               </a>
             ))}
-            {(!newsItems || newsItems.length === 0) && (
+            {ipoNews.length === 0 && (
               <p className="text-sm text-[#9D9FA0] text-center py-4">뉴스를 불러오는 중입니다...</p>
             )}
           </div>

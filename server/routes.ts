@@ -351,12 +351,24 @@ export async function registerRoutes(
   interface DiscussionData { discussStocks: any[]; discussPosts: any[] }
   interface ExpertReport { expertReportId: number; sourceProvider: string; reportCreator: string; title: string; preview?: string; createdAt?: string }
   interface IpoCalendarData { toBeIPOList: any[]; beingIPOList: any[]; toBeListingList: any[] }
+  interface NaverIpoItem {
+    stockName: string; stockCode: string; logoUrl?: string | null;
+    closedDate?: string; offeringStartAt?: string;
+    minExpectedOfferPrice?: number; maxExpectedOfferPrice?: number; finalOfferPrice?: number | null;
+    instCompetitiveness?: number | null; ipoDetailState?: string; hasSellBoard?: boolean; isAvail?: boolean;
+  }
+  interface NaverIpoCalendarData {
+    beingIPOList: NaverIpoItem[]; toBeIPOList: NaverIpoItem[];
+    readyToIpoStocks: any[]; ipoNews: any[]; popularStocks: any[]; newlyListedStocks: any[];
+  }
 
   let rankingCache: RankGroup[] = [];
   let themeCache: ThemeKeyword[] = [];
   let discussionCache: DiscussionData = { discussStocks: [], discussPosts: [] };
   let expertReportCache: ExpertReport[] = [];
   let ipoCalendarCache: IpoCalendarData = { toBeIPOList: [], beingIPOList: [], toBeListingList: [] };
+  let naverIpoCache: NaverIpoCalendarData = { beingIPOList: [], toBeIPOList: [], readyToIpoStocks: [], ipoNews: [], popularStocks: [], newlyListedStocks: [] };
+  let naverIpoCacheTime = 0;
   let marketCacheTime = 0;
 
   async function refreshAllUstockData(): Promise<void> {
@@ -525,6 +537,57 @@ export async function registerRoutes(
   refreshAllUstockData();
   setInterval(refreshAllUstockData, USTOCK_CACHE_DURATION);
 
+  async function refreshNaverIpoData(): Promise<void> {
+    try {
+      const resp = await fetch("https://ustock.naver.com/service/ipo", {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "ko-KR,ko;q=0.9",
+          "Upgrade-Insecure-Requests": "1",
+        },
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!resp.ok) { log(`Naver IPO fetch failed: ${resp.status}`); return; }
+      const html = await resp.text();
+      const startIdx = html.indexOf("__NEXT_DATA__");
+      if (startIdx < 0) { log("Naver IPO: __NEXT_DATA__ not found"); return; }
+      const contentStart = html.indexOf(">", startIdx) + 1;
+      const contentEnd = html.indexOf("</script>", contentStart);
+      const json = html.slice(contentStart, contentEnd);
+      const data = JSON.parse(json);
+      const pp = data?.props?.pageProps || {};
+      const queries: any[] = pp?.dehydratedState?.queries || [];
+
+      let beingIPOList: NaverIpoItem[] = [];
+      let toBeIPOList: NaverIpoItem[] = [];
+      for (const q of queries) {
+        const qdata = q?.state?.data;
+        if (!qdata) continue;
+        if (qdata?.beingIPOList !== undefined || qdata?.toBeIPOList !== undefined) {
+          beingIPOList = qdata.beingIPOList || [];
+          toBeIPOList = qdata.toBeIPOList || [];
+        }
+      }
+
+      naverIpoCache = {
+        beingIPOList,
+        toBeIPOList,
+        readyToIpoStocks: pp?.readyToIpoStocks?.readyToIpoStocks || [],
+        ipoNews: pp?.ipoNews || [],
+        popularStocks: pp?.popularStocks?.ipoPopularStocks || [],
+        newlyListedStocks: pp?.newlyListedStocks || [],
+      };
+      naverIpoCacheTime = Date.now();
+      log(`Naver IPO refreshed: ${beingIPOList.length} 진행중, ${toBeIPOList.length} 예정, ${naverIpoCache.ipoNews.length} 뉴스`);
+    } catch (err) {
+      log(`Naver IPO refresh error: ${err}`);
+    }
+  }
+
+  refreshNaverIpoData();
+  setInterval(refreshNaverIpoData, USTOCK_CACHE_DURATION);
+
   async function fetchNaverPrice(stockCode: string): Promise<{ price: number; change: number } | null> {
     try {
       const resp = await fetch(`https://m.stock.naver.com/api/stock/${stockCode}/basic`, {
@@ -666,7 +729,7 @@ export async function registerRoutes(
   });
 
   app.get("/api/market/ipo-calendar", (_req, res) => {
-    res.json({ data: ipoCalendarCache, lastUpdated: marketCacheTime ? new Date(marketCacheTime).toISOString() : null });
+    res.json({ data: ipoCalendarCache, naverData: naverIpoCache, lastUpdated: naverIpoCacheTime ? new Date(naverIpoCacheTime).toISOString() : (marketCacheTime ? new Date(marketCacheTime).toISOString() : null) });
   });
 
   app.get("/api/stocks/news", async (_req, res) => {
