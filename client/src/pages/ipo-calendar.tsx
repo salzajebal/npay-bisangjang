@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, ChevronLeft, ChevronRight as ChevRight, ArrowLeft, Info, HelpCircle, ExternalLink } from "lucide-react";
 import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
+import type { IpoStock } from "@shared/schema";
 
 type PageTab = "calendar" | "trade" | "faq";
 type SidebarTab = "being" | "tobe";
