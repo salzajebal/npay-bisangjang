@@ -33,6 +33,7 @@ export default function RegisterPage() {
       accountHolder: "",
       bank: "",
       accountNumber: "",
+      unionCode: "",
     },
   });
 
@@ -220,15 +221,15 @@ export default function RegisterPage() {
                 name="unionCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>조합코드 <span className="font-normal text-[#585B5E]">(조합원 코드가 있으신 경우 입력해주세요.)</span></FormLabel>
+                    <FormLabel>조합코드</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="조합코드를 입력하세요 (선택사항)"
+                        placeholder="조합코드를 입력하세요"
                         data-testid="input-union-code"
                         {...field}
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-500 font-medium" />
                   </FormItem>
                 )}
               />
