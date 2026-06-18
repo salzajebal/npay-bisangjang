@@ -529,6 +529,244 @@ function CalendarSection() {
   );
 }
 
+type TradeTab = "being" | "tobe" | "listed";
+
+function TradeSection() {
+  const [tradeTab, setTradeTab] = useState<TradeTab>("being");
+
+  const { data: ipoApiData, isLoading } = useQuery<IpoCalendarApiResponse>({
+    queryKey: ["/api/market/ipo-calendar"],
+    refetchInterval: 5 * 60 * 1000,
+  });
+
+  const naverData = ipoApiData?.naverData;
+  const popularStocks: any[] = naverData?.popularStocks || [];
+  const beingIPO: NaverIpoItem[] = naverData?.beingIPOList || [];
+  const toBeIPO: NaverIpoItem[] = naverData?.toBeIPOList || [];
+  const newlyListed: any[] = naverData?.newlyListedStocks || [];
+
+  const popularMap = useMemo(() => {
+    const m: Record<string, any> = {};
+    for (const s of popularStocks) m[s.stockCode] = s;
+    return m;
+  }, [popularStocks]);
+
+  const currentTab = tradeTab === "being" ? beingIPO : tradeTab === "tobe" ? toBeIPO : newlyListed;
+
+  function fmtTimeAgo(iso?: string): string {
+    if (!iso) return "";
+    try {
+      const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+      if (diff < 1) return "방금";
+      if (diff < 60) return `${diff}분 전`;
+      const h = Math.floor(diff / 60);
+      if (h < 24) return `${h}시간 전`;
+      return `${Math.floor(h / 24)}일 전`;
+    } catch { return ""; }
+  }
+
+  return (
+    <div className="max-w-[1200px] mx-auto px-4 py-6" data-testid="section-trade">
+      {popularStocks.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-[15px] font-bold text-[#14181B] mb-3">인기 청약 전 종목</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {popularStocks.map((s: any, i: number) => (
+              <div key={i} className="border border-[#E0E2E4] rounded-xl p-4 bg-white hover:border-[#14181B] transition-colors" data-testid={`popular-stock-${i}`}>
+                <div className="flex items-center gap-2 mb-3">
+                  <StockIcon name={s.stockName} logoUrl={s.logoUrl} size={32} />
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-bold text-[#14181B] truncate">{s.stockName}</p>
+                    {s.isRegistered && (
+                      <span className="text-[10px] text-[#03C75A] font-medium">상장완료</span>
+                    )}
+                  </div>
+                </div>
+                <p className="text-[16px] font-bold text-[#14181B]">
+                  {s.currentPrice != null ? s.currentPrice.toLocaleString() + "원" : "-"}
+                </p>
+                {s.changeRate != null && (
+                  <p className={`text-[13px] font-medium ${s.changeRate > 0 ? "text-[#f04452]" : s.changeRate < 0 ? "text-[#3182f6]" : "text-[#9D9FA0]"}`}>
+                    {s.changeRate > 0 ? "▲" : s.changeRate < 0 ? "▼" : ""}{" "}
+                    {Math.abs(s.changeRate).toFixed(2)}%
+                  </p>
+                )}
+                <p className="text-[10px] text-[#BFC0C1] mt-1">{fmtTimeAgo(s.lastTradedAt)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex-1 min-w-0">
+          <div className="flex border-b border-[#E0E2E4] mb-4">
+            {(["being", "tobe", "listed"] as TradeTab[]).map((tab) => {
+              const labels = { being: `청약진행중 ${beingIPO.length}`, tobe: `청약예정 ${toBeIPO.length}`, listed: `최근상장 ${newlyListed.length}` };
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setTradeTab(tab)}
+                  className={`px-4 py-2.5 text-[13px] font-bold border-b-2 transition-colors ${tradeTab === tab ? "border-[#14181B] text-[#14181B]" : "border-transparent text-[#9D9FA0]"}`}
+                  data-testid={`trade-tab-${tab}`}
+                >
+                  {labels[tab]}
+                </button>
+              );
+            })}
+          </div>
+
+          {isLoading ? (
+            <div className="space-y-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="border border-[#E0E2E4] rounded-xl p-4 animate-pulse">
+                  <div className="flex gap-3">
+                    <div className="w-10 h-10 bg-[#F3F5F6] rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-28 bg-[#F3F5F6] rounded" />
+                      <div className="h-3 w-40 bg-[#F3F5F6] rounded" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : currentTab.length === 0 ? (
+            <div className="border border-[#E0E2E4] rounded-xl p-10 text-center">
+              <p className="text-[13px] text-[#9D9FA0]">해당 종목이 없습니다</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {(tradeTab === "being" || tradeTab === "tobe") && (currentTab as NaverIpoItem[]).map((ipo, i) => {
+                const pop = popularMap[ipo.stockCode];
+                const isOngoing = tradeTab === "being";
+                const dateStr = isOngoing ? ipo.closedDate : ipo.offeringStartAt;
+                const dateFmt = dateStr ? fmtMD(dateStr) + (isOngoing ? " 마감" : " 시작") : "일정 미정";
+                const dday = !isOngoing ? fmtDDay(ipo.offeringStartAt) : null;
+                return (
+                  <div key={i} className="border border-[#E0E2E4] rounded-xl overflow-hidden bg-white" data-testid={`trade-ipo-${i}`}>
+                    <div className="flex items-center gap-1.5 px-4 py-2 bg-[#F9FAFB] border-b border-[#E0E2E4]">
+                      <span className={`text-[11px] font-bold ${isOngoing ? "text-[#03C75A]" : "text-[#585B5E]"}`}>
+                        {isOngoing ? "진행중" : (dday || "예정")}
+                      </span>
+                      <span className="text-[11px] text-[#9D9FA0]">{dateFmt}</span>
+                      {ipo.hasSellBoard && (
+                        <span className="ml-auto text-[10px] text-white bg-[#03C75A] px-1.5 py-0.5 rounded font-medium">청약 전 거래</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 px-4 py-3">
+                      <StockIcon name={ipo.stockName} logoUrl={ipo.logoUrl || undefined} size={40} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[15px] font-bold text-[#14181B] truncate">{ipo.stockName}</p>
+                        <p className="text-[12px] text-[#585B5E] mt-0.5">
+                          {isOngoing ? "공모가" : "희망가"}{" "}
+                          {fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice)}
+                        </p>
+                        {ipo.instCompetitiveness != null && (
+                          <p className="text-[11px] text-[#9D9FA0]">기관경쟁률 {Number(ipo.instCompetitiveness).toLocaleString()}:1</p>
+                        )}
+                      </div>
+                      {pop && (
+                        <div className="text-right shrink-0">
+                          <p className="text-[15px] font-bold text-[#14181B]">{pop.currentPrice?.toLocaleString()}원</p>
+                          {pop.changeRate != null && (
+                            <p className={`text-[12px] font-medium ${pop.changeRate > 0 ? "text-[#f04452]" : pop.changeRate < 0 ? "text-[#3182f6]" : "text-[#9D9FA0]"}`}>
+                              {pop.changeRate > 0 ? "▲" : pop.changeRate < 0 ? "▼" : ""} {Math.abs(pop.changeRate).toFixed(2)}%
+                            </p>
+                          )}
+                          <p className="text-[10px] text-[#BFC0C1]">{fmtTimeAgo(pop.lastTradedAt)}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {tradeTab === "listed" && (currentTab as any[]).map((s, i) => (
+                <div key={i} className="border border-[#E0E2E4] rounded-xl overflow-hidden bg-white" data-testid={`trade-listed-${i}`}>
+                  <div className="flex items-center gap-1.5 px-4 py-2 bg-[#F9FAFB] border-b border-[#E0E2E4]">
+                    <span className="text-[11px] font-bold text-[#585B5E]">상장완료</span>
+                    <span className="text-[11px] text-[#9D9FA0]">{s.listingAt ? fmtMD(s.listingAt) + " 상장" : ""}</span>
+                  </div>
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <StockIcon name={s.name} logoUrl={s.logoUrl || undefined} size={40} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[15px] font-bold text-[#14181B] truncate">{s.name}</p>
+                      <p className="text-[12px] text-[#585B5E] mt-0.5">공모가 {s.finalOfferPrice ? s.finalOfferPrice.toLocaleString() + "원" : "-"}</p>
+                      {s.keywords?.length > 0 && (
+                        <div className="flex gap-1 mt-1 flex-wrap">
+                          {s.keywords.slice(0, 2).map((k: string, ki: number) => (
+                            <span key={ki} className="text-[10px] text-[#9D9FA0] bg-[#F3F5F6] px-1.5 py-0.5 rounded">{k}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      {s.changeRateFromLowestPrice != null && (
+                        <p className={`text-[15px] font-bold ${s.changeRateFromLowestPrice > 0 ? "text-[#f04452]" : s.changeRateFromLowestPrice < 0 ? "text-[#3182f6]" : "text-[#9D9FA0]"}`}>
+                          {s.changeRateFromLowestPrice > 0 ? "+" : ""}{s.changeRateFromLowestPrice.toFixed(1)}%
+                        </p>
+                      )}
+                      <p className="text-[11px] text-[#9D9FA0]">최저가 대비</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="lg:w-[320px] shrink-0">
+          <h3 className="text-[15px] font-bold text-[#14181B] mb-3">청약 전 거래란?</h3>
+          <div className="border border-[#E0E2E4] rounded-xl p-5 bg-white space-y-4">
+            <div className="flex gap-3">
+              <span className="w-6 h-6 rounded-full bg-[#E8F0FE] flex items-center justify-center shrink-0 text-[12px] font-bold text-[#14181B]">1</span>
+              <div>
+                <p className="text-[13px] font-bold text-[#14181B] mb-1">청약 전 거래 가능 종목</p>
+                <p className="text-[12px] text-[#585B5E] leading-relaxed">공모주 청약 기간 전에 비상장 시장에서 미리 매매할 수 있는 종목입니다.</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <span className="w-6 h-6 rounded-full bg-[#E8F0FE] flex items-center justify-center shrink-0 text-[12px] font-bold text-[#14181B]">2</span>
+              <div>
+                <p className="text-[13px] font-bold text-[#14181B] mb-1">가격 변동성 주의</p>
+                <p className="text-[12px] text-[#585B5E] leading-relaxed">공모가 확정 전이므로 가격 변동성이 클 수 있습니다. 신중한 투자 판단이 필요합니다.</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <span className="w-6 h-6 rounded-full bg-[#E8F0FE] flex items-center justify-center shrink-0 text-[12px] font-bold text-[#14181B]">3</span>
+              <div>
+                <p className="text-[13px] font-bold text-[#14181B] mb-1">실시간 시세 제공</p>
+                <p className="text-[12px] text-[#585B5E] leading-relaxed">인기 청약 전 종목의 현재가 및 등락률을 실시간으로 확인할 수 있습니다.</p>
+              </div>
+            </div>
+          </div>
+
+          {popularStocks.filter((s: any) => s.hasSellBoard).length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-[14px] font-bold text-[#14181B] mb-2">청약 전 거래 가능</h3>
+              <div className="border border-[#E0E2E4] rounded-xl overflow-hidden">
+                {popularStocks.filter((s: any) => s.hasSellBoard).map((s: any, i: number) => (
+                  <div key={i} className="flex items-center gap-2.5 px-3 py-2.5 border-b border-[#F3F5F6] last:border-b-0" data-testid={`trade-popular-${i}`}>
+                    <StockIcon name={s.stockName} logoUrl={s.logoUrl} size={28} />
+                    <p className="text-[12px] font-medium text-[#14181B] truncate flex-1">{s.stockName}</p>
+                    <div className="text-right shrink-0">
+                      <p className="text-[12px] font-bold text-[#14181B]">{s.currentPrice?.toLocaleString()}</p>
+                      {s.changeRate != null && (
+                        <p className={`text-[10px] font-medium ${s.changeRate > 0 ? "text-[#f04452]" : s.changeRate < 0 ? "text-[#3182f6]" : "text-[#9D9FA0]"}`}>
+                          {s.changeRate > 0 ? "▲" : "▼"}{Math.abs(s.changeRate).toFixed(2)}%
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const { data: ipoApiData } = useQuery<IpoCalendarApiResponse>({
@@ -647,11 +885,7 @@ export default function IPOCalendarPage() {
       </div>
 
       {activePageTab === "calendar" && <CalendarSection />}
-      {activePageTab === "trade" && (
-        <div className="max-w-[1200px] mx-auto px-4 py-16 text-center">
-          <p className="text-[#9D9FA0] text-[14px]">청약 전 거래 정보는 준비 중입니다.</p>
-        </div>
-      )}
+      {activePageTab === "trade" && <TradeSection />}
       {activePageTab === "faq" && <FAQSection />}
 
       <footer className="border-t border-[#E0E2E4] mt-12 bg-[#F9FAFB]">
