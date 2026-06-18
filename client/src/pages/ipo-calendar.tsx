@@ -48,19 +48,18 @@ interface CalEvent {
   priceRange: string;
   competition: string;
   logoUrl?: string | null;
+  iconType: "square" | "circle" | "snowflake" | "dash" | "dot";
+  isBar: boolean;
 }
 
 const STATUS_LEGEND = [
-  { label: "주관사선정", color: "#E8F5E9", border: "#81C784" },
-  { label: "기술평가가통과", color: "#E3F2FD", border: "#90CAF9" },
-  { label: "심사청구", color: "#FFF3E0", border: "#FFCC02" },
-  { label: "심사승인", color: "#FCE4EC", border: "#F48FB1" },
-  { label: "신고서제출", color: "#F3E5F5", border: "#CE93D8" },
-  { label: "수요예측", color: "#E8EAF6", border: "#9FA8DA" },
-  { label: "공모청약", color: "#FCDDE1", border: "#EF9A9A" },
-  { label: "상장", color: "#E0F2F1", border: "#80CBC4" },
-  { label: "환불", color: "#FFF8E1", border: "#FFD54F" },
-  { label: "배정", color: "#F1F8E9", border: "#AED581" },
+  { label: "심사청구",   icon: "●", color: "#9D9FA0", bg: "#F9FAFB", border: "#E0E2E4" },
+  { label: "수요예측",   icon: "○", color: "#3D5AFE", bg: "#E8EAF6", border: "#9FA8DA" },
+  { label: "공모청약",   icon: "■", color: "#c0392b", bg: "#FCDDE1", border: "#EF9A9A" },
+  { label: "청약예정",   icon: "■", color: "#6c3483", bg: "#D7C8E8", border: "#CE93D8" },
+  { label: "환불",       icon: "─", color: "#b7601e", bg: "#FFF8E1", border: "#FFD54F" },
+  { label: "배정",       icon: "✦", color: "#33691e", bg: "#F1F8E9", border: "#AED581" },
+  { label: "상장",       icon: "●", color: "#004d40", bg: "#E0F2F1", border: "#80CBC4" },
 ];
 
 const FAQ_ITEMS = [
@@ -132,16 +131,16 @@ function getMonthWeeks(year: number, month: number): Date[][] {
   return weeks;
 }
 
-const IPO_STATE_MAP: Record<string, { label: string; color: string; bgColor: string }> = {
-  "EXAMINATION_REQUESTED":     { label: "심사청구",   color: "#7d5a00", bgColor: "#FFF3E0" },
-  "EXAMINATION_APPROVED":      { label: "심사승인",   color: "#880e4f", bgColor: "#FCE4EC" },
-  "REPORT_SUBMITTED":          { label: "신고서제출", color: "#4a148c", bgColor: "#F3E5F5" },
-  "DEMAND_FORECAST":           { label: "수요예측",   color: "#1a237e", bgColor: "#E8EAF6" },
-  "OFFER_SUBSCRIPTION":        { label: "공모청약",   color: "#c0392b", bgColor: "#FCDDE1" },
-  "TO_BE_OFFER_SUBSCRIPTION":  { label: "청약예정",   color: "#6c3483", bgColor: "#D7C8E8" },
-  "REFUND":                    { label: "환불",       color: "#b7601e", bgColor: "#FFF8E1" },
-  "ALLOCATION":                { label: "배정",       color: "#33691e", bgColor: "#F1F8E9" },
-  "LISTING":                   { label: "상장",       color: "#004d40", bgColor: "#E0F2F1" },
+const IPO_STATE_MAP: Record<string, { label: string; color: string; bgColor: string; iconType: CalEvent["iconType"]; isBar: boolean }> = {
+  "EXAMINATION_REQUESTED":     { label: "심사청구",   color: "#9D9FA0", bgColor: "transparent", iconType: "dot",       isBar: false },
+  "EXAMINATION_APPROVED":      { label: "심사승인",   color: "#9D9FA0", bgColor: "transparent", iconType: "dot",       isBar: false },
+  "REPORT_SUBMITTED":          { label: "신고서제출", color: "#9D9FA0", bgColor: "transparent", iconType: "dot",       isBar: false },
+  "DEMAND_FORECAST":           { label: "수요예측",   color: "#3D5AFE", bgColor: "#E8EAF6",     iconType: "circle",    isBar: true  },
+  "OFFER_SUBSCRIPTION":        { label: "공모청약",   color: "#c0392b", bgColor: "#FCDDE1",     iconType: "square",    isBar: true  },
+  "TO_BE_OFFER_SUBSCRIPTION":  { label: "청약예정",   color: "#6c3483", bgColor: "#D7C8E8",     iconType: "square",    isBar: true  },
+  "REFUND":                    { label: "환불",       color: "#b7601e", bgColor: "#FFF1E0",     iconType: "dash",      isBar: false },
+  "ALLOCATION":                { label: "배정",       color: "#33691e", bgColor: "#F1F8E9",     iconType: "snowflake", isBar: false },
+  "LISTING":                   { label: "상장",       color: "#004d40", bgColor: "#E0F2F1",     iconType: "dot",       isBar: false },
 };
 
 function buildDbCalEvents(dbStocks: IpoStock[]): CalEvent[] {
@@ -152,12 +151,10 @@ function buildDbCalEvents(dbStocks: IpoStock[]): CalEvent[] {
     const end = new Date(stock.endDate);
     if (isNaN(start.getTime()) || isNaN(end.getTime())) continue;
 
-    let color = "#c0392b", bgColor = "#FCDDE1", status = "공모청약";
-    if (stock.subscriptionStatus === "청약예정") {
-      color = "#6c3483"; bgColor = "#D7C8E8"; status = "청약예정";
-    } else if (stock.subscriptionStatus === "청약진행중") {
-      color = "#c0392b"; bgColor = "#FCDDE1"; status = "공모청약";
-    }
+    const isOngoing = stock.subscriptionStatus === "청약진행중";
+    const color = isOngoing ? "#c0392b" : "#6c3483";
+    const bgColor = isOngoing ? "#FCDDE1" : "#D7C8E8";
+    const status = isOngoing ? "공모청약" : "청약예정";
 
     events.push({
       name: stock.stockName, start, end,
@@ -167,6 +164,8 @@ function buildDbCalEvents(dbStocks: IpoStock[]): CalEvent[] {
         : "-",
       competition: stock.competitionRate || "-",
       logoUrl: null,
+      iconType: "square",
+      isBar: true,
     });
   }
   return events;
@@ -175,6 +174,7 @@ function buildDbCalEvents(dbStocks: IpoStock[]): CalEvent[] {
 function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
   const events: CalEvent[] = [];
 
+  // 공모청약 진행중 (pink bar) — Korean IPO subscription typically 2 trading days
   for (const ipo of naverData.beingIPOList || []) {
     if (!ipo.stockName || !ipo.closedDate) continue;
     const end = new Date(ipo.closedDate);
@@ -185,9 +185,12 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
       priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice),
       competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness.toLocaleString()}:1` : "-",
       logoUrl: ipo.logoUrl || null,
+      iconType: "square",
+      isBar: true,
     });
   }
 
+  // 청약예정 (purple bar) — show as 2-day bar from start
   for (const ipo of naverData.toBeIPOList || []) {
     if (!ipo.stockName || !ipo.offeringStartAt) continue;
     const start = new Date(ipo.offeringStartAt);
@@ -198,14 +201,23 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
       priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice),
       competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness.toLocaleString()}:1` : "-",
       logoUrl: ipo.logoUrl || null,
+      iconType: "square",
+      isBar: true,
     });
   }
 
+  // 상장 준비 중 종목 — dot events per state
   for (const stock of naverData.readyToIpoStocks || []) {
     if (!stock.stockName || !stock.ipoDate) continue;
-    const stateInfo = IPO_STATE_MAP[stock.ipoState as string] || { label: stock.ipoState || "준비중", color: "#555", bgColor: "#f5f5f5" };
+    const stateInfo = IPO_STATE_MAP[stock.ipoState as string] || {
+      label: stock.ipoState || "준비중",
+      color: "#9D9FA0",
+      bgColor: "transparent",
+      iconType: "dot" as const,
+      isBar: false,
+    };
     const start = new Date(stock.ipoDate);
-    const end = new Date(stock.ipoDate);
+    const end = stateInfo.isBar ? addDays(stock.ipoDate, 1) : new Date(stock.ipoDate);
     events.push({
       name: stock.stockName, start, end,
       color: stateInfo.color, bgColor: stateInfo.bgColor,
@@ -213,24 +225,38 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
       priceRange: "-",
       competition: "-",
       logoUrl: stock.logoUrl || null,
+      iconType: stateInfo.iconType,
+      isBar: stateInfo.isBar,
     });
   }
 
+  // 신규 상장 종목 — dot events
   for (const stock of naverData.newlyListedStocks || []) {
     if (!stock.name || !stock.listingAt) continue;
     const start = new Date(stock.listingAt);
-    const end = new Date(stock.listingAt);
     events.push({
-      name: stock.name, start, end,
+      name: stock.name, start, end: new Date(stock.listingAt),
       color: "#004d40", bgColor: "#E0F2F1",
       status: "상장",
       priceRange: stock.finalOfferPrice ? `${stock.finalOfferPrice.toLocaleString()}원` : "-",
       competition: stock.changeRateFromLowestPrice != null ? `${stock.changeRateFromLowestPrice > 0 ? "+" : ""}${stock.changeRateFromLowestPrice}%` : "-",
       logoUrl: stock.logoUrl || null,
+      iconType: "dot",
+      isBar: false,
     });
   }
 
   return events;
+}
+
+function IpoEventIcon({ type, color }: { type: CalEvent["iconType"]; color: string }) {
+  switch (type) {
+    case "square":    return <span style={{ color }} className="text-[8px] leading-none shrink-0 mr-0.5">■</span>;
+    case "circle":    return <span style={{ color }} className="text-[9px] leading-none shrink-0 mr-0.5">○</span>;
+    case "snowflake": return <span style={{ color }} className="text-[9px] leading-none shrink-0 mr-0.5">✦</span>;
+    case "dash":      return <span style={{ color }} className="text-[10px] leading-none shrink-0 mr-0.5 font-bold">─</span>;
+    default:          return <span className="inline-block w-[6px] h-[6px] rounded-full shrink-0 mr-0.5 mt-[1px]" style={{ backgroundColor: color || "#BFC0C1" }} />;
+  }
 }
 
 function CalendarGrid({ year, month, events }: { year: number; month: number; events: CalEvent[] }) {
@@ -238,10 +264,13 @@ function CalendarGrid({ year, month, events }: { year: number; month: number; ev
   const dayNames = ["월", "화", "수", "목", "금"];
   const today = new Date(); today.setHours(0, 0, 0, 0);
 
-  function getWeekLanes(week: Date[]) {
+  const barEvents = useMemo(() => events.filter(ev => ev.isBar), [events]);
+  const dotEvents = useMemo(() => events.filter(ev => !ev.isBar), [events]);
+
+  function getWeekBarLanes(week: Date[]) {
     const weekFirst = week[0].getTime();
     const weekLast = week[4].getTime();
-    const applicable = events.filter(ev =>
+    const applicable = barEvents.filter(ev =>
       ev.start.getTime() <= weekLast && ev.end.getTime() >= weekFirst
     );
     const lanes: (CalEvent | null)[][] = [];
@@ -274,80 +303,113 @@ function CalendarGrid({ year, month, events }: { year: number; month: number; ev
 
   return (
     <div className="border border-[#E0E2E4] rounded-lg overflow-hidden" data-testid="calendar-grid">
+      {/* Day headers */}
       <div className="grid grid-cols-5 border-b border-[#E0E2E4]">
         {dayNames.map(d => (
-          <div key={d} className="px-2 py-2.5 text-[13px] text-[#9D9FA0] font-medium text-center border-r border-[#E0E2E4] last:border-r-0 bg-white">{d}</div>
+          <div key={d} className="px-2 py-2.5 text-[13px] text-[#9D9FA0] font-medium text-center border-r border-[#E0E2E4] last:border-r-0 bg-[#FAFBFC]">{d}</div>
         ))}
       </div>
+
       {weeks.map((week, wi) => {
-        const lanes = getWeekLanes(week);
+        const lanes = getWeekBarLanes(week);
+        const weekDots = week.map(day => dotEvents.filter(ev => sameDay(ev.start, day)));
+        const hasDots = weekDots.some(dots => dots.length > 0);
+        const minHeight = Math.max(52, lanes.length * 26 + 30);
+
         return (
           <div key={wi} className="border-b border-[#E0E2E4] last:border-b-0">
+
+            {/* Date numbers row */}
             <div className="grid grid-cols-5">
               {week.map((day, di) => {
                 const isThisMonth = day.getMonth() === month;
                 const isToday = sameDay(day, today);
                 return (
-                  <div key={di} className={`border-r border-[#E0E2E4] last:border-r-0 px-2 pt-1.5 pb-0.5 ${isToday ? "bg-[#F3F5F6]" : "bg-white"}`}>
-                    <div className={`text-[12px] text-right leading-none py-0.5 ${isThisMonth ? "text-[#14181B]" : "text-[#C5C7CB]"}`}>
+                  <div key={di} className={`border-r border-[#E0E2E4] last:border-r-0 px-2 pt-1.5 pb-0 ${isToday ? "bg-[#F5F7FA]" : "bg-white"}`}>
+                    <div className={`text-right leading-none py-0.5 ${isThisMonth ? "text-[#14181B]" : "text-[#C5C7CB]"}`}>
                       {isToday
                         ? <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full bg-[#14181B] text-white text-[11px] font-bold">{day.getDate()}</span>
-                        : <span className="inline-flex items-center justify-center w-[22px] h-[22px]">{day.getDate()}</span>
+                        : <span className="inline-flex items-center justify-center w-[22px] h-[22px] text-[12px]">{day.getDate()}</span>
                       }
                     </div>
                   </div>
                 );
               })}
             </div>
-            {lanes.length > 0 && (
-              <div className="pb-1 px-0.5 bg-white" style={{ minHeight: lanes.length * 26 }}>
-                {lanes.map((lane, li) => {
-                  const cells: JSX.Element[] = [];
-                  let col = 0;
-                  while (col < 5) {
-                    const ev = lane[col];
-                    if (!ev) {
-                      cells.push(<div key={col} style={{ flex: 1, minWidth: 0 }} />);
-                      col++;
-                    } else {
-                      let span = 1;
-                      while (col + span < 5 && lane[col + span] === ev) span++;
-                      const isStart = col === 0 || lane[col - 1] !== ev;
-                      const isEnd = col + span >= 5 || lane[col + span] !== ev;
-                      cells.push(
+
+            {/* Bar events (horizontal spanning pills) */}
+            <div className="bg-white" style={{ minHeight: lanes.length > 0 ? lanes.length * 26 + 4 : 4 }}>
+              {lanes.map((lane, li) => {
+                const cells: JSX.Element[] = [];
+                let col = 0;
+                while (col < 5) {
+                  const ev = lane[col];
+                  if (!ev) {
+                    cells.push(<div key={col} style={{ flex: 1, minWidth: 0 }} className="h-[22px]" />);
+                    col++;
+                  } else {
+                    let span = 1;
+                    while (col + span < 5 && lane[col + span] === ev) span++;
+                    const isStart = col === 0 || lane[col - 1] !== ev;
+                    const isEnd = col + span >= 5 || lane[col + span] !== ev;
+                    cells.push(
+                      <div
+                        key={col}
+                        style={{
+                          flex: span,
+                          backgroundColor: ev.bgColor,
+                          borderRadius: isStart && isEnd ? 3 : isStart ? "3px 0 0 3px" : isEnd ? "0 3px 3px 0" : 0,
+                          marginLeft: isStart ? 2 : 0,
+                          marginRight: isEnd ? 2 : 0,
+                        }}
+                        className="h-[22px] flex items-center px-1.5 overflow-hidden"
+                        title={`${ev.name} (${ev.status})`}
+                      >
+                        {isStart && (
+                          <>
+                            <IpoEventIcon type={ev.iconType} color={ev.color} />
+                            <span className="text-[11px] font-medium truncate leading-none" style={{ color: ev.color }}>{ev.name}</span>
+                          </>
+                        )}
+                        {!isStart && !isEnd && <span className="text-transparent text-[11px] leading-none">·</span>}
+                      </div>
+                    );
+                    col += span;
+                  }
+                }
+                return <div key={li} className="flex mb-[2px]">{cells}</div>;
+              })}
+            </div>
+
+            {/* Dot events — per-column stacked items */}
+            {hasDots && (
+              <div className="grid grid-cols-5 border-t border-[#F3F5F6]">
+                {weekDots.map((dots, di) => {
+                  const isToday = sameDay(week[di], today);
+                  return (
+                    <div
+                      key={di}
+                      className={`border-r border-[#E0E2E4] last:border-r-0 px-1.5 py-1 ${isToday ? "bg-[#F5F7FA]" : "bg-white"}`}
+                    >
+                      {dots.slice(0, 6).map((ev, ei) => (
                         <div
-                          key={col}
-                          style={{ flex: span, backgroundColor: ev.bgColor, borderRadius: isStart && isEnd ? 4 : isStart ? "4px 0 0 4px" : isEnd ? "0 4px 4px 0" : 0, marginLeft: isStart ? 1 : 0, marginRight: isEnd ? 1 : 0 }}
-                          className="h-[22px] flex items-center px-1 gap-1 overflow-hidden"
+                          key={ei}
+                          className="flex items-center gap-0 py-[2px] min-w-0"
                           title={`${ev.name} (${ev.status})`}
                         >
-                          {isStart && (
-                            <>
-                              {ev.logoUrl ? (
-                                <img
-                                  src={ev.logoUrl}
-                                  alt=""
-                                  className="w-[14px] h-[14px] rounded-full object-cover shrink-0 bg-white"
-                                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                                />
-                              ) : (
-                                <span className="w-[14px] h-[14px] rounded-full shrink-0 flex items-center justify-center text-[8px] font-bold" style={{ backgroundColor: ev.color + "33", color: ev.color }}>
-                                  {ev.name.charAt(0)}
-                                </span>
-                              )}
-                              <span className="text-[10px] font-medium truncate leading-none" style={{ color: ev.color }}>{ev.name}</span>
-                            </>
-                          )}
+                          <IpoEventIcon type={ev.iconType} color={ev.color} />
+                          <span className="text-[11px] text-[#585B5E] truncate leading-snug">{ev.name}</span>
                         </div>
-                      );
-                      col += span;
-                    }
-                  }
-                  return <div key={li} className="flex mb-[2px] bg-white">{cells}</div>;
+                      ))}
+                      {dots.length > 6 && (
+                        <span className="text-[10px] text-[#9D9FA0]">+{dots.length - 6}개</span>
+                      )}
+                    </div>
+                  );
                 })}
               </div>
             )}
-            {lanes.length === 0 && <div className="bg-white" style={{ minHeight: 36 }} />}
+            {!hasDots && lanes.length === 0 && <div className="bg-white" style={{ minHeight: 28 }} />}
           </div>
         );
       })}
@@ -375,9 +437,10 @@ function CalendarSection() {
   const events = useMemo(() => {
     const naverEvents = naverData ? buildCalEvents(naverData) : [];
     const dbEvents = buildDbCalEvents(dbStocks);
-    // 중복 제거: DB 종목명이 Naver에도 있으면 DB 우선
-    const naverNames = new Set(dbEvents.map(e => e.name));
-    const filteredNaver = naverEvents.filter(e => !naverNames.has(e.name));
+    // 중복 제거: DB 종목명과 유사한 Naver 종목은 DB 우선 (표기 정규화)
+    const norm = (s: string) => s.replace(/\s/g, "").replace(/져/g, "저").replace(/쟤/g, "재").toLowerCase();
+    const dbNamesNorm = new Set(dbEvents.map(e => norm(e.name)));
+    const filteredNaver = naverEvents.filter(e => !dbNamesNorm.has(norm(e.name)));
     return [...dbEvents, ...filteredNaver];
   }, [naverData, dbStocks]);
 
@@ -458,8 +521,9 @@ function CalendarSection() {
           </div>
 
           <div className="flex flex-wrap gap-1.5 mb-4">
-            {STATUS_LEGEND.map(({ label, bgColor, border }: any) => (
-              <span key={label} className="inline-flex items-center gap-1 text-[11px] text-[#585B5E] px-2 py-0.5 rounded-full border" style={{ backgroundColor: bgColor || "#F9FAFB", borderColor: border || "#E0E2E4" }}>
+            {STATUS_LEGEND.map(({ label, icon, color, bg, border }) => (
+              <span key={label} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border" style={{ backgroundColor: bg, borderColor: border, color: "#585B5E" }}>
+                <span style={{ color }} className="text-[9px] leading-none">{icon}</span>
                 {label}
               </span>
             ))}
