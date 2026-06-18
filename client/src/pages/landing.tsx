@@ -128,9 +128,9 @@ const RANKING_TABS = ["일반종목", "거래많은", "상승률 높은", "상�
 
 const NAV_LINKS = [
   { label: "공모주 IPO 캘린더", href: "/ipo-calendar" },
-  { label: "서비스소개", href: "#tips" },
-  { label: "이벤트", href: "#news" },
-  { label: "공지사항", href: "#news" },
+  { label: "서비스소개", href: "/service" },
+  { label: "이벤트", href: "/events" },
+  { label: "공지사항", href: "/notices" },
 ];
 
 function useWatchlist(user: UserType | null) {

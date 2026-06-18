@@ -19,6 +19,9 @@ import IPOCalendarPage from "@/pages/ipo-calendar";
 import AdminManualPage from "@/pages/admin-manual";
 import TestAdminPage from "@/pages/test-admin";
 import StockDetailPage from "@/pages/stock-detail";
+import EventsPage from "@/pages/events";
+import ServiceIntroPage from "@/pages/service-intro";
+import NoticesPage from "@/pages/notices";
 import { useEffect } from "react";
 
 function MaintenancePage() {
@@ -102,6 +105,9 @@ function Router() {
       <Route path="/demo-admin" component={DemoAdminPage} />
       <Route path="/test" component={TestAdminPage} />
       <Route path="/stock/:name" component={StockDetailPage} />
+      <Route path="/events" component={EventsPage} />
+      <Route path="/service" component={ServiceIntroPage} />
+      <Route path="/notices" component={NoticesPage} />
       <Route path="/chat" component={ChatPage} />
       <Route component={NotFound} />
     </Switch>
