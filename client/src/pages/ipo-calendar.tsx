@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ChevronLeft, ChevronDown, ArrowLeft, Info, ExternalLink } from "lucide-react";
+import { ChevronRight, ChevronLeft, ChevronRight as ChevRight, ArrowLeft, Info, HelpCircle, ExternalLink } from "lucide-react";
 import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
 
-type PageTab = "calendar" | "faq";
+type PageTab = "calendar" | "trade" | "faq";
+type SidebarTab = "being" | "tobe";
 
 interface NaverIpoItem {
   stockName: string;
@@ -41,14 +42,23 @@ interface CalEvent {
   start: Date;
   end: Date;
   color: string;
+  bgColor: string;
   status: string;
   priceRange: string;
   competition: string;
 }
 
 const STATUS_LEGEND = [
-  { label: "청약예정", color: "#D7C8E8" },
-  { label: "공모청약", color: "#FCDDE1" },
+  { label: "주관사선정", color: "#E8F5E9", border: "#81C784" },
+  { label: "기술평가가통과", color: "#E3F2FD", border: "#90CAF9" },
+  { label: "심사청구", color: "#FFF3E0", border: "#FFCC02" },
+  { label: "심사승인", color: "#FCE4EC", border: "#F48FB1" },
+  { label: "신고서제출", color: "#F3E5F5", border: "#CE93D8" },
+  { label: "수요예측", color: "#E8EAF6", border: "#9FA8DA" },
+  { label: "공모청약", color: "#FCDDE1", border: "#EF9A9A" },
+  { label: "상장", color: "#E0F2F1", border: "#80CBC4" },
+  { label: "환불", color: "#FFF8E1", border: "#FFD54F" },
+  { label: "배정", color: "#F1F8E9", border: "#AED581" },
 ];
 
 const FAQ_ITEMS = [
@@ -80,7 +90,7 @@ function fmtDDay(dateStr?: string): string | null {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const target = new Date(dateStr); target.setHours(0, 0, 0, 0);
     const diff = Math.ceil((target.getTime() - today.getTime()) / 86400000);
-    return diff > 0 ? `D-${diff}` : diff === 0 ? "D-Day" : "완료";
+    return diff > 0 ? `D-${diff}` : diff === 0 ? "D-Day" : null;
   } catch { return null; }
 }
 
@@ -128,11 +138,8 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
     const end = new Date(ipo.closedDate);
     const start = addDays(ipo.closedDate, -1);
     events.push({
-      name: ipo.stockName,
-      start,
-      end,
-      color: "#FCDDE1",
-      status: "공모청약",
+      name: ipo.stockName, start, end,
+      color: "#c0392b", bgColor: "#FCDDE1", status: "공모청약",
       priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice),
       competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness.toLocaleString()}:1` : "-",
     });
@@ -143,11 +150,8 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
     const start = new Date(ipo.offeringStartAt);
     const end = addDays(ipo.offeringStartAt, 1);
     events.push({
-      name: ipo.stockName,
-      start,
-      end,
-      color: "#D7C8E8",
-      status: "청약예정",
+      name: ipo.stockName, start, end,
+      color: "#6c3483", bgColor: "#D7C8E8", status: "청약예정",
       priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice),
       competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness.toLocaleString()}:1` : "-",
     });
@@ -156,9 +160,10 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
   return events;
 }
 
-function CalendarView({ year, month, events }: { year: number; month: number; events: CalEvent[] }) {
+function CalendarGrid({ year, month, events }: { year: number; month: number; events: CalEvent[] }) {
   const weeks = useMemo(() => getMonthWeeks(year, month), [year, month]);
   const dayNames = ["월", "화", "수", "목", "금"];
+  const today = new Date(); today.setHours(0, 0, 0, 0);
 
   function getWeekLanes(week: Date[]) {
     const weekFirst = week[0].getTime();
@@ -194,13 +199,11 @@ function CalendarView({ year, month, events }: { year: number; month: number; ev
     return lanes;
   }
 
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-
   return (
     <div className="border border-[#E0E2E4] rounded-lg overflow-hidden" data-testid="calendar-grid">
-      <div className="grid grid-cols-5 bg-[#fafafa] border-b border-[#E0E2E4]">
+      <div className="grid grid-cols-5 border-b border-[#E0E2E4]">
         {dayNames.map(d => (
-          <div key={d} className="px-2 py-2.5 text-[13px] text-[#555] font-medium text-center border-r border-[#E0E2E4] last:border-r-0">{d}</div>
+          <div key={d} className="px-2 py-2.5 text-[13px] text-[#9D9FA0] font-medium text-center border-r border-[#E0E2E4] last:border-r-0 bg-white">{d}</div>
         ))}
       </div>
       {weeks.map((week, wi) => {
@@ -212,11 +215,11 @@ function CalendarView({ year, month, events }: { year: number; month: number; ev
                 const isThisMonth = day.getMonth() === month;
                 const isToday = sameDay(day, today);
                 return (
-                  <div key={di} className="border-r border-[#E0E2E4] last:border-r-0 px-2 pt-2 pb-1">
-                    <div className={`text-[12px] text-right ${isThisMonth ? "text-[#555]" : "text-[#ccc]"}`}>
+                  <div key={di} className={`border-r border-[#E0E2E4] last:border-r-0 px-2 pt-1.5 pb-0.5 ${isToday ? "bg-[#F3F5F6]" : "bg-white"}`}>
+                    <div className={`text-[12px] text-right leading-none py-0.5 ${isThisMonth ? "text-[#14181B]" : "text-[#C5C7CB]"}`}>
                       {isToday
-                        ? <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#03C75A] text-white text-[11px] font-bold">{day.getDate()}</span>
-                        : day.getDate()
+                        ? <span className="inline-flex items-center justify-center w-[22px] h-[22px] rounded-full bg-[#14181B] text-white text-[11px] font-bold">{day.getDate()}</span>
+                        : <span className="inline-flex items-center justify-center w-[22px] h-[22px]">{day.getDate()}</span>
                       }
                     </div>
                   </div>
@@ -224,14 +227,14 @@ function CalendarView({ year, month, events }: { year: number; month: number; ev
               })}
             </div>
             {lanes.length > 0 && (
-              <div className="pb-1 px-1" style={{ minHeight: lanes.length * 26 }}>
+              <div className="pb-1 px-0.5 bg-white" style={{ minHeight: lanes.length * 26 }}>
                 {lanes.map((lane, li) => {
                   const cells: JSX.Element[] = [];
                   let col = 0;
                   while (col < 5) {
                     const ev = lane[col];
                     if (!ev) {
-                      cells.push(<div key={col} style={{ flex: 1 }} />);
+                      cells.push(<div key={col} style={{ flex: 1, minWidth: 0 }} />);
                       col++;
                     } else {
                       let span = 1;
@@ -241,23 +244,21 @@ function CalendarView({ year, month, events }: { year: number; month: number; ev
                       cells.push(
                         <div
                           key={col}
-                          style={{ flex: span, backgroundColor: ev.color, borderRadius: isStart && isEnd ? 4 : isStart ? "4px 0 0 4px" : isEnd ? "0 4px 4px 0" : 0, marginLeft: isStart ? 1 : 0, marginRight: isEnd ? 1 : 0 }}
+                          style={{ flex: span, backgroundColor: ev.bgColor, borderRadius: isStart && isEnd ? 4 : isStart ? "4px 0 0 4px" : isEnd ? "0 4px 4px 0" : 0, marginLeft: isStart ? 1 : 0, marginRight: isEnd ? 1 : 0 }}
                           className="h-[22px] flex items-center px-1.5 overflow-hidden"
                           title={`${ev.name} (${ev.status})`}
                         >
-                          {isStart && <span className="text-[10px] text-[#333] font-medium truncate leading-none">{ev.name}</span>}
+                          {isStart && <span className="text-[10px] font-medium truncate leading-none" style={{ color: ev.color }}>{ev.name}</span>}
                         </div>
                       );
                       col += span;
                     }
                   }
-                  return (
-                    <div key={li} className="flex mb-[2px]">{cells}</div>
-                  );
+                  return <div key={li} className="flex mb-[2px] bg-white">{cells}</div>;
                 })}
               </div>
             )}
-            {lanes.length === 0 && <div style={{ minHeight: 32 }} />}
+            {lanes.length === 0 && <div className="bg-white" style={{ minHeight: 36 }} />}
           </div>
         );
       })}
@@ -269,6 +270,7 @@ function CalendarSection() {
   const today = new Date();
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>("being");
 
   const { data: ipoApiData, isLoading } = useQuery<IpoCalendarApiResponse>({
     queryKey: ["/api/market/ipo-calendar"],
@@ -276,11 +278,12 @@ function CalendarSection() {
   });
 
   const naverData = ipoApiData?.naverData;
+  const events = useMemo(() => naverData ? buildCalEvents(naverData) : [], [naverData]);
 
-  const events = useMemo(() => {
-    if (!naverData) return [];
-    return buildCalEvents(naverData);
-  }, [naverData]);
+  const beingIPO = naverData?.beingIPOList || [];
+  const toBeIPO = naverData?.toBeIPOList || [];
+  const readyIPO = naverData?.readyToIpoStocks || [];
+  const ipoNews = naverData?.ipoNews || [];
 
   const monthName = `${calYear}년 ${calMonth + 1}월`;
 
@@ -294,36 +297,31 @@ function CalendarSection() {
   }
   function goToday() { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); }
 
-  const beingIPO = naverData?.beingIPOList || [];
-  const toBeIPO = naverData?.toBeIPOList || [];
-  const readyIPO = naverData?.readyToIpoStocks || [];
-  const ipoNews = naverData?.ipoNews || [];
-  const hasItems = beingIPO.length > 0 || toBeIPO.length > 0;
+  const currentSidebarItems = sidebarTab === "being" ? beingIPO : toBeIPO;
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-6">
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-[#14181B]">{monthName}</h2>
-              <Info className="w-4 h-4 text-[#BFC0C1]" />
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1.5">
+              <span className="text-base font-bold text-[#14181B]">{monthName}</span>
+              <button className="text-[#9D9FA0]"><HelpCircle className="w-4 h-4" /></button>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={prevMonth} className="px-2 py-1 rounded border border-[#E0E2E4] text-xs text-[#585B5E] hover:bg-[#F9FAFB]" data-testid="button-cal-prev">
-                <ChevronLeft className="w-3.5 h-3.5" />
+              <button onClick={prevMonth} className="w-8 h-8 flex items-center justify-center rounded border border-[#E0E2E4] text-[#585B5E] hover:bg-[#F9FAFB] transition-colors" data-testid="button-cal-prev">
+                <ChevronLeft className="w-4 h-4" />
               </button>
-              <button onClick={goToday} className="px-3 py-1 rounded border border-[#E0E2E4] text-xs text-[#585B5E] hover:bg-[#F9FAFB]" data-testid="button-cal-today">오늘</button>
-              <button onClick={nextMonth} className="px-2 py-1 rounded border border-[#E0E2E4] text-xs text-[#585B5E] hover:bg-[#F9FAFB]" data-testid="button-cal-next">
-                <ChevronRight className="w-3.5 h-3.5" />
+              <button onClick={goToday} className="h-8 px-3 rounded border border-[#E0E2E4] text-[13px] text-[#585B5E] hover:bg-[#F9FAFB] transition-colors" data-testid="button-cal-today">오늘</button>
+              <button onClick={nextMonth} className="w-8 h-8 flex items-center justify-center rounded border border-[#E0E2E4] text-[#585B5E] hover:bg-[#F9FAFB] transition-colors" data-testid="button-cal-next">
+                <ChevRight className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            {STATUS_LEGEND.map(({ label, color }) => (
-              <span key={label} className="inline-flex items-center gap-1.5 text-[12px] text-[#585B5E] px-2.5 py-1 rounded-full border border-[#E0E2E4] bg-white">
-                <span className="w-2.5 h-2.5 rounded-sm inline-block" style={{ backgroundColor: color }} />
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {STATUS_LEGEND.map(({ label, bgColor, border }: any) => (
+              <span key={label} className="inline-flex items-center gap-1 text-[11px] text-[#585B5E] px-2 py-0.5 rounded-full border" style={{ backgroundColor: bgColor || "#F9FAFB", borderColor: border || "#E0E2E4" }}>
                 {label}
               </span>
             ))}
@@ -332,53 +330,53 @@ function CalendarSection() {
           {isLoading ? (
             <div className="border border-[#E0E2E4] rounded-lg overflow-hidden animate-pulse">
               <div className="h-10 bg-[#fafafa] border-b border-[#E0E2E4]" />
-              {[...Array(5)].map((_, i) => <div key={i} className="h-20 border-b border-[#E0E2E4] last:border-b-0 bg-white" />)}
+              {[...Array(5)].map((_, i) => <div key={i} className="h-24 border-b border-[#E0E2E4] last:border-b-0 bg-white" />)}
             </div>
           ) : (
-            <div className="min-w-0 overflow-x-auto">
-              <div className="min-w-[480px]">
-                <CalendarView year={calYear} month={calMonth} events={events} />
+            <div className="overflow-x-auto">
+              <div className="min-w-[460px]">
+                <CalendarGrid year={calYear} month={calMonth} events={events} />
               </div>
             </div>
           )}
 
           {ipoNews.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-sm font-bold text-[#14181B] mb-3">IPO 뉴스</h3>
-              <div className="space-y-2">
+            <div className="mt-8">
+              <h3 className="text-[15px] font-bold text-[#14181B] mb-3">IPO 뉴스</h3>
+              <div className="divide-y divide-[#F3F5F6]">
                 {ipoNews.slice(0, 5).map((news: any, i: number) => (
                   <a
                     key={i}
                     href={news.landingUrl || "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-start gap-3 p-3 border border-[#E0E2E4] rounded-lg hover:border-[#BFC0C1] hover:bg-[#F9FAFB] transition-colors"
+                    className="flex items-start gap-3 py-3 hover:bg-[#F9FAFB] px-1 rounded transition-colors"
                     data-testid={`ipo-news-${i}`}
                   >
                     {news.logoUrl ? (
-                      <img src={news.logoUrl} alt="" className="w-8 h-8 rounded object-cover shrink-0 mt-0.5" />
+                      <img src={news.logoUrl} alt="" className="w-9 h-9 rounded object-cover shrink-0" />
                     ) : (
-                      <div className="w-8 h-8 rounded bg-[#F3F5F6] flex items-center justify-center shrink-0 mt-0.5">
-                        <span className="text-[10px] font-bold text-[#9D9FA0]">N</span>
+                      <div className="w-9 h-9 rounded bg-[#E6E8EA] flex items-center justify-center shrink-0">
+                        <span className="text-[11px] font-bold text-[#9D9FA0]">N</span>
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm text-[#14181B] line-clamp-2 leading-snug mb-0.5">{news.title}</p>
-                      <p className="text-[11px] text-[#9D9FA0]">{news.mediaIssuerName} | {news.publishedAt ? new Date(news.publishedAt).toLocaleDateString("ko-KR") : ""}</p>
+                      <p className="text-[13px] text-[#14181B] line-clamp-2 leading-snug mb-0.5 font-medium">{news.title}</p>
+                      <p className="text-[11px] text-[#9D9FA0]">{news.mediaIssuerName} · {news.publishedAt ? new Date(news.publishedAt).toLocaleDateString("ko-KR", { month: "long", day: "numeric" }) : ""}</p>
                     </div>
-                    <ExternalLink className="w-3.5 h-3.5 text-[#BFC0C1] shrink-0 mt-1" />
+                    <ExternalLink className="w-3.5 h-3.5 text-[#C5C7CB] shrink-0 mt-0.5" />
                   </a>
                 ))}
               </div>
             </div>
           )}
 
-          <div className="mt-6 border-t border-[#E0E2E4] pt-4">
-            <div className="flex items-center gap-1.5 mb-2 text-[#9D9FA0]">
-              <Info className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">유의사항</span>
+          <div className="mt-6 pt-4 border-t border-[#E0E2E4]">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Info className="w-3.5 h-3.5 text-[#BFC0C1]" />
+              <span className="text-[11px] font-medium text-[#9D9FA0]">유의사항</span>
             </div>
-            <ul className="text-[11px] text-[#9D9FA0] space-y-1 list-disc pl-4">
+            <ul className="text-[11px] text-[#BFC0C1] space-y-1 list-disc pl-4">
               <li>모든 정보는 정보 제공을 위한 것으로, 투자 권유를 목적으로 하지 않습니다.</li>
               <li>제공되는 정보는 오류 또는 지연이 발생할 수 있으며, 책임을 지지 않습니다.</li>
               <li>데이터 출처: Npay 비상장 (ustock.naver.com)</li>
@@ -386,101 +384,100 @@ function CalendarSection() {
           </div>
         </div>
 
-        <div className="lg:w-[300px] shrink-0">
-          {beingIPO.length > 0 && (
-            <div className="mb-5">
-              <h3 className="text-base font-bold text-[#14181B] mb-3">공모청약 진행중</h3>
-              <div className="space-y-2">
-                {beingIPO.map((ipo, i) => {
-                  const price = fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice);
-                  return (
-                    <div key={i} className="border border-[#E0E2E4] rounded-lg p-3 hover:border-[#BFC0C1] transition-colors cursor-pointer" data-testid={`sidebar-being-${i}`}>
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-[#FCDDE1] text-[#c0392b]">공모청약</span>
-                        <span className="text-[11px] font-bold text-[#03C75A]">진행중</span>
-                        {ipo.closedDate && <span className="text-[10px] text-[#9D9FA0] ml-auto">~{fmtMD(ipo.closedDate)}</span>}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <StockIcon name={ipo.stockName} logoUrl={ipo.logoUrl || undefined} size={28} />
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-[#14181B] truncate">{ipo.stockName}</p>
-                          {price !== "-" && <p className="text-[11px] text-[#585B5E]">공모가 {price}</p>}
-                          {ipo.instCompetitiveness != null && (
-                            <p className="text-[11px] text-[#9D9FA0]">기관경쟁률 {Number(ipo.instCompetitiveness).toLocaleString()}:1</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+        <div className="lg:w-[296px] shrink-0">
+          <h3 className="text-[15px] font-bold text-[#14181B] mb-3">다가오는 청약 종목</h3>
 
-          {toBeIPO.length > 0 && (
-            <div className="mb-5">
-              <h3 className="text-base font-bold text-[#14181B] mb-3">청약예정</h3>
-              <div className="space-y-2">
-                {toBeIPO.slice(0, 6).map((ipo, i) => {
-                  const price = fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice);
-                  const dday = fmtDDay(ipo.offeringStartAt);
-                  return (
-                    <div key={i} className="border border-[#E0E2E4] rounded-lg p-3 hover:border-[#BFC0C1] transition-colors cursor-pointer" data-testid={`sidebar-tobe-${i}`}>
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-[#D7C8E8] text-[#6c3483]">청약예정</span>
-                        {dday && <span className="text-[11px] font-bold text-[#03C75A]">{dday}</span>}
-                        {ipo.offeringStartAt && <span className="text-[10px] text-[#9D9FA0] ml-auto">{fmtMD(ipo.offeringStartAt)} ~</span>}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <StockIcon name={ipo.stockName} logoUrl={ipo.logoUrl || undefined} size={28} />
-                        <div className="min-w-0">
-                          <p className="text-sm font-bold text-[#14181B] truncate">{ipo.stockName}</p>
-                          {price !== "-" && <p className="text-[11px] text-[#585B5E]">희망가 {price}</p>}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <div className="flex border-b border-[#E0E2E4] mb-4">
+            <button
+              onClick={() => setSidebarTab("being")}
+              className={`flex-1 py-2.5 text-[13px] font-bold border-b-2 transition-colors ${sidebarTab === "being" ? "border-[#14181B] text-[#14181B]" : "border-transparent text-[#9D9FA0]"}`}
+              data-testid="sidebar-tab-being"
+            >
+              청약진행중 {beingIPO.length}
+            </button>
+            <button
+              onClick={() => setSidebarTab("tobe")}
+              className={`flex-1 py-2.5 text-[13px] font-bold border-b-2 transition-colors ${sidebarTab === "tobe" ? "border-[#14181B] text-[#14181B]" : "border-transparent text-[#9D9FA0]"}`}
+              data-testid="sidebar-tab-tobe"
+            >
+              청약예정 {toBeIPO.length}
+            </button>
+          </div>
 
-          {!isLoading && !hasItems && (
-            <div className="border border-[#E0E2E4] rounded-lg p-6 text-center">
-              <p className="text-sm text-[#9D9FA0]">현재 청약 일정이 없습니다</p>
-            </div>
-          )}
-
-          {isLoading && (
+          {isLoading ? (
             <div className="space-y-3">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="border border-[#E0E2E4] rounded-lg p-3 animate-pulse">
-                  <div className="h-3 w-16 bg-gray-100 rounded mb-2" />
-                  <div className="h-4 w-28 bg-gray-100 rounded mb-1" />
-                  <div className="h-3 w-full bg-gray-100 rounded" />
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="border border-[#E0E2E4] rounded-xl p-4 animate-pulse">
+                  <div className="h-3 w-24 bg-[#F3F5F6] rounded mb-3" />
+                  <div className="flex gap-2">
+                    <div className="w-10 h-10 bg-[#F3F5F6] rounded-full" />
+                    <div className="flex-1">
+                      <div className="h-4 w-20 bg-[#F3F5F6] rounded mb-1.5" />
+                      <div className="h-3 w-28 bg-[#F3F5F6] rounded" />
+                    </div>
+                  </div>
                 </div>
               ))}
+            </div>
+          ) : currentSidebarItems.length === 0 ? (
+            <div className="border border-[#E0E2E4] rounded-xl p-6 text-center">
+              <p className="text-[13px] text-[#9D9FA0]">해당 청약 종목이 없습니다</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {currentSidebarItems.map((ipo, i) => {
+                const isOngoing = sidebarTab === "being";
+                const dateLabel = isOngoing
+                  ? ipo.closedDate ? `${fmtMD(ipo.closedDate)} 마감` : "마감일 미정"
+                  : ipo.offeringStartAt ? `${fmtMD(ipo.offeringStartAt)} 시작` : "일정 미정";
+                const dday = !isOngoing ? fmtDDay(ipo.offeringStartAt) : null;
+                const price = fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice);
+                return (
+                  <div key={i} className="border border-[#E0E2E4] rounded-xl overflow-hidden" data-testid={`sidebar-ipo-${i}`}>
+                    <div className="flex items-center gap-1.5 px-4 py-2 bg-[#F9FAFB] border-b border-[#E0E2E4]">
+                      <span className={`text-[11px] font-bold ${isOngoing ? "text-[#03C75A]" : "text-[#9D9FA0]"}`}>
+                        {isOngoing ? "진행중" : (dday || "예정")}
+                      </span>
+                      <span className="text-[11px] text-[#9D9FA0]">{dateLabel}</span>
+                    </div>
+                    <div className="flex items-center gap-3 px-4 py-3">
+                      <StockIcon name={ipo.stockName} logoUrl={ipo.logoUrl || undefined} size={36} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[14px] font-bold text-[#14181B] truncate">{ipo.stockName}</p>
+                        {price !== "-" && (
+                          <p className="text-[12px] text-[#585B5E] mt-0.5">
+                            {isOngoing ? "공모가" : "희망가"} {price}
+                          </p>
+                        )}
+                        {ipo.instCompetitiveness != null && (
+                          <p className="text-[11px] text-[#9D9FA0]">기관경쟁률 {Number(ipo.instCompetitiveness).toLocaleString()}:1</p>
+                        )}
+                      </div>
+                      <ChevRight className="w-4 h-4 text-[#C5C7CB] shrink-0" />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 
           {readyIPO.length > 0 && (
-            <div className="mt-2">
-              <h3 className="text-sm font-bold text-[#14181B] mb-2">상장 준비 중</h3>
-              <div className="border border-[#E0E2E4] rounded-lg overflow-hidden">
+            <div className="mt-6">
+              <h3 className="text-[14px] font-bold text-[#14181B] mb-2">상장 준비 중</h3>
+              <div className="border border-[#E0E2E4] rounded-xl overflow-hidden">
                 {readyIPO.slice(0, 6).map((ipo: any, i: number) => {
-                  const stateLabel: Record<string, string> = {
-                    "EXAMINATION_REQUESTED": "심사청구",
-                    "DEMAND_FORECAST": "수요예측",
-                    "APPROVED": "상장승인",
+                  const labels: Record<string, string> = {
+                    EXAMINATION_REQUESTED: "심사청구",
+                    DEMAND_FORECAST: "수요예측",
+                    APPROVED: "상장승인",
+                    REGISTRATION_STATEMENT: "신고서제출",
                   };
-                  const label = stateLabel[ipo.ipoState] || ipo.ipoState || "준비중";
+                  const label = labels[ipo.ipoState] || "준비중";
                   return (
-                    <div key={i} className="flex items-center gap-2 px-3 py-2.5 border-b border-[#E0E2E4] last:border-b-0" data-testid={`ready-ipo-${i}`}>
+                    <div key={i} className="flex items-center gap-2 px-3 py-2.5 border-b border-[#F3F5F6] last:border-b-0" data-testid={`ready-ipo-${i}`}>
                       <StockIcon name={ipo.stockName} logoUrl={ipo.logoUrl || undefined} size={24} />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium text-[#14181B] truncate">{ipo.stockName}</p>
-                      </div>
-                      <span className="text-[10px] text-[#9D9FA0] shrink-0 bg-[#F3F5F6] px-1.5 py-0.5 rounded">{label}</span>
+                      <p className="text-[12px] font-medium text-[#14181B] truncate flex-1">{ipo.stockName}</p>
+                      <span className="text-[10px] text-[#9D9FA0] bg-[#F3F5F6] px-1.5 py-0.5 rounded shrink-0">{label}</span>
                     </div>
                   );
                 })}
@@ -495,33 +492,30 @@ function CalendarSection() {
 
 function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-
   const { data: ipoApiData } = useQuery<IpoCalendarApiResponse>({
     queryKey: ["/api/market/ipo-calendar"],
   });
-
   const ipoNews = ipoApiData?.naverData?.ipoNews || [];
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-8" data-testid="section-faq">
-      <h2 className="text-lg font-bold text-[#14181B] mb-6">IPO, 이런게 궁금해요!</h2>
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-1">
-          <h3 className="text-sm font-bold text-[#14181B] mb-4">IPO 공모주 청약의 모든 것</h3>
-          <div className="border border-[#E0E2E4] rounded-lg overflow-hidden">
+          <h3 className="text-[15px] font-bold text-[#14181B] mb-4">IPO 공모주 청약의 모든 것</h3>
+          <div className="border border-[#E0E2E4] rounded-xl overflow-hidden">
             {FAQ_ITEMS.map((item, i) => (
               <div key={i} className="border-b border-[#E0E2E4] last:border-b-0">
                 <button
                   onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                  className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-[#F9FAFB] transition-colors"
+                  className="w-full flex items-center justify-between px-4 py-4 text-left hover:bg-[#F9FAFB] transition-colors"
                   data-testid={`faq-toggle-${i}`}
                 >
-                  <span className="text-sm text-[#14181B]">{item.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-[#9D9FA0] shrink-0 transition-transform ${openIndex === i ? "rotate-180" : ""}`} />
+                  <span className="text-[13px] text-[#14181B] font-medium">{item.q}</span>
+                  <ChevronLeft className={`w-4 h-4 text-[#9D9FA0] shrink-0 transition-transform ${openIndex === i ? "-rotate-90" : "rotate-[270deg]"}`} style={{ transform: openIndex === i ? "rotate(-90deg)" : "rotate(90deg)" }} />
                 </button>
                 {openIndex === i && (
                   <div className="px-4 pb-4">
-                    <p className="text-sm text-[#585B5E] leading-relaxed">{item.a}</p>
+                    <p className="text-[13px] text-[#585B5E] leading-relaxed">{item.a}</p>
                   </div>
                 )}
               </div>
@@ -529,33 +523,33 @@ function FAQSection() {
           </div>
         </div>
 
-        <div className="lg:w-[380px]">
-          <h3 className="text-sm font-bold text-[#14181B] mb-4">IPO News 모아보기</h3>
-          <div className="space-y-3">
+        <div className="lg:w-[340px]">
+          <h3 className="text-[15px] font-bold text-[#14181B] mb-4">IPO News 모아보기</h3>
+          <div className="divide-y divide-[#F3F5F6]">
             {ipoNews.slice(0, 6).map((news: any, i: number) => (
               <a
                 key={i}
                 href={news.landingUrl || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-start gap-3 py-2 hover:bg-[#F9FAFB] rounded px-2 transition-colors"
+                className="flex items-start gap-3 py-3 hover:bg-[#F9FAFB] px-1 rounded transition-colors"
                 data-testid={`faq-news-${i}`}
               >
                 {news.logoUrl ? (
-                  <img src={news.logoUrl} alt="" className="w-8 h-8 rounded object-cover shrink-0 mt-0.5" />
+                  <img src={news.logoUrl} alt="" className="w-9 h-9 rounded object-cover shrink-0" />
                 ) : (
-                  <div className="w-8 h-8 rounded bg-[#F3F5F6] flex items-center justify-center shrink-0 mt-0.5">
-                    <span className="text-[10px] font-bold text-[#9D9FA0]">N</span>
+                  <div className="w-9 h-9 rounded bg-[#E6E8EA] flex items-center justify-center shrink-0">
+                    <span className="text-[11px] font-bold text-[#9D9FA0]">N</span>
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="text-sm text-[#14181B] line-clamp-2 leading-snug mb-0.5">{news.title}</p>
-                  <p className="text-[11px] text-[#9D9FA0]">{news.mediaIssuerName} | {news.publishedAt ? new Date(news.publishedAt).toLocaleDateString("ko-KR") : ""}</p>
+                  <p className="text-[13px] text-[#14181B] line-clamp-2 leading-snug mb-0.5">{news.title}</p>
+                  <p className="text-[11px] text-[#9D9FA0]">{news.mediaIssuerName} · {news.publishedAt ? new Date(news.publishedAt).toLocaleDateString("ko-KR", { month: "long", day: "numeric" }) : ""}</p>
                 </div>
               </a>
             ))}
             {ipoNews.length === 0 && (
-              <p className="text-sm text-[#9D9FA0] text-center py-4">뉴스를 불러오는 중입니다...</p>
+              <p className="text-[13px] text-[#9D9FA0] text-center py-6">뉴스를 불러오는 중입니다...</p>
             )}
           </div>
         </div>
@@ -569,7 +563,7 @@ export default function IPOCalendarPage() {
 
   return (
     <div className="min-h-screen bg-white" data-testid="page-ipo-calendar">
-      <header className="border-b border-[#E0E2E4]">
+      <header className="border-b border-[#E0E2E4] bg-white">
         <div className="max-w-[1200px] mx-auto px-4 h-14 flex items-center justify-between">
           <Link href="/">
             <span className="flex items-center gap-1.5 cursor-pointer" data-testid="link-home">
@@ -577,7 +571,7 @@ export default function IPOCalendarPage() {
             </span>
           </Link>
           <Link href="/">
-            <span className="flex items-center gap-1 text-sm text-[#585B5E] hover:text-[#14181B] cursor-pointer" data-testid="link-back-home">
+            <span className="flex items-center gap-1 text-[13px] text-[#585B5E] hover:text-[#14181B] cursor-pointer" data-testid="link-back-home">
               <ArrowLeft className="w-4 h-4" />
               홈으로
             </span>
@@ -585,18 +579,27 @@ export default function IPOCalendarPage() {
         </div>
       </header>
 
-      <div className="max-w-[1200px] mx-auto px-4">
-        <div className="flex items-center gap-4 border-b border-[#E0E2E4]">
+      <div className="max-w-[1200px] mx-auto px-4 pt-8 pb-0">
+        <div className="flex items-center gap-0">
           <button
             onClick={() => setActivePageTab("calendar")}
-            className={`py-4 text-sm sm:text-base font-bold border-b-2 transition-colors whitespace-nowrap ${activePageTab === "calendar" ? "border-[#14181B] text-[#14181B]" : "border-transparent text-[#9D9FA0]"}`}
+            className={`text-[22px] font-bold transition-colors ${activePageTab === "calendar" ? "text-[#14181B]" : "text-[#9D9FA0]"}`}
             data-testid="tab-page-calendar"
           >
             공모주 IPO 캘린더
           </button>
+          <span className="mx-3 text-[#C5C7CB] text-[18px]">|</span>
+          <button
+            onClick={() => setActivePageTab("trade")}
+            className={`text-[22px] font-bold transition-colors ${activePageTab === "trade" ? "text-[#14181B]" : "text-[#9D9FA0]"}`}
+            data-testid="tab-page-trade"
+          >
+            청약 전 거래
+          </button>
+          <span className="mx-3 text-[#C5C7CB] text-[18px]">|</span>
           <button
             onClick={() => setActivePageTab("faq")}
-            className={`py-4 text-sm sm:text-base border-b-2 transition-colors whitespace-nowrap ${activePageTab === "faq" ? "border-[#14181B] text-[#14181B] font-bold" : "border-transparent text-[#9D9FA0]"}`}
+            className={`text-[22px] font-bold transition-colors ${activePageTab === "faq" ? "text-[#14181B]" : "text-[#9D9FA0]"}`}
             data-testid="tab-page-faq"
           >
             FAQ
@@ -605,24 +608,24 @@ export default function IPOCalendarPage() {
       </div>
 
       {activePageTab === "calendar" && <CalendarSection />}
+      {activePageTab === "trade" && (
+        <div className="max-w-[1200px] mx-auto px-4 py-16 text-center">
+          <p className="text-[#9D9FA0] text-[14px]">청약 전 거래 정보는 준비 중입니다.</p>
+        </div>
+      )}
       {activePageTab === "faq" && <FAQSection />}
 
-      <footer className="border-t border-[#E0E2E4] mt-8 bg-[#F9FAFB]">
+      <footer className="border-t border-[#E0E2E4] mt-12 bg-[#F9FAFB]">
         <div className="max-w-[1200px] mx-auto px-4 py-8">
-          <div className="flex items-center gap-1.5 mb-4">
-            <SiteLogoBadge size={22} />
+          <div className="flex items-center gap-1.5 mb-3">
+            <SiteLogoBadge size={20} />
           </div>
           <p className="text-[11px] text-[#9D9FA0] leading-relaxed">
             Npay 비상장은 비상장주식 거래 정보를 제공하며, 투자 판단에 대한 책임은 투자자 본인에게 있습니다.
           </p>
-          <p className="text-[11px] text-[#BFC0C1] mt-2">© 2026 Npay 비상장. All rights reserved.</p>
+          <p className="text-[11px] text-[#C5C7CB] mt-1.5">© 2026 Npay 비상장. All rights reserved.</p>
         </div>
       </footer>
-
-      <style>{`
-        .scrollbar-none::-webkit-scrollbar { display: none; }
-        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
     </div>
   );
 }
