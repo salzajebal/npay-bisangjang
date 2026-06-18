@@ -50,7 +50,7 @@ export default function ServiceIntroPage() {
       </header>
 
       {/* [섹션 2] 약 1,200개 이상 비상장 종목 */}
-      <section className="py-24 bg-white border-b border-slate-100">
+      <section className="py-12 sm:py-24 bg-white border-b border-slate-100">
         <div className="max-w-5xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* 스마트폰 UI 모형 */}
@@ -124,9 +124,9 @@ export default function ServiceIntroPage() {
       </section>
 
       {/* [섹션 3] 대형 자금 매칭을 위한 핵심 인프라 */}
-      <section className="py-24 bg-white border-b border-slate-100">
+      <section className="py-12 sm:py-24 bg-white border-b border-slate-100">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
+          <div className="text-center max-w-2xl mx-auto space-y-3 mb-8 sm:mb-16">
             <h2 className="text-3xl font-extrabold text-[#081d33] tracking-tight">
               대형 자금 매칭을 위한 핵심 인프라
             </h2>
@@ -171,7 +171,7 @@ export default function ServiceIntroPage() {
       </section>
 
       {/* [섹션 4] 실 증권계좌 연동 에스크로 */}
-      <section className="py-24 bg-slate-50 border-b border-slate-200">
+      <section className="py-12 sm:py-24 bg-slate-50 border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* 왼쪽 본문 */}
@@ -228,7 +228,7 @@ export default function ServiceIntroPage() {
       </section>
 
       {/* [섹션 5] 엔딩 CTA */}
-      <section className="py-24 text-white relative overflow-hidden" style={{ background: "linear-gradient(135deg, #0f172a 0%, #081d33 50%, #020617 100%)" }}>
+      <section className="py-12 sm:py-24 text-white relative overflow-hidden" style={{ background: "linear-gradient(135deg, #0f172a 0%, #081d33 50%, #020617 100%)" }}>
         <div className="absolute inset-0" style={{ background: "radial-gradient(circle at top, rgba(0,199,60,0.08), transparent 50%)" }}></div>
         <div className="max-w-4xl mx-auto px-6 text-center space-y-6 relative z-10">
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">

@@ -1908,8 +1908,8 @@ function Footer() {
           비상장주식은 상장주식에 비해 유동성이 낮고 가격 변동성이 클 수 있으니 투자에 유의하시기 바랍니다.
         </p>
 
-        <div className="flex items-start justify-between gap-4">
-          <div className="text-[11px] text-[#9D9FA0] leading-relaxed space-y-0.5">
+        <div className="flex flex-col sm:flex-row items-start gap-4">
+          <div className="text-[11px] text-[#9D9FA0] leading-relaxed space-y-0.5 flex-1">
             <p>네이버페이비상장(주) &nbsp;|&nbsp; 대표 이영민 &nbsp;|&nbsp; 사업자 등록번호 696-86-03457 &nbsp;|&nbsp; 고객센터 1588-9449</p>
             <p>06621 서울 서초구 서초대로78길 28, 5층 &nbsp;|&nbsp; © Npay Ustock</p>
           </div>

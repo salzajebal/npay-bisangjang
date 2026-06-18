@@ -698,8 +698,8 @@ function CalendarSection() {
               {[...Array(5)].map((_, i) => <div key={i} className="h-24 border-b border-[#E0E2E4] last:border-b-0 bg-white" />)}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <div className="min-w-[460px]">
+            <div className="overflow-x-auto -mx-4 px-4">
+              <div className="min-w-[340px]">
                 <CalendarGrid year={calYear} month={calMonth} events={events} />
               </div>
             </div>
@@ -904,7 +904,7 @@ function TradeSection() {
     <div className="max-w-[1200px] mx-auto px-4 py-6" data-testid="section-trade">
 
       {/* 헤더 */}
-      <h2 className="text-[20px] font-bold text-[#14181B] mb-6">청약 전에도 비상장 주식으로 미리 거래할 수 있어요!</h2>
+      <h2 className="text-[16px] sm:text-[20px] font-bold text-[#14181B] mb-4 sm:mb-6">청약 전에도 비상장 주식으로 미리 거래할 수 있어요!</h2>
 
       {/* TOP5 + 차트 2컬럼 */}
       {isLoading ? (
@@ -1023,11 +1023,9 @@ function TradeSection() {
       {/* 이제 막 상장준비를 시작한, 눈여겨 볼 종목 */}
       {readyToIpo.length > 0 && (
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-[15px] font-bold text-[#14181B]">이제 막 상장준비를 시작한, 눈여겨 볼 종목</h3>
-              {baseDt && <span className="text-[11px] text-[#9D9FA0]">{baseDt} 기준</span>}
-            </div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-4">
+            <h3 className="text-[14px] sm:text-[15px] font-bold text-[#14181B]">이제 막 상장준비를 시작한, 눈여겨 볼 종목</h3>
+            {baseDt && <span className="text-[11px] text-[#9D9FA0]">{baseDt} 기준</span>}
           </div>
           <div className="overflow-x-auto -mx-4 px-4">
             <div className="flex gap-3 pb-2" style={{ minWidth: "max-content" }}>
@@ -1131,27 +1129,27 @@ export default function IPOCalendarPage() {
     <div className="min-h-screen bg-white" data-testid="page-ipo-calendar">
       <GlobalNav />
 
-      <div className="max-w-[1200px] mx-auto px-4 pt-8 pb-0">
-        <div className="flex items-center gap-0">
+      <div className="max-w-[1200px] mx-auto px-4 pt-4 sm:pt-8 pb-0">
+        <div className="flex items-center gap-0 overflow-x-auto scrollbar-none">
           <button
             onClick={() => setActivePageTab("calendar")}
-            className={`text-[22px] font-bold transition-colors ${activePageTab === "calendar" ? "text-[#14181B]" : "text-[#9D9FA0]"}`}
+            className={`text-[16px] sm:text-[22px] font-bold transition-colors whitespace-nowrap ${activePageTab === "calendar" ? "text-[#14181B]" : "text-[#9D9FA0]"}`}
             data-testid="tab-page-calendar"
           >
             공모주 IPO 캘린더
           </button>
-          <span className="mx-3 text-[#C5C7CB] text-[18px]">|</span>
+          <span className="mx-2 sm:mx-3 text-[#C5C7CB] text-[16px] sm:text-[18px]">|</span>
           <button
             onClick={() => setActivePageTab("trade")}
-            className={`text-[22px] font-bold transition-colors ${activePageTab === "trade" ? "text-[#14181B]" : "text-[#9D9FA0]"}`}
+            className={`text-[16px] sm:text-[22px] font-bold transition-colors whitespace-nowrap ${activePageTab === "trade" ? "text-[#14181B]" : "text-[#9D9FA0]"}`}
             data-testid="tab-page-trade"
           >
             청약 전 거래
           </button>
-          <span className="mx-3 text-[#C5C7CB] text-[18px]">|</span>
+          <span className="mx-2 sm:mx-3 text-[#C5C7CB] text-[16px] sm:text-[18px]">|</span>
           <button
             onClick={() => setActivePageTab("faq")}
-            className={`text-[22px] font-bold transition-colors ${activePageTab === "faq" ? "text-[#14181B]" : "text-[#9D9FA0]"}`}
+            className={`text-[16px] sm:text-[22px] font-bold transition-colors whitespace-nowrap ${activePageTab === "faq" ? "text-[#14181B]" : "text-[#9D9FA0]"}`}
             data-testid="tab-page-faq"
           >
             FAQ
@@ -1164,7 +1162,7 @@ export default function IPOCalendarPage() {
       {activePageTab === "faq" && <FAQSection />}
 
       <footer className="border-t border-[#E0E2E4] mt-12 bg-[#F9FAFB]">
-        <div className="max-w-[1200px] mx-auto px-4 py-8">
+        <div className="max-w-[1200px] mx-auto px-4 py-6 sm:py-8">
           <div className="flex items-center gap-1.5 mb-3">
             <SiteLogoBadge size={20} />
           </div>
@@ -1174,6 +1172,10 @@ export default function IPOCalendarPage() {
           <p className="text-[11px] text-[#C5C7CB] mt-1.5">© 2026 Npay 비상장. All rights reserved.</p>
         </div>
       </footer>
+      <style>{`
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   );
 }
