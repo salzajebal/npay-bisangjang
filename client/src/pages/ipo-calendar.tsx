@@ -162,6 +162,17 @@ function buildDbCalEvents(dbStocks: IpoStock[]): CalEvent[] {
     const end = new Date(stock.endDate);
     if (isNaN(start.getTime()) || isNaN(end.getTime())) continue;
 
+    // 심사청구 → 점(dot) 이벤트
+    if (stock.subscriptionStatus === "심사청구") {
+      events.push({
+        name: stock.stockName, start, end,
+        color: "#B07840", bgColor: "#FCEAD5", status: "심사청구",
+        priceRange: "-", competition: "-",
+        logoUrl: null, iconType: "dot", isBar: false,
+      });
+      continue;
+    }
+
     const isOngoing = stock.subscriptionStatus === "청약진행중";
     const color = isOngoing ? "#c0392b" : "#6c3483";
     const bgColor = isOngoing ? "#FCDDE1" : "#D7C8E8";
