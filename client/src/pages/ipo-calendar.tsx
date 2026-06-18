@@ -102,7 +102,7 @@ const FAQ_ITEMS = [
 function fmtMD(iso?: string): string {
   if (!iso) return "";
   try {
-    const d = new Date(iso);
+    const d = parseLocalDate(iso);
     return `${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
   } catch { return ""; }
 }
@@ -118,14 +118,21 @@ function fmtDDay(dateStr?: string): string | null {
   if (!dateStr) return null;
   try {
     const today = new Date(); today.setHours(0, 0, 0, 0);
-    const target = new Date(dateStr); target.setHours(0, 0, 0, 0);
+    const target = parseLocalDate(dateStr); target.setHours(0, 0, 0, 0);
     const diff = Math.ceil((target.getTime() - today.getTime()) / 86400000);
     return diff > 0 ? `D-${diff}` : diff === 0 ? "D-Day" : null;
   } catch { return null; }
 }
 
+// YYYY-MM-DD 형식을 로컬(KST) 자정으로 파싱 — new Date("YYYY-MM-DD")는 UTC 자정이라 하루 밀림
+function parseLocalDate(dateStr: string): Date {
+  const m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
+  return new Date(dateStr);
+}
+
 function addDays(dateStr: string, days: number): Date {
-  const d = new Date(dateStr);
+  const d = parseLocalDate(dateStr);
   d.setDate(d.getDate() + days);
   return d;
 }
@@ -178,8 +185,8 @@ function buildDbCalEvents(dbStocks: IpoStock[]): CalEvent[] {
   const events: CalEvent[] = [];
   for (const stock of dbStocks) {
     if (!stock.stockName || !stock.startDate || !stock.endDate) continue;
-    const start = new Date(stock.startDate);
-    const end = new Date(stock.endDate);
+    const start = parseLocalDate(stock.startDate);
+    const end = parseLocalDate(stock.endDate);
     if (isNaN(start.getTime()) || isNaN(end.getTime())) continue;
 
     // 심사청구 → 점(dot) 이벤트
@@ -219,7 +226,7 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
   // 공모청약 진행중 (pink bar) — Korean IPO subscription typically 2 trading days
   for (const ipo of naverData.beingIPOList || []) {
     if (!ipo.stockName || !ipo.closedDate) continue;
-    const end = new Date(ipo.closedDate);
+    const end = parseLocalDate(ipo.closedDate);
     const start = addDays(ipo.closedDate, -1);
     events.push({
       name: ipo.stockName, start, end,
@@ -235,7 +242,7 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
   // 청약예정 (purple bar) — show as 2-day bar from start
   for (const ipo of naverData.toBeIPOList || []) {
     if (!ipo.stockName || !ipo.offeringStartAt) continue;
-    const start = new Date(ipo.offeringStartAt);
+    const start = parseLocalDate(ipo.offeringStartAt);
     const end = addDays(ipo.offeringStartAt, 1);
     events.push({
       name: ipo.stockName, start, end,
@@ -258,8 +265,8 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
       iconType: "dot" as const,
       isBar: false,
     };
-    const start = new Date(stock.ipoDate);
-    const end = stateInfo.isBar ? addDays(stock.ipoDate, 1) : new Date(stock.ipoDate);
+    const start = parseLocalDate(stock.ipoDate);
+    const end = stateInfo.isBar ? addDays(stock.ipoDate, 1) : parseLocalDate(stock.ipoDate);
     events.push({
       name: stock.stockName, start, end,
       color: stateInfo.color, bgColor: stateInfo.bgColor,
@@ -275,9 +282,9 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
   // 신규 상장 종목 — dot events
   for (const stock of naverData.newlyListedStocks || []) {
     if (!stock.name || !stock.listingAt) continue;
-    const start = new Date(stock.listingAt);
+    const start = parseLocalDate(stock.listingAt);
     events.push({
-      name: stock.name, start, end: new Date(stock.listingAt),
+      name: stock.name, start, end: parseLocalDate(stock.listingAt),
       color: "#1b5e20", bgColor: "#E8F5E9",
       status: "상장",
       priceRange: stock.finalOfferPrice ? `${stock.finalOfferPrice.toLocaleString()}원` : "-",
@@ -304,8 +311,8 @@ function buildRichCalEvents(richIpoList: RichIpoItem[]): CalEvent[] {
 
     // 수요예측 bar
     if (ipo.demandForecastStartDate && ipo.demandForecastEndDate) {
-      const s = new Date(ipo.demandForecastStartDate);
-      const e = new Date(ipo.demandForecastEndDate);
+      const s = parseLocalDate(ipo.demandForecastStartDate);
+      const e = parseLocalDate(ipo.demandForecastEndDate);
       if (!isNaN(s.getTime()) && !isNaN(e.getTime())) {
         events.push({
           name, start: s, end: e,
@@ -319,8 +326,8 @@ function buildRichCalEvents(richIpoList: RichIpoItem[]): CalEvent[] {
     const subStart = ipo.offeringStartAt;
     const subEnd = ipo.offeringEndAt || ipo.closedDate;
     if (subStart && subEnd) {
-      const s = new Date(subStart);
-      const e = new Date(subEnd);
+      const s = parseLocalDate(subStart);
+      const e = parseLocalDate(subEnd);
       if (!isNaN(s.getTime()) && !isNaN(e.getTime())) {
         const isOngoing = ipo.ipoDetailState === "OFFER_SUBSCRIPTION";
         events.push({
@@ -335,7 +342,7 @@ function buildRichCalEvents(richIpoList: RichIpoItem[]): CalEvent[] {
     }
     // 상장 dot
     if (ipo.listingAt) {
-      const d = new Date(ipo.listingAt);
+      const d = parseLocalDate(ipo.listingAt);
       if (!isNaN(d.getTime())) {
         events.push({
           name, start: d, end: d,
@@ -875,7 +882,7 @@ function TradeSection() {
   function fmtIpoDate(iso?: string): string {
     if (!iso) return "";
     try {
-      const d = new Date(iso);
+      const d = parseLocalDate(iso);
       const yy = String(d.getFullYear()).slice(2);
       const mm = String(d.getMonth() + 1).padStart(2, "0");
       const dd = String(d.getDate()).padStart(2, "0");
