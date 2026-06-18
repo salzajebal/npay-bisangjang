@@ -33,8 +33,28 @@ interface NaverIpoCalendarData {
   newlyListedStocks: any[];
 }
 
+interface RichIpoItem {
+  code?: string;
+  koreanName?: string;
+  stockName?: string;
+  logoUrl?: string | null;
+  demandForecastStartDate?: string;
+  demandForecastEndDate?: string;
+  offeringStartAt?: string;
+  offeringEndAt?: string;
+  closedDate?: string;
+  listingAt?: string;
+  minExpectedOfferPrice?: number;
+  maxExpectedOfferPrice?: number;
+  finalOfferPrice?: number | null;
+  instCompetitiveness?: number | null;
+  offerSubscriptionCompetitiveness?: number | null;
+  ipoDetailState?: string;
+}
+
 interface IpoCalendarApiResponse {
   naverData: NaverIpoCalendarData;
+  richIpoList?: RichIpoItem[];
   lastUpdated: string | null;
 }
 
@@ -258,7 +278,7 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
     const start = new Date(stock.listingAt);
     events.push({
       name: stock.name, start, end: new Date(stock.listingAt),
-      color: "#004d40", bgColor: "#E0F2F1",
+      color: "#1b5e20", bgColor: "#E8F5E9",
       status: "상장",
       priceRange: stock.finalOfferPrice ? `${stock.finalOfferPrice.toLocaleString()}원` : "-",
       competition: stock.changeRateFromLowestPrice != null ? `${stock.changeRateFromLowestPrice > 0 ? "+" : ""}${stock.changeRateFromLowestPrice}%` : "-",
@@ -268,6 +288,64 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
     });
   }
 
+  return events;
+}
+
+// Rich IPO 데이터(ustockplus)로 수요예측·공모청약·상장 이벤트 생성
+function buildRichCalEvents(richIpoList: RichIpoItem[]): CalEvent[] {
+  const events: CalEvent[] = [];
+  for (const ipo of richIpoList) {
+    const name = ipo.koreanName || ipo.stockName;
+    if (!name) continue;
+    const logo = ipo.logoUrl || null;
+    const price = fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice);
+    const comp = ipo.offerSubscriptionCompetitiveness || ipo.instCompetitiveness;
+    const compStr = comp ? `${comp.toLocaleString()}:1` : "-";
+
+    // 수요예측 bar
+    if (ipo.demandForecastStartDate && ipo.demandForecastEndDate) {
+      const s = new Date(ipo.demandForecastStartDate);
+      const e = new Date(ipo.demandForecastEndDate);
+      if (!isNaN(s.getTime()) && !isNaN(e.getTime())) {
+        events.push({
+          name, start: s, end: e,
+          color: "#3D5AFE", bgColor: "#E8EAF6", status: "수요예측",
+          priceRange: price, competition: compStr,
+          logoUrl: logo, iconType: "circle", isBar: true,
+        });
+      }
+    }
+    // 공모청약 bar
+    const subStart = ipo.offeringStartAt;
+    const subEnd = ipo.offeringEndAt || ipo.closedDate;
+    if (subStart && subEnd) {
+      const s = new Date(subStart);
+      const e = new Date(subEnd);
+      if (!isNaN(s.getTime()) && !isNaN(e.getTime())) {
+        const isOngoing = ipo.ipoDetailState === "OFFER_SUBSCRIPTION";
+        events.push({
+          name, start: s, end: e,
+          color: isOngoing ? "#c0392b" : "#6c3483",
+          bgColor: isOngoing ? "#FCDDE1" : "#D7C8E8",
+          status: isOngoing ? "공모청약" : "청약예정",
+          priceRange: price, competition: compStr,
+          logoUrl: logo, iconType: "square", isBar: true,
+        });
+      }
+    }
+    // 상장 dot
+    if (ipo.listingAt) {
+      const d = new Date(ipo.listingAt);
+      if (!isNaN(d.getTime())) {
+        events.push({
+          name, start: d, end: d,
+          color: "#1b5e20", bgColor: "#E8F5E9", status: "상장",
+          priceRange: price, competition: compStr,
+          logoUrl: logo, iconType: "dot", isBar: false,
+        });
+      }
+    }
+  }
   return events;
 }
 
@@ -455,16 +533,21 @@ function CalendarSection() {
   });
 
   const naverData = ipoApiData?.naverData;
+  const richIpoList: RichIpoItem[] = ipoApiData?.richIpoList || [];
 
   const events = useMemo(() => {
-    const naverEvents = naverData ? buildCalEvents(naverData) : [];
-    const dbEvents = buildDbCalEvents(dbStocks);
-    // 중복 제거: DB 종목명과 유사한 Naver 종목은 DB 우선 (표기 정규화)
     const norm = (s: string) => s.replace(/\s/g, "").replace(/져/g, "저").replace(/쟤/g, "재").toLowerCase();
+    const dbEvents = buildDbCalEvents(dbStocks);
     const dbNamesNorm = new Set(dbEvents.map(e => norm(e.name)));
-    const filteredNaver = naverEvents.filter(e => !dbNamesNorm.has(norm(e.name)));
-    return [...dbEvents, ...filteredNaver];
-  }, [naverData, dbStocks]);
+
+    // Rich 데이터가 있으면 우선 사용 (수요예측+공모청약+상장 전부 포함)
+    const richEvents = richIpoList.length > 0 ? buildRichCalEvents(richIpoList) : [];
+    // Naver 이벤트 (rich에 없는 종목 보완)
+    const naverEvents = naverData ? buildCalEvents(naverData) : [];
+    const richNamesNorm = new Set(richEvents.map(e => norm(e.name)));
+    const filteredNaver = naverEvents.filter(e => !richNamesNorm.has(norm(e.name)) && !dbNamesNorm.has(norm(e.name)));
+    return [...dbEvents, ...richEvents, ...filteredNaver];
+  }, [naverData, dbStocks, richIpoList]);
 
   const beingIPO = naverData?.beingIPOList || [];
   const toBeIPO = naverData?.toBeIPOList || [];

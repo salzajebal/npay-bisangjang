@@ -367,6 +367,7 @@ export async function registerRoutes(
   let discussionCache: DiscussionData = { discussStocks: [], discussPosts: [] };
   let expertReportCache: ExpertReport[] = [];
   let ipoCalendarCache: IpoCalendarData = { toBeIPOList: [], beingIPOList: [], toBeListingList: [] };
+  let richIpoList: any[] = [];
   let naverIpoCache: NaverIpoCalendarData = { beingIPOList: [], toBeIPOList: [], readyToIpoStocks: [], ipoNews: [], popularStocks: [], newlyListedStocks: [] };
   let naverIpoCacheTime = 0;
   let marketCacheTime = 0;
@@ -452,21 +453,34 @@ export async function registerRoutes(
           }
         }
 
-        // Q2: IPO 캘린더
-        if (qdata?.toBeIPOList !== undefined) {
-          ipoCalendarCache = {
-            toBeIPOList: qdata.toBeIPOList || [],
-            beingIPOList: qdata.beingIPOList || [],
-            toBeListingList: qdata.toBeListingList || [],
-          };
-          // Extract live prices from IPO lists (offerPrice = 현재 장외 시세)
-          const allIpoItems = [
-            ...(qdata.toBeIPOList || []),
-            ...(qdata.beingIPOList || []),
-            ...(qdata.toBeListingList || []),
-          ];
-          for (const item of allIpoItems) {
-            const name: string = item?.koreanName;
+        // Q2: IPO 캘린더 (detect rich vs limited)
+        if (qdata?.toBeIPOList !== undefined || qdata?.beingIPOList !== undefined) {
+          const beingList: any[] = qdata.beingIPOList || [];
+          const toBeList: any[] = qdata.toBeIPOList || [];
+          const listingList: any[] = qdata.toBeListingList || [];
+          // Rich version: beingIPOList has koreanName + all milestone dates
+          const isRich = (beingList[0]?.koreanName !== undefined || beingList[0]?.demandForecastStartDate !== undefined)
+            || (listingList[0]?.koreanName !== undefined || listingList[0]?.demandForecastStartDate !== undefined);
+          if (isRich) {
+            // Rich items have all milestone dates — use for comprehensive calendar
+            const richItems = [...beingList, ...listingList].filter(
+              item => item?.koreanName !== undefined || item?.demandForecastStartDate !== undefined
+            );
+            // Also add toBeList items if they have offeringEndAt (rich version)
+            const richToBe = toBeList.filter(item => item?.koreanName !== undefined || item?.offeringEndAt !== undefined);
+            richIpoList = [...richItems, ...richToBe];
+          } else {
+            // Simple version: use for ipoCalendarCache (stockName, closedDate)
+            ipoCalendarCache = {
+              toBeIPOList: toBeList,
+              beingIPOList: beingList,
+              toBeListingList: listingList,
+            };
+          }
+          // Extract live prices from IPO lists
+          const allItems = [...beingList, ...toBeList, ...listingList];
+          for (const item of allItems) {
+            const name: string = item?.koreanName || item?.stockName;
             const price: number = item?.finalOfferPrice || item?.offerPrice || item?.minExpectedOfferPrice;
             if (name && typeof price === "number" && price > 0 && !seen.has(name)) {
               ustockLiveCache.set(name, { price, change: 0 });
@@ -729,7 +743,7 @@ export async function registerRoutes(
   });
 
   app.get("/api/market/ipo-calendar", (_req, res) => {
-    res.json({ data: ipoCalendarCache, naverData: naverIpoCache, lastUpdated: naverIpoCacheTime ? new Date(naverIpoCacheTime).toISOString() : (marketCacheTime ? new Date(marketCacheTime).toISOString() : null) });
+    res.json({ data: ipoCalendarCache, naverData: naverIpoCache, richIpoList, lastUpdated: naverIpoCacheTime ? new Date(naverIpoCacheTime).toISOString() : (marketCacheTime ? new Date(marketCacheTime).toISOString() : null) });
   });
 
   app.get("/api/stocks/news", async (_req, res) => {
