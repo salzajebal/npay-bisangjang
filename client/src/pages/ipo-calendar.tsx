@@ -468,8 +468,39 @@ function CalendarSection() {
 
   const beingIPO = naverData?.beingIPOList || [];
   const toBeIPO = naverData?.toBeIPOList || [];
-  const readyIPO = naverData?.readyToIpoStocks || [];
+  const naverReadyIPO: any[] = naverData?.readyToIpoStocks || [];
   const ipoNews = naverData?.ipoNews || [];
+
+  // Naver 로고 맵 (종목명 정규화 → logoUrl)
+  const norm = (s: string) => s.replace(/\s/g, "").replace(/져/g, "저").toLowerCase();
+  const naverLogoMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const s of naverReadyIPO) {
+      if (s.stockName && s.logoUrl) m[norm(s.stockName)] = s.logoUrl;
+    }
+    return m;
+  }, [naverReadyIPO]);
+
+  // DB 심사청구 종목을 사이드바 형식으로 변환 (Naver 로고 매칭)
+  const dbReadyIPO = useMemo(() => {
+    return dbStocks
+      .filter(s => s.subscriptionStatus === "심사청구")
+      .sort((a, b) => (b.startDate || "").localeCompare(a.startDate || ""))
+      .map(s => ({
+        stockName: s.stockName,
+        ipoDate: s.startDate,
+        ipoState: "EXAMINATION_REQUESTED",
+        logoUrl: naverLogoMap[norm(s.stockName)] || "",
+        _fromDb: true,
+      }));
+  }, [dbStocks, naverLogoMap]);
+
+  // Naver readyIPO에서 DB에 없는 종목만 추가
+  const dbReadyNames = useMemo(() => new Set(dbReadyIPO.map(s => norm(s.stockName))), [dbReadyIPO]);
+  const readyIPO = useMemo(() => [
+    ...dbReadyIPO,
+    ...naverReadyIPO.filter(s => !dbReadyNames.has(norm(s.stockName))),
+  ], [dbReadyIPO, naverReadyIPO, dbReadyNames]);
 
   const monthName = `${calYear}년 ${calMonth + 1}월`;
 
