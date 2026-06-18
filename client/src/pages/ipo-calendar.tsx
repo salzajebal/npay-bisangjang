@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ChevronLeft, ChevronRight as ChevRight, ArrowLeft, Info, HelpCircle, ExternalLink } from "lucide-react";
+import { ChevronRight, ChevronLeft, ChevronRight as ChevRight, Info, HelpCircle, ExternalLink } from "lucide-react";
 import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
+import { GlobalNav } from "@/components/global-nav";
 import type { IpoStock } from "@shared/schema";
 
 type PageTab = "calendar" | "trade" | "faq";
@@ -1128,21 +1129,7 @@ export default function IPOCalendarPage() {
 
   return (
     <div className="min-h-screen bg-white" data-testid="page-ipo-calendar">
-      <header className="border-b border-[#E0E2E4] bg-white">
-        <div className="max-w-[1200px] mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/">
-            <span className="flex items-center gap-1.5 cursor-pointer" data-testid="link-home">
-              <SiteLogoBadge size={24} />
-            </span>
-          </Link>
-          <Link href="/">
-            <span className="flex items-center gap-1 text-[13px] text-[#585B5E] hover:text-[#14181B] cursor-pointer" data-testid="link-back-home">
-              <ArrowLeft className="w-4 h-4" />
-              홈으로
-            </span>
-          </Link>
-        </div>
-      </header>
+      <GlobalNav />
 
       <div className="max-w-[1200px] mx-auto px-4 pt-8 pb-0">
         <div className="flex items-center gap-0">

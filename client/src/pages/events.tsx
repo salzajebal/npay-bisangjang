@@ -1,7 +1,5 @@
-import { Link } from "wouter";
 import { useState } from "react";
-import { SiteLogoBadge } from "@/components/site-logo";
-import { ArrowLeft } from "lucide-react";
+import { GlobalNav } from "@/components/global-nav";
 
 type Tab = "ongoing" | "ended";
 
@@ -10,21 +8,7 @@ export default function EventsPage() {
 
   return (
     <div className="min-h-screen bg-white" data-testid="page-events">
-      <header className="border-b border-[#E0E2E4] bg-white sticky top-0 z-50">
-        <div className="max-w-[1200px] mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/">
-            <span className="flex items-center gap-1.5 cursor-pointer" data-testid="link-home">
-              <SiteLogoBadge size={24} />
-            </span>
-          </Link>
-          <Link href="/">
-            <span className="flex items-center gap-1 text-[13px] text-[#585B5E] hover:text-[#14181B] cursor-pointer" data-testid="link-back-home">
-              <ArrowLeft className="w-4 h-4" />
-              홈으로
-            </span>
-          </Link>
-        </div>
-      </header>
+      <GlobalNav />
 
       <div className="max-w-[800px] mx-auto px-4 py-10">
         <h1 className="text-2xl font-bold text-[#14181B] mb-6" data-testid="text-events-title">이벤트</h1>

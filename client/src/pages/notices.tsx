@@ -1,25 +1,9 @@
-import { Link } from "wouter";
-import { ArrowLeft } from "lucide-react";
-import { SiteLogoBadge } from "@/components/site-logo";
+import { GlobalNav } from "@/components/global-nav";
 
 export default function NoticesPage() {
   return (
     <div className="min-h-screen bg-white" data-testid="page-notices">
-      <header className="border-b border-[#E0E2E4] bg-white sticky top-0 z-50">
-        <div className="max-w-[1200px] mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/">
-            <span className="flex items-center gap-1.5 cursor-pointer" data-testid="link-home">
-              <SiteLogoBadge size={24} />
-            </span>
-          </Link>
-          <Link href="/">
-            <span className="flex items-center gap-1 text-[13px] text-[#585B5E] hover:text-[#14181B] cursor-pointer" data-testid="link-back-home">
-              <ArrowLeft className="w-4 h-4" />
-              홈으로
-            </span>
-          </Link>
-        </div>
-      </header>
+      <GlobalNav />
 
       <div className="max-w-[800px] mx-auto px-4 py-10">
         <h1 className="text-2xl font-bold text-[#14181B] mb-6" data-testid="text-notices-title">공지사항</h1>

@@ -1,26 +1,9 @@
-import { Link } from "wouter";
-import { ArrowLeft } from "lucide-react";
-import { SiteLogoBadge } from "@/components/site-logo";
+import { GlobalNav } from "@/components/global-nav";
 
 export default function ServiceIntroPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans" data-testid="page-service-intro">
-      {/* 헤더 */}
-      <header className="border-b border-[#E0E2E4] bg-white sticky top-0 z-50">
-        <div className="max-w-[1200px] mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/">
-            <span className="flex items-center gap-1.5 cursor-pointer" data-testid="link-home">
-              <SiteLogoBadge size={24} />
-            </span>
-          </Link>
-          <Link href="/">
-            <span className="flex items-center gap-1 text-[13px] text-[#585B5E] hover:text-[#14181B] cursor-pointer" data-testid="link-back-home">
-              <ArrowLeft className="w-4 h-4" />
-              홈으로
-            </span>
-          </Link>
-        </div>
-      </header>
+      <GlobalNav />
 
       {/* [섹션 1] 메인 히어로 */}
       <header className="text-white py-20 sm:py-28 border-b border-white/5" style={{ background: "linear-gradient(135deg, #021105 0%, #041f0b 50%, #072911 100%)" }}>
