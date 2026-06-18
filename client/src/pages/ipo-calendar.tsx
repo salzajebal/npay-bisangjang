@@ -130,6 +130,18 @@ function getMonthWeeks(year: number, month: number): Date[][] {
   return weeks;
 }
 
+const IPO_STATE_MAP: Record<string, { label: string; color: string; bgColor: string }> = {
+  "EXAMINATION_REQUESTED":     { label: "심사청구",   color: "#7d5a00", bgColor: "#FFF3E0" },
+  "EXAMINATION_APPROVED":      { label: "심사승인",   color: "#880e4f", bgColor: "#FCE4EC" },
+  "REPORT_SUBMITTED":          { label: "신고서제출", color: "#4a148c", bgColor: "#F3E5F5" },
+  "DEMAND_FORECAST":           { label: "수요예측",   color: "#1a237e", bgColor: "#E8EAF6" },
+  "OFFER_SUBSCRIPTION":        { label: "공모청약",   color: "#c0392b", bgColor: "#FCDDE1" },
+  "TO_BE_OFFER_SUBSCRIPTION":  { label: "청약예정",   color: "#6c3483", bgColor: "#D7C8E8" },
+  "REFUND":                    { label: "환불",       color: "#b7601e", bgColor: "#FFF8E1" },
+  "ALLOCATION":                { label: "배정",       color: "#33691e", bgColor: "#F1F8E9" },
+  "LISTING":                   { label: "상장",       color: "#004d40", bgColor: "#E0F2F1" },
+};
+
 function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
   const events: CalEvent[] = [];
 
@@ -154,6 +166,33 @@ function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
       color: "#6c3483", bgColor: "#D7C8E8", status: "청약예정",
       priceRange: fmtPrice(ipo.minExpectedOfferPrice, ipo.maxExpectedOfferPrice, ipo.finalOfferPrice),
       competition: ipo.instCompetitiveness ? `${ipo.instCompetitiveness.toLocaleString()}:1` : "-",
+    });
+  }
+
+  for (const stock of naverData.readyToIpoStocks || []) {
+    if (!stock.stockName || !stock.ipoDate) continue;
+    const stateInfo = IPO_STATE_MAP[stock.ipoState as string] || { label: stock.ipoState || "준비중", color: "#555", bgColor: "#f5f5f5" };
+    const start = new Date(stock.ipoDate);
+    const end = new Date(stock.ipoDate);
+    events.push({
+      name: stock.stockName, start, end,
+      color: stateInfo.color, bgColor: stateInfo.bgColor,
+      status: stateInfo.label,
+      priceRange: "-",
+      competition: "-",
+    });
+  }
+
+  for (const stock of naverData.newlyListedStocks || []) {
+    if (!stock.name || !stock.listingAt) continue;
+    const start = new Date(stock.listingAt);
+    const end = new Date(stock.listingAt);
+    events.push({
+      name: stock.name, start, end,
+      color: "#004d40", bgColor: "#E0F2F1",
+      status: "상장",
+      priceRange: stock.finalOfferPrice ? `${stock.finalOfferPrice.toLocaleString()}원` : "-",
+      competition: stock.changeRateFromLowestPrice != null ? `${stock.changeRateFromLowestPrice > 0 ? "+" : ""}${stock.changeRateFromLowestPrice}%` : "-",
     });
   }
 
