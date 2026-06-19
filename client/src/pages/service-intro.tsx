@@ -10,7 +10,7 @@ export default function ServiceIntroPage() {
         <div className="max-w-5xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* 왼쪽 카피라이팅 */}
-            <div className="lg:col-span-8 space-y-6 text-center lg:text-left">
+            <div className="lg:col-span-8 space-y-6 text-left">
               <div className="space-y-4">
                 <div className="inline-block bg-[#eefdf4] text-[#15a859] text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full shadow-[0_2px_10px_rgba(0,199,60,0.1)]">
                   Only for Private Syndicate &amp; Professional Investors
@@ -99,13 +99,13 @@ export default function ServiceIntroPage() {
             </div>
             {/* 오른쪽 설명 */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="space-y-2 text-center lg:text-left">
+              <div className="space-y-2 text-left">
                 <span className="text-xs font-bold text-[#00c73c] uppercase tracking-wider block">종목 수급</span>
                 <h2 className="text-3xl font-extrabold text-[#081d33] tracking-tight">
                   약 1,200개 이상 다양한 비상장 주식 종목
                 </h2>
               </div>
-              <div className="space-y-4 text-slate-600 text-sm sm:text-base leading-relaxed text-center lg:text-left">
+              <div className="space-y-4 text-slate-600 text-sm sm:text-base leading-relaxed text-left">
                 <p className="font-bold text-slate-900">우량 스타트업부터 상장 임박 유니콘 기업까지,</p>
                 <p>시장을 선도할 유망 기업의 가치를 누구보다 먼저 안전하게 선점하십시오. 공모주 청약의 바늘구멍 같은 비례 배정 방식에 머무르지 않고, 대형 물량을 합리적으로 공급받아 차별화된 포트폴리오를 구성할 수 있습니다.</p>
                 <p>특히 <span className="text-slate-900 font-bold">개인투자조합원 및 전문투자자 전용 파이프라인</span>을 통해 장내 시장에서 구하기 힘들었던 대형 구주(Block Deal) 거래를 실시간으로 조율해 드립니다.</p>
@@ -177,7 +177,7 @@ export default function ServiceIntroPage() {
         <div className="max-w-5xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* 왼쪽 본문 */}
-            <div className="lg:col-span-6 space-y-5 text-center lg:text-left">
+            <div className="lg:col-span-6 space-y-5 text-left">
               <span className="text-xs font-bold text-[#00c73c] uppercase tracking-wider block">안전 이행 시스템</span>
               <h2 className="text-3xl font-extrabold text-[#081d33] tracking-tight leading-snug">
                 실 증권계좌 연동 기반의<br />100% 실매물 안전 결제 보장
