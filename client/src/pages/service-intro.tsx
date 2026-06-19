@@ -20,8 +20,8 @@ export default function ServiceIntroPage() {
                 </h1>
               </div>
               <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-xl mx-auto lg:mx-0">
-                단주 거래 위주의 일반 시장에서 벗어나,<br />
-                대형 자금 운용에 최적화된 비공개 1:1 프리미엄 매칭 솔루션을 선사합니다.<br />
+                단주 거래 위주의 일반 시장에서 벗어나,<br className="hidden sm:block" />
+                대형 자금 운용에 최적화된 비공개 1:1 프리미엄 매칭 솔루션을 선사합니다.<br className="hidden sm:block" />
                 증권사 계좌 연동으로 비상장 주식 대형 블록딜을 가장 안전하게 거래해 보세요.
               </p>
               <div className="pt-2 flex justify-center lg:justify-start items-center gap-3">
