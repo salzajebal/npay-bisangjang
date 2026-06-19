@@ -19,11 +19,11 @@ export default function ServiceIntroPage() {
                   오직 조합투자자만을 위한<br className="hidden sm:block" /> <span className="text-[#00c73c]">차별화된 인프라</span>
                 </h1>
               </div>
-              <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-xl mx-auto lg:mx-0">
-                단주 거래 위주의 일반 시장에서 벗어나,<br className="hidden sm:block" />
-                대형 자금 운용에 최적화된 비공개 1:1 프리미엄 매칭 솔루션을 선사합니다.<br className="hidden sm:block" />
-                증권사 계좌 연동으로 비상장 주식 대형 블록딜을 가장 안전하게 거래해 보세요.
-              </p>
+              <div className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-xl mx-auto lg:mx-0 space-y-2">
+                <p>단주 거래 위주의 일반 시장에서 벗어나,</p>
+                <p>대형 자금 운용에 최적화된 비공개 1:1 프리미엄 매칭 솔루션을 선사합니다.</p>
+                <p>증권사 계좌 연동으로 비상장 주식 대형 블록딜을 가장 안전하게 거래해 보세요.</p>
+              </div>
               <div className="pt-2 flex justify-center lg:justify-start items-center gap-3">
                 <div className="flex items-center gap-1.5 bg-black/30 px-3 py-1.5 rounded-lg border border-white/10 text-xs sm:text-sm">
                   <span className="inline-flex items-center justify-center bg-[#00c73c] text-white w-5 h-5 rounded-full text-[11px] font-black">N</span>
