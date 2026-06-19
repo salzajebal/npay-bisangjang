@@ -20,7 +20,9 @@ export default function ServiceIntroPage() {
                 </h1>
               </div>
               <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-xl mx-auto lg:mx-0">
-                단주 거래 위주의 일반 시장에서 벗어나, 대형 자금 운용에 최적화된 원천 딜 매칭 솔루션을 선사합니다. 증권사 계좌 연동으로 비상장 주식 대형 블록딜을 가장 안전하게 거래해 보세요.
+                단주 거래 위주의 일반 시장에서 벗어나,<br />
+                대형 자금 운용에 최적화된 비공개 1:1 프리미엄 매칭 솔루션을 선사합니다.<br />
+                증권사 계좌 연동으로 비상장 주식 대형 블록딜을 가장 안전하게 거래해 보세요.
               </p>
               <div className="pt-2 flex justify-center lg:justify-start items-center gap-3">
                 <div className="flex items-center gap-1.5 bg-black/30 px-3 py-1.5 rounded-lg border border-white/10 text-xs sm:text-sm">
@@ -105,7 +107,7 @@ export default function ServiceIntroPage() {
               </div>
               <div className="space-y-4 text-slate-600 text-sm sm:text-base leading-relaxed text-center lg:text-left">
                 <p className="font-bold text-slate-900">우량 스타트업부터 상장 임박 유니콘 기업까지,</p>
-                <p>시장을 선도할 개인의 소기 가치를 누구보다 먼저 안전하게 선점하십시오. 공모주 청약의 바늘구멍 같은 비례 배정 방식에 머무르지 않고, 대형의 물량을 합리적으로 공급받아 차별화된 포트폴리오를 구성할 수 있습니다.</p>
+                <p>시장을 선도할 유망 기업의 가치를 누구보다 먼저 안전하게 선점하십시오. 공모주 청약의 바늘구멍 같은 비례 배정 방식에 머무르지 않고, 대형 물량을 합리적으로 공급받아 차별화된 포트폴리오를 구성할 수 있습니다.</p>
                 <p>특히 <span className="text-slate-900 font-bold">개인투자조합원 및 전문투자자 전용 파이프라인</span>을 통해 장내 시장에서 구하기 힘들었던 대형 구주(Block Deal) 거래를 실시간으로 조율해 드립니다.</p>
               </div>
               <div className="grid grid-cols-2 gap-4 pt-2">
