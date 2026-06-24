@@ -895,21 +895,38 @@ function PublisherLogo({ publisher, size = 28 }: { publisher: string; size?: num
   );
 }
 
+function NewsItemIcon({ logoUrl, publisher, stockName }: { logoUrl?: string; publisher: string; stockName?: string }) {
+  const [imgErr, setImgErr] = useState(false);
+  if (logoUrl && !imgErr) {
+    return (
+      <img
+        src={logoUrl}
+        alt={stockName || publisher}
+        className="w-7 h-7 rounded-full object-cover shrink-0 bg-[#f5f5f5]"
+        onError={() => setImgErr(true)}
+        loading="lazy"
+      />
+    );
+  }
+  return <PublisherLogo publisher={publisher} size={28} />;
+}
+
 function MajorNews() {
-  const { data: newsData } = useQuery<{ title: string; source: string; date: string; url?: string }[]>({
+  const { data: newsData } = useQuery<{ title: string; publisher: string; link: string; logoUrl?: string; stockName?: string; publishedAt: string }[]>({
     queryKey: ["/api/stocks/news"],
     queryFn: getQueryFn({ on401: "returnNull" }),
+    refetchInterval: 5 * 60 * 1000,
   });
 
   const fallbackNews = [
-    { title: "카나프테라퓨틱스, 공모 청약 시작...바이오 IPO 관심 집중", source: "한국경제", date: "2026.03.05", color: "#F73631" },
-    { title: "두나무, 4분기 영업이익 전년비 120% 증가", source: "매일경제", date: "2026.02.14", color: "#333" },
-    { title: "무신사, 해외 시장 진출 가속화...동남아 공략", source: "조선비즈", date: "2026.02.13", color: "#111" },
-    { title: "비상장 주식 거래, 2026년 규제 변화 전망", source: "서울경제", date: "2026.02.12", color: "#1976D2" },
-    { title: "컬리, 흑자전환 성공...IPO 재시동", source: "머니투데이", date: "2026.02.11", color: "#5F0080" },
+    { title: "두나무, 폴리곤 스테이킹 글로벌 1위…국내 거래소 경쟁력 입증", publisher: "헤럴드경제", link: "#", publishedAt: "2026.06.24" },
+    { title: "무신사 뷰티 협업 전략, 브랜드 성장으로", publisher: "뉴시스", link: "#", publishedAt: "2026.06.24" },
+    { title: "레몬헬스케어, 공모가 상단 1만원 확정…24~25일 일반청약", publisher: "한국경제", link: "#", publishedAt: "2026.06.24" },
+    { title: "'휴대용 엑스레이' 레메디, 최대 1571억 상장시총 도전", publisher: "이데일리", link: "#", publishedAt: "2026.06.24" },
+    { title: "스트라드비젼, 글로벌 비전 AI 시장 공략 본격화..30일 코스닥 입성", publisher: "머니투데이", link: "#", publishedAt: "2026.06.24" },
   ];
 
-  const news = newsData || fallbackNews;
+  const news = (newsData && newsData.length > 0) ? newsData : fallbackNews;
 
   return (
     <section id="news" data-testid="section-major-news">
@@ -923,20 +940,20 @@ function MajorNews() {
         {(news as any[]).slice(0, 5).map((item: any, i: number) => (
           <a
             key={i}
-            href={item.url || item.link || `https://search.naver.com/search.naver?query=${encodeURIComponent(item.title)}`}
+            href={item.link || item.url || `https://search.naver.com/search.naver?query=${encodeURIComponent(item.title)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-start gap-3 px-4 py-3.5 border-b border-[#F3F5F6] last:border-b-0 hover:bg-[#F9FAFB] transition-colors cursor-pointer"
+            className="flex items-center gap-3 px-4 py-3.5 border-b border-[#F3F5F6] last:border-b-0 hover:bg-[#F9FAFB] transition-colors cursor-pointer"
             data-testid={`row-news-${i}`}
           >
-            <div className="shrink-0 mt-0.5">
-              <PublisherLogo publisher={item.publisher || item.source || ""} size={28} />
+            <div className="shrink-0">
+              <NewsItemIcon logoUrl={item.logoUrl} publisher={item.publisher || item.source || ""} stockName={item.stockName} />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-[#14181B] leading-snug line-clamp-2">{item.title}</p>
-              <p className="text-xs text-[#9D9FA0] mt-1">{item.publisher || item.source} · {item.publishedAt || item.date}</p>
+              <p className="text-xs text-[#9D9FA0] mt-0.5">{item.publisher || item.source} · {item.publishedAt || item.date}</p>
             </div>
-            <ExternalLink className="w-3.5 h-3.5 text-[#BFC0C1] shrink-0 mt-1" />
+            <ExternalLink className="w-3.5 h-3.5 text-[#BFC0C1] shrink-0" />
           </a>
         ))}
       </div>

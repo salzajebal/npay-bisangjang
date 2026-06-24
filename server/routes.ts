@@ -215,7 +215,7 @@ export async function registerRoutes(
   }
 
   let newsCache: { data: any; timestamp: number } | null = null;
-  const NEWS_CACHE_DURATION = 30 * 60 * 1000;
+  const NEWS_CACHE_DURATION = 5 * 60 * 1000;
 
   async function prefetchNews() {
     try {
@@ -644,6 +644,21 @@ export async function registerRoutes(
             createdAt: r.createdAt,
           }));
           if (reports.length > 0) { expertReportCache = reports; reportsFound = reports.length; }
+        }
+
+        // 주요뉴스 (recentCompanyPosts)
+        if (Array.isArray(qdata?.recentCompanyPosts) && qdata.recentCompanyPosts.length > 0) {
+          const naverNews = qdata.recentCompanyPosts.map((p: any) => ({
+            title: p.postTitle || "",
+            publisher: p.mediaIssuerName || "",
+            link: p.landingUrl || "",
+            logoUrl: p.logoUrl || "",
+            stockName: p.koreanName || "",
+            publishedAt: p.publishedAt ? p.publishedAt.slice(0, 10).replace(/-/g, ".") : "",
+          })).filter((n: any) => n.title && n.link);
+          if (naverNews.length > 0) {
+            newsCache = { data: naverNews, timestamp: Date.now() };
+          }
         }
 
         // 토론 + 테마
