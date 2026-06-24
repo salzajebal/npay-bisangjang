@@ -649,7 +649,7 @@ function StockRankings({
   const [showAll, setShowAll] = useState(false);
   const [, navigate] = useLocation();
 
-  const { data: rankingData, isLoading: rankingLoading } = useQuery<{ data: { type: string; name: string; rows: any[] }[] }>({
+  const { data: rankingData, isLoading: rankingLoading } = useQuery<{ data: { type: string; name: string; rows: any[] }[]; lastUpdated?: string }>({
     queryKey: ["/api/market/rankings"],
     refetchInterval: 5 * 60 * 1000,
   });
@@ -671,8 +671,8 @@ function StockRankings({
 
   const cols = getColDefs(activeTab);
 
-  const now = new Date();
-  const timeStr = `${String(now.getFullYear()).slice(2)}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")} ${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")} 기준`;
+  const tsDate = rankingData?.lastUpdated ? new Date(rankingData.lastUpdated) : new Date();
+  const timeStr = `${String(tsDate.getFullYear()).slice(2)}.${String(tsDate.getMonth() + 1).padStart(2, "0")}.${String(tsDate.getDate()).padStart(2, "0")} ${String(tsDate.getHours()).padStart(2, "0")}:${String(tsDate.getMinutes()).padStart(2, "0")} 기준`;
 
   const gridCols = cols.length === 4
     ? "grid-cols-[40px_1fr_110px_80px_70px_44px_36px]"
@@ -1582,7 +1582,7 @@ function HotDiscussionRooms() {
   const [liveComments, setLiveComments] = useState<{ user: string; text: string; time: string }[]>([]);
   const commentsContainerRef = useRef<HTMLDivElement>(null);
 
-  const { data: discussionsData } = useQuery<{ data: { discussStocks: any[]; discussPosts: any[] } }>({
+  const { data: discussionsData } = useQuery<{ data: { discussStocks: any[]; discussPosts: any[] }; lastUpdated?: string }>({
     queryKey: ["/api/market/discussions"],
     refetchInterval: 5 * 60 * 1000,
   });
@@ -1651,8 +1651,8 @@ function HotDiscussionRooms() {
     }
   }, [liveComments]);
 
-  const now2 = new Date();
-  const hotTimeStr = `${String(now2.getFullYear()).slice(2)}.${String(now2.getMonth()+1).padStart(2,"0")}.${String(now2.getDate()).padStart(2,"0")} ${String(now2.getHours()).padStart(2,"0")}:${String(now2.getMinutes()).padStart(2,"0")} 기준`;
+  const tsDate2 = discussionsData?.lastUpdated ? new Date(discussionsData.lastUpdated) : new Date();
+  const hotTimeStr = `${String(tsDate2.getFullYear()).slice(2)}.${String(tsDate2.getMonth()+1).padStart(2,"0")}.${String(tsDate2.getDate()).padStart(2,"0")} ${String(tsDate2.getHours()).padStart(2,"0")}:${String(tsDate2.getMinutes()).padStart(2,"0")} 기준`;
 
   const stockHashtags: Record<string, string[]> = {
     "두나무": ["#핀테크", "#블록체인", "#일반종목"],
