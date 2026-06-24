@@ -1166,31 +1166,31 @@ function PopularDiscussions() {
 function IPOUpcomingSidebar() {
   const [activeTab, setActiveTab] = useState<"진행중" | "예정">("예정");
 
-  const { data: ipoData, isLoading } = useQuery<any[]>({
-    queryKey: ["/api/ipo-stocks"],
+  const { data: ipoCalendarData, isLoading } = useQuery<{ naverData?: { beingIPOList: any[]; toBeIPOList: any[] } }>({
+    queryKey: ["/api/market/ipo-calendar"],
+    refetchInterval: 5 * 60 * 1000,
   });
 
+  const naverData = ipoCalendarData?.naverData;
+  const ongoing = (naverData?.beingIPOList || []).map((item: any) => ({
+    stockName: item.stockName,
+    startDate: item.offeringStartAt || item.subscriptionStartDate || "",
+    endDate: item.closedDate || item.subscriptionEndDate || "",
+    priceMin: item.minExpectedOfferPrice || item.finalOfferPrice || 0,
+    priceMax: item.maxExpectedOfferPrice || item.finalOfferPrice || 0,
+    competitionRate: item.instCompetitiveness ? `${item.instCompetitiveness}:1` : null,
+  }));
+  const upcoming = (naverData?.toBeIPOList || []).map((item: any) => ({
+    stockName: item.stockName,
+    startDate: item.offeringStartAt || item.subscriptionStartDate || "",
+    endDate: item.closedDate || item.subscriptionEndDate || "",
+    priceMin: item.minExpectedOfferPrice || 0,
+    priceMax: item.maxExpectedOfferPrice || 0,
+    competitionRate: item.instCompetitiveness ? `${item.instCompetitiveness}:1` : null,
+  }));
+
+  const displayed = activeTab === "진행중" ? ongoing : upcoming;
   const now = new Date();
-  const allIpos: any[] = (ipoData || []).filter((s: any) => s.isActive);
-
-  const ongoing = allIpos.filter((s: any) => {
-    if (s.subscriptionStatus === "청약진행중") return true;
-    const end = s.endDate ? new Date(s.endDate) : null;
-    return end && end >= now && s.startDate && new Date(s.startDate) <= now;
-  });
-  const upcoming = allIpos.filter((s: any) => {
-    if (s.subscriptionStatus === "청약예정") return true;
-    const start = s.startDate ? new Date(s.startDate) : null;
-    return start && start > now;
-  });
-
-  const fallbackUpcoming = [
-    { stockName: "스트라드비전", startDate: "2026-06-18", endDate: "2026-06-19", priceMin: 12000, priceMax: 14000, competitionRate: null },
-    { stockName: "저스텍", startDate: "2026-06-18", endDate: "2026-06-19", priceMin: 10500, priceMax: 12500, competitionRate: null },
-    { stockName: "빅웨이브로보틱스", startDate: "2026-06-18", endDate: "2026-06-20", priceMin: 22000, priceMax: 27000, competitionRate: null },
-  ];
-
-  const displayed = activeTab === "진행중" ? ongoing : (upcoming.length > 0 ? upcoming : fallbackUpcoming);
 
   function dday(dateStr: string) {
     const d = new Date(dateStr);
@@ -1233,7 +1233,7 @@ function IPOUpcomingSidebar() {
           data-testid="sidebar-tab-upcoming"
         >
           청약예정
-          <span className="text-[10px] bg-[#03C75A] text-white rounded-full w-4 h-4 flex items-center justify-center">{upcoming.length > 0 ? upcoming.length : fallbackUpcoming.length}</span>
+          {upcoming.length > 0 && <span className="text-[10px] bg-[#03C75A] text-white rounded-full w-4 h-4 flex items-center justify-center">{upcoming.length}</span>}
         </button>
       </div>
 
