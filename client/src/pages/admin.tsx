@@ -2098,7 +2098,7 @@ export default function AdminPage() {
               <span className="text-white text-xs font-bold">U+</span>
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="font-bold text-sm truncate text-gray-900">증권플러스 비상장</span>
+              <span className="font-bold text-sm truncate text-gray-900">네이버페이 비상장</span>
               <span className="text-[11px] text-gray-500">관리자 시스템</span>
             </div>
             {isMobile && (

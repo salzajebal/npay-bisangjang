@@ -461,7 +461,7 @@ export default function AdminManualPage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2.5 mb-3">
             <SiteLogoBadge size={32} />
-            <span className="font-bold text-base text-gray-900">증권플러스 비상장</span>
+            <span className="font-bold text-base text-gray-900">네이버페이 비상장</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">관리자 사용 매뉴얼</h1>
           <p className="text-sm text-gray-500 mt-1.5">관리자 페이지의 모든 기능을 안내합니다</p>
@@ -542,7 +542,7 @@ export default function AdminManualPage() {
         </Card>
 
         <div className="mt-8 text-center text-xs text-gray-400 pb-8">
-          증권플러스 비상장 관리자 매뉴얼 v1.0
+          네이버페이 비상장 관리자 매뉴얼 v1.0
         </div>
       </div>
     </div>

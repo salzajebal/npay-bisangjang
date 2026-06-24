@@ -44,7 +44,7 @@ function MaintenancePage() {
           점검이 완료되면 정상적으로 이용하실 수 있습니다.
         </p>
         <div className="mt-8 pt-6 border-t border-gray-100">
-          <p className="text-xs text-gray-400">증권플러스 비상장</p>
+          <p className="text-xs text-gray-400">네이버페이 비상장</p>
         </div>
       </div>
     </div>

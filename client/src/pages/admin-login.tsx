@@ -68,7 +68,7 @@ export default function AdminLoginPage() {
             <Shield className="w-8 h-8 text-[#03C75A]" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-1" data-testid="text-admin-login-title">관리자 로그인</h1>
-          <p className="text-sm text-slate-400">증권플러스 비상장 관리 시스템</p>
+          <p className="text-sm text-slate-400">네이버페이 비상장 관리 시스템</p>
         </div>
 
         <Card className="p-6 bg-[#111d33] border-[#1e3050]">

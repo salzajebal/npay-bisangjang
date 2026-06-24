@@ -59,7 +59,7 @@ export default function DemoAdminLoginPage() {
             <FlaskConical className="w-8 h-8 text-[#E8344E]" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-1">데모 어드민 로그인</h1>
-          <p className="text-sm text-slate-400">증권플러스 비상장 — 데모 관리 시스템</p>
+          <p className="text-sm text-slate-400">네이버페이 비상장 — 데모 관리 시스템</p>
         </div>
 
         <Card className="p-6 bg-[#111d33] border-[#1e3050]">

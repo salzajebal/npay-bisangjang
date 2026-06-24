@@ -43,7 +43,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 h-16">
           <div className="flex items-center gap-2">
             <SiteLogoBadge size={32} />
-            <span className={`font-bold text-lg transition-colors ${scrolled ? "text-gray-900" : "text-white"}`}>증권플러스 비상장</span>
+            <span className={`font-bold text-lg transition-colors ${scrolled ? "text-gray-900" : "text-white"}`}>네이버페이 비상장</span>
           </div>
 
           <nav className="hidden md:flex items-center gap-6">
@@ -136,7 +136,7 @@ export default function HomePage() {
           </Badge>
 
           <h1 className="text-white text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-tight tracking-tight mb-4">
-            <span className="block text-white/70 text-lg sm:text-2xl md:text-3xl font-medium tracking-widest mb-3">증권플러스 비상장에서</span>
+            <span className="block text-white/70 text-lg sm:text-2xl md:text-3xl font-medium tracking-widest mb-3">네이버페이 비상장에서</span>
             <span className="block">주식관리</span>
           </h1>
 
@@ -150,7 +150,7 @@ export default function HomePage() {
           </div>
 
           <p className="text-white/70 text-base sm:text-lg md:text-xl mb-8 sm:mb-10 max-w-xl mx-auto leading-relaxed">
-            투자의 시작, 믿을 수 있는 증권플러스에서<br className="hidden sm:block" />
+            투자의 시작, 믿을 수 있는 네이버페이에서<br className="hidden sm:block" />
             안전하고 편리한 주식 관리 서비스
           </p>
 
@@ -178,7 +178,7 @@ export default function HomePage() {
           <div className="text-center mb-12 sm:mb-16">
             <Badge className="bg-[#E8344E]/10 text-[#E8344E] border-[#E8344E]/20 mb-4 no-default-hover-elevate no-default-active-elevate">서비스 소개</Badge>
             <h2 className="text-2xl sm:text-4xl font-black text-gray-900 mb-4">
-              증권플러스 비상장이 제공하는<br />주식 관리 서비스
+              네이버페이 비상장이 제공하는<br />주식 관리 서비스
             </h2>
             <p className="text-gray-500 text-base sm:text-lg max-w-2xl mx-auto">
               입고부터 출고까지, 간편하고 안전한 주식 관리를 경험하세요
@@ -188,7 +188,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {[
               { icon: BarChart3, title: "실시간 시세 조회", desc: "비상장 종목 실시간 시세와 차트를 한눈에 확인하세요", color: "bg-blue-50 text-blue-600" },
-              { icon: Shield, title: "안전한 자산 관리", desc: "증권플러스의 검증된 시스템으로 소중한 자산을 보호합니다", color: "bg-green-50 text-green-600" },
+              { icon: Shield, title: "안전한 자산 관리", desc: "네이버페이의 검증된 시스템으로 소중한 자산을 보호합니다", color: "bg-green-50 text-green-600" },
               { icon: TrendingUp, title: "실시간 손익 추적", desc: "보유 주식의 현재가 대비 실시간 수익률을 확인하세요", color: "bg-purple-50 text-purple-600" },
               { icon: Smartphone, title: "모바일 최적화", desc: "언제 어디서나 모바일로 편리하게 주식을 관리하세요", color: "bg-orange-50 text-orange-600" },
               { icon: Clock, title: "빠른 입출고 처리", desc: "신속하고 정확한 주식 입고/출고 처리를 경험하세요", color: "bg-red-50 text-red-600" },
@@ -217,7 +217,7 @@ export default function HomePage() {
               국내주식<br />첫 투자 ON
             </h2>
             <p className="text-white/60 text-base sm:text-lg max-w-xl mx-auto">
-              증권플러스가 처음이라면<br />
+              네이버페이가 처음이라면<br />
               <span className="text-[#4db8ff] font-bold">매매수수료 12개월 우대</span>
             </p>
           </div>
@@ -259,7 +259,7 @@ export default function HomePage() {
           <div className="text-center mb-10 sm:mb-14">
             <Badge className="bg-[#E8344E]/10 text-[#E8344E] border-[#E8344E]/20 mb-4 no-default-hover-elevate no-default-active-elevate">이벤트</Badge>
             <h2 className="text-2xl sm:text-4xl font-black text-gray-900 mb-4">
-              증권플러스 비상장에서는<br />주식모으기 수수료 부담없이!
+              네이버페이 비상장에서는<br />주식모으기 수수료 부담없이!
             </h2>
           </div>
 
@@ -277,7 +277,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <Badge className="bg-[#7ad03a]/20 text-[#4a8c1e] border-[#7ad03a]/30 mb-2 no-default-hover-elevate no-default-active-elevate">이벤트 대상</Badge>
-                  <p className="text-gray-700">주식 모으기 서비스를 이용하는<br />증권플러스 고객 누구나!</p>
+                  <p className="text-gray-700">주식 모으기 서비스를 이용하는<br />네이버페이 고객 누구나!</p>
                 </div>
               </div>
             </Card>
@@ -325,7 +325,7 @@ export default function HomePage() {
           <div className="mt-8 pt-6 border-t border-white/10">
             <h4 className="text-white/80 font-bold text-sm mb-3">국내주식 모으기 이벤트</h4>
             <div className="text-white/40 text-xs space-y-1.5 leading-relaxed">
-              <p>- 증권플러스라면 누구나 이벤트에 참여 가능합니다.</p>
+              <p>- 네이버페이라면 누구나 이벤트에 참여 가능합니다.</p>
               <p>- 본 이벤트는 서비스 신뢰를 위한 정보 제공을 목적으로 하며, 투자권유를 위한 것은 아닙니다.</p>
               <p>- 국내주식 모으기 무료 이벤트는 매수/매매 관련 거래 모든 종류에 매매수수료와 기본 수수료가 무료로 적용되며, 그 외 수수료가 제한됩니다.</p>
             </div>
@@ -338,7 +338,7 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <SiteLogoBadge size={24} />
-              <span className="text-white/60 text-sm font-medium">증권플러스 비상장</span>
+              <span className="text-white/60 text-sm font-medium">네이버페이 비상장</span>
             </div>
             <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
               <div className="flex items-center gap-3 sm:gap-4">
@@ -356,7 +356,7 @@ export default function HomePage() {
           </div>
           <div className="mt-6 text-center sm:text-left">
             <p className="text-white/30 text-xs">
-              증권플러스 비상장 주식관리 시스템 | 본 서비스는 투자 참고용이며, 투자 판단의 책임은 투자자에게 있습니다.
+              네이버페이 비상장 주식관리 시스템 | 본 서비스는 투자 참고용이며, 투자 판단의 책임은 투자자에게 있습니다.
             </p>
           </div>
         </div>

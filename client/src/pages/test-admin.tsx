@@ -98,7 +98,7 @@ export default function TestAdminPage() {
         <Card className="w-full max-w-sm p-8 space-y-6">
           <div className="flex flex-col items-center gap-2">
             <SiteLogoBadge size={40} />
-            <h1 className="text-xl font-bold">증권플러스 비상장</h1>
+            <h1 className="text-xl font-bold">네이버페이 비상장</h1>
             <p className="text-sm text-muted-foreground">관리자 데모 로그인</p>
           </div>
           <div className="space-y-3">
@@ -139,7 +139,7 @@ export default function TestAdminPage() {
             <SiteLogoBadge size={26} />
             {(isMobile || !sidebarCollapsed) && (
               <div className="flex flex-col min-w-0">
-                <span className="font-bold text-sm">증권플러스 비상장</span>
+                <span className="font-bold text-sm">네이버페이 비상장</span>
                 <span className="text-[11px] text-muted-foreground">관리자 데모</span>
               </div>
             )}
