@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Menu, X, LogIn, LogOut, User, Search } from "lucide-react";
 import { SiteLogoBadge } from "@/components/site-logo";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
+import { searchStocks } from "@/lib/stocks";
 
 const NAV_LINKS = [
   { label: "공모주 IPO 캘린더", href: "/ipo-calendar" },
@@ -13,15 +14,49 @@ const NAV_LINKS = [
   { label: "공지사항", href: "/notices" },
 ];
 
+function StockDropdown({ results, onSelect }: {
+  results: { name: string; code: string }[];
+  onSelect: (name: string) => void;
+}) {
+  if (results.length === 0) return null;
+  return (
+    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#E0E2E4] rounded-lg shadow-lg z-50 max-h-72 overflow-y-auto">
+      {results.slice(0, 10).map(stock => (
+        <button
+          key={stock.code}
+          onMouseDown={e => { e.preventDefault(); onSelect(stock.name); }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[#F3F5F6] text-left transition-colors"
+          data-testid={`search-dropdown-${stock.code}`}
+        >
+          <div className="w-7 h-7 rounded-full bg-[#E8F5EE] flex items-center justify-center shrink-0">
+            <span className="text-xs font-bold text-[#03C75A]">{stock.name[0]}</span>
+          </div>
+          <div>
+            <div className="text-sm font-medium text-[#14181B]">{stock.name}</div>
+            <div className="text-xs text-[#9D9FA0]">{stock.code}</div>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function GlobalNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [mobileSearch, setMobileSearch] = useState("");
+  const [mobileSearchFocused, setMobileSearchFocused] = useState(false);
   const [location, navigate] = useLocation();
+  const searchRef = useRef<HTMLDivElement>(null);
 
   const { data: user } = useQuery<{ id: number; fullName: string; username: string } | null>({
     queryKey: ["/api/auth/me"],
     retry: false,
   });
+
+  const searchResults = searchStocks(searchQuery);
+  const mobileSearchResults = searchStocks(mobileSearch);
 
   async function handleLogout() {
     try {
@@ -30,11 +65,26 @@ export function GlobalNav() {
     } catch {}
   }
 
-  function handleSearchFocus() {
-    if (location !== "/") {
-      navigate("/");
-    }
+  function handleSelect(name: string) {
+    setSearchQuery("");
+    setMobileSearch("");
+    setSearchFocused(false);
+    setMobileSearchFocused(false);
+    navigate(`/stock/${encodeURIComponent(name)}`);
   }
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchFocused(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  const showDropdown = searchFocused && searchQuery.trim().length > 0;
+  const showMobileDropdown = mobileSearchFocused && mobileSearch.trim().length > 0;
 
   return (
     <header className="sticky top-0 z-[9999] bg-white border-b border-[#E0E2E4]" data-testid="global-nav">
@@ -48,14 +98,14 @@ export function GlobalNav() {
           </Link>
 
           {/* Desktop search bar */}
-          <div className="hidden md:flex flex-1 max-w-[360px] mx-4">
+          <div className="hidden md:flex flex-1 max-w-[360px] mx-4" ref={searchRef}>
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#999]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                onFocus={handleSearchFocus}
+                onFocus={() => setSearchFocused(true)}
                 placeholder="종목명·초성·코드 검색"
                 className="w-full h-9 pl-9 pr-8 rounded-lg bg-[#F3F5F6] border-none text-sm text-[#14181B] placeholder-[#9D9FA0] outline-none focus:ring-1 focus:ring-[#03C75A]"
                 data-testid="input-search-nav"
@@ -63,11 +113,19 @@ export function GlobalNav() {
               {searchQuery.length > 0 && (
                 <button
                   className="absolute right-2.5 top-1/2 -translate-y-1/2"
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => { setSearchQuery(""); setSearchFocused(false); }}
                   data-testid="button-search-clear-nav"
                 >
                   <X className="w-4 h-4 text-[#999]" />
                 </button>
+              )}
+              {showDropdown && searchResults.length === 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-[#E0E2E4] rounded-lg shadow-lg z-50 px-4 py-3">
+                  <p className="text-sm text-[#999]">'{searchQuery}'에 대한 결과가 없습니다</p>
+                </div>
+              )}
+              {showDropdown && searchResults.length > 0 && (
+                <StockDropdown results={searchResults} onSelect={handleSelect} />
               )}
             </div>
           </div>
@@ -152,12 +210,45 @@ export function GlobalNav() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9D9FA0]" />
               <input
                 type="text"
+                value={mobileSearch}
+                onChange={e => setMobileSearch(e.target.value)}
+                onFocus={() => setMobileSearchFocused(true)}
+                onBlur={() => setTimeout(() => setMobileSearchFocused(false), 150)}
                 placeholder="종목명·초성·코드 검색"
-                onFocus={() => { setMobileOpen(false); if (location !== "/") navigate("/"); }}
-                className="w-full h-9 pl-9 pr-3 rounded-lg bg-[#F3F5F6] border-none text-sm text-[#14181B] placeholder-[#9D9FA0] outline-none"
+                className="w-full h-9 pl-9 pr-8 rounded-lg bg-[#F3F5F6] border-none text-sm text-[#14181B] placeholder-[#9D9FA0] outline-none focus:ring-1 focus:ring-[#03C75A]"
                 data-testid="input-search-mobile-nav"
               />
+              {mobileSearch.length > 0 && (
+                <button className="absolute right-2.5 top-1/2 -translate-y-1/2" onClick={() => setMobileSearch("")}>
+                  <X className="w-4 h-4 text-[#999]" />
+                </button>
+              )}
             </div>
+            {showMobileDropdown && mobileSearchResults.length === 0 && (
+              <div className="mt-1 bg-white border border-[#E0E2E4] rounded-lg px-4 py-3">
+                <p className="text-sm text-[#999]">'{mobileSearch}'에 대한 결과가 없습니다</p>
+              </div>
+            )}
+            {showMobileDropdown && mobileSearchResults.length > 0 && (
+              <div className="mt-1 bg-white border border-[#E0E2E4] rounded-lg max-h-60 overflow-y-auto">
+                {mobileSearchResults.slice(0, 10).map(stock => (
+                  <button
+                    key={stock.code}
+                    onMouseDown={() => { handleSelect(stock.name); setMobileOpen(false); }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[#F3F5F6] text-left"
+                    data-testid={`search-mobile-result-${stock.code}`}
+                  >
+                    <div className="w-7 h-7 rounded-full bg-[#E8F5EE] flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-[#03C75A]">{stock.name[0]}</span>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-[#14181B]">{stock.name}</div>
+                      <div className="text-xs text-[#9D9FA0]">{stock.code}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {NAV_LINKS.map((link) => {
