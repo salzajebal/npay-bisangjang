@@ -602,6 +602,143 @@ export async function registerRoutes(
   refreshNaverIpoData();
   setInterval(refreshNaverIpoData, USTOCK_CACHE_DURATION);
 
+  // Scrape ustock.naver.com main page for expert reports, rankings, discussions, themes
+  async function refreshNaverMainData(): Promise<void> {
+    try {
+      const resp = await fetch("https://ustock.naver.com/", {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "ko-KR,ko;q=0.9",
+          "Upgrade-Insecure-Requests": "1",
+        },
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!resp.ok) { log(`Naver main fetch failed: ${resp.status}`); return; }
+      const html = await resp.text();
+      const startIdx = html.indexOf("__NEXT_DATA__");
+      if (startIdx < 0) { log("Naver main: __NEXT_DATA__ not found"); return; }
+      const contentStart = html.indexOf(">", startIdx) + 1;
+      const contentEnd = html.indexOf("</script>", contentStart);
+      const json = html.slice(contentStart, contentEnd);
+      const data = JSON.parse(json);
+      const queries: any[] = data?.props?.pageProps?.dehydratedState?.queries || [];
+      const seen = new Set<string>();
+      let reportsFound = 0;
+      let ranksFound = 0;
+
+      for (const q of queries) {
+        const qdata = q?.state?.data;
+        if (!qdata) continue;
+
+        // 전문가 리포트
+        if (qdata?.rows !== undefined && !Array.isArray(qdata) && qdata?.rows?.[0]?.expertReportId !== undefined) {
+          const reports = (qdata.rows || []).map((r: any) => ({
+            expertReportId: r.expertReportId,
+            sourceProvider: r.sourceProvider,
+            reportCreator: r.reportCreator,
+            title: r.title,
+            preview: r.preview,
+            createdAt: r.createdAt,
+          }));
+          if (reports.length > 0) { expertReportCache = reports; reportsFound = reports.length; }
+        }
+
+        // 토론 + 테마
+        if (qdata?.featuredDiscussStocks !== undefined || qdata?.featuredStockKeywords !== undefined) {
+          const discussStocks: any[] = (qdata?.featuredDiscussStocks?.rows || []).map((row: any) => ({
+            name: row?.resource?.name,
+            code: row?.resource?.code,
+            totalPostCount: row?.resource?.totalPostCount,
+            currentPrice: row?.resource?.currentPrice,
+            changeRate: row?.resource?.currentChangeRate ?? row?.resource?.changeRate,
+            logoUrl: row?.resource?.logoUrl,
+          })).filter((r: any) => r.name);
+          const discussPosts: any[] = (qdata?.featuredDiscussPosts?.rows || []).map((row: any) => ({
+            id: row?.id,
+            stockName: row?.resource?.stockName,
+            nickName: row?.resource?.nickName,
+            subject: row?.resource?.subject,
+            body: row?.resource?.body,
+            createdAt: row?.resource?.createdAt,
+          })).filter((r: any) => r.id);
+          if (discussStocks.length > 0 || discussPosts.length > 0) {
+            discussionCache = { discussStocks, discussPosts };
+          }
+          const keywords: any[] = qdata?.featuredStockKeywords || [];
+          if (keywords.length > 0) {
+            themeCache = keywords.map((k: any) => ({
+              keywordId: k.keywordId,
+              keywordName: k.keywordName,
+              keywordCode: k.keywordCode,
+              description: k.description,
+              includedStocks: (k.includedStocks || []).map((s: any) => ({
+                name: s.name,
+                code: s.code,
+                currentPrice: s.currentPrice,
+                changeRate: s.currentChangeRate ?? s.changeRate,
+                logoUrl: s.logoUrl,
+              })),
+            }));
+          }
+          for (const row of (qdata?.featuredDiscussStocks?.rows || [])) {
+            const name: string = row?.resource?.name;
+            const price: number = row?.resource?.currentPrice;
+            const change: number = row?.resource?.currentChangeRate ?? row?.resource?.changeRate;
+            if (name && typeof price === "number" && price > 0 && !seen.has(name)) {
+              ustockLiveCache.set(name, { price, change: change ?? 0 });
+              seen.add(name);
+            }
+          }
+        }
+
+        // 종목 랭킹
+        if (Array.isArray(qdata) && qdata[0]?.type && qdata[0]?.rows) {
+          const groups = qdata.map((group: any) => ({
+            type: group.type,
+            name: group.name,
+            rows: (group.rows || []).map((row: any) => ({
+              stockName: row.stockName,
+              stockCode: row.stockCode,
+              currentPrice: row.currentPrice,
+              changeRate: row.changeRate,
+              prevClosingPrice: row.prevClosingPrice,
+              estimatedMarketCap: row.estimatedMarketCap,
+              logoUrl: row.logoUrl,
+              rank: row.rank,
+              type: row.type,
+              ipoDate: row.ipoDate,
+              reviewType: row.reviewType,
+              salesRevenueGrowthRate: row.salesRevenueGrowthRate,
+              fiscalYear: row.fiscalYear,
+              orderCount: row.orderCount,
+            })),
+          }));
+          if (groups.length > 0) { rankingCache = groups; ranksFound = groups.length; }
+          for (const group of qdata) {
+            for (const row of (group?.rows || [])) {
+              const name: string = row?.stockName;
+              const price: number = row?.currentPrice;
+              const change: number = row?.changeRate;
+              if (name && typeof price === "number" && price > 0 && !seen.has(name)) {
+                ustockLiveCache.set(name, { price, change: change ?? 0 });
+                seen.add(name);
+              }
+            }
+          }
+        }
+      }
+
+      marketCacheTime = Date.now();
+      log(`Naver main refreshed: ${reportsFound} reports, ${ranksFound} rank groups, ${seen.size} prices`);
+    } catch (err) {
+      log(`Naver main refresh error: ${err}`);
+    }
+  }
+
+  refreshNaverMainData();
+  setInterval(refreshNaverMainData, USTOCK_CACHE_DURATION);
+
   async function fetchNaverPrice(stockCode: string): Promise<{ price: number; change: number } | null> {
     try {
       const resp = await fetch(`https://m.stock.naver.com/api/stock/${stockCode}/basic`, {
