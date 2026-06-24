@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Menu, X, LogIn, LogOut, User, Search } from "lucide-react";
 import { SiteLogoBadge } from "@/components/site-logo";
+import { StockIcon } from "@/components/stock-icon";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import { searchStocks } from "@/lib/stocks";
@@ -28,9 +29,7 @@ function StockDropdown({ results, onSelect }: {
           className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[#F3F5F6] text-left transition-colors"
           data-testid={`search-dropdown-${stock.code}`}
         >
-          <div className="w-7 h-7 rounded-full bg-[#E8F5EE] flex items-center justify-center shrink-0">
-            <span className="text-xs font-bold text-[#03C75A]">{stock.name[0]}</span>
-          </div>
+          <StockIcon name={stock.name} size={28} />
           <div>
             <div className="text-sm font-medium text-[#14181B]">{stock.name}</div>
             <div className="text-xs text-[#9D9FA0]">{stock.code}</div>
@@ -238,9 +237,7 @@ export function GlobalNav() {
                     className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[#F3F5F6] text-left"
                     data-testid={`search-mobile-result-${stock.code}`}
                   >
-                    <div className="w-7 h-7 rounded-full bg-[#E8F5EE] flex items-center justify-center shrink-0">
-                      <span className="text-xs font-bold text-[#03C75A]">{stock.name[0]}</span>
-                    </div>
+                    <StockIcon name={stock.name} size={28} />
                     <div>
                       <div className="text-sm font-medium text-[#14181B]">{stock.name}</div>
                       <div className="text-xs text-[#9D9FA0]">{stock.code}</div>

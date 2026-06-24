@@ -1975,10 +1975,35 @@ export async function registerRoutes(
   let logoCache: Record<string, string> = {};
   let logoCacheTime = 0;
 
+  function buildLogoMapFromCaches(): Record<string, string> {
+    const logos: Record<string, string> = { ...logoCache };
+    // 랭킹 캐시에서 로고 수집
+    for (const group of rankingCache) {
+      for (const row of (group.rows || [])) {
+        if (row.stockName && row.logoUrl && !logos[row.stockName]) logos[row.stockName] = row.logoUrl;
+      }
+    }
+    // 네이버 IPO 캐시에서 로고 수집
+    const ipoItems = [...(naverIpoCache.beingIPOList || []), ...(naverIpoCache.toBeIPOList || [])];
+    for (const item of ipoItems) {
+      const name = (item as any).stockName || (item as any).koreanName;
+      const url = (item as any).logoUrl;
+      if (name && url && !logos[name]) logos[name] = url;
+    }
+    // DB IPO 종목 로고 수집 (richIpoList)
+    for (const item of richIpoList) {
+      const name = item.koreanName || item.stockName;
+      const url = item.logoUrl;
+      if (name && url && !logos[name]) logos[name] = url;
+    }
+    return logos;
+  }
+
   app.get("/api/stock-logos", async (req, res) => {
     const now = Date.now();
+    const merged = buildLogoMapFromCaches();
     if (now - logoCacheTime < 3600000 && Object.keys(logoCache).length > 0) {
-      return res.json({ logos: logoCache });
+      return res.json({ logos: merged });
     }
     try {
       const response = await fetch("https://www.ustockplus.com/", {
@@ -1987,7 +2012,7 @@ export async function registerRoutes(
       });
       const html = await response.text();
       const m = html.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
-      if (!m) return res.json({ logos: logoCache });
+      if (!m) return res.json({ logos: merged });
       const data = JSON.parse(m[1]);
       const text = JSON.stringify(data);
       const matches = [...text.matchAll(/"name":"([^"]+)"[^}]{0,500}?"logoUrl":"([^"]+)"/g)];
@@ -1997,9 +2022,9 @@ export async function registerRoutes(
       }
       logoCache = logos;
       logoCacheTime = now;
-      res.json({ logos });
+      res.json({ logos: buildLogoMapFromCaches() });
     } catch (e) {
-      res.json({ logos: logoCache });
+      res.json({ logos: merged });
     }
   });
 
