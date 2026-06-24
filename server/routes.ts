@@ -238,10 +238,12 @@ export async function registerRoutes(
         const linkMatch = item.match(/<link>(.*?)<\/link>/);
         const pubDateMatch = item.match(/<pubDate>(.*?)<\/pubDate>/);
         const sourceMatch = item.match(/<source[^>]*>(.*?)<\/source>/);
-        const title = (titleMatch?.[1] || titleMatch?.[2] || "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/<[^>]*>/g, "");
+        const rawTitle = (titleMatch?.[1] || titleMatch?.[2] || "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/<[^>]*>/g, "").trim();
         const link = linkMatch?.[1] || "";
-        const publisher = sourceMatch?.[1] || "뉴스";
+        const publisher = (sourceMatch?.[1] || "뉴스").trim();
         const pubDate = pubDateMatch?.[1] || null;
+        const escapedPub = publisher.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const title = rawTitle.replace(new RegExp(`(\\s*-\\s*${escapedPub})+\\s*$`, "g"), "").trim();
         if (title && link) {
           let dateStr = "방금 전";
           if (pubDate) {
@@ -911,10 +913,12 @@ export async function registerRoutes(
         const pubDateMatch = item.match(/<pubDate>(.*?)<\/pubDate>/);
         const sourceMatch = item.match(/<source[^>]*>(.*?)<\/source>/);
 
-        const title = (titleMatch?.[1] || titleMatch?.[2] || "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/<[^>]*>/g, "");
+        const rawTitle = (titleMatch?.[1] || titleMatch?.[2] || "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/<[^>]*>/g, "").trim();
         const link = linkMatch?.[1] || "";
-        const publisher = sourceMatch?.[1] || "뉴스";
+        const publisher = (sourceMatch?.[1] || "뉴스").trim();
         const pubDate = pubDateMatch?.[1] || null;
+        const escapedPub = publisher.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const title = rawTitle.replace(new RegExp(`(\\s*-\\s*${escapedPub})+\\s*$`, "g"), "").trim();
 
         if (title && link) {
           let dateStr = "방금 전";
