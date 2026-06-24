@@ -18,7 +18,7 @@ export function serveStatic(app: Express) {
     const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
     const host = req.headers["x-forwarded-host"] || req.headers.host || "";
     const baseUrl = `${protocol}://${host}`;
-    html = html.replace(/content="\/og-image\.png"/g, `content="${baseUrl}/og-image.png"`);
+    html = html.replace(/content="(\/og-image[^""]*)"/g, `content="${baseUrl}$1"`);
     res.status(200).set({
       "Content-Type": "text/html",
       "Cache-Control": "no-cache, no-store, must-revalidate",
