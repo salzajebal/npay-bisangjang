@@ -339,7 +339,7 @@ function TransactionDeleteButton({ tx, onSuccess }: { tx: StockTransaction; onSu
             <span className="text-sm font-medium">{tx.stockName}</span>
           </div>
           <p className="text-sm mt-1">{tx.quantity.toLocaleString()}주 x {tx.pricePerShare.toLocaleString()}원</p>
-          <p className="text-xs text-muted-foreground mt-1">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</p>
+          <p className="text-xs text-muted-foreground mt-1">{new Date(tx.createdAt).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}</p>
         </Card>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>취소</Button>
@@ -459,7 +459,7 @@ function MemberDetailDialog({ user, transactions, onTransactionChange }: { user:
                       <span className="truncate flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{tx.stockName} {tx.quantity.toLocaleString()}주</span>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <span className="text-muted-foreground text-xs mr-1">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</span>
+                      <span className="text-muted-foreground text-xs mr-1">{new Date(tx.createdAt).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}</span>
                       <TransactionEditDialog tx={tx} onSuccess={onTransactionChange} />
                       <TransactionDeleteButton tx={tx} onSuccess={onTransactionChange} />
                     </div>
@@ -2352,7 +2352,7 @@ export default function AdminPage() {
                               <p className="text-xs text-gray-500">{tx.quantity.toLocaleString()}주 · {tx.pricePerShare.toLocaleString()}원</p>
                             </div>
                           </div>
-                          <span className="text-xs text-gray-400 shrink-0">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</span>
+                          <span className="text-xs text-gray-400 shrink-0">{new Date(tx.createdAt).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}</span>
                         </div>
                       ))}
                     </div>
@@ -2779,7 +2779,7 @@ export default function AdminPage() {
                         >
                           {tx.type === "in" ? "입고" : "출고"}
                         </Badge>
-                        <span className="text-xs text-gray-400">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</span>
+                        <span className="text-xs text-gray-400">{new Date(tx.createdAt).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}</span>
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -2865,7 +2865,7 @@ export default function AdminPage() {
                             <TableCell className="text-right font-mono tabular-nums text-gray-700">{(tx.quantity * tx.pricePerShare).toLocaleString()}원</TableCell>
                             <TableCell className="text-sm text-gray-400">{tx.memo || "-"}</TableCell>
                             <TableCell className="text-sm text-gray-400">
-                              {new Date(tx.createdAt).toLocaleDateString("ko-KR")}
+                              {new Date(tx.createdAt).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center justify-center gap-1">

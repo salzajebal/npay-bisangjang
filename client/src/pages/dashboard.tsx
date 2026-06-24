@@ -704,7 +704,7 @@ export default function DashboardPage() {
                             <TableCell className="text-right font-mono tabular-nums">{tx.pricePerShare.toLocaleString()}원</TableCell>
                             <TableCell className="text-right font-mono tabular-nums">{(tx.quantity * tx.pricePerShare).toLocaleString()}원</TableCell>
                             <TableCell className="text-sm text-muted-foreground">{tx.memo || "-"}</TableCell>
-                            <TableCell className="text-sm text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{new Date(tx.createdAt).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -729,7 +729,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>{tx.quantity.toLocaleString()}주 x {tx.pricePerShare.toLocaleString()}원 · {tx.category}</span>
-                        <span>{new Date(tx.createdAt).toLocaleDateString("ko-KR")}</span>
+                        <span>{new Date(tx.createdAt).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}</span>
                       </div>
                       {tx.memo && <p className="text-xs text-muted-foreground mt-1">{tx.memo}</p>}
                     </Card>
