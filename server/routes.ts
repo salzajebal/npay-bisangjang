@@ -1624,22 +1624,43 @@ export async function registerRoutes(
       const requestedStock = data.stockName || "";
       let resolvedStockName = requestedStock;
       let avgPurchasePrice = 0;
+
+      // 이미 신청 중인 수량을 보유수량에서 차감
+      const pendingRequests = await storage.getPendingTransferRequestsByUserId(req.session.userId);
+      const pendingQtyByStock: Record<string, number> = {};
+      for (const pr of pendingRequests) {
+        const key = pr.stockName || "";
+        pendingQtyByStock[key] = (pendingQtyByStock[key] || 0) + (pr.quantity || 0);
+      }
+      // 잔여 보유수량 계산 (신청 중 수량 차감)
+      const availableMap: Record<string, { qty: number; totalCost: number }> = {};
+      for (const [name, holding] of Object.entries(holdingsMap)) {
+        const pending = pendingQtyByStock[name] || 0;
+        const available = holding.qty - pending;
+        if (available > 0) availableMap[name] = { qty: available, totalCost: holding.totalCost };
+      }
+
       if (requestedStock && holdingsMap[requestedStock] && holdingsMap[requestedStock].qty > 0) {
-        const stockHolding = holdingsMap[requestedStock];
-        if (data.quantity > stockHolding.qty) {
-          return res.status(400).json({ message: `${requestedStock} 보유 수량(${stockHolding.qty}주)을 초과할 수 없습니다` });
+        const available = availableMap[requestedStock]?.qty ?? 0;
+        if (data.quantity > available) {
+          const totalHeld = holdingsMap[requestedStock].qty;
+          const alreadyPending = pendingQtyByStock[requestedStock] || 0;
+          if (alreadyPending > 0) {
+            return res.status(400).json({ message: `${requestedStock} 잔여 신청 가능 수량(${available}주)을 초과할 수 없습니다. (보유 ${totalHeld}주 - 신청중 ${alreadyPending}주)` });
+          }
+          return res.status(400).json({ message: `${requestedStock} 보유 수량(${totalHeld}주)을 초과할 수 없습니다` });
         }
-        avgPurchasePrice = Math.round(stockHolding.totalCost / stockHolding.qty);
+        avgPurchasePrice = Math.round(holdingsMap[requestedStock].totalCost / holdingsMap[requestedStock].qty);
       } else {
-        const availableHoldings = Object.entries(holdingsMap).filter(([, v]) => v.qty > 0);
-        if (availableHoldings.length === 0) {
+        const available = Object.entries(availableMap).filter(([, v]) => v.qty > 0);
+        if (available.length === 0) {
           return res.status(400).json({ message: "보유 중인 종목이 없습니다" });
         }
-        const totalHolding = availableHoldings.reduce((sum, [, v]) => sum + v.qty, 0);
-        if (data.quantity > totalHolding) {
-          return res.status(400).json({ message: `보유 수량(${totalHolding}주)을 초과할 수 없습니다` });
+        const totalAvailable = available.reduce((sum, [, v]) => sum + v.qty, 0);
+        if (data.quantity > totalAvailable) {
+          return res.status(400).json({ message: `보유 수량(${totalAvailable}주)을 초과할 수 없습니다` });
         }
-        const [firstStockName, firstHolding] = availableHoldings[0];
+        const [firstStockName, firstHolding] = available[0];
         resolvedStockName = firstStockName;
         avgPurchasePrice = Math.round(firstHolding.totalCost / firstHolding.qty);
       }
@@ -1650,11 +1671,6 @@ export async function registerRoutes(
       const profitRate = avgPurchasePrice > 0 
         ? (((currentPrice - avgPurchasePrice) / avgPurchasePrice) * 100).toFixed(2) 
         : "0";
-
-      const pendingRequests = await storage.getPendingTransferRequestsByUserId(req.session.userId);
-      if (pendingRequests.length > 0) {
-        return res.status(400).json({ message: "이미 진행 중인 출고신청이 있습니다." });
-      }
 
       const transferRequest = await storage.createTransferRequest({ 
         ...data, 
