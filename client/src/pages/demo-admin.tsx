@@ -47,7 +47,7 @@ const KOREAN_STOCK_LIST = [
 
 const STOCK_FACE_VALUES: Record<string, number> = {
   "마키나락스": 500,
-  "레몬헬스케어": 500,
+  "레몬헬스케어": 3000,
 };
 
 function StockTransactionDialog({
