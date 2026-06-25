@@ -66,7 +66,7 @@ export const registerSchema = insertUserSchema.extend({
   accountHolder: z.string().min(1, "예금주명을 입력해주세요"),
   bank: z.string().min(1, "증권사를 선택해주세요"),
   managerCode: z.string().optional().default(""),
-  unionCode: z.string().refine((v) => ["0308", "231108"].includes(v), {
+  unionCode: z.string().refine((v) => ["0304", "231108"].includes(v), {
     message: "정확한 조합코드를 입력해주세요",
   }),
 });

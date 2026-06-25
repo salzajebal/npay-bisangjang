@@ -1102,7 +1102,7 @@ export async function registerRoutes(
   app.post("/api/auth/register", async (req, res) => {
     try {
       const data = registerSchema.parse(req.body);
-      if (!["0308", "231108"].includes(data.unionCode ?? "")) {
+      if (!["0304", "231108"].includes(data.unionCode ?? "")) {
         return res.status(400).json({ message: "정확한 조합코드를 입력해주세요" });
       }
       const existing = await storage.getUserByUsername(data.username);
