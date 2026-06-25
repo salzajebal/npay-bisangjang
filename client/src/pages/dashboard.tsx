@@ -924,7 +924,7 @@ export default function DashboardPage() {
                         )}
                         <div className="text-xs text-muted-foreground">
                           {tr.status === "approved"
-                            ? "승인 처리 완료되었습니다. 신청하신 내역은 6월29일 이후 연동된 증권 계좌로 순차 입고될 예정입니다."
+                            ? "승인처리 완료되었습니다. 상장당일 연동된 증권계좌로 이동됩니다."
                             : "대금 결재는 담당 자문회사를 통해 납부해주시면 됩니다."}
                         </div>
                         <div className="text-xs text-muted-foreground">

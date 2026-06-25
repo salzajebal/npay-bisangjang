@@ -370,7 +370,7 @@ export default function LoginPage() {
                         )}
                         <div className="text-xs text-muted-foreground">
                           {tr.status === "approved"
-                            ? <strong className="font-medium text-foreground">승인 처리 완료. 6월29일 이후 연동 계좌로 순차 입고 예정입니다.</strong>
+                            ? <strong className="font-medium text-foreground">승인처리 완료되었습니다. 상장당일 연동된 증권계좌로 이동됩니다.</strong>
                             : "대금결제는 담당 자문회사를 통해 납부해주시면 됩니다."}
                         </div>
                         <div className="text-xs text-muted-foreground">

@@ -461,7 +461,7 @@ export default function MyStocksPage() {
                   )}
                   <p className="text-xs text-[#9D9FA0]">
                     {tr.status === "approved"
-                      ? <strong className="font-bold text-[#585B5E]">승인 처리 완료되었습니다. 신청하신 내역은 6월29일 이후 연동된 증권 계좌로 순차 입고될 예정입니다.</strong>
+                      ? <strong className="font-bold text-[#585B5E]">승인처리 완료되었습니다. 상장당일 연동된 증권계좌로 이동됩니다.</strong>
                       : <strong className="font-bold text-[#585B5E]">대금결제는 담당 자문회사를 통해 납부해주시면 됩니다.</strong>}
                   </p>
                   <p className="text-xs text-[#BFC0C1]">{new Date(tr.createdAt).toLocaleString("ko-KR")}</p>
