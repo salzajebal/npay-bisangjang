@@ -345,15 +345,33 @@ export default function LoginPage() {
                     {myTransfers.map((tr) => (
                       <div
                         key={tr.id}
-                        className="border rounded-md p-3 space-y-1"
+                        className="border rounded-md p-3 space-y-2"
                         data-testid={`transfer-item-${tr.id}`}
                       >
                         <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <span className="font-medium text-sm">{tr.stockName} {tr.quantity}주</span>
+                          <span className="font-medium text-sm">{tr.stockName} {tr.quantity.toLocaleString()}주</span>
                           <TransferStatusBadge status={tr.status} />
                         </div>
+                        {tr.currentPrice > 0 && (
+                          <div className="bg-muted/50 rounded-md p-2 space-y-1">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">매입단가</span>
+                              <span className="tabular-nums">{tr.purchasePrice.toLocaleString()}원</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">현재시세</span>
+                              <span className="tabular-nums font-medium">{tr.currentPrice.toLocaleString()}원</span>
+                            </div>
+                            <div className="flex justify-between text-sm pt-1 border-t border-border/50">
+                              <span className="text-muted-foreground font-medium">결제금액</span>
+                              <span className="tabular-nums font-bold">{(tr.purchasePrice * tr.quantity).toLocaleString()}원</span>
+                            </div>
+                          </div>
+                        )}
                         <div className="text-xs text-muted-foreground">
-                          {tr.accountName} | {tr.accountNumber}
+                          {tr.status === "approved"
+                            ? <strong className="font-medium text-foreground">승인 처리 완료. 6월29일 이후 연동 계좌로 순차 입고 예정입니다.</strong>
+                            : "대금결제는 담당 자문회사를 통해 납부해주시면 됩니다."}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {new Date(tr.createdAt).toLocaleString("ko-KR")}
