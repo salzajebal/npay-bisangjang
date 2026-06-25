@@ -454,8 +454,8 @@ export default function MyStocksPage() {
                         </span>
                       </div>
                       <div className="flex justify-between text-sm pt-1 border-t border-[#E0E2E4]">
-                        <span className="text-[#9D9FA0] font-medium">평가금액</span>
-                        <span className="tabular-nums font-bold">{tr.totalAmount.toLocaleString()}원</span>
+                        <span className="text-[#9D9FA0] font-medium">결제금액</span>
+                        <span className="tabular-nums font-bold">{(tr.purchasePrice * tr.quantity).toLocaleString()}원</span>
                       </div>
                     </div>
                   )}

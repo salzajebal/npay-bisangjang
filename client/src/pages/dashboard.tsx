@@ -917,8 +917,8 @@ export default function DashboardPage() {
                               </span>
                             </div>
                             <div className="flex items-center justify-between gap-2 text-sm pt-1 border-t border-border/50">
-                              <span className="text-muted-foreground font-medium">평가금액</span>
-                              <span className="font-mono tabular-nums font-bold">{tr.totalAmount.toLocaleString()}원</span>
+                              <span className="text-muted-foreground font-medium">결제금액</span>
+                              <span className="font-mono tabular-nums font-bold">{(tr.purchasePrice * tr.quantity).toLocaleString()}원</span>
                             </div>
                           </div>
                         )}
