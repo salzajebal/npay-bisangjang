@@ -347,8 +347,8 @@ export default function MyStocksPage() {
                 </TableHeader>
                 <TableBody>
                   {txList.map((tx) => {
-                    const unitPrice = tx.type === "out" ? tx.pricePerShare : (priceData[tx.stockName]?.currentPrice ?? tx.pricePerShare);
-                    const totalTx = tx.quantity * tx.pricePerShare;
+                    const unitPrice = tx.type === "in" ? tx.pricePerShare : (priceData[tx.stockName]?.currentPrice ?? tx.pricePerShare);
+                    const totalTx = tx.quantity * unitPrice;
                     return (
                     <TableRow key={tx.id} data-testid={`row-tx-${tx.id}`}>
                       <TableCell className="text-xs text-[#585B5E]">
@@ -376,8 +376,8 @@ export default function MyStocksPage() {
             </div>
             <div className="sm:hidden space-y-2">
               {txList.map((tx) => {
-                const unitPrice = tx.type === "out" ? tx.pricePerShare : (priceData[tx.stockName]?.currentPrice ?? tx.pricePerShare);
-                const totalTx = tx.quantity * tx.pricePerShare;
+                const unitPrice = tx.type === "in" ? tx.pricePerShare : (priceData[tx.stockName]?.currentPrice ?? tx.pricePerShare);
+                const totalTx = tx.quantity * unitPrice;
                 return (
                 <div key={tx.id} className="border border-[#E0E2E4] rounded-lg p-3" data-testid={`card-tx-${tx.id}`}>
                   <div className="flex items-center gap-3">
