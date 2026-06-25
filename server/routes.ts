@@ -373,6 +373,21 @@ export async function registerRoutes(
   let naverIpoCache: NaverIpoCalendarData = { beingIPOList: [], toBeIPOList: [], readyToIpoStocks: [], ipoNews: [], popularStocks: [], newlyListedStocks: [] };
   let naverIpoCacheTime = 0;
   let marketCacheTime = 0;
+  interface Ipo38Item {
+    stockName: string;
+    subscriptionStartDate: string;
+    subscriptionEndDate: string;
+    listingDate?: string;
+    finalOfferPrice?: number | null;
+    minOfferPrice?: number;
+    maxOfferPrice?: number;
+    competitionRate?: string;
+    brokers?: string;
+    type: 'subscription' | 'listing';
+  }
+  let ipo38Cache: Ipo38Item[] = [];
+  let ipo38CacheTime = 0;
+  const IPO38_CACHE_DURATION = 30 * 60 * 1000;
 
   async function refreshAllUstockData(): Promise<void> {
     try {
@@ -603,6 +618,105 @@ export async function registerRoutes(
 
   refreshNaverIpoData();
   setInterval(refreshNaverIpoData, USTOCK_CACHE_DURATION);
+
+  async function refresh38IpoData(): Promise<void> {
+    try {
+      const resp = await fetch("http://www.38.co.kr/html/fund/index.htm", {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml",
+          "Accept-Language": "ko-KR,ko;q=0.9",
+        },
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!resp.ok) { log(`38.co.kr IPO fetch failed: ${resp.status}`); return; }
+      const buf = Buffer.from(await resp.arrayBuffer());
+      const text = new TextDecoder("euc-kr").decode(buf);
+
+      const tables = text.match(/<table[\s\S]*?<\/table>/gi) || [];
+      const result: Ipo38Item[] = [];
+
+      const parseKorDate = (str: string): string => {
+        const m = str.match(/(\d{4})\.(\d{2})\.(\d{2})/);
+        if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+        const m2 = str.match(/(\d{2})\/(\d{2})/);
+        const year = new Date().getFullYear();
+        if (m2) return `${year}-${m2[1]}-${m2[2]}`;
+        return str;
+      };
+      const parsePrice = (s: string): number | undefined => {
+        const n = parseInt(s.replace(/[,\s]/g, ""), 10);
+        return isNaN(n) ? undefined : n;
+      };
+
+      // Table 14: Full IPO subscription schedule (종목명|공모주일정|확정공모가|희망공모가|경쟁률|주간사)
+      if (tables[14]) {
+        const rows = tables[14].match(/<tr[\s\S]*?<\/tr>/gi) || [];
+        for (let i = 2; i < rows.length; i++) {
+          const cells = (rows[i].match(/<td[^>]*>([\s\S]*?)<\/td>/gi) || [])
+            .map(c => c.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim())
+            .filter(c => c.length > 0);
+          if (cells.length < 4) continue;
+          const stockName = cells[0].replace(/^[&\s]+/, "").trim();
+          if (!stockName || stockName.includes("종목명")) continue;
+          const datePart = cells[1];
+          const dateMatch = datePart.match(/(\d{4})\.(\d{2})\.(\d{2})~(?:\d{4}\.)?(\d{2})\.(\d{2})/);
+          if (!dateMatch) continue;
+          const [, yr, sm, sd, em, ed] = dateMatch;
+          const subscriptionStartDate = `${yr}-${sm}-${sd}`;
+          const subscriptionEndDate = `${yr}-${em}-${ed}`;
+          const finalRaw = cells[2];
+          const finalOfferPrice = finalRaw === "-" ? null : parsePrice(finalRaw) ?? null;
+          const priceRange = cells[3];
+          const priceMatch = priceRange.match(/([0-9,]+)~([0-9,]+)/);
+          const minOfferPrice = priceMatch ? parsePrice(priceMatch[1]) : undefined;
+          const maxOfferPrice = priceMatch ? parsePrice(priceMatch[2]) : undefined;
+          let competitionRate: string | undefined;
+          let brokers: string | undefined;
+          if (cells.length === 5) {
+            brokers = cells[4];
+          } else if (cells.length >= 6) {
+            competitionRate = cells[4];
+            brokers = cells[5];
+          }
+          result.push({ stockName, subscriptionStartDate, subscriptionEndDate, finalOfferPrice, minOfferPrice, maxOfferPrice, competitionRate, brokers, type: "subscription" });
+        }
+      }
+
+      // Table 22: Listing dates (신규상장 일정) — compact format "MM/DD 종목명"
+      if (tables[22]) {
+        const rows = tables[22].match(/<tr[\s\S]*?<\/tr>/gi) || [];
+        const year = new Date().getFullYear();
+        for (let i = 2; i < rows.length; i++) {
+          const cells = (rows[i].match(/<td[^>]*>([\s\S]*?)<\/td>/gi) || [])
+            .map(c => c.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim())
+            .filter(c => c.length > 0);
+          if (cells.length === 0) continue;
+          const raw = cells[0];
+          const m = raw.match(/^(\d{2})\/(\d{2})\s+(.+)$/);
+          if (!m) continue;
+          const listingDate = `${year}-${m[1]}-${m[2]}`;
+          const stockName = m[3].trim();
+          const existing = result.find(r => r.stockName === stockName || stockName.startsWith(r.stockName.slice(0, 4)));
+          if (existing) { existing.listingDate = listingDate; }
+          else {
+            result.push({ stockName, subscriptionStartDate: "", subscriptionEndDate: "", listingDate, type: "listing" });
+          }
+        }
+      }
+
+      if (result.length > 0) {
+        ipo38Cache = result;
+        ipo38CacheTime = Date.now();
+        log(`38.co.kr IPO refreshed: ${result.length} items`);
+      }
+    } catch (err) {
+      log(`38.co.kr IPO refresh error: ${err}`);
+    }
+  }
+
+  refresh38IpoData();
+  setInterval(refresh38IpoData, IPO38_CACHE_DURATION);
 
   // Scrape ustock.naver.com main page for expert reports, rankings, discussions, themes
   async function refreshNaverMainData(): Promise<void> {
@@ -897,7 +1011,7 @@ export async function registerRoutes(
   });
 
   app.get("/api/market/ipo-calendar", (_req, res) => {
-    res.json({ data: ipoCalendarCache, naverData: naverIpoCache, richIpoList, lastUpdated: naverIpoCacheTime ? new Date(naverIpoCacheTime).toISOString() : (marketCacheTime ? new Date(marketCacheTime).toISOString() : null) });
+    res.json({ data: ipoCalendarCache, naverData: naverIpoCache, richIpoList, ipo38: ipo38Cache, ipo38LastUpdated: ipo38CacheTime ? new Date(ipo38CacheTime).toISOString() : null, lastUpdated: naverIpoCacheTime ? new Date(naverIpoCacheTime).toISOString() : (marketCacheTime ? new Date(marketCacheTime).toISOString() : null) });
   });
 
   app.get("/api/stocks/news", async (_req, res) => {

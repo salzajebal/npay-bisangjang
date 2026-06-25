@@ -53,9 +53,23 @@ interface RichIpoItem {
   ipoDetailState?: string;
 }
 
+interface Ipo38Item {
+  stockName: string;
+  subscriptionStartDate: string;
+  subscriptionEndDate: string;
+  listingDate?: string;
+  finalOfferPrice?: number | null;
+  minOfferPrice?: number;
+  maxOfferPrice?: number;
+  competitionRate?: string;
+  brokers?: string;
+  type: 'subscription' | 'listing';
+}
+
 interface IpoCalendarApiResponse {
   naverData: NaverIpoCalendarData;
   richIpoList?: RichIpoItem[];
+  ipo38?: Ipo38Item[];
   lastUpdated: string | null;
 }
 
@@ -357,6 +371,48 @@ function buildRichCalEvents(richIpoList: RichIpoItem[]): CalEvent[] {
   return events;
 }
 
+function buildIpo38CalEvents(ipo38: Ipo38Item[]): CalEvent[] {
+  const events: CalEvent[] = [];
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  for (const item of ipo38) {
+    const name = item.stockName;
+    if (!name) continue;
+    const price = fmtPrice(item.minOfferPrice, item.maxOfferPrice, item.finalOfferPrice);
+    const compStr = item.competitionRate || "-";
+
+    if (item.subscriptionStartDate && item.subscriptionEndDate) {
+      const start = parseLocalDate(item.subscriptionStartDate);
+      const end = parseLocalDate(item.subscriptionEndDate);
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) continue;
+      const isOngoing = start <= today && today <= end;
+      const isPast = end < today;
+      const color = isOngoing ? "#c0392b" : isPast ? "#888" : "#6c3483";
+      const bgColor = isOngoing ? "#FCDDE1" : isPast ? "#F3F5F6" : "#D7C8E8";
+      const status = isOngoing ? "공모청약" : isPast ? "청약완료" : "청약예정";
+      events.push({
+        name, start, end, color, bgColor, status,
+        priceRange: price, competition: compStr,
+        logoUrl: null, iconType: "square", isBar: true,
+      });
+    }
+    if (item.listingDate) {
+      const d = parseLocalDate(item.listingDate);
+      if (!isNaN(d.getTime())) {
+        const isPast = d < today;
+        events.push({
+          name, start: d, end: d,
+          color: isPast ? "#555" : "#1b5e20",
+          bgColor: isPast ? "#EFEFEF" : "#E8F5E9",
+          status: "상장",
+          priceRange: price, competition: compStr,
+          logoUrl: null, iconType: "dot", isBar: false,
+        });
+      }
+    }
+  }
+  return events;
+}
+
 function IpoEventIcon({ type, color }: { type: CalEvent["iconType"]; color: string }) {
   switch (type) {
     case "square":    return <span style={{ color }} className="text-[8px] leading-none shrink-0 mr-0.5">■</span>;
@@ -548,20 +604,29 @@ function CalendarSection() {
 
   const naverData = ipoApiData?.naverData;
   const richIpoList: RichIpoItem[] = ipoApiData?.richIpoList || [];
+  const ipo38: Ipo38Item[] = ipoApiData?.ipo38 || [];
 
   const events = useMemo(() => {
     const norm = (s: string) => s.replace(/\s/g, "").replace(/져/g, "저").replace(/쟤/g, "재").toLowerCase();
     const dbEvents = buildDbCalEvents(dbStocks);
     const dbNamesNorm = new Set(dbEvents.map(e => norm(e.name)));
 
+    // 38.co.kr 이벤트 (가장 최신/풍부한 공모주 일정)
+    const ipo38Events = ipo38.length > 0 ? buildIpo38CalEvents(ipo38) : [];
+    const ipo38NamesNorm = new Set(ipo38Events.map(e => norm(e.name)));
+
     // Rich 데이터가 있으면 우선 사용 (수요예측+공모청약+상장 전부 포함)
     const richEvents = richIpoList.length > 0 ? buildRichCalEvents(richIpoList) : [];
     // Naver 이벤트 (rich에 없는 종목 보완)
     const naverEvents = naverData ? buildCalEvents(naverData) : [];
     const richNamesNorm = new Set(richEvents.map(e => norm(e.name)));
-    const filteredNaver = naverEvents.filter(e => !richNamesNorm.has(norm(e.name)) && !dbNamesNorm.has(norm(e.name)));
-    return [...dbEvents, ...richEvents, ...filteredNaver];
-  }, [naverData, dbStocks, richIpoList]);
+
+    // 38 이벤트 중 DB에 없는 종목만 추가
+    const filtered38 = ipo38Events.filter(e => !dbNamesNorm.has(norm(e.name)));
+    const filteredRich = richEvents.filter(e => !dbNamesNorm.has(norm(e.name)) && !ipo38NamesNorm.has(norm(e.name)));
+    const filteredNaver = naverEvents.filter(e => !richNamesNorm.has(norm(e.name)) && !dbNamesNorm.has(norm(e.name)) && !ipo38NamesNorm.has(norm(e.name)));
+    return [...dbEvents, ...filtered38, ...filteredRich, ...filteredNaver];
+  }, [naverData, dbStocks, richIpoList, ipo38]);
 
   const beingIPO = naverData?.beingIPOList || [];
   const toBeIPO = naverData?.toBeIPOList || [];
@@ -642,11 +707,60 @@ function CalendarSection() {
       _fromDb: true,
     }));
 
+  // 38.co.kr 데이터를 사이드바 형식으로 변환
+  const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
+  const ipo38Being = ipo38.filter(x => {
+    if (!x.subscriptionStartDate || !x.subscriptionEndDate) return false;
+    const s = parseLocalDate(x.subscriptionStartDate);
+    const e = parseLocalDate(x.subscriptionEndDate);
+    return s <= todayMidnight && todayMidnight <= e;
+  }).map(x => ({
+    stockName: x.stockName,
+    stockCode: null,
+    closedDate: x.subscriptionEndDate,
+    offeringStartAt: x.subscriptionStartDate,
+    minExpectedOfferPrice: x.minOfferPrice,
+    maxExpectedOfferPrice: x.maxOfferPrice,
+    finalOfferPrice: x.finalOfferPrice,
+    instCompetitiveness: x.competitionRate ? parseFloat(x.competitionRate) : null,
+    logoUrl: null,
+    brokers: x.brokers,
+    _from38: true,
+  }));
+  const ipo38ToBe = ipo38.filter(x => {
+    if (!x.subscriptionStartDate) return false;
+    const s = parseLocalDate(x.subscriptionStartDate);
+    return s > todayMidnight;
+  }).map(x => ({
+    stockName: x.stockName,
+    stockCode: null,
+    closedDate: x.subscriptionEndDate,
+    offeringStartAt: x.subscriptionStartDate,
+    minExpectedOfferPrice: x.minOfferPrice,
+    maxExpectedOfferPrice: x.maxOfferPrice,
+    finalOfferPrice: x.finalOfferPrice,
+    instCompetitiveness: x.competitionRate ? parseFloat(x.competitionRate) : null,
+    logoUrl: null,
+    brokers: x.brokers,
+    listingDate: x.listingDate,
+    _from38: true,
+  }));
+
   // Naver 데이터와 합치되 DB에 있는 종목은 제외
   const dbBeingNames = new Set(dbBeingIPO.map(s => s.stockName));
   const dbToBeNames = new Set(dbToBeIPO.map(s => s.stockName));
-  const mergedBeingIPO = [...dbBeingIPO, ...beingIPO.filter((s: any) => !dbBeingNames.has(s.stockName))];
-  const mergedToBeIPO = [...dbToBeIPO, ...toBeIPO.filter((s: any) => !dbToBeNames.has(s.stockName))];
+  const ipo38BeingNames = new Set(ipo38Being.map(s => s.stockName));
+  const ipo38ToBeNames = new Set(ipo38ToBe.map(s => s.stockName));
+  const mergedBeingIPO = [
+    ...dbBeingIPO,
+    ...ipo38Being.filter(s => !dbBeingNames.has(s.stockName)),
+    ...beingIPO.filter((s: any) => !dbBeingNames.has(s.stockName) && !ipo38BeingNames.has(s.stockName)),
+  ];
+  const mergedToBeIPO = [
+    ...dbToBeIPO,
+    ...ipo38ToBe.filter(s => !dbToBeNames.has(s.stockName)),
+    ...toBeIPO.filter((s: any) => !dbToBeNames.has(s.stockName) && !ipo38ToBeNames.has(s.stockName)),
+  ];
 
   const currentSidebarItems = sidebarTab === "being" ? mergedBeingIPO : mergedToBeIPO;
 
@@ -744,7 +858,7 @@ function CalendarSection() {
             <ul className="text-[11px] text-[#BFC0C1] space-y-1 list-disc pl-4">
               <li>모든 정보는 정보 제공을 위한 것으로, 투자 권유를 목적으로 하지 않습니다.</li>
               <li>제공되는 정보는 오류 또는 지연이 발생할 수 있으며, 책임을 지지 않습니다.</li>
-              <li>데이터 출처: Npay 비상장 (ustock.naver.com)</li>
+              <li>데이터 출처: 38커뮤니케이션 (www.38.co.kr), Npay 비상장 (ustock.naver.com)</li>
             </ul>
           </div>
         </div>

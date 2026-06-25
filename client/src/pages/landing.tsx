@@ -1183,28 +1183,63 @@ function PopularDiscussions() {
 function IPOUpcomingSidebar() {
   const [activeTab, setActiveTab] = useState<"진행중" | "예정">("예정");
 
-  const { data: ipoCalendarData, isLoading } = useQuery<{ naverData?: { beingIPOList: any[]; toBeIPOList: any[] } }>({
+  const { data: ipoCalendarData, isLoading } = useQuery<{ naverData?: { beingIPOList: any[]; toBeIPOList: any[] }; ipo38?: any[] }>({
     queryKey: ["/api/market/ipo-calendar"],
     refetchInterval: 5 * 60 * 1000,
   });
 
   const naverData = ipoCalendarData?.naverData;
-  const ongoing = (naverData?.beingIPOList || []).map((item: any) => ({
-    stockName: item.stockName,
-    startDate: item.offeringStartAt || item.subscriptionStartDate || "",
-    endDate: item.closedDate || item.subscriptionEndDate || "",
-    priceMin: item.minExpectedOfferPrice || item.finalOfferPrice || 0,
-    priceMax: item.maxExpectedOfferPrice || item.finalOfferPrice || 0,
-    competitionRate: item.instCompetitiveness ? `${item.instCompetitiveness}:1` : null,
-  }));
-  const upcoming = (naverData?.toBeIPOList || []).map((item: any) => ({
-    stockName: item.stockName,
-    startDate: item.offeringStartAt || item.subscriptionStartDate || "",
-    endDate: item.closedDate || item.subscriptionEndDate || "",
-    priceMin: item.minExpectedOfferPrice || 0,
-    priceMax: item.maxExpectedOfferPrice || 0,
-    competitionRate: item.instCompetitiveness ? `${item.instCompetitiveness}:1` : null,
-  }));
+  const ipo38 = ipoCalendarData?.ipo38 || [];
+  const todayMs = new Date().setHours(0, 0, 0, 0);
+
+  function parseLD(s: string) { const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2]-1, +m[3]).getTime() : NaN; }
+
+  // 38.co.kr 기준: 진행중 (오늘이 청약시작~청약종료 사이)
+  const ipo38Ongoing = ipo38.filter((x: any) => x.subscriptionStartDate && x.subscriptionEndDate && parseLD(x.subscriptionStartDate) <= todayMs && todayMs <= parseLD(x.subscriptionEndDate));
+  // 38.co.kr 기준: 청약예정 (청약시작일이 오늘 이후)
+  const ipo38Upcoming = ipo38.filter((x: any) => x.subscriptionStartDate && parseLD(x.subscriptionStartDate) > todayMs);
+
+  const ipo38OngoingNames = new Set(ipo38Ongoing.map((x: any) => x.stockName));
+  const ipo38UpcomingNames = new Set(ipo38Upcoming.map((x: any) => x.stockName));
+
+  const ongoing = [
+    ...ipo38Ongoing.map((x: any) => ({
+      stockName: x.stockName,
+      startDate: x.subscriptionStartDate || "",
+      endDate: x.subscriptionEndDate || "",
+      priceMin: x.minOfferPrice || x.finalOfferPrice || 0,
+      priceMax: x.maxOfferPrice || x.finalOfferPrice || 0,
+      competitionRate: x.competitionRate || null,
+    })),
+    ...(naverData?.beingIPOList || []).filter((item: any) => !ipo38OngoingNames.has(item.stockName)).map((item: any) => ({
+      stockName: item.stockName,
+      startDate: item.offeringStartAt || item.subscriptionStartDate || "",
+      endDate: item.closedDate || item.subscriptionEndDate || "",
+      priceMin: item.minExpectedOfferPrice || item.finalOfferPrice || 0,
+      priceMax: item.maxExpectedOfferPrice || item.finalOfferPrice || 0,
+      competitionRate: item.instCompetitiveness ? `${item.instCompetitiveness}:1` : null,
+    })),
+  ];
+  const upcoming = [
+    ...ipo38Upcoming.map((x: any) => ({
+      stockName: x.stockName,
+      startDate: x.subscriptionStartDate || "",
+      endDate: x.subscriptionEndDate || "",
+      priceMin: x.minOfferPrice || 0,
+      priceMax: x.maxOfferPrice || 0,
+      competitionRate: x.competitionRate || null,
+      listingDate: x.listingDate || null,
+    })),
+    ...(naverData?.toBeIPOList || []).filter((item: any) => !ipo38UpcomingNames.has(item.stockName)).map((item: any) => ({
+      stockName: item.stockName,
+      startDate: item.offeringStartAt || item.subscriptionStartDate || "",
+      endDate: item.closedDate || item.subscriptionEndDate || "",
+      priceMin: item.minExpectedOfferPrice || 0,
+      priceMax: item.maxExpectedOfferPrice || 0,
+      competitionRate: item.instCompetitiveness ? `${item.instCompetitiveness}:1` : null,
+      listingDate: null,
+    })),
+  ];
 
   const displayed = activeTab === "진행중" ? ongoing : upcoming;
   const now = new Date();
