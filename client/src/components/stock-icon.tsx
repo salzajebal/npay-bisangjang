@@ -87,6 +87,7 @@ const STOCK_LOGOS: Record<string, { logo: string; bg: string }> = {
   "애자일소다": { logo: "https://static.ustockplus.com/admin/2023-02/8a839a3b-2c7f-46ca-8cf3-2aec138d2233.png", bg: "#1976D2" },
   "오톰": { logo: "https://static.ustockplus.com/admin/2023-01/33d52156-7bff-43d1-896e-a9dd3b59d858.png", bg: "#333333" },
   "마이리얼트립": { logo: "https://static.ustockplus.com/admin/2023-02/731a0e1d-48bf-46ef-a699-d10cbe743a9a.png", bg: "#3182f6" },
+  "덕양에너젠": { logo: "https://static.ustockplus.com/admin/2026-01/db876834-45cf-41f3-b5be-8ed8c4658da0.png", bg: "#1565C0" },
 };
 
 const STOCK_CODE_MAP: Record<string, string> = {
