@@ -152,6 +152,21 @@ function addDays(dateStr: string, days: number): Date {
   return d;
 }
 
+function addBusinessDays(dateStr: string, days: number): Date {
+  const d = parseLocalDate(dateStr);
+  let count = 0;
+  while (count < days) {
+    d.setDate(d.getDate() + 1);
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) count++;
+  }
+  return d;
+}
+
+function dateToStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
 function sameDay(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
@@ -355,6 +370,24 @@ function buildRichCalEvents(richIpoList: RichIpoItem[]): CalEvent[] {
         });
       }
     }
+    // 배정 dot = 청약종료 후 1 영업일, 환불 dot = 2 영업일
+    if (subEnd) {
+      const allotDate = addBusinessDays(subEnd, 1);
+      const refundDate = addBusinessDays(subEnd, 2);
+      events.push({
+        name, start: allotDate, end: allotDate,
+        color: "#33691e", bgColor: "#F1F8E9", status: "배정",
+        priceRange: price, competition: compStr,
+        logoUrl: logo, iconType: "snowflake", isBar: false,
+      });
+      events.push({
+        name, start: refundDate, end: refundDate,
+        color: "#b7601e", bgColor: "#FFF1E0", status: "환불",
+        priceRange: price, competition: compStr,
+        logoUrl: logo, iconType: "dash", isBar: false,
+      });
+    }
+
     // 상장 dot
     if (ipo.listingAt) {
       const d = parseLocalDate(ipo.listingAt);
