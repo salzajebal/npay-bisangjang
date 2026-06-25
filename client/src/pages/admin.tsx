@@ -67,11 +67,24 @@ function StockTransactionDialog({
   const [pricePerShare, setPricePerShare] = useState("");
   const [memo, setMemo] = useState("");
   const [txDate, setTxDate] = useState("");
+  const [fetchedLogoUrl, setFetchedLogoUrl] = useState<string | null>(null);
+  const [logoImgErr, setLogoImgErr] = useState(false);
   const { toast } = useToast();
 
   const filteredStocks = stockSearch.length > 0
     ? KOREAN_STOCK_LIST.filter(s => s.includes(stockSearch)).slice(0, 8)
     : [];
+
+  useEffect(() => {
+    if (!stockName || stockSearch) { setFetchedLogoUrl(null); setLogoImgErr(false); return; }
+    const t = setTimeout(() => {
+      fetch(`/api/stock-logo-search?name=${encodeURIComponent(stockName)}`)
+        .then(r => r.json())
+        .then((d: { logoUrl: string | null }) => { setFetchedLogoUrl(d.logoUrl || null); setLogoImgErr(false); })
+        .catch(() => setFetchedLogoUrl(null));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [stockName, stockSearch]);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -155,8 +168,13 @@ function StockTransactionDialog({
             </div>
             {stockName && !stockSearch && (
               <div className="flex items-center gap-2 mt-1 px-1">
-                <StockIcon name={stockName} size={20} />
+                {fetchedLogoUrl && !logoImgErr ? (
+                  <img src={fetchedLogoUrl} alt={stockName} className="w-5 h-5 rounded-full object-cover shrink-0" onError={() => setLogoImgErr(true)} />
+                ) : (
+                  <StockIcon name={stockName} size={20} />
+                )}
                 <span className="text-sm font-medium text-gray-700">{stockName}</span>
+                {fetchedLogoUrl && !logoImgErr && <span className="text-xs text-green-600">로고 확인됨</span>}
               </div>
             )}
             {filteredStocks.length > 0 && stockSearch && (

@@ -2015,8 +2015,25 @@ export async function registerRoutes(
       const url = item.logoUrl;
       if (name && url && !logos[name]) logos[name] = url;
     }
+    // 뉴스 캐시 (recentCompanyPosts) 로고 수집
+    if (newsCache?.data) {
+      for (const item of newsCache.data) {
+        if (item.stockName && item.logoUrl && !logos[item.stockName]) {
+          logos[item.stockName] = item.logoUrl;
+        }
+      }
+    }
     return logos;
   }
+
+  // 단일 종목 로고 검색 (모든 캐시에서)
+  app.get("/api/stock-logo-search", (req, res) => {
+    const name = String(req.query.name || "").trim();
+    if (!name) return res.json({ logoUrl: null });
+    const logos = buildLogoMapFromCaches();
+    const logoUrl = logos[name] || null;
+    return res.json({ logoUrl, name });
+  });
 
   app.get("/api/stock-logos", async (req, res) => {
     const now = Date.now();
