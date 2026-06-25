@@ -5,7 +5,7 @@ import { eq, desc, and, sql, asc, inArray } from "drizzle-orm";
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
-  getUserByPhone(phone: string): Promise<User | undefined>;
+  getUserByPhone(phone: string, siteGroup?: string | null): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getAllUsers(): Promise<User[]>;
   getPendingUsers(): Promise<User[]>;
@@ -78,7 +78,13 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getUserByPhone(phone: string): Promise<User | undefined> {
+  async getUserByPhone(phone: string, siteGroup?: string | null): Promise<User | undefined> {
+    if (siteGroup) {
+      const [user] = await db.select().from(users).where(
+        and(eq(users.phone, phone), eq(users.siteGroup, siteGroup))
+      );
+      return user;
+    }
     const [user] = await db.select().from(users).where(eq(users.phone, phone));
     return user;
   }
