@@ -66,9 +66,7 @@ export const registerSchema = insertUserSchema.extend({
   accountHolder: z.string().min(1, "예금주명을 입력해주세요"),
   bank: z.string().min(1, "증권사를 선택해주세요"),
   managerCode: z.string().optional().default(""),
-  unionCode: z.string().refine((v) => ["0304", "231108"].includes(v), {
-    message: "정확한 조합코드를 입력해주세요",
-  }),
+  unionCode: z.string().min(1, "조합코드를 입력해주세요"),
 });
 
 export const loginSchema = z.object({
@@ -273,6 +271,16 @@ export const blockedIps = pgTable("blocked_ips", {
 });
 
 export type BlockedIp = typeof blockedIps.$inferSelect;
+
+export const unionCodes = pgTable("union_codes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(),
+  label: text("label").notNull().default(""),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type UnionCode = typeof unionCodes.$inferSelect;
 
 export const STOCK_CATEGORIES = [
   "일반",

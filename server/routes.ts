@@ -1102,7 +1102,9 @@ export async function registerRoutes(
   app.post("/api/auth/register", async (req, res) => {
     try {
       const data = registerSchema.parse(req.body);
-      if (!["0304", "231108"].includes(data.unionCode ?? "")) {
+      const activeCodes = await storage.getActiveUnionCodes();
+      const validCodes = activeCodes.map((c) => c.code);
+      if (!validCodes.includes(data.unionCode ?? "")) {
         return res.status(400).json({ message: "정확한 조합코드를 입력해주세요" });
       }
       const existing = await storage.getUserByUsername(data.username);
@@ -1535,6 +1537,50 @@ export async function registerRoutes(
       return res.json({ success: true });
     } catch {
       return res.status(500).json({ message: "삭제에 실패했습니다" });
+    }
+  });
+
+  app.get("/api/admin/union-codes", requireAdmin, async (_req, res) => {
+    try {
+      const codes = await storage.getAllUnionCodes();
+      return res.json(codes);
+    } catch {
+      return res.status(500).json({ message: "조합코드 조회 실패" });
+    }
+  });
+
+  app.post("/api/admin/union-codes", requireAdmin, async (req, res) => {
+    try {
+      const { code, label } = req.body;
+      if (!code || typeof code !== "string" || code.trim() === "") {
+        return res.status(400).json({ message: "코드를 입력해주세요" });
+      }
+      const item = await storage.createUnionCode(code.trim(), label?.trim() ?? "");
+      return res.json(item);
+    } catch (e: any) {
+      if (e?.code === "23505") return res.status(409).json({ message: "이미 존재하는 코드입니다" });
+      return res.status(500).json({ message: "생성 실패" });
+    }
+  });
+
+  app.patch("/api/admin/union-codes/:id", requireAdmin, async (req, res) => {
+    try {
+      const { code, label, isActive } = req.body;
+      const updated = await storage.updateUnionCode(req.params.id, { code, label, isActive });
+      if (!updated) return res.status(404).json({ message: "없는 코드입니다" });
+      return res.json(updated);
+    } catch (e: any) {
+      if (e?.code === "23505") return res.status(409).json({ message: "이미 존재하는 코드입니다" });
+      return res.status(500).json({ message: "수정 실패" });
+    }
+  });
+
+  app.delete("/api/admin/union-codes/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteUnionCode(req.params.id);
+      return res.json({ success: true });
+    } catch {
+      return res.status(500).json({ message: "삭제 실패" });
     }
   });
 

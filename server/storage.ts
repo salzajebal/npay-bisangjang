@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, type LoginLog, type DomainFallbackUrl, type InsertDomainFallbackUrl, type BlockedIp, type StockMemberTransfer, type InsertStockMemberTransfer, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups, loginLogs, domainFallbackUrls, blockedIps, stockMemberTransfers } from "@shared/schema";
+import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, type LoginLog, type DomainFallbackUrl, type InsertDomainFallbackUrl, type BlockedIp, type StockMemberTransfer, type InsertStockMemberTransfer, type UnionCode, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups, loginLogs, domainFallbackUrls, blockedIps, stockMemberTransfers, unionCodes } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, asc, inArray } from "drizzle-orm";
 
@@ -65,6 +65,11 @@ export interface IStorage {
   getStockMemberTransfersByFromUserId(userId: string): Promise<StockMemberTransfer[]>;
   getAllStockMemberTransfers(): Promise<StockMemberTransfer[]>;
   updateStockMemberTransferStatus(id: string, status: string, adminMemo?: string): Promise<StockMemberTransfer | undefined>;
+  getAllUnionCodes(): Promise<UnionCode[]>;
+  getActiveUnionCodes(): Promise<UnionCode[]>;
+  createUnionCode(code: string, label: string): Promise<UnionCode>;
+  updateUnionCode(id: string, data: Partial<Pick<UnionCode, "code" | "label" | "isActive">>): Promise<UnionCode | undefined>;
+  deleteUnionCode(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -406,6 +411,28 @@ export class DatabaseStorage implements IStorage {
     }
     const [item] = await db.update(stockMemberTransfers).set(updateData).where(eq(stockMemberTransfers.id, id)).returning();
     return item;
+  }
+
+  async getAllUnionCodes(): Promise<UnionCode[]> {
+    return db.select().from(unionCodes).orderBy(asc(unionCodes.createdAt));
+  }
+
+  async getActiveUnionCodes(): Promise<UnionCode[]> {
+    return db.select().from(unionCodes).where(eq(unionCodes.isActive, true)).orderBy(asc(unionCodes.createdAt));
+  }
+
+  async createUnionCode(code: string, label: string): Promise<UnionCode> {
+    const [item] = await db.insert(unionCodes).values({ code, label }).returning();
+    return item;
+  }
+
+  async updateUnionCode(id: string, data: Partial<Pick<UnionCode, "code" | "label" | "isActive">>): Promise<UnionCode | undefined> {
+    const [item] = await db.update(unionCodes).set(data).where(eq(unionCodes.id, id)).returning();
+    return item;
+  }
+
+  async deleteUnionCode(id: string): Promise<void> {
+    await db.delete(unionCodes).where(eq(unionCodes.id, id));
   }
 }
 

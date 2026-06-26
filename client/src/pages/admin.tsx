@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { STOCK_CATEGORIES, KOREAN_BANKS } from "@shared/schema";
 import { StockIcon } from "@/components/stock-icon";
-import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup, LoginLog, DomainFallbackUrl, BlockedIp, StockMemberTransfer } from "@shared/schema";
+import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup, LoginLog, DomainFallbackUrl, BlockedIp, StockMemberTransfer, UnionCode } from "@shared/schema";
 import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
@@ -1311,7 +1311,7 @@ function MaintenanceToggleCard() {
   );
 }
 
-type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "member-transfers" | "stocks" | "chat" | "groups" | "fallbacks" | "logs" | "ipblock";
+type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "member-transfers" | "stocks" | "chat" | "groups" | "fallbacks" | "logs" | "ipblock" | "unioncodes";
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "대시보드", icon: LayoutDashboard },
@@ -1325,13 +1325,14 @@ const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashbo
   { id: "fallbacks", label: "도메인 대체", icon: ShieldAlert },
   { id: "logs", label: "접속 로그", icon: Activity },
   { id: "ipblock", label: "IP 차단", icon: Ban },
+  { id: "unioncodes", label: "조합코드 관리", icon: Shield },
 ];
 
 export default function AdminPage() {
   const [, setLocation] = useLocation();
   const getHashSection = (): AdminSection => {
     const hash = window.location.hash.replace("#", "");
-    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "member-transfers", "stocks", "chat", "groups", "fallbacks", "logs", "ipblock"];
+    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "member-transfers", "stocks", "chat", "groups", "fallbacks", "logs", "ipblock", "unioncodes"];
     return valid.includes(hash as AdminSection) ? (hash as AdminSection) : "dashboard";
   };
 
@@ -1432,6 +1433,11 @@ export default function AdminPage() {
   const [logSearchFilter, setLogSearchFilter] = useState("");
   const [newBlockIp, setNewBlockIp] = useState("");
   const [newBlockReason, setNewBlockReason] = useState("");
+  const [newUnionCode, setNewUnionCode] = useState("");
+  const [newUnionLabel, setNewUnionLabel] = useState("");
+  const [editingUnionCode, setEditingUnionCode] = useState<UnionCode | null>(null);
+  const [editUnionCodeVal, setEditUnionCodeVal] = useState("");
+  const [editUnionLabelVal, setEditUnionLabelVal] = useState("");
   const [txSearchTerm, setTxSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
@@ -1541,6 +1547,46 @@ export default function AdminPage() {
     queryKey: ["/api/admin/blocked-ips"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!authData?.user?.isAdmin,
+  });
+
+  const { data: unionCodesList = [] } = useQuery<UnionCode[]>({
+    queryKey: ["/api/admin/union-codes"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!authData?.user?.isAdmin,
+  });
+
+  const addUnionCodeMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/admin/union-codes", { code: newUnionCode.trim(), label: newUnionLabel.trim() }),
+    onSuccess: () => {
+      setNewUnionCode("");
+      setNewUnionLabel("");
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/union-codes"] });
+      toast({ title: "추가 완료", description: "조합코드가 추가되었습니다" });
+    },
+    onError: (e: any) => {
+      toast({ title: "오류", description: e.message || "이미 존재하는 코드입니다", variant: "destructive" });
+    },
+  });
+
+  const updateUnionCodeMutation = useMutation({
+    mutationFn: (vars: { id: string; code: string; label: string; isActive: boolean }) =>
+      apiRequest("PATCH", `/api/admin/union-codes/${vars.id}`, { code: vars.code, label: vars.label, isActive: vars.isActive }),
+    onSuccess: () => {
+      setEditingUnionCode(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/union-codes"] });
+      toast({ title: "수정 완료" });
+    },
+    onError: (e: any) => {
+      toast({ title: "오류", description: e.message || "수정 실패", variant: "destructive" });
+    },
+  });
+
+  const deleteUnionCodeMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/union-codes/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/union-codes"] });
+      toast({ title: "삭제 완료", description: "조합코드가 삭제되었습니다" });
+    },
   });
 
   const addBlockedIpMutation = useMutation({
@@ -4358,6 +4404,127 @@ export default function AdminPage() {
                   </div>
                 );
               })()}
+            </>
+          )}
+
+          {activeSection === "unioncodes" && (
+            <>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-800">조합코드 관리</h2>
+                <Badge variant="outline" className="border-gray-200 text-gray-500">{unionCodesList.length}개</Badge>
+              </div>
+
+              <Card className="p-5 bg-white border-gray-200">
+                <p className="text-sm text-gray-500 mb-3">회원가입 시 입력하는 조합코드를 관리합니다. 활성 상태인 코드만 가입에 사용 가능합니다.</p>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                  <Input
+                    placeholder="코드 (예: 0304)"
+                    value={newUnionCode}
+                    onChange={(e) => setNewUnionCode(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && newUnionCode.trim() && addUnionCodeMutation.mutate()}
+                    className="bg-white border-gray-200 font-mono"
+                    data-testid="input-union-code-new"
+                  />
+                  <Input
+                    placeholder="설명 (예: 1차 조합)"
+                    value={newUnionLabel}
+                    onChange={(e) => setNewUnionLabel(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && newUnionCode.trim() && addUnionCodeMutation.mutate()}
+                    className="bg-white border-gray-200 md:col-span-2"
+                    data-testid="input-union-label-new"
+                  />
+                  <Button
+                    onClick={() => addUnionCodeMutation.mutate()}
+                    disabled={!newUnionCode.trim() || addUnionCodeMutation.isPending}
+                    className="bg-[#03C75A] hover:bg-[#02b350] text-white"
+                    data-testid="button-add-union-code"
+                  >
+                    {addUnionCodeMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4 mr-1" />코드 추가</>}
+                  </Button>
+                </div>
+              </Card>
+
+              {unionCodesList.length === 0 ? (
+                <Card className="p-12 text-center bg-white border-gray-200">
+                  <Shield className="w-10 h-10 mx-auto mb-3 opacity-20 text-gray-400" />
+                  <p className="font-medium text-gray-500">등록된 조합코드가 없습니다</p>
+                  <p className="text-xs text-gray-400 mt-1">위 폼에서 코드를 추가하세요</p>
+                </Card>
+              ) : (
+                <Card className="p-0 overflow-hidden bg-white border-gray-200">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-gray-50 border-gray-200">
+                        <TableHead className="text-gray-500">코드</TableHead>
+                        <TableHead className="text-gray-500">설명</TableHead>
+                        <TableHead className="text-center text-gray-500">상태</TableHead>
+                        <TableHead className="text-gray-500">등록일</TableHead>
+                        <TableHead className="text-center text-gray-500">관리</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {unionCodesList.map((item) => (
+                        <TableRow key={item.id} className="border-gray-200" data-testid={`row-union-code-${item.id}`}>
+                          {editingUnionCode?.id === item.id ? (
+                            <>
+                              <TableCell>
+                                <Input value={editUnionCodeVal} onChange={(e) => setEditUnionCodeVal(e.target.value)} className="font-mono h-8 text-sm" />
+                              </TableCell>
+                              <TableCell>
+                                <Input value={editUnionLabelVal} onChange={(e) => setEditUnionLabelVal(e.target.value)} className="h-8 text-sm" />
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className={editingUnionCode.isActive ? "border-green-300 text-green-700" : "border-gray-300 text-gray-500"}
+                                  onClick={() => setEditingUnionCode({ ...editingUnionCode, isActive: !editingUnionCode.isActive })}
+                                >
+                                  {editingUnionCode.isActive ? "활성" : "비활성"}
+                                </Button>
+                              </TableCell>
+                              <TableCell className="text-xs text-gray-400">{new Date(item.createdAt).toLocaleDateString("ko-KR")}</TableCell>
+                              <TableCell className="text-center">
+                                <div className="flex gap-1 justify-center">
+                                  <Button size="sm" className="bg-[#03C75A] hover:bg-[#02b350] text-white h-7 px-2 text-xs"
+                                    onClick={() => updateUnionCodeMutation.mutate({ id: item.id, code: editUnionCodeVal, label: editUnionLabelVal, isActive: editingUnionCode.isActive })}
+                                    disabled={updateUnionCodeMutation.isPending}
+                                  >저장</Button>
+                                  <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEditingUnionCode(null)}>취소</Button>
+                                </div>
+                              </TableCell>
+                            </>
+                          ) : (
+                            <>
+                              <TableCell className="font-mono font-bold text-gray-800">{item.code}</TableCell>
+                              <TableCell className="text-gray-600 text-sm">{item.label || "-"}</TableCell>
+                              <TableCell className="text-center">
+                                <Badge className={item.isActive ? "bg-green-100 text-green-700 border-green-200" : "bg-gray-100 text-gray-500 border-gray-200"} variant="outline">
+                                  {item.isActive ? "활성" : "비활성"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-xs text-gray-400 whitespace-nowrap">{new Date(item.createdAt).toLocaleDateString("ko-KR")}</TableCell>
+                              <TableCell className="text-center">
+                                <div className="flex gap-1 justify-center">
+                                  <Button size="sm" variant="outline" className="border-gray-200 h-7 px-2 text-xs"
+                                    onClick={() => { setEditingUnionCode(item); setEditUnionCodeVal(item.code); setEditUnionLabelVal(item.label); }}
+                                    data-testid={`button-edit-union-${item.id}`}
+                                  ><Pencil className="w-3 h-3" /></Button>
+                                  <Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 h-7 px-2 text-xs"
+                                    onClick={() => deleteUnionCodeMutation.mutate(item.id)}
+                                    disabled={deleteUnionCodeMutation.isPending}
+                                    data-testid={`button-delete-union-${item.id}`}
+                                  ><Trash2 className="w-3 h-3" /></Button>
+                                </div>
+                              </TableCell>
+                            </>
+                          )}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Card>
+              )}
             </>
           )}
 
