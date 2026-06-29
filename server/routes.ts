@@ -1895,6 +1895,24 @@ export async function registerRoutes(
       if (!updated) {
         return res.status(404).json({ message: "신청을 찾을 수 없습니다" });
       }
+      // 승인 시 stockTransactions에 "out" 거래 자동 생성 → 보유 종목에서 차감
+      if (status === "approved") {
+        const existingTxs = await storage.getTransactionsByUserId(updated.userId);
+        const alreadyOut = existingTxs.some(
+          (tx) => tx.type === "out" && tx.stockName === updated.stockName && tx.quantity === updated.quantity && tx.memo === `출고신청#${updated.id}`
+        );
+        if (!alreadyOut) {
+          await storage.createTransaction({
+            userId: updated.userId,
+            type: "out",
+            category: "일반",
+            stockName: updated.stockName,
+            quantity: updated.quantity,
+            pricePerShare: updated.currentPrice || updated.purchasePrice,
+            memo: `출고신청#${updated.id}`,
+          });
+        }
+      }
       const statusLabels: Record<string, string> = { approved: "승인", rejected: "반려", held: "보류", pending: "대기" };
       broadcastTransferUpdate(updated.userId, { action: "status_change", request: updated, statusLabel: statusLabels[status] || status });
       return res.json(updated);
