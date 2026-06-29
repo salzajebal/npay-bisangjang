@@ -1305,7 +1305,7 @@ function IPOUpcomingSidebar() {
         <div className="p-6 text-center text-sm text-[#9D9FA0]">해당 종목이 없습니다</div>
       ) : (
         <div className="divide-y divide-[#F3F5F6]">
-          {displayed.map((ipo: any, i: number) => {
+          {displayed.slice(0, 3).map((ipo: any, i: number) => {
             const name = ipo.stockName || ipo.name || "";
             const startStr = ipo.startDate ? fmtDate(ipo.startDate) : "";
             const endStr = ipo.endDate ? fmtDate(ipo.endDate) : "";
