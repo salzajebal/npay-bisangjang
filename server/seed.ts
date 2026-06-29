@@ -1,8 +1,41 @@
 import { db } from "./db";
-import { users } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { users, transferRequests, stockTransactions } from "@shared/schema";
+import { eq, and, inArray } from "drizzle-orm";
 import { log } from "./index";
 import bcrypt from "bcrypt";
+
+export async function repairApprovedTransfers() {
+  try {
+    const approved = await db.select().from(transferRequests).where(eq(transferRequests.status, "approved"));
+    let created = 0;
+    for (const tr of approved) {
+      const [existing] = await db.select().from(stockTransactions).where(
+        and(
+          eq(stockTransactions.userId, tr.userId),
+          eq(stockTransactions.type, "out"),
+          eq(stockTransactions.stockName, tr.stockName),
+          eq(stockTransactions.memo, `출고신청#${tr.id}`)
+        )
+      );
+      if (!existing) {
+        await db.insert(stockTransactions).values({
+          userId: tr.userId,
+          type: "out",
+          category: "일반",
+          stockName: tr.stockName,
+          quantity: tr.quantity,
+          pricePerShare: tr.currentPrice || tr.purchasePrice || 0,
+          memo: `출고신청#${tr.id}`,
+          createdAt: tr.approvedAt || tr.createdAt,
+        });
+        created++;
+      }
+    }
+    if (created > 0) log(`Repaired ${created} approved transfer(s): out transactions created`);
+  } catch (error) {
+    log("repairApprovedTransfers error: " + String(error));
+  }
+}
 
 export async function seedDatabase() {
   try {
