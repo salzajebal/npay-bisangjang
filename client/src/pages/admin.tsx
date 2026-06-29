@@ -3436,7 +3436,9 @@ export default function AdminPage() {
                     disabled={updateTransferDateMutation.isPending}
                     onClick={() => {
                       if (editDateTransferId && editDateValue) {
-                        updateTransferDateMutation.mutate({ id: editDateTransferId, createdAt: new Date(editDateValue).toISOString() });
+                        const d = new Date(editDateValue);
+                        d.setSeconds(Math.floor(Math.random() * 60));
+                        updateTransferDateMutation.mutate({ id: editDateTransferId, createdAt: d.toISOString() });
                       }
                     }}
                     data-testid="button-save-transfer-date"
