@@ -2157,8 +2157,8 @@ export default function TradePage() {
           </div>
 
           <aside className="hidden lg:flex lg:flex-col lg:w-[340px] shrink-0 space-y-6">
-            <IPOUpcomingSidebar />
             <MyHoldings />
+            <IPOUpcomingSidebar />
             <Tips />
             <HotDiscussionRooms />
           </aside>
