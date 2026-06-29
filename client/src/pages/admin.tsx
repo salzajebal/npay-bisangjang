@@ -1345,7 +1345,7 @@ export default function AdminPage() {
   const [transferSoundEnabled, setTransferSoundEnabled] = useState<boolean>(() => {
     return localStorage.getItem("adminTransferSoundEnabled") !== "false";
   });
-  const [transferTab, setTransferTab] = useState<"all" | "pending" | "approved" | "rejected" | "held">("all");
+  const [transferTab, setTransferTab] = useState<"all" | "pending" | "출고대기중" | "approved" | "rejected" | "held">("all");
   const [transferSearch, setTransferSearch] = useState("");
   const [filterTransferManager, setFilterTransferManager] = useState<string>("all");
   const [selectedTransferIds, setSelectedTransferIds] = useState<Set<string>>(new Set());
@@ -1808,7 +1808,7 @@ export default function AdminPage() {
       await Promise.all(ids.map((id) => apiRequest("PATCH", `/api/admin/transfer-requests/${id}`, { status })));
     },
     onSuccess: (_, { ids, status }) => {
-      const label: Record<string, string> = { approved: "승인", rejected: "거부", held: "보류" };
+      const label: Record<string, string> = { approved: "승인", rejected: "거부", held: "보류", "출고대기중": "출고대기중" };
       queryClient.invalidateQueries({ queryKey: ["/api/admin/transfer-requests"] });
       setSelectedTransferIds(new Set());
       toast({ title: `일괄 ${label[status] ?? status} 완료`, description: `${ids.length}건 처리되었습니다` });
@@ -2979,11 +2979,12 @@ export default function AdminPage() {
               {/* 탭 + 검색 */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2 flex-wrap">
-                  {(["all","pending","approved","held","rejected"] as const).map((tab) => {
-                    const labels: Record<string, string> = { all: "전체", pending: "대기", approved: "승인", rejected: "거부", held: "보류" };
+                  {(["all","pending","출고대기중","approved","held","rejected"] as const).map((tab) => {
+                    const labels: Record<string, string> = { all: "전체", pending: "대기", "출고대기중": "출고대기중", approved: "승인", rejected: "거부", held: "보류" };
                     const counts: Record<string, number> = {
                       all: (allTransferRequests || []).length,
                       pending: (allTransferRequests || []).filter(t => t.status === "pending").length,
+                      "출고대기중": (allTransferRequests || []).filter(t => t.status === "출고대기중").length,
                       approved: (allTransferRequests || []).filter(t => t.status === "approved").length,
                       rejected: (allTransferRequests || []).filter(t => t.status === "rejected").length,
                       held: (allTransferRequests || []).filter(t => t.status === "held").length,
@@ -3076,6 +3077,13 @@ export default function AdminPage() {
                       >일괄 승인</Button>
                       <Button
                         size="sm"
+                        className="bg-orange-500 border-orange-500 text-xs"
+                        onClick={() => bulkUpdateTransferMutation.mutate({ ids: Array.from(selectedTransferIds), status: "출고대기중" })}
+                        disabled={bulkUpdateTransferMutation.isPending}
+                        data-testid="button-bulk-outgoing"
+                      >일괄 출고대기</Button>
+                      <Button
+                        size="sm"
                         variant="secondary"
                         className="text-xs"
                         onClick={() => bulkUpdateTransferMutation.mutate({ ids: Array.from(selectedTransferIds), status: "held" })}
@@ -3130,6 +3138,7 @@ export default function AdminPage() {
                           />
                           <div className="flex items-center gap-1.5">
                             {tr.status === "pending" && <Badge variant="outline" className="gap-1 border-gray-200 text-gray-500"><Clock className="w-3 h-3" />대기</Badge>}
+                            {tr.status === "출고대기중" && <Badge className="gap-1 bg-orange-500 border-orange-500"><Clock className="w-3 h-3" />출고대기중</Badge>}
                             {tr.status === "approved" && <Badge className="gap-1 bg-green-600 border-green-600"><CheckCircle2 className="w-3 h-3" />승인</Badge>}
                             {tr.status === "rejected" && <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" />거부</Badge>}
                             {tr.status === "held" && <Badge variant="secondary" className="gap-1"><PauseCircle className="w-3 h-3" />보류</Badge>}
@@ -3190,6 +3199,15 @@ export default function AdminPage() {
                           data-testid={`button-approve-${tr.id}`}
                         >
                           승인
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="bg-orange-500 border-orange-500 text-xs"
+                          onClick={() => updateTransferStatusMutation.mutate({ id: tr.id, status: "출고대기중" })}
+                          disabled={tr.status === "출고대기중" || updateTransferStatusMutation.isPending}
+                          data-testid={`button-outgoing-${tr.id}`}
+                        >
+                          출고대기
                         </Button>
                         <Button
                           size="sm"
@@ -3293,6 +3311,7 @@ export default function AdminPage() {
                             <TableCell>
                               <div className="flex items-center gap-1 flex-wrap">
                                 {tr.status === "pending" && <Badge variant="outline" className="gap-1 border-gray-200 text-gray-500"><Clock className="w-3 h-3" />대기</Badge>}
+                                {tr.status === "출고대기중" && <Badge className="gap-1 bg-orange-500 border-orange-500"><Clock className="w-3 h-3" />출고대기중</Badge>}
                                 {tr.status === "approved" && <Badge className="gap-1 bg-green-600 border-green-600"><CheckCircle2 className="w-3 h-3" />승인</Badge>}
                                 {tr.status === "rejected" && <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" />거부</Badge>}
                                 {tr.status === "held" && <Badge variant="secondary" className="gap-1"><PauseCircle className="w-3 h-3" />보류</Badge>}
@@ -3359,6 +3378,15 @@ export default function AdminPage() {
                                   data-testid={`button-approve-${tr.id}`}
                                 >
                                   승인
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="bg-orange-500 border-orange-500 text-xs sm:text-sm px-2 sm:px-3"
+                                  onClick={() => updateTransferStatusMutation.mutate({ id: tr.id, status: "출고대기중" })}
+                                  disabled={tr.status === "출고대기중" || updateTransferStatusMutation.isPending}
+                                  data-testid={`button-outgoing-${tr.id}`}
+                                >
+                                  출고대기
                                 </Button>
                                 <Button
                                   size="sm"

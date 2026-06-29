@@ -427,6 +427,9 @@ export default function MyStocksPage() {
                     {tr.status === "pending" && (
                       <Badge variant="secondary" className="gap-1 text-xs"><Clock className="w-3 h-3" />결제대기중</Badge>
                     )}
+                    {tr.status === "출고대기중" && (
+                      <Badge className="gap-1 text-xs bg-orange-500 hover:bg-orange-500"><Clock className="w-3 h-3" />출고대기중</Badge>
+                    )}
                     {tr.status === "approved" && (
                       <Badge className="gap-1 text-xs bg-[#00a878] hover:bg-[#00a878]"><CheckCircle2 className="w-3 h-3" />승인</Badge>
                     )}

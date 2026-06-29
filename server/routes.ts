@@ -1900,7 +1900,7 @@ export async function registerRoutes(
   app.patch("/api/admin/transfer-requests/:id", requireAdmin, async (req, res) => {
     try {
       const { status, adminMemo } = req.body;
-      if (!["pending", "approved", "rejected", "held"].includes(status)) {
+      if (!["pending", "approved", "rejected", "held", "출고대기중"].includes(status)) {
         return res.status(400).json({ message: "유효하지 않은 상태입니다" });
       }
       const updated = await storage.updateTransferRequestStatus(req.params.id, status, adminMemo);
@@ -1925,7 +1925,7 @@ export async function registerRoutes(
           });
         }
       }
-      const statusLabels: Record<string, string> = { approved: "승인", rejected: "반려", held: "보류", pending: "대기" };
+      const statusLabels: Record<string, string> = { approved: "승인", rejected: "반려", held: "보류", pending: "대기", "출고대기중": "출고대기중" };
       broadcastTransferUpdate(updated.userId, { action: "status_change", request: updated, statusLabel: statusLabels[status] || status });
       return res.json(updated);
     } catch (error) {
