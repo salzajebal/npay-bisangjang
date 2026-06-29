@@ -34,7 +34,9 @@ const formatPct = (n: number) =>
 function TransferStatusBadge({ status }: { status: string }) {
   switch (status) {
     case "pending":
-      return <Badge variant="outline" className="gap-1" data-testid="badge-status-pending"><Clock className="w-3 h-3" />대기중</Badge>;
+      return <Badge variant="outline" className="gap-1" data-testid="badge-status-pending"><Clock className="w-3 h-3" />결제대기중</Badge>;
+    case "출고대기중":
+      return <Badge className="gap-1 bg-orange-500 border-orange-500" data-testid="badge-status-outgoing"><Clock className="w-3 h-3" />출고대기중</Badge>;
     case "approved":
       return <Badge variant="default" className="gap-1 bg-green-600 border-green-600" data-testid="badge-status-approved"><CheckCircle2 className="w-3 h-3" />승인</Badge>;
     case "rejected":
@@ -876,8 +878,10 @@ export default function DashboardPage() {
                         )}
                         <div className="text-xs text-muted-foreground">
                           {tr.status === "approved"
-                            ? "승인처리 완료되었습니다. 상장당일 연동된 증권계좌로 이동됩니다."
-                            : "대금 결재는 담당 자문회사를 통해 납부해주시면 됩니다."}
+                            ? "해당 신청건은 출고완료 되었습니다. 연동된 증권계좌 확인해주세요."
+                            : tr.status === "출고대기중"
+                            ? "대금결제 완료되었습니다. 상장당일 연동된 증권계좌로 출고됩니다."
+                            : "대금결제는 담당 자문회사를 통해 납부해주시면 됩니다."}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {new Date(tr.createdAt).toLocaleString("ko-KR")}
