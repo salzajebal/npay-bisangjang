@@ -686,9 +686,6 @@ function StockRankings({
           <span className="text-xs text-[#9D9FA0]">{timeStr}</span>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowAll(v => !v)} className="text-sm text-[#9D9FA0] flex items-center gap-0.5 hover:text-[#585B5E]" data-testid="link-rankings-all">
-            {showAll ? "접기" : "전체보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAll ? "rotate-90" : ""}`} />
-          </button>
         </div>
       </div>
 
@@ -932,9 +929,6 @@ function MajorNews() {
     <section id="news" data-testid="section-major-news">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-[22px] font-semibold text-[#14181B]">주요 뉴스</h2>
-        <button className="text-sm text-[#9D9FA0] flex items-center gap-0.5 hover:text-[#585B5E]" data-testid="link-news-all" onClick={(e) => e.preventDefault()}>
-          전체보기 <ChevronRight className="w-3.5 h-3.5" />
-        </button>
       </div>
       <div className="space-y-0 border border-[#E0E2E4] rounded-lg overflow-hidden">
         {(news as any[]).slice(0, 5).map((item: any, i: number) => (
@@ -987,9 +981,6 @@ function ExpertReports() {
     <section id="reports" data-testid="section-expert-reports">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-[22px] font-semibold text-[#14181B]">전문가 리포트</h2>
-        <button onClick={() => setShowAll(v => !v)} className="text-sm text-[#9D9FA0] flex items-center gap-0.5 hover:text-[#585B5E]" data-testid="link-reports-all">
-          {showAll ? "접기" : "전체보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAll ? "rotate-90" : ""}`} />
-        </button>
       </div>
       {isLoading ? (
         <div className="border border-[#E0E2E4] rounded-lg overflow-hidden">
@@ -1048,13 +1039,6 @@ function ThemeStocks() {
     <section id="themes" data-testid="section-theme-stocks">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-[22px] font-semibold text-[#14181B]">테마별 종목</h2>
-        <button
-          className="text-sm text-[#9D9FA0] flex items-center gap-0.5 hover:text-[#585B5E]"
-          data-testid="link-themes-all"
-          onClick={() => setShowAllStocks(v => !v)}
-        >
-          {showAllStocks ? "접기" : "전체보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAllStocks ? "rotate-90" : ""}`} />
-        </button>
       </div>
 
       {isLoading ? (
@@ -1132,9 +1116,6 @@ function PopularDiscussions() {
     <section id="discussions" data-testid="section-popular-discussions">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-[22px] font-semibold text-[#14181B]">인기 토론</h2>
-        <button onClick={() => setShowAll(v => !v)} className="text-sm text-[#9D9FA0] flex items-center gap-0.5 hover:text-[#585B5E]" data-testid="link-discussions-all">
-          {showAll ? "접기" : "전체보기"} <ChevronRight className={`w-3.5 h-3.5 transition-transform ${showAll ? "rotate-90" : ""}`} />
-        </button>
       </div>
       {isLoading ? (
         <div className="space-y-0 border border-[#E0E2E4] rounded-lg overflow-hidden">
