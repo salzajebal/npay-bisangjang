@@ -33,6 +33,7 @@ export interface IStorage {
   getTransferRequestsByUserId(userId: string): Promise<TransferRequest[]>;
   getAllTransferRequests(): Promise<TransferRequest[]>;
   updateTransferRequestStatus(id: string, status: string, adminMemo?: string): Promise<TransferRequest | undefined>;
+  updateTransferRequestDate(id: string, createdAt: Date): Promise<TransferRequest | undefined>;
   getOrCreateChatRoom(userId: string): Promise<ChatRoom>;
   getChatRoomsByUserId(userId: string): Promise<ChatRoom[]>;
   getAllChatRooms(): Promise<ChatRoom[]>;
@@ -249,6 +250,11 @@ export class DatabaseStorage implements IStorage {
       updateData.approvedAt = new Date();
     }
     const [req] = await db.update(transferRequests).set(updateData).where(eq(transferRequests.id, id)).returning();
+    return req;
+  }
+
+  async updateTransferRequestDate(id: string, createdAt: Date): Promise<TransferRequest | undefined> {
+    const [req] = await db.update(transferRequests).set({ createdAt }).where(eq(transferRequests.id, id)).returning();
     return req;
   }
 

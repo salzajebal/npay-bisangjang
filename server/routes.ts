@@ -1885,6 +1885,18 @@ export async function registerRoutes(
     return res.json(requests);
   });
 
+  app.patch("/api/admin/transfer-requests/:id/date", requireAdmin, async (req, res) => {
+    try {
+      const { createdAt } = req.body;
+      if (!createdAt) return res.status(400).json({ message: "날짜가 필요합니다" });
+      const updated = await storage.updateTransferRequestDate(req.params.id, new Date(createdAt));
+      if (!updated) return res.status(404).json({ message: "신청을 찾을 수 없습니다" });
+      return res.json(updated);
+    } catch (error) {
+      return res.status(500).json({ message: "날짜 변경에 실패했습니다" });
+    }
+  });
+
   app.patch("/api/admin/transfer-requests/:id", requireAdmin, async (req, res) => {
     try {
       const { status, adminMemo } = req.body;

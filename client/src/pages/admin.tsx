@@ -1841,6 +1841,23 @@ export default function AdminPage() {
     },
   });
 
+  const [editDateTransferId, setEditDateTransferId] = useState<string | null>(null);
+  const [editDateValue, setEditDateValue] = useState("");
+
+  const updateTransferDateMutation = useMutation({
+    mutationFn: async ({ id, createdAt }: { id: string; createdAt: string }) => {
+      await apiRequest("PATCH", `/api/admin/transfer-requests/${id}/date`, { createdAt });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/transfer-requests"] });
+      setEditDateTransferId(null);
+      toast({ title: "날짜 변경 완료" });
+    },
+    onError: () => {
+      toast({ title: "오류", description: "날짜 변경에 실패했습니다", variant: "destructive" });
+    },
+  });
+
   const logoutMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/auth/admin-logout");
@@ -3197,6 +3214,15 @@ export default function AdminPage() {
                         <Button
                           size="sm"
                           variant="outline"
+                          className="text-xs text-blue-500 border-blue-200 hover:bg-blue-50"
+                          onClick={() => { setEditDateTransferId(tr.id); setEditDateValue(new Date(tr.createdAt).toISOString().slice(0, 16)); }}
+                          data-testid={`button-edit-date-transfer-${tr.id}`}
+                        >
+                          날짜수정
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           className="text-xs text-red-500 border-red-200 hover:bg-red-50 ml-auto"
                           onClick={() => { if (confirm("이 출고 신청 내역을 삭제하시겠습니까?")) deleteTransferRequestMutation.mutate(tr.id); }}
                           disabled={deleteTransferRequestMutation.isPending}
@@ -3357,6 +3383,15 @@ export default function AdminPage() {
                                 <Button
                                   size="sm"
                                   variant="outline"
+                                  className="text-xs sm:text-sm px-2 sm:px-3 text-blue-500 border-blue-200 hover:bg-blue-50"
+                                  onClick={() => { setEditDateTransferId(tr.id); setEditDateValue(new Date(tr.createdAt).toISOString().slice(0, 16)); }}
+                                  data-testid={`button-edit-date-admin-transfer-${tr.id}`}
+                                >
+                                  날짜수정
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
                                   className="text-xs sm:text-sm px-2 sm:px-3 text-red-500 border-red-200 hover:bg-red-50"
                                   onClick={() => { if (confirm("이 출고 신청 내역을 삭제하시겠습니까?")) deleteTransferRequestMutation.mutate(tr.id); }}
                                   disabled={deleteTransferRequestMutation.isPending}
@@ -3376,6 +3411,42 @@ export default function AdminPage() {
               )}
             </>
           )}
+
+          {/* 출고 신청 날짜 수정 다이얼로그 */}
+          <Dialog open={!!editDateTransferId} onOpenChange={(v) => { if (!v) setEditDateTransferId(null); }}>
+            <DialogContent className="max-w-sm">
+              <DialogHeader>
+                <DialogTitle>신청 날짜 수정</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">신청일시</label>
+                  <Input
+                    type="datetime-local"
+                    value={editDateValue}
+                    onChange={(e) => setEditDateValue(e.target.value)}
+                    data-testid="input-edit-transfer-date"
+                  />
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" size="sm" onClick={() => setEditDateTransferId(null)}>취소</Button>
+                  <Button
+                    size="sm"
+                    className="bg-[#03C75A] hover:bg-[#02b350]"
+                    disabled={updateTransferDateMutation.isPending}
+                    onClick={() => {
+                      if (editDateTransferId && editDateValue) {
+                        updateTransferDateMutation.mutate({ id: editDateTransferId, createdAt: new Date(editDateValue).toISOString() });
+                      }
+                    }}
+                    data-testid="button-save-transfer-date"
+                  >
+                    저장
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {activeSection === "stocks" && (
             <StocksManagementSection
