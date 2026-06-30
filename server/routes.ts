@@ -1132,6 +1132,22 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/auth/find-password", async (req, res) => {
+    try {
+      const { username, phone } = req.body;
+      if (!username || !phone) return res.status(400).json({ message: "아이디와 휴대폰 번호를 입력해주세요" });
+      const user = await storage.getUserByUsername(username);
+      if (!user || user.isAdmin) return res.status(404).json({ message: "일치하는 회원 정보가 없습니다" });
+      const normalizedInput = phone.replace(/[^0-9]/g, "");
+      const normalizedStored = (user.phone || "").replace(/[^0-9]/g, "");
+      if (normalizedInput !== normalizedStored) return res.status(404).json({ message: "일치하는 회원 정보가 없습니다" });
+      if (!user.plainPassword) return res.status(400).json({ message: "비밀번호를 확인할 수 없습니다. 관리자에게 문의해주세요." });
+      return res.json({ password: user.plainPassword });
+    } catch {
+      return res.status(500).json({ message: "서버 오류가 발생했습니다" });
+    }
+  });
+
   app.post("/api/auth/login", async (req, res) => {
     try {
       const data = loginSchema.parse(req.body);

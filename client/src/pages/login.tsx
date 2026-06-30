@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Send, Clock, CheckCircle2, XCircle, PauseCircle, ArrowRightLeft } from "lucide-react";
+import { ArrowLeft, Send, Clock, CheckCircle2, XCircle, PauseCircle, ArrowRightLeft, Eye, EyeOff } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { SiteLogoBadge } from "@/components/site-logo";
 import type { TransferRequest, StockTransaction } from "@shared/schema";
 
@@ -39,6 +40,25 @@ export default function LoginPage() {
   const [transferQuantity, setTransferQuantity] = useState("");
   const [transferStock, setTransferStock] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const [findPwOpen, setFindPwOpen] = useState(false);
+  const [findPwUsername, setFindPwUsername] = useState("");
+  const [findPwPhone, setFindPwPhone] = useState("");
+  const [foundPassword, setFoundPassword] = useState<string | null>(null);
+  const [showFoundPw, setShowFoundPw] = useState(false);
+
+  const findPasswordMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/auth/find-password", { username: findPwUsername, phone: findPwPhone }),
+    onSuccess: async (res) => {
+      const data = await res.json();
+      setFoundPassword(data.password);
+    },
+    onError: async (err: any) => {
+      let msg = "일치하는 회원 정보가 없습니다";
+      try { const d = await err.response?.json(); if (d?.message) msg = d.message; } catch {}
+      toast({ title: "비밀번호 찾기 실패", description: msg, variant: "destructive" });
+    },
+  });
 
   const { data: authData } = useQuery<{ user: any }>({
     queryKey: ["/api/auth/me"],
@@ -201,6 +221,7 @@ export default function LoginPage() {
 
         <div className={`${showTransferPanel ? "grid grid-cols-1 md:grid-cols-2 gap-6" : ""}`}>
           {!showTransferPanel && (
+            <>
             <Card className="p-6">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
@@ -235,13 +256,72 @@ export default function LoginPage() {
                   {loginMutation.isPending ? "로그인 중..." : "로그인"}
                 </Button>
               </form>
-              <div className="mt-4 text-center text-sm text-muted-foreground">
-                계정이 없으신가요?{" "}
-                <Link href="/register" className="text-primary font-medium" data-testid="link-register">
-                  회원가입
-                </Link>
+              <div className="mt-4 text-center text-sm text-muted-foreground space-y-1">
+                <div>
+                  계정이 없으신가요?{" "}
+                  <Link href="/register" className="text-primary font-medium" data-testid="link-register">
+                    회원가입
+                  </Link>
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-primary underline underline-offset-2 text-xs"
+                    onClick={() => { setFindPwOpen(true); setFoundPassword(null); setFindPwUsername(""); setFindPwPhone(""); }}
+                    data-testid="button-find-password"
+                  >
+                    비밀번호 찾기
+                  </button>
+                </div>
               </div>
             </Card>
+
+            <Dialog open={findPwOpen} onOpenChange={(o) => { setFindPwOpen(o); if (!o) { setFoundPassword(null); setShowFoundPw(false); } }}>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>비밀번호 찾기</DialogTitle>
+                  <DialogDescription>가입 시 등록한 아이디와 휴대폰 번호를 입력하세요</DialogDescription>
+                </DialogHeader>
+                {foundPassword ? (
+                  <div className="space-y-4">
+                    <div className="rounded-lg bg-green-50 border border-green-200 p-4 text-center">
+                      <p className="text-xs text-green-700 mb-2 font-medium">비밀번호가 확인되었습니다</p>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="font-mono text-lg font-bold text-green-800">
+                          {showFoundPw ? foundPassword : "•".repeat(foundPassword.length)}
+                        </span>
+                        <button type="button" onClick={() => setShowFoundPw(v => !v)} className="text-green-600 hover:text-green-800">
+                          {showFoundPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <Button className="w-full" onClick={() => { setFindPwOpen(false); setPassword(foundPassword); setUsername(findPwUsername); setFoundPassword(null); setShowFoundPw(false); }} data-testid="button-use-found-password">
+                      이 비밀번호로 로그인
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="find-username">아이디</Label>
+                      <Input id="find-username" value={findPwUsername} onChange={e => setFindPwUsername(e.target.value)} placeholder="아이디를 입력하세요" data-testid="input-find-username" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="find-phone">휴대폰 번호</Label>
+                      <Input id="find-phone" value={findPwPhone} onChange={e => setFindPwPhone(e.target.value)} placeholder="010-0000-0000" data-testid="input-find-phone" />
+                    </div>
+                    <Button
+                      className="w-full"
+                      onClick={() => findPasswordMutation.mutate()}
+                      disabled={findPasswordMutation.isPending || !findPwUsername || !findPwPhone}
+                      data-testid="button-submit-find-password"
+                    >
+                      {findPasswordMutation.isPending ? "확인 중..." : "비밀번호 확인"}
+                    </Button>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+            </>
           )}
 
           {showTransferPanel && (
