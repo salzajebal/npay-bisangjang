@@ -881,7 +881,7 @@ export default function DashboardPage() {
                             ? "해당 신청건은 출고완료 되었습니다. 연동된 증권계좌 확인해주세요."
                             : tr.status === "출고대기중"
                             ? "대금결제 완료되었습니다. 상장당일 연동된 증권계좌로 출고됩니다."
-                            : "대금결제 완료되었습니다.  상장당일 연동된 증권계좌로 출고됩니다."}
+                            : "출고 신청이 접수되었습니다. 담당자 확인 후 처리됩니다."}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {new Date(tr.createdAt).toLocaleString("ko-KR")}
