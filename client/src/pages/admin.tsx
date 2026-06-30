@@ -2649,6 +2649,9 @@ export default function AdminPage() {
                         <p>{u.phone || "-"} · {u.email || "-"}</p>
                         <p>{u.bank} · {u.accountHolder}</p>
                         <p className="font-mono text-gray-400">{u.accountNumber}</p>
+                        {u.unionCode && (
+                          <p>조합코드: <span className="font-mono font-bold text-purple-700 bg-purple-50 px-1 rounded">{u.unionCode}</span></p>
+                        )}
                         <div className="pt-0.5">
                           <ManagerCodeDialog user={u} onSuccess={refreshData} />
                         </div>
@@ -2698,6 +2701,7 @@ export default function AdminPage() {
                           <TableHead className="text-gray-500 whitespace-nowrap">증권사</TableHead>
                           <TableHead className="text-gray-500 whitespace-nowrap">계좌번호</TableHead>
                           <TableHead className="text-gray-500 whitespace-nowrap">예금주</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">조합코드</TableHead>
                           <TableHead className="text-gray-500 whitespace-nowrap">가입일</TableHead>
                           <TableHead className="text-gray-500 whitespace-nowrap">보유 종목</TableHead>
                           <TableHead className="text-center text-gray-500 whitespace-nowrap">관리</TableHead>
@@ -2735,6 +2739,15 @@ export default function AdminPage() {
                             <TableCell className="text-gray-700 whitespace-nowrap">{u.bank}</TableCell>
                             <TableCell className="font-mono text-sm text-gray-700 whitespace-nowrap">{u.accountNumber}</TableCell>
                             <TableCell className="text-gray-700 whitespace-nowrap">{u.accountHolder}</TableCell>
+                            <TableCell className="text-xs whitespace-nowrap">
+                              {u.unionCode ? (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 text-[11px] font-mono font-bold">
+                                  {u.unionCode}
+                                </span>
+                              ) : (
+                                <span className="text-gray-400 text-[11px]">-</span>
+                              )}
+                            </TableCell>
                             <TableCell className="text-sm text-gray-400 whitespace-nowrap">
                               {new Date(u.createdAt).toLocaleDateString("ko-KR")}
                             </TableCell>
