@@ -55,7 +55,7 @@ const STOCK_LOGOS: Record<string, { logo: string; bg: string }> = {
   "비상장주식": { logo: "", bg: "#E8344E" },
   "채비": { logo: "https://static.ustockplus.com/admin/2025-09/af81f310-052a-47ea-9513-f07128a6e1e9.png", bg: "#2E7D32" },
   "인벤테라": { logo: "https://static.ustockplus.com/admin/2025-09/ef2e1aca-f93b-4c6f-b63e-37a456f41b79.png", bg: "#1565C0" },
-  "레몬헬스케어": { logo: "https://static.ustockplus.com/admin/2023-02/34fbfac8-37cc-4a4c-acf0-efae5edf08f2.png", bg: "#E8344E" },
+  "레몬헬스케어": { logo: "/logos/lemonhealthcare.png", bg: "#E8344E" },
   "케이피항공산업": { logo: "https://static.ustockplus.com/admin/2023-04/2e34a914-1d1c-4a8c-88dd-42351b3fc190.png", bg: "#1565C0" },
   "스트라드비전": { logo: "https://static.ustockplus.com/logo/company/77183.png", bg: "#1976D2" },
   "제이비케이랩": { logo: "https://static.ustockplus.com/admin/2023-01/06aac63c-465d-433f-bc74-8ce6e484d613.png", bg: "#E8344E" },
