@@ -114,9 +114,13 @@ export default function RegisterPage() {
                     <FormLabel>회원아이디</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="회원아이디를 입력하세요 (4자 이상)"
+                        placeholder="영문/숫자만 가능 (4자 이상)"
                         data-testid="input-username"
                         {...field}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^a-zA-Z0-9_]/g, "");
+                          field.onChange(val);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
