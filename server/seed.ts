@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, transferRequests, stockTransactions } from "@shared/schema";
+import { users, transferRequests, stockTransactions, unionCodes } from "@shared/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { log } from "./index";
 import bcrypt from "bcrypt";
@@ -66,6 +66,19 @@ export async function seedDatabase() {
     } else {
       await db.update(users).set({ password: hashedPassword }).where(eq(users.username, "admin"));
       log("Admin password reset");
+    }
+
+    // 조합코드 기본값 생성
+    const defaultCodes = [
+      { code: "0304", label: "1차 조합" },
+      { code: "231108", label: "2차 조합" },
+    ];
+    for (const { code, label } of defaultCodes) {
+      const [existing] = await db.select().from(unionCodes).where(eq(unionCodes.code, code));
+      if (!existing) {
+        await db.insert(unionCodes).values({ code, label, isActive: true });
+        log(`Union code created: ${code}`);
+      }
     }
   } catch (error) {
     log("Seed error: " + String(error));
