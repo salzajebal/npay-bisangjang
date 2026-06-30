@@ -2513,6 +2513,9 @@ export default function AdminPage() {
                             )}
                           </div>
                           <p className="text-xs text-gray-500 truncate">{u.phone || "-"} · {u.bank} · {u.accountNumber}</p>
+                          {u.unionCode && (
+                            <p className="text-xs mt-0.5">조합코드: <span className="font-mono font-bold text-purple-700 bg-purple-50 px-1 rounded">{u.unionCode}</span></p>
+                          )}
                         </div>
                         <div className="flex gap-1 shrink-0">
                           <Button
