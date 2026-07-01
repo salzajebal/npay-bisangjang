@@ -261,6 +261,7 @@ export const KOREAN_BANKS = [
   "토스증권",
   "신영증권",
   "유진증권",
+  "부국증권",
 ] as const;
 
 export const blockedIps = pgTable("blocked_ips", {
