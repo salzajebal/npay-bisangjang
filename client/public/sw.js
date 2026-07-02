@@ -28,20 +28,31 @@ async function getCachedUrls() {
   }
 }
 
-async function isReachable(url) {
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 4000);
-    await fetch(url, {
-      mode: 'no-cors',
-      signal: controller.signal,
-      cache: 'no-store',
+async function findReachableUrl(urls) {
+  if (!urls.length) return null;
+  return new Promise((resolve) => {
+    let settled = 0;
+    let resolved = false;
+    urls.forEach((url) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4000);
+      fetch(url, { mode: 'no-cors', signal: controller.signal, cache: 'no-store' })
+        .then(() => {
+          clearTimeout(timer);
+          if (!resolved) {
+            resolved = true;
+            resolve(url);
+          }
+        })
+        .catch(() => {
+          clearTimeout(timer);
+          settled++;
+          if (settled === urls.length && !resolved) {
+            resolve(null);
+          }
+        });
     });
-    clearTimeout(timer);
-    return true;
-  } catch (_) {
-    return false;
-  }
+  });
 }
 
 self.addEventListener('install', (event) => {
@@ -70,12 +81,10 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request).catch(async () => {
       const urls = await getCachedUrls();
+      const target = await findReachableUrl(urls);
 
-      for (const url of urls) {
-        const alive = await isReachable(url);
-        if (alive) {
-          return Response.redirect(url, 302);
-        }
+      if (target) {
+        return Response.redirect(target, 302);
       }
 
       return new Response(
@@ -98,11 +107,11 @@ self.addEventListener('fetch', (event) => {
       max-width: 380px; width: 90%;
     }
     .icon { font-size: 48px; margin-bottom: 16px; }
-    h2 { color: #E8344E; font-size: 20px; margin-bottom: 12px; }
+    h2 { color: #03C75A; font-size: 20px; margin-bottom: 12px; }
     p { color: #666; font-size: 14px; line-height: 1.7; }
     button {
       margin-top: 24px; padding: 12px 32px;
-      background: #E8344E; color: #fff; border: none;
+      background: #03C75A; color: #fff; border: none;
       border-radius: 8px; font-size: 15px; cursor: pointer;
       font-weight: 600; transition: opacity .15s;
     }
