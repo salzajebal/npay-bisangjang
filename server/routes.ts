@@ -2411,24 +2411,6 @@ export async function registerRoutes(
         return res.redirect(302, "/");
       }
 
-      for (const entry of sorted) {
-        try {
-          const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 2500);
-          const response = await fetch(entry.url, {
-            method: "HEAD",
-            signal: controller.signal,
-            redirect: "follow",
-          });
-          clearTimeout(timer);
-          if (response.status < 500) {
-            return res.redirect(302, entry.url);
-          }
-        } catch {
-          continue;
-        }
-      }
-
       return res.redirect(302, sorted[0].url);
     } catch {
       return res.redirect(302, "/");
