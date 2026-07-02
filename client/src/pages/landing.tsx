@@ -1183,64 +1183,46 @@ function IPOUpcomingSidebar() {
   const ipo38OngoingNames = new Set(ipo38Ongoing.map((x: any) => x.stockName));
   const ipo38UpcomingNames = new Set(ipo38Upcoming.map((x: any) => x.stockName));
 
-  const ongoing = [
-    ...ipo38Ongoing.map((x: any) => ({
-      stockName: x.stockName,
-      startDate: x.subscriptionStartDate || "",
-      endDate: x.subscriptionEndDate || "",
-      priceMin: x.minOfferPrice || x.finalOfferPrice || 0,
-      priceMax: x.maxOfferPrice || x.finalOfferPrice || 0,
-      competitionRate: x.competitionRate || null,
-      logoUrl: x.logoUrl || null,
-    })),
-    ...(naverData?.beingIPOList || []).filter((item: any) => !ipo38OngoingNames.has(item.stockName)).map((item: any) => ({
-      stockName: item.stockName,
-      startDate: item.offeringStartAt || item.subscriptionStartDate || "",
-      endDate: item.closedDate || item.subscriptionEndDate || "",
-      priceMin: item.minExpectedOfferPrice || item.finalOfferPrice || 0,
-      priceMax: item.maxExpectedOfferPrice || item.finalOfferPrice || 0,
-      competitionRate: item.instCompetitiveness ? `${item.instCompetitiveness}:1` : null,
-      logoUrl: item.logoUrl || null,
-    })),
-  ];
-  const upcoming = [
-    ...ipo38Upcoming.map((x: any) => ({
-      stockName: x.stockName,
-      startDate: x.subscriptionStartDate || "",
-      endDate: x.subscriptionEndDate || "",
-      priceMin: x.minOfferPrice || 0,
-      priceMax: x.maxOfferPrice || 0,
-      competitionRate: x.competitionRate || null,
-      listingDate: x.listingDate || null,
-      logoUrl: x.logoUrl || null,
-    })),
-    ...(naverData?.toBeIPOList || []).filter((item: any) => !ipo38UpcomingNames.has(item.stockName)).map((item: any) => ({
-      stockName: item.stockName,
-      startDate: item.offeringStartAt || item.subscriptionStartDate || "",
-      endDate: item.closedDate || item.subscriptionEndDate || "",
-      priceMin: item.minExpectedOfferPrice || 0,
-      priceMax: item.maxExpectedOfferPrice || 0,
-      competitionRate: item.instCompetitiveness ? `${item.instCompetitiveness}:1` : null,
-      listingDate: null,
-      logoUrl: item.logoUrl || null,
-    })),
-  ];
+  // 네이버 데이터만 사용 (네이버 비상장 원본과 동일하게)
+  const ongoing = (naverData?.beingIPOList || []).map((item: any) => ({
+    stockName: item.stockName,
+    startDate: item.offeringStartAt || "",
+    endDate: item.closedDate || "",
+    priceMin: item.minExpectedOfferPrice || item.finalOfferPrice || 0,
+    priceMax: item.maxExpectedOfferPrice || item.finalOfferPrice || 0,
+    competitionRate: item.instCompetitiveness != null ? `${item.instCompetitiveness}:1` : null,
+    logoUrl: item.logoUrl || null,
+  }));
+
+  const upcoming = (naverData?.toBeIPOList || []).map((item: any) => ({
+    stockName: item.stockName,
+    startDate: item.offeringStartAt || "",
+    endDate: item.closedDate || "",
+    priceMin: item.minExpectedOfferPrice || 0,
+    priceMax: item.maxExpectedOfferPrice || 0,
+    competitionRate: item.instCompetitiveness != null ? `${item.instCompetitiveness}:1` : null,
+    logoUrl: item.logoUrl || null,
+  }));
 
   const displayed = activeTab === "진행중" ? ongoing : upcoming;
   const now = new Date();
 
   function dday(dateStr: string) {
+    if (!dateStr) return "";
     const d = new Date(dateStr);
-    const diff = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    d.setHours(0, 0, 0, 0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const diff = Math.round((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     if (diff === 0) return "D-Day";
     if (diff > 0) return `D-${diff}`;
     return `D+${Math.abs(diff)}`;
   }
 
   function fmtDate(s: string) {
+    if (!s) return "";
     try {
       const d = new Date(s);
-      return `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, "0")}`;
+      return `${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
     } catch { return s; }
   }
 
@@ -1287,24 +1269,27 @@ function IPOUpcomingSidebar() {
           ))}
         </div>
       ) : displayed.length === 0 ? (
-        <div className="p-6 text-center text-sm text-[#9D9FA0]">해당 종목이 없습니다</div>
+        <div className="py-8 flex flex-col items-center justify-center gap-2">
+          <div className="w-12 h-12 flex items-center justify-center text-[#C8CACC] text-3xl">🗒️</div>
+          <p className="text-sm text-[#9D9FA0]">현재 {activeTab === "진행중" ? "진행중인" : "예정된"} 청약이 없어요</p>
+        </div>
       ) : (
         <div className="divide-y divide-[#F3F5F6]">
           {displayed.slice(0, 3).map((ipo: any, i: number) => {
-            const name = ipo.stockName || ipo.name || "";
-            const startStr = ipo.startDate ? fmtDate(ipo.startDate) : "";
-            const endStr = ipo.endDate ? fmtDate(ipo.endDate) : "";
-            const ddayStr = ipo.startDate ? dday(ipo.startDate) : (ipo.dDay || "");
+            const name = ipo.stockName || "";
+            const ddayStr = dday(ipo.startDate);
+            const dateLabel = fmtDate(ipo.startDate);
             const priceRange = ipo.priceMin && ipo.priceMax
-              ? `공모가 ${ipo.priceMin.toLocaleString()}~${ipo.priceMax.toLocaleString()}원`
-              : (ipo.priceRange || "공모가 미정");
+              ? `공모가 ${ipo.priceMin.toLocaleString()} ~ ${ipo.priceMax.toLocaleString()}원`
+              : "공모가 미정";
+            const compRate = ipo.competitionRate || "-";
             return (
-              <div key={i} className="px-4 py-3 hover:bg-[#F9FAFB] transition-colors cursor-pointer" data-testid={`sidebar-ipo-card-${i}`}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] font-bold text-[#03C75A]">{ddayStr || "예정"}</span>
-                  <span className="text-[11px] text-[#9D9FA0]">{startStr}{endStr && startStr !== endStr ? ` ~ ${endStr}` : ""} 예정</span>
+              <div key={i} className="px-4 pt-3 pb-2 hover:bg-[#F9FAFB] transition-colors cursor-pointer" data-testid={`sidebar-ipo-card-${i}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[13px] font-bold text-[#14181B]">{ddayStr}</span>
+                  {dateLabel && <span className="text-[12px] text-[#9D9FA0]">{dateLabel} 예정</span>}
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between bg-white border border-[#EAECEE] rounded-lg px-3 py-2.5">
                   <div className="flex items-center gap-2.5">
                     {ipo.logoUrl ? (
                       <img
@@ -1320,7 +1305,7 @@ function IPOUpcomingSidebar() {
                     <div>
                       <p className="text-sm font-semibold text-[#14181B]">{name}</p>
                       <p className="text-[11px] text-[#585B5E]">{priceRange}</p>
-                      {ipo.competitionRate && <p className="text-[11px] text-[#9D9FA0]">기관경쟁률 {ipo.competitionRate}</p>}
+                      <p className="text-[11px] text-[#9D9FA0]">기관경쟁률 {compRate}</p>
                     </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-[#BFC0C1] shrink-0" />
