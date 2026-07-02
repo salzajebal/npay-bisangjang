@@ -1162,7 +1162,7 @@ function PopularDiscussions() {
 }
 
 function IPOUpcomingSidebar() {
-  const [activeTab, setActiveTab] = useState<"진행중" | "예정">("예정");
+  const [activeTab, setActiveTab] = useState<"진행중" | "예정">("진행중");
 
   const { data: ipoCalendarData, isLoading } = useQuery<{ naverData?: { beingIPOList: any[]; toBeIPOList: any[] }; ipo38?: any[] }>({
     queryKey: ["/api/market/ipo-calendar"],
@@ -1191,6 +1191,7 @@ function IPOUpcomingSidebar() {
       priceMin: x.minOfferPrice || x.finalOfferPrice || 0,
       priceMax: x.maxOfferPrice || x.finalOfferPrice || 0,
       competitionRate: x.competitionRate || null,
+      logoUrl: x.logoUrl || null,
     })),
     ...(naverData?.beingIPOList || []).filter((item: any) => !ipo38OngoingNames.has(item.stockName)).map((item: any) => ({
       stockName: item.stockName,
@@ -1199,6 +1200,7 @@ function IPOUpcomingSidebar() {
       priceMin: item.minExpectedOfferPrice || item.finalOfferPrice || 0,
       priceMax: item.maxExpectedOfferPrice || item.finalOfferPrice || 0,
       competitionRate: item.instCompetitiveness ? `${item.instCompetitiveness}:1` : null,
+      logoUrl: item.logoUrl || null,
     })),
   ];
   const upcoming = [
@@ -1210,6 +1212,7 @@ function IPOUpcomingSidebar() {
       priceMax: x.maxOfferPrice || 0,
       competitionRate: x.competitionRate || null,
       listingDate: x.listingDate || null,
+      logoUrl: x.logoUrl || null,
     })),
     ...(naverData?.toBeIPOList || []).filter((item: any) => !ipo38UpcomingNames.has(item.stockName)).map((item: any) => ({
       stockName: item.stockName,
@@ -1219,6 +1222,7 @@ function IPOUpcomingSidebar() {
       priceMax: item.maxExpectedOfferPrice || 0,
       competitionRate: item.instCompetitiveness ? `${item.instCompetitiveness}:1` : null,
       listingDate: null,
+      logoUrl: item.logoUrl || null,
     })),
   ];
 
@@ -1302,7 +1306,17 @@ function IPOUpcomingSidebar() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <StockIcon name={name} size={36} />
+                    {ipo.logoUrl ? (
+                      <img
+                        src={ipo.logoUrl}
+                        alt={name}
+                        className="w-9 h-9 rounded object-contain bg-[#F3F5F6] p-0.5 shrink-0"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <StockIcon name={name} size={36} />
+                    )}
                     <div>
                       <p className="text-sm font-semibold text-[#14181B]">{name}</p>
                       <p className="text-[11px] text-[#585B5E]">{priceRange}</p>
