@@ -569,8 +569,55 @@ export async function registerRoutes(
   refreshAllUstockData();
   setInterval(refreshAllUstockData, USTOCK_CACHE_DURATION);
 
+  async function fetchNaverIpoDirect(): Promise<{ beingIPOList: NaverIpoItem[]; toBeIPOList: NaverIpoItem[] } | null> {
+    const naverHeaders = {
+      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      "Accept": "application/json, text/plain, */*",
+      "Accept-Language": "ko-KR,ko;q=0.9",
+      "Referer": "https://ustock.naver.com/",
+    };
+    const endpoints = [
+      "https://ustock.naver.com/api/ipo/being-ipo-stocks",
+      "https://ustock.naver.com/api/ipo/to-be-ipo-stocks",
+    ];
+    try {
+      const [beingResp, toBeResp] = await Promise.all(
+        endpoints.map(url => fetch(url, { headers: naverHeaders, signal: AbortSignal.timeout(8000) }).catch(() => null))
+      );
+      let beingIPOList: NaverIpoItem[] = [];
+      let toBeIPOList: NaverIpoItem[] = [];
+      if (beingResp?.ok) {
+        const json = await beingResp.json().catch(() => null);
+        beingIPOList = json?.result?.beingIpoStocks || json?.beingIPOList || json?.result || [];
+      }
+      if (toBeResp?.ok) {
+        const json = await toBeResp.json().catch(() => null);
+        toBeIPOList = json?.result?.toBeIpoStocks || json?.toBeIPOList || json?.result || [];
+      }
+      if (beingIPOList.length > 0 || toBeIPOList.length > 0) {
+        return { beingIPOList, toBeIPOList };
+      }
+    } catch (_) {}
+    return null;
+  }
+
   async function refreshNaverIpoData(): Promise<void> {
     try {
+      let beingIPOList: NaverIpoItem[] = [];
+      let toBeIPOList: NaverIpoItem[] = [];
+      let ipoNews: any[] = [];
+      let readyToIpoStocks: any[] = [];
+      let popularStocks: any[] = [];
+      let newlyListedStocks: any[] = [];
+
+      // 1순위: 직접 API 시도
+      const direct = await fetchNaverIpoDirect();
+      if (direct) {
+        beingIPOList = direct.beingIPOList;
+        toBeIPOList = direct.toBeIPOList;
+      }
+
+      // 2순위: HTML __NEXT_DATA__ 파싱 (직접 API 실패 또는 보완)
       const resp = await fetch("https://ustock.naver.com/service/ipo", {
         headers: {
           "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -580,38 +627,39 @@ export async function registerRoutes(
         },
         signal: AbortSignal.timeout(15000),
       });
-      if (!resp.ok) { log(`Naver IPO fetch failed: ${resp.status}`); return; }
-      const html = await resp.text();
-      const startIdx = html.indexOf("__NEXT_DATA__");
-      if (startIdx < 0) { log("Naver IPO: __NEXT_DATA__ not found"); return; }
-      const contentStart = html.indexOf(">", startIdx) + 1;
-      const contentEnd = html.indexOf("</script>", contentStart);
-      const json = html.slice(contentStart, contentEnd);
-      const data = JSON.parse(json);
-      const pp = data?.props?.pageProps || {};
-      const queries: any[] = pp?.dehydratedState?.queries || [];
+      if (resp.ok) {
+        const html = await resp.text();
+        const startIdx = html.indexOf("__NEXT_DATA__");
+        if (startIdx >= 0) {
+          const contentStart = html.indexOf(">", startIdx) + 1;
+          const contentEnd = html.indexOf("</script>", contentStart);
+          const json = html.slice(contentStart, contentEnd);
+          const data = JSON.parse(json);
+          const pp = data?.props?.pageProps || {};
+          const queries: any[] = pp?.dehydratedState?.queries || [];
 
-      let beingIPOList: NaverIpoItem[] = [];
-      let toBeIPOList: NaverIpoItem[] = [];
-      for (const q of queries) {
-        const qdata = q?.state?.data;
-        if (!qdata) continue;
-        if (qdata?.beingIPOList !== undefined || qdata?.toBeIPOList !== undefined) {
-          beingIPOList = qdata.beingIPOList || [];
-          toBeIPOList = qdata.toBeIPOList || [];
+          // 각 리스트를 별도로 수집 (덮어쓰기 방지)
+          for (const q of queries) {
+            const qdata = q?.state?.data;
+            if (!qdata) continue;
+            if (Array.isArray(qdata?.beingIPOList) && qdata.beingIPOList.length > beingIPOList.length) {
+              beingIPOList = qdata.beingIPOList;
+            }
+            if (Array.isArray(qdata?.toBeIPOList) && qdata.toBeIPOList.length > toBeIPOList.length) {
+              toBeIPOList = qdata.toBeIPOList;
+            }
+          }
+
+          ipoNews = pp?.ipoNews || [];
+          readyToIpoStocks = pp?.readyToIpoStocks?.readyToIpoStocks || [];
+          popularStocks = pp?.popularStocks?.ipoPopularStocks || [];
+          newlyListedStocks = pp?.newlyListedStocks || [];
         }
       }
 
-      naverIpoCache = {
-        beingIPOList,
-        toBeIPOList,
-        readyToIpoStocks: pp?.readyToIpoStocks?.readyToIpoStocks || [],
-        ipoNews: pp?.ipoNews || [],
-        popularStocks: pp?.popularStocks?.ipoPopularStocks || [],
-        newlyListedStocks: pp?.newlyListedStocks || [],
-      };
+      naverIpoCache = { beingIPOList, toBeIPOList, readyToIpoStocks, ipoNews, popularStocks, newlyListedStocks };
       naverIpoCacheTime = Date.now();
-      log(`Naver IPO refreshed: ${beingIPOList.length} 진행중, ${toBeIPOList.length} 예정, ${naverIpoCache.ipoNews.length} 뉴스`);
+      log(`Naver IPO refreshed: ${beingIPOList.length} 진행중, ${toBeIPOList.length} 예정, ${ipoNews.length} 뉴스`);
     } catch (err) {
       log(`Naver IPO refresh error: ${err}`);
     }
