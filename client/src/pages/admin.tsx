@@ -1429,7 +1429,6 @@ export default function AdminPage() {
   const [newGroupManagerCode, setNewGroupManagerCode] = useState("");
   const [bulkCode, setBulkCode] = useState("");
   const [bulkSelectedDomains, setBulkSelectedDomains] = useState<string[]>([]);
-  const shareLink = typeof window !== "undefined" ? window.location.origin + "/go" : "/go";
   const [logSearchFilter, setLogSearchFilter] = useState("");
   const [newBlockIp, setNewBlockIp] = useState("");
   const [newBlockReason, setNewBlockReason] = useState("");
@@ -1475,6 +1474,11 @@ export default function AdminPage() {
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!authData?.user?.isAdmin,
   });
+
+  const sortedActiveFallbacks = [...fallbackUrls].filter(f => f.isActive).sort((a, b) => a.priority - b.priority);
+  const shareLink = sortedActiveFallbacks.length > 0
+    ? sortedActiveFallbacks[0].url.replace(/\/$/, "") + "/go"
+    : (typeof window !== "undefined" ? window.location.origin + "/go" : "/go");
 
   const [newFbUrl, setNewFbUrl] = useState("");
   const [newFbLabel, setNewFbLabel] = useState("");
