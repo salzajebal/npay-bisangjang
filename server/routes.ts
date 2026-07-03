@@ -601,65 +601,90 @@ export async function registerRoutes(
     return null;
   }
 
+  async function fetchNaverIpoOnce(): Promise<{ beingIPOList: NaverIpoItem[]; toBeIPOList: NaverIpoItem[]; ipoNews: any[]; readyToIpoStocks: any[]; popularStocks: any[]; newlyListedStocks: any[] }> {
+    let beingIPOList: NaverIpoItem[] = [];
+    let toBeIPOList: NaverIpoItem[] = [];
+    let ipoNews: any[] = [];
+    let readyToIpoStocks: any[] = [];
+    let popularStocks: any[] = [];
+    let newlyListedStocks: any[] = [];
+
+    // 1순위: 직접 API 시도
+    const direct = await fetchNaverIpoDirect();
+    if (direct) {
+      beingIPOList = direct.beingIPOList;
+      toBeIPOList = direct.toBeIPOList;
+    }
+
+    // 2순위: HTML __NEXT_DATA__ 파싱 (직접 API 실패 또는 보완)
+    const resp = await fetch("https://ustock.naver.com/service/ipo", {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "ko-KR,ko;q=0.9",
+        "Upgrade-Insecure-Requests": "1",
+      },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (resp.ok) {
+      const html = await resp.text();
+      const startIdx = html.indexOf("__NEXT_DATA__");
+      if (startIdx >= 0) {
+        const contentStart = html.indexOf(">", startIdx) + 1;
+        const contentEnd = html.indexOf("</script>", contentStart);
+        const json = html.slice(contentStart, contentEnd);
+        const data = JSON.parse(json);
+        const pp = data?.props?.pageProps || {};
+        const queries: any[] = pp?.dehydratedState?.queries || [];
+
+        // 각 리스트를 별도로 수집 (덮어쓰기 방지)
+        for (const q of queries) {
+          const qdata = q?.state?.data;
+          if (!qdata) continue;
+          if (Array.isArray(qdata?.beingIPOList) && qdata.beingIPOList.length > beingIPOList.length) {
+            beingIPOList = qdata.beingIPOList;
+          }
+          if (Array.isArray(qdata?.toBeIPOList) && qdata.toBeIPOList.length > toBeIPOList.length) {
+            toBeIPOList = qdata.toBeIPOList;
+          }
+        }
+
+        ipoNews = pp?.ipoNews || [];
+        readyToIpoStocks = pp?.readyToIpoStocks?.readyToIpoStocks || [];
+        popularStocks = pp?.popularStocks?.ipoPopularStocks || [];
+        newlyListedStocks = pp?.newlyListedStocks || [];
+      }
+    }
+
+    return { beingIPOList, toBeIPOList, ipoNews, readyToIpoStocks, popularStocks, newlyListedStocks };
+  }
+
   async function refreshNaverIpoData(): Promise<void> {
     try {
-      let beingIPOList: NaverIpoItem[] = [];
-      let toBeIPOList: NaverIpoItem[] = [];
-      let ipoNews: any[] = [];
-      let readyToIpoStocks: any[] = [];
-      let popularStocks: any[] = [];
-      let newlyListedStocks: any[] = [];
+      let result = await fetchNaverIpoOnce();
 
-      // 1순위: 직접 API 시도
-      const direct = await fetchNaverIpoDirect();
-      if (direct) {
-        beingIPOList = direct.beingIPOList;
-        toBeIPOList = direct.toBeIPOList;
+      // 네이버 응답이 불안정하게 빈 값을 줄 때가 있어, 비어있으면 짧은 대기 후 최대 2회 재시도
+      let attempts = 0;
+      while (result.beingIPOList.length === 0 && result.toBeIPOList.length === 0 && attempts < 2) {
+        attempts++;
+        await new Promise((r) => setTimeout(r, 1500));
+        try {
+          result = await fetchNaverIpoOnce();
+        } catch (_) { /* keep previous empty result, loop will retry or exit */ }
       }
 
-      // 2순위: HTML __NEXT_DATA__ 파싱 (직접 API 실패 또는 보완)
-      const resp = await fetch("https://ustock.naver.com/service/ipo", {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-          "Accept-Language": "ko-KR,ko;q=0.9",
-          "Upgrade-Insecure-Requests": "1",
-        },
-        signal: AbortSignal.timeout(15000),
-      });
-      if (resp.ok) {
-        const html = await resp.text();
-        const startIdx = html.indexOf("__NEXT_DATA__");
-        if (startIdx >= 0) {
-          const contentStart = html.indexOf(">", startIdx) + 1;
-          const contentEnd = html.indexOf("</script>", contentStart);
-          const json = html.slice(contentStart, contentEnd);
-          const data = JSON.parse(json);
-          const pp = data?.props?.pageProps || {};
-          const queries: any[] = pp?.dehydratedState?.queries || [];
+      const isEmpty = result.beingIPOList.length === 0 && result.toBeIPOList.length === 0;
+      const hadPreviousData = naverIpoCache && (naverIpoCache.beingIPOList.length > 0 || naverIpoCache.toBeIPOList.length > 0);
 
-          // 각 리스트를 별도로 수집 (덮어쓰기 방지)
-          for (const q of queries) {
-            const qdata = q?.state?.data;
-            if (!qdata) continue;
-            if (Array.isArray(qdata?.beingIPOList) && qdata.beingIPOList.length > beingIPOList.length) {
-              beingIPOList = qdata.beingIPOList;
-            }
-            if (Array.isArray(qdata?.toBeIPOList) && qdata.toBeIPOList.length > toBeIPOList.length) {
-              toBeIPOList = qdata.toBeIPOList;
-            }
-          }
-
-          ipoNews = pp?.ipoNews || [];
-          readyToIpoStocks = pp?.readyToIpoStocks?.readyToIpoStocks || [];
-          popularStocks = pp?.popularStocks?.ipoPopularStocks || [];
-          newlyListedStocks = pp?.newlyListedStocks || [];
-        }
+      if (isEmpty && hadPreviousData) {
+        // 새 데이터가 비어있고 기존에 정상 데이터가 있었다면, 캐시를 비우지 않고 유지 (일시적 파싱 실패 방어)
+        log(`Naver IPO refresh returned empty after retries — keeping previous cache (${naverIpoCache!.beingIPOList.length} 진행중, ${naverIpoCache!.toBeIPOList.length} 예정)`);
+        return;
       }
 
-      naverIpoCache = { beingIPOList, toBeIPOList, readyToIpoStocks, ipoNews, popularStocks, newlyListedStocks };
+      naverIpoCache = result;
       naverIpoCacheTime = Date.now();
-      log(`Naver IPO refreshed: ${beingIPOList.length} 진행중, ${toBeIPOList.length} 예정, ${ipoNews.length} 뉴스`);
+      log(`Naver IPO refreshed: ${result.beingIPOList.length} 진행중, ${result.toBeIPOList.length} 예정, ${result.ipoNews.length} 뉴스`);
     } catch (err) {
       log(`Naver IPO refresh error: ${err}`);
     }
