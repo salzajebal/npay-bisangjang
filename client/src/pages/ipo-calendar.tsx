@@ -213,6 +213,7 @@ const IPO_STATE_MAP: Record<string, { label: string; color: string; bgColor: str
 
 function buildDbCalEvents(dbStocks: IpoStock[]): CalEvent[] {
   const events: CalEvent[] = [];
+  const today = new Date(); today.setHours(0, 0, 0, 0);
   for (const stock of dbStocks) {
     if (!stock.stockName || !stock.startDate || !stock.endDate) continue;
     const start = parseLocalDate(stock.startDate);
@@ -230,10 +231,11 @@ function buildDbCalEvents(dbStocks: IpoStock[]): CalEvent[] {
       continue;
     }
 
-    const isOngoing = stock.subscriptionStatus === "청약진행중";
-    const color = isOngoing ? "#c0392b" : "#6c3483";
-    const bgColor = isOngoing ? "#FCDDE1" : "#D7C8E8";
-    const status = isOngoing ? "공모청약" : "청약예정";
+    const isPast = end < today;
+    const isOngoing = !isPast && start <= today && today <= end;
+    const color = isPast ? "#9D9FA0" : isOngoing ? "#c0392b" : "#6c3483";
+    const bgColor = isPast ? "#F3F5F6" : isOngoing ? "#FCDDE1" : "#D7C8E8";
+    const status = isPast ? "청약완료" : isOngoing ? "공모청약" : "청약예정";
 
     events.push({
       name: stock.stockName, start, end,
@@ -248,6 +250,17 @@ function buildDbCalEvents(dbStocks: IpoStock[]): CalEvent[] {
     });
   }
   return events;
+}
+
+// 이벤트 상태를 마일스톤 버킷으로 분류 — 서로 다른 출처 간 중복 제거 시
+// 같은 종목이라도 마일스톤 유형(수요예측/청약/상장 등)이 다르면 별개 이벤트로 취급
+function bucketOf(status: string): string {
+  if (status === "수요예측") return "demand";
+  if (status === "공모청약" || status === "청약예정" || status === "청약완료") return "subscription";
+  if (status === "배정") return "allot";
+  if (status === "환불") return "refund";
+  if (status === "상장") return "listing";
+  return "review"; // 심사청구/심사승인/신고서제출/주관사선정/기술평가통과 등
 }
 
 function buildCalEvents(naverData: NaverIpoCalendarData): CalEvent[] {
@@ -621,7 +634,7 @@ function CalendarGrid({ year, month, events }: { year: number; month: number; ev
 }
 
 function CalendarSection() {
-  const today = new Date();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
   const [calYear, setCalYear] = useState(today.getFullYear());
   const [calMonth, setCalMonth] = useState(today.getMonth());
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("being");
@@ -641,23 +654,27 @@ function CalendarSection() {
 
   const events = useMemo(() => {
     const norm = (s: string) => s.replace(/\s/g, "").replace(/져/g, "저").replace(/쟤/g, "재").toLowerCase();
+    // 종목명 + 마일스톤 버킷(수요예측/청약/배정/환불/상장/심사 등) 조합으로 키를 만들어
+    // 같은 종목이라도 서로 다른 일정(예: 8월 청약 vs 7월 수요예측)은 중복 제거되지 않도록 함
+    const evKey = (e: CalEvent) => `${norm(e.name)}|${bucketOf(e.status)}`;
+
     const dbEvents = buildDbCalEvents(dbStocks);
-    const dbNamesNorm = new Set(dbEvents.map(e => norm(e.name)));
+    const dbKeys = new Set(dbEvents.map(evKey));
 
     // 38.co.kr 이벤트 (가장 최신/풍부한 공모주 일정)
     const ipo38Events = ipo38.length > 0 ? buildIpo38CalEvents(ipo38) : [];
-    const ipo38NamesNorm = new Set(ipo38Events.map(e => norm(e.name)));
+    const ipo38Keys = new Set(ipo38Events.map(evKey));
 
     // Rich 데이터가 있으면 우선 사용 (수요예측+공모청약+상장 전부 포함)
     const richEvents = richIpoList.length > 0 ? buildRichCalEvents(richIpoList) : [];
     // Naver 이벤트 (rich에 없는 종목 보완)
     const naverEvents = naverData ? buildCalEvents(naverData) : [];
-    const richNamesNorm = new Set(richEvents.map(e => norm(e.name)));
+    const richKeys = new Set(richEvents.map(evKey));
 
-    // 38 이벤트 중 DB에 없는 종목만 추가
-    const filtered38 = ipo38Events.filter(e => !dbNamesNorm.has(norm(e.name)));
-    const filteredRich = richEvents.filter(e => !dbNamesNorm.has(norm(e.name)) && !ipo38NamesNorm.has(norm(e.name)));
-    const filteredNaver = naverEvents.filter(e => !richNamesNorm.has(norm(e.name)) && !dbNamesNorm.has(norm(e.name)) && !ipo38NamesNorm.has(norm(e.name)));
+    // 동일 종목이라도 마일스톤 유형이 다르면 유지, 완전히 같은 유형만 중복 제거
+    const filtered38 = ipo38Events.filter(e => !dbKeys.has(evKey(e)));
+    const filteredRich = richEvents.filter(e => !dbKeys.has(evKey(e)) && !ipo38Keys.has(evKey(e)));
+    const filteredNaver = naverEvents.filter(e => !richKeys.has(evKey(e)) && !dbKeys.has(evKey(e)) && !ipo38Keys.has(evKey(e)));
     return [...dbEvents, ...filtered38, ...filteredRich, ...filteredNaver];
   }, [naverData, dbStocks, richIpoList, ipo38]);
 
@@ -709,9 +726,9 @@ function CalendarSection() {
   }
   function goToday() { setCalYear(today.getFullYear()); setCalMonth(today.getMonth()); }
 
-  // DB 종목을 사이드바 형식으로 변환
+  // DB 종목을 사이드바 형식으로 변환 (마감일이 지난 과거 항목은 진행중/예정 집계에서 제외)
   const dbBeingIPO = dbStocks
-    .filter(s => s.subscriptionStatus === "청약진행중")
+    .filter(s => s.subscriptionStatus === "청약진행중" && s.endDate && parseLocalDate(s.endDate) >= today)
     .map(s => ({
       stockName: s.stockName,
       stockCode: s.id,
@@ -726,7 +743,7 @@ function CalendarSection() {
     }));
 
   const dbToBeIPO = dbStocks
-    .filter(s => s.subscriptionStatus === "청약예정")
+    .filter(s => s.subscriptionStatus === "청약예정" && s.endDate && parseLocalDate(s.endDate) >= today)
     .map(s => ({
       stockName: s.stockName,
       stockCode: s.id,
