@@ -2299,7 +2299,7 @@ export async function registerRoutes(
       }
     }
     // 네이버 IPO 캐시에서 로고 수집
-    const ipoItems = [...(naverIpoCache.beingIPOList || []), ...(naverIpoCache.toBeIPOList || [])];
+    const ipoItems = [...(naverIpoCache.beingIPOList || []), ...(naverIpoCache.toBeIPOList || []), ...(naverIpoCache.readyToIpoStocks || [])];
     for (const item of ipoItems) {
       const name = (item as any).stockName || (item as any).koreanName;
       const url = (item as any).logoUrl;
