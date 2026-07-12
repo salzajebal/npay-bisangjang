@@ -21,6 +21,7 @@ export const STOCK_CODES: Record<string, string> = {
   "원스토어": "0610T0", "리디": "0620T0", "버킷플레이스": "0630T0",
   "피스피스스튜디오": "A0117P0", "매드업": "0650T0",
   "덕양에너젠": "0001A0",
+  "기도산업": "282620",
 };
 
 export const ALL_SEARCH_STOCKS = Object.entries(STOCK_CODES).map(([name, code]) => ({ name, code }));

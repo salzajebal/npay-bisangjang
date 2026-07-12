@@ -307,6 +307,7 @@ export async function registerRoutes(
     "마키나락스": { price: 15000, change: 0 },
     "덕양에너젠": { price: 10000, change: 0 },
     "빅웨이브로보틱스": { price: 20000, change: 0 },
+    "기도산업": { price: 24800, change: 0 },
   };
 
   const UNLISTED_PRICES: Record<string, { price: number; change: number }> = {
