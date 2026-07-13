@@ -202,7 +202,7 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(transferRequests)
       .where(and(
         eq(transferRequests.userId, userId),
-        inArray(transferRequests.status, ["pending", "출고대기중", "approved", "held"])
+        inArray(transferRequests.status, ["pending", "출고대기중", "held"])
       ));
   }
 
