@@ -2099,6 +2099,11 @@ export default function AdminPage() {
     return u?.managerCode || null;
   };
 
+  const getUserUnionCode = (userId: string) => {
+    const u = (allUsers || []).find((u) => u.id === userId);
+    return u?.unionCode || null;
+  };
+
   const getUserPhone = (userId: string) => {
     const u = (allUsers || []).find((u) => u.id === userId);
     return u?.phone || "-";
@@ -2847,18 +2852,50 @@ export default function AdminPage() {
                 <Badge variant="outline" className="shrink-0 border-gray-200 text-gray-500">{filteredTransactions.length}건</Badge>
               </div>
 
-              {(txSearchTerm || filterType !== "all" || filterCategory !== "all") && filteredTransactions.length > 0 && (
-                <div className="flex flex-wrap gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200 text-sm">
-                  <span className="text-gray-500 font-medium">합산:</span>
-                  <span className="text-red-500 font-semibold">
-                    입고 {filteredTransactions.filter(t => t.type === "in").reduce((s, t) => s + t.quantity, 0).toLocaleString()}주
-                  </span>
-                  <span className="text-blue-500 font-semibold">
-                    출고 {filteredTransactions.filter(t => t.type === "out").reduce((s, t) => s + t.quantity, 0).toLocaleString()}주
-                  </span>
-                  <span className="text-gray-700 font-semibold">
-                    순보유 {(filteredTransactions.filter(t => t.type === "in").reduce((s, t) => s + t.quantity, 0) - filteredTransactions.filter(t => t.type === "out").reduce((s, t) => s + t.quantity, 0)).toLocaleString()}주
-                  </span>
+              {filteredTransactions.length > 0 && (
+                <div className="space-y-2">
+                  {/* 전체 합산 */}
+                  <div className="flex flex-wrap gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200 text-sm">
+                    <span className="text-gray-500 font-medium">합산:</span>
+                    <span className="text-red-500 font-semibold">
+                      입고 {filteredTransactions.filter(t => t.type === "in").reduce((s, t) => s + t.quantity, 0).toLocaleString()}주
+                    </span>
+                    <span className="text-blue-500 font-semibold">
+                      출고 {filteredTransactions.filter(t => t.type === "out").reduce((s, t) => s + t.quantity, 0).toLocaleString()}주
+                    </span>
+                    <span className="text-gray-700 font-semibold">
+                      순보유 {(filteredTransactions.filter(t => t.type === "in").reduce((s, t) => s + t.quantity, 0) - filteredTransactions.filter(t => t.type === "out").reduce((s, t) => s + t.quantity, 0)).toLocaleString()}주
+                    </span>
+                  </div>
+                  {/* 담당코드별 합계 */}
+                  {(() => {
+                    const grouped: Record<string, { in: number; out: number }> = {};
+                    for (const tx of filteredTransactions) {
+                      const code = getUserManagerCode(tx.userId) || "(없음)";
+                      if (!grouped[code]) grouped[code] = { in: 0, out: 0 };
+                      if (tx.type === "in") grouped[code].in += tx.quantity;
+                      else grouped[code].out += tx.quantity;
+                    }
+                    const entries = Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b));
+                    if (entries.length <= 1 && entries[0]?.[0] === "(없음)") return null;
+                    return (
+                      <div className="rounded-lg border border-gray-200 bg-white overflow-hidden">
+                        <div className="px-3 py-2 bg-gray-50 border-b border-gray-200">
+                          <span className="text-xs font-semibold text-gray-600">담당코드별 합계</span>
+                        </div>
+                        <div className="divide-y divide-gray-100">
+                          {entries.map(([code, { in: inQty, out: outQty }]) => (
+                            <div key={code} className="flex items-center gap-4 px-3 py-2 text-xs">
+                              <span className="font-mono font-semibold text-[#03C75A] w-24 shrink-0">{code}</span>
+                              <span className="text-red-500">입고 {inQty.toLocaleString()}주</span>
+                              <span className="text-blue-500">출고 {outQty.toLocaleString()}주</span>
+                              <span className="text-gray-700 font-medium">순보유 {(inQty - outQty).toLocaleString()}주</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
@@ -2890,6 +2927,9 @@ export default function AdminPage() {
                           <span className="text-sm font-medium text-gray-700 flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{getUserName(tx.userId)} · {tx.stockName}</span>
                           {getUserManagerCode(tx.userId) && (
                             <Badge variant="outline" className="border-[#03C75A]/40 text-[#03C75A] bg-[#03C75A]/5 font-mono text-xs">{getUserManagerCode(tx.userId)}</Badge>
+                          )}
+                          {getUserUnionCode(tx.userId) && (
+                            <Badge variant="outline" className="border-purple-300 text-purple-600 bg-purple-50 font-mono text-xs">{getUserUnionCode(tx.userId)}</Badge>
                           )}
                         </div>
                         <p className="text-xs text-gray-500 font-mono">{getUserPhone(tx.userId)} · <span className="text-gray-400">ID: {getUserUsername(tx.userId)}</span></p>
@@ -2925,7 +2965,8 @@ export default function AdminPage() {
                         <TableRow className="bg-gray-50 border-gray-200">
                           <TableHead className="text-gray-500">유형</TableHead>
                           <TableHead className="text-gray-500">카테고리</TableHead>
-                          <TableHead className="text-gray-500">담당자</TableHead>
+                          <TableHead className="text-gray-500">담당코드</TableHead>
+                          <TableHead className="text-gray-500">조합코드</TableHead>
                           <TableHead className="text-gray-500">회원</TableHead>
                           <TableHead className="text-gray-500">연락처</TableHead>
                           <TableHead className="text-gray-500">아이디</TableHead>
@@ -2953,6 +2994,11 @@ export default function AdminPage() {
                             <TableCell>
                               {getUserManagerCode(tx.userId)
                                 ? <Badge variant="outline" className="border-[#03C75A]/40 text-[#03C75A] bg-[#03C75A]/5 font-mono text-xs">{getUserManagerCode(tx.userId)}</Badge>
+                                : <span className="text-gray-300 text-xs">-</span>}
+                            </TableCell>
+                            <TableCell>
+                              {getUserUnionCode(tx.userId)
+                                ? <Badge variant="outline" className="border-purple-300 text-purple-600 bg-purple-50 font-mono text-xs">{getUserUnionCode(tx.userId)}</Badge>
                                 : <span className="text-gray-300 text-xs">-</span>}
                             </TableCell>
                             <TableCell className="font-medium text-gray-700">{getUserName(tx.userId)}</TableCell>
