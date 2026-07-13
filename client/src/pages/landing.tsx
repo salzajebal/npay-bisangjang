@@ -1975,21 +1975,28 @@ function LandingPopup() {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60" data-testid="popup-landing">
       <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden max-w-[360px] w-full mx-4">
+        {/* 상단: 이미지에서 하단 회색 바(8.7%) 잘라내고 표시 */}
         <a
           href="https://ustock.naver.com"
           target="_blank"
           rel="noopener noreferrer"
           data-testid="link-popup-npay"
           className="block"
+          style={{ lineHeight: 0 }}
         >
           <img
             src="/img/popup-banner.png"
             alt="Npay비상장 일반회원전용 이동하기"
-            className="w-full"
+            className="w-full block"
+            style={{ clipPath: "inset(0 0 8.7% 0)", marginBottom: "-8.7%" }}
           />
         </a>
+        {/* 하단: 기능적 체크박스 + 닫기 버튼 */}
         <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-[#E0E2E4]">
-          <label className="flex items-center gap-2 cursor-pointer select-none text-[13px] text-[#585B5E]" data-testid="label-dont-show-again">
+          <label
+            className="flex items-center gap-2 cursor-pointer select-none text-[13px] text-[#585B5E]"
+            data-testid="label-dont-show-again"
+          >
             <input
               type="checkbox"
               checked={dontShow}
