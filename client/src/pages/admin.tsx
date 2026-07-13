@@ -2910,133 +2910,220 @@ export default function AdminPage() {
                 </Card>
               ) : (
                 <>
-                <div className="md:hidden space-y-3">
-                  {filteredTransactions.map((tx) => (
-                    <div key={tx.id} className="rounded-md border border-gray-200 bg-white p-4 space-y-3" data-testid={`row-tx-${tx.id}`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <Badge
-                          variant={tx.type === "in" ? "default" : "secondary"}
-                          className={tx.type === "in" ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500 text-white"}
-                        >
-                          {tx.type === "in" ? "입고" : "출고"}
-                        </Badge>
-                        <span className="text-xs text-gray-400">{new Date(tx.createdAt).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}</span>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-medium text-gray-700 flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{getUserName(tx.userId)} · {tx.stockName}</span>
-                          {getUserManagerCode(tx.userId) && (
-                            <Badge variant="outline" className="border-[#03C75A]/40 text-[#03C75A] bg-[#03C75A]/5 font-mono text-xs">{getUserManagerCode(tx.userId)}</Badge>
-                          )}
-                          {getUserUnionCode(tx.userId) && (
-                            <Badge variant="outline" className="border-purple-300 text-purple-600 bg-purple-50 font-mono text-xs">{getUserUnionCode(tx.userId)}</Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-500 font-mono">{getUserPhone(tx.userId)} · <span className="text-gray-400">ID: {getUserUsername(tx.userId)}</span></p>
-                        <div className="flex items-center gap-3 text-xs text-gray-500">
-                          <span>{tx.quantity.toLocaleString()}주</span>
-                          <span>{tx.pricePerShare.toLocaleString()}원</span>
-                        </div>
-                        <p className="text-sm font-medium text-gray-700 tabular-nums">총 {(tx.quantity * tx.pricePerShare).toLocaleString()}원</p>
-                      </div>
-                      <div className="flex items-center justify-between gap-2 text-xs text-gray-400">
-                        <span>{tx.category}{tx.memo ? ` · ${tx.memo}` : ""}</span>
-                      </div>
-                      <div className="flex items-center gap-1 pt-1 border-t border-gray-200">
-                        <TransactionEditDialog tx={tx} onSuccess={refreshData} />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => deleteTransactionMutation.mutate(tx.id)}
-                          data-testid={`button-delete-tx-${tx.id}`}
-                          title="삭제"
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                {(() => {
+                  // 담당코드+조합코드 기준으로 그룹핑
+                  const groupKey = (tx: StockTransaction) => {
+                    const mc = getUserManagerCode(tx.userId) || "";
+                    const uc = getUserUnionCode(tx.userId) || "";
+                    return `${mc}||${uc}`;
+                  };
+                  const groupOrder: string[] = [];
+                  const groupMap: Record<string, StockTransaction[]> = {};
+                  for (const tx of filteredTransactions) {
+                    const k = groupKey(tx);
+                    if (!groupMap[k]) { groupMap[k] = []; groupOrder.push(k); }
+                    groupMap[k].push(tx);
+                  }
+                  const isGrouped = groupOrder.length > 1;
 
-                <Card className="hidden md:block p-0 overflow-hidden bg-white border-gray-200">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gray-50 border-gray-200">
-                          <TableHead className="text-gray-500">유형</TableHead>
-                          <TableHead className="text-gray-500">카테고리</TableHead>
-                          <TableHead className="text-gray-500">담당코드</TableHead>
-                          <TableHead className="text-gray-500">조합코드</TableHead>
-                          <TableHead className="text-gray-500">회원</TableHead>
-                          <TableHead className="text-gray-500">연락처</TableHead>
-                          <TableHead className="text-gray-500">아이디</TableHead>
-                          <TableHead className="text-gray-500">종목</TableHead>
-                          <TableHead className="text-right text-gray-500">수량</TableHead>
-                          <TableHead className="text-right text-gray-500">단가</TableHead>
-                          <TableHead className="text-right text-gray-500">총액</TableHead>
-                          <TableHead className="text-gray-500">메모</TableHead>
-                          <TableHead className="text-gray-500">일시</TableHead>
-                          <TableHead className="text-center text-gray-500">관리</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredTransactions.map((tx) => (
-                          <TableRow key={tx.id} className="border-gray-200" data-testid={`row-tx-${tx.id}`}>
-                            <TableCell>
-                              <Badge
-                                variant={tx.type === "in" ? "default" : "secondary"}
-                                className={tx.type === "in" ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500 text-white"}
-                              >
-                                {tx.type === "in" ? "입고" : "출고"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-gray-700">{tx.category}</TableCell>
-                            <TableCell>
-                              {getUserManagerCode(tx.userId)
-                                ? <Badge variant="outline" className="border-[#03C75A]/40 text-[#03C75A] bg-[#03C75A]/5 font-mono text-xs">{getUserManagerCode(tx.userId)}</Badge>
-                                : <span className="text-gray-300 text-xs">-</span>}
-                            </TableCell>
-                            <TableCell>
-                              {getUserUnionCode(tx.userId)
-                                ? <Badge variant="outline" className="border-purple-300 text-purple-600 bg-purple-50 font-mono text-xs">{getUserUnionCode(tx.userId)}</Badge>
-                                : <span className="text-gray-300 text-xs">-</span>}
-                            </TableCell>
-                            <TableCell className="font-medium text-gray-700">{getUserName(tx.userId)}</TableCell>
-                            <TableCell className="font-mono text-xs text-gray-500 whitespace-nowrap">{getUserPhone(tx.userId)}</TableCell>
-                            <TableCell className="font-mono text-xs text-gray-400 whitespace-nowrap">{getUserUsername(tx.userId)}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1.5">
-                                <StockIcon name={tx.stockName} size={22} />
-                                <span className="text-gray-700">{tx.stockName}</span>
+                  return (
+                    <>
+                    {/* 모바일 */}
+                    <div className="md:hidden space-y-4">
+                      {groupOrder.map((key) => {
+                        const [mc, uc] = key.split("||");
+                        const group = groupMap[key];
+                        const inQty = group.filter(t => t.type === "in").reduce((s, t) => s + t.quantity, 0);
+                        const outQty = group.filter(t => t.type === "out").reduce((s, t) => s + t.quantity, 0);
+                        return (
+                          <div key={key} className="space-y-2">
+                            {isGrouped && (
+                              <div className="flex items-center gap-2 px-1 py-1.5 border-b-2 border-gray-200">
+                                <div className="flex items-center gap-1.5 flex-1 flex-wrap">
+                                  {mc ? <Badge variant="outline" className="border-[#03C75A]/40 text-[#03C75A] bg-[#03C75A]/5 font-mono text-xs">담당 {mc}</Badge> : <span className="text-xs text-gray-400 font-mono">담당코드 없음</span>}
+                                  {uc ? <Badge variant="outline" className="border-purple-300 text-purple-600 bg-purple-50 font-mono text-xs">조합 {uc}</Badge> : null}
+                                </div>
+                                <div className="flex items-center gap-2 text-xs shrink-0">
+                                  <span className="text-red-500 font-semibold">입고 {inQty.toLocaleString()}주</span>
+                                  <span className="text-blue-500 font-semibold">출고 {outQty.toLocaleString()}주</span>
+                                </div>
                               </div>
-                            </TableCell>
-                            <TableCell className="text-right font-mono tabular-nums text-gray-700">{tx.quantity.toLocaleString()}주</TableCell>
-                            <TableCell className="text-right font-mono tabular-nums text-gray-700">{tx.pricePerShare.toLocaleString()}원</TableCell>
-                            <TableCell className="text-right font-mono tabular-nums text-gray-700">{(tx.quantity * tx.pricePerShare).toLocaleString()}원</TableCell>
-                            <TableCell className="text-sm text-gray-400">{tx.memo || "-"}</TableCell>
-                            <TableCell className="text-sm text-gray-400">
-                              {new Date(tx.createdAt).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center justify-center gap-1">
-                                <TransactionEditDialog tx={tx} onSuccess={refreshData} />
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => deleteTransactionMutation.mutate(tx.id)}
-                                  data-testid={`button-delete-tx-${tx.id}`}
-                                  title="삭제"
-                                >
-                                  <Trash2 className="w-4 h-4 text-destructive" />
-                                </Button>
+                            )}
+                            {group.map((tx) => (
+                              <div key={tx.id} className="rounded-md border border-gray-200 bg-white p-4 space-y-3" data-testid={`row-tx-${tx.id}`}>
+                                <div className="flex items-center justify-between gap-2">
+                                  <Badge
+                                    variant={tx.type === "in" ? "default" : "secondary"}
+                                    className={tx.type === "in" ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500 text-white"}
+                                  >
+                                    {tx.type === "in" ? "입고" : "출고"}
+                                  </Badge>
+                                  <span className="text-xs text-gray-400">{new Date(tx.createdAt).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}</span>
+                                </div>
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-sm font-medium text-gray-700 flex items-center gap-1.5"><StockIcon name={tx.stockName} size={18} />{getUserName(tx.userId)} · {tx.stockName}</span>
+                                  </div>
+                                  <p className="text-xs text-gray-500 font-mono">{getUserPhone(tx.userId)} · <span className="text-gray-400">ID: {getUserUsername(tx.userId)}</span></p>
+                                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                                    <span>{tx.quantity.toLocaleString()}주</span>
+                                    <span>{tx.pricePerShare.toLocaleString()}원</span>
+                                  </div>
+                                  <p className="text-sm font-medium text-gray-700 tabular-nums">총 {(tx.quantity * tx.pricePerShare).toLocaleString()}원</p>
+                                </div>
+                                <div className="flex items-center justify-between gap-2 text-xs text-gray-400">
+                                  <span>{tx.category}{tx.memo ? ` · ${tx.memo}` : ""}</span>
+                                </div>
+                                <div className="flex items-center gap-1 pt-1 border-t border-gray-200">
+                                  <TransactionEditDialog tx={tx} onSuccess={refreshData} />
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => deleteTransactionMutation.mutate(tx.id)}
+                                    data-testid={`button-delete-tx-${tx.id}`}
+                                    title="삭제"
+                                  >
+                                    <Trash2 className="w-4 h-4 text-destructive" />
+                                  </Button>
+                                </div>
                               </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </Card>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* 데스크톱 */}
+                    <div className="hidden md:block space-y-4">
+                      {groupOrder.map((key) => {
+                        const [mc, uc] = key.split("||");
+                        const group = groupMap[key];
+                        const inQty = group.filter(t => t.type === "in").reduce((s, t) => s + t.quantity, 0);
+                        const outQty = group.filter(t => t.type === "out").reduce((s, t) => s + t.quantity, 0);
+                        return (
+                          <div key={key} className="rounded-lg border border-gray-200 overflow-hidden bg-white">
+                            {isGrouped && (
+                              <div className="flex items-center gap-3 px-4 py-2.5 bg-gray-50 border-b border-gray-200">
+                                <div className="flex items-center gap-2 flex-1">
+                                  {mc ? <Badge variant="outline" className="border-[#03C75A]/40 text-[#03C75A] bg-[#03C75A]/5 font-mono text-xs">담당 {mc}</Badge> : <span className="text-xs text-gray-400 font-mono">담당코드 없음</span>}
+                                  {uc ? <Badge variant="outline" className="border-purple-300 text-purple-600 bg-purple-50 font-mono text-xs">조합 {uc}</Badge> : null}
+                                  <span className="text-xs text-gray-400">{group.length}건</span>
+                                </div>
+                                <div className="flex items-center gap-4 text-xs">
+                                  <span className="text-red-500 font-semibold">입고 {inQty.toLocaleString()}주</span>
+                                  <span className="text-blue-500 font-semibold">출고 {outQty.toLocaleString()}주</span>
+                                  <span className="text-gray-700 font-semibold">순보유 {(inQty - outQty).toLocaleString()}주</span>
+                                </div>
+                              </div>
+                            )}
+                            <div className="overflow-x-auto">
+                              <Table>
+                                {!isGrouped && (
+                                  <TableHeader>
+                                    <TableRow className="bg-gray-50 border-gray-200">
+                                      <TableHead className="text-gray-500">유형</TableHead>
+                                      <TableHead className="text-gray-500">카테고리</TableHead>
+                                      <TableHead className="text-gray-500">담당코드</TableHead>
+                                      <TableHead className="text-gray-500">조합코드</TableHead>
+                                      <TableHead className="text-gray-500">회원</TableHead>
+                                      <TableHead className="text-gray-500">연락처</TableHead>
+                                      <TableHead className="text-gray-500">아이디</TableHead>
+                                      <TableHead className="text-gray-500">종목</TableHead>
+                                      <TableHead className="text-right text-gray-500">수량</TableHead>
+                                      <TableHead className="text-right text-gray-500">단가</TableHead>
+                                      <TableHead className="text-right text-gray-500">총액</TableHead>
+                                      <TableHead className="text-gray-500">메모</TableHead>
+                                      <TableHead className="text-gray-500">일시</TableHead>
+                                      <TableHead className="text-center text-gray-500">관리</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                )}
+                                {isGrouped && (
+                                  <TableHeader>
+                                    <TableRow className="border-gray-100">
+                                      <TableHead className="text-gray-400 text-xs py-2">유형</TableHead>
+                                      <TableHead className="text-gray-400 text-xs py-2">카테고리</TableHead>
+                                      <TableHead className="text-gray-400 text-xs py-2">회원</TableHead>
+                                      <TableHead className="text-gray-400 text-xs py-2">연락처</TableHead>
+                                      <TableHead className="text-gray-400 text-xs py-2">아이디</TableHead>
+                                      <TableHead className="text-gray-400 text-xs py-2">종목</TableHead>
+                                      <TableHead className="text-right text-gray-400 text-xs py-2">수량</TableHead>
+                                      <TableHead className="text-right text-gray-400 text-xs py-2">단가</TableHead>
+                                      <TableHead className="text-right text-gray-400 text-xs py-2">총액</TableHead>
+                                      <TableHead className="text-gray-400 text-xs py-2">메모</TableHead>
+                                      <TableHead className="text-gray-400 text-xs py-2">일시</TableHead>
+                                      <TableHead className="text-center text-gray-400 text-xs py-2">관리</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                )}
+                                <TableBody>
+                                  {group.map((tx) => (
+                                    <TableRow key={tx.id} className="border-gray-100" data-testid={`row-tx-${tx.id}`}>
+                                      <TableCell>
+                                        <Badge
+                                          variant={tx.type === "in" ? "default" : "secondary"}
+                                          className={tx.type === "in" ? "bg-red-500 border-red-500" : "bg-blue-500 border-blue-500 text-white"}
+                                        >
+                                          {tx.type === "in" ? "입고" : "출고"}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell className="text-gray-700">{tx.category}</TableCell>
+                                      {!isGrouped && (
+                                        <>
+                                          <TableCell>
+                                            {getUserManagerCode(tx.userId)
+                                              ? <Badge variant="outline" className="border-[#03C75A]/40 text-[#03C75A] bg-[#03C75A]/5 font-mono text-xs">{getUserManagerCode(tx.userId)}</Badge>
+                                              : <span className="text-gray-300 text-xs">-</span>}
+                                          </TableCell>
+                                          <TableCell>
+                                            {getUserUnionCode(tx.userId)
+                                              ? <Badge variant="outline" className="border-purple-300 text-purple-600 bg-purple-50 font-mono text-xs">{getUserUnionCode(tx.userId)}</Badge>
+                                              : <span className="text-gray-300 text-xs">-</span>}
+                                          </TableCell>
+                                        </>
+                                      )}
+                                      <TableCell className="font-medium text-gray-700">{getUserName(tx.userId)}</TableCell>
+                                      <TableCell className="font-mono text-xs text-gray-500 whitespace-nowrap">{getUserPhone(tx.userId)}</TableCell>
+                                      <TableCell className="font-mono text-xs text-gray-400 whitespace-nowrap">{getUserUsername(tx.userId)}</TableCell>
+                                      <TableCell>
+                                        <div className="flex items-center gap-1.5">
+                                          <StockIcon name={tx.stockName} size={22} />
+                                          <span className="text-gray-700">{tx.stockName}</span>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="text-right font-mono tabular-nums text-gray-700">{tx.quantity.toLocaleString()}주</TableCell>
+                                      <TableCell className="text-right font-mono tabular-nums text-gray-700">{tx.pricePerShare.toLocaleString()}원</TableCell>
+                                      <TableCell className="text-right font-mono tabular-nums text-gray-700">{(tx.quantity * tx.pricePerShare).toLocaleString()}원</TableCell>
+                                      <TableCell className="text-sm text-gray-400">{tx.memo || "-"}</TableCell>
+                                      <TableCell className="text-sm text-gray-400 whitespace-nowrap">
+                                        {new Date(tx.createdAt).toLocaleString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false })}
+                                      </TableCell>
+                                      <TableCell>
+                                        <div className="flex items-center justify-center gap-1">
+                                          <TransactionEditDialog tx={tx} onSuccess={refreshData} />
+                                          <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={() => deleteTransactionMutation.mutate(tx.id)}
+                                            data-testid={`button-delete-tx-${tx.id}`}
+                                            title="삭제"
+                                          >
+                                            <Trash2 className="w-4 h-4 text-destructive" />
+                                          </Button>
+                                        </div>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    </>
+                  );
+                })()}
                 </>
               )}
             </>
