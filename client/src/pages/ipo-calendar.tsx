@@ -441,6 +441,24 @@ function buildIpo38CalEvents(ipo38: Ipo38Item[]): CalEvent[] {
         logoUrl: null, iconType: "square", isBar: true,
       });
     }
+    // 배정 (+1 영업일), 환불 (+2 영업일) — 청약종료일이 있을 때만
+    if (item.subscriptionEndDate) {
+      const allotDate = addBusinessDays(item.subscriptionEndDate, 1);
+      const refundDate = addBusinessDays(item.subscriptionEndDate, 2);
+      events.push({
+        name, start: allotDate, end: allotDate,
+        color: "#33691e", bgColor: "#F1F8E9", status: "배정",
+        priceRange: price, competition: compStr,
+        logoUrl: null, iconType: "snowflake", isBar: false,
+      });
+      events.push({
+        name, start: refundDate, end: refundDate,
+        color: "#b7601e", bgColor: "#FFF1E0", status: "환불",
+        priceRange: price, competition: compStr,
+        logoUrl: null, iconType: "dash", isBar: false,
+      });
+    }
+
     if (item.listingDate) {
       const d = parseLocalDate(item.listingDate);
       if (!isNaN(d.getTime())) {
@@ -650,7 +668,41 @@ function CalendarSection() {
 
   const naverData = ipoApiData?.naverData;
   const richIpoList: RichIpoItem[] = ipoApiData?.richIpoList || [];
-  const ipo38: Ipo38Item[] = ipoApiData?.ipo38 || [];
+  const ipo38Raw: Ipo38Item[] = ipoApiData?.ipo38 || [];
+
+  // 네이버 캘린더 기준 누락 종목 보완 데이터
+  const STATIC_IPO_SUPPLEMENTS: Ipo38Item[] = [
+    // 기존 ipo38에 있지만 listingDate 없는 종목에 상장일 추가
+    { stockName: "져스텍",      subscriptionStartDate: "2026-06-18", subscriptionEndDate: "2026-06-19", listingDate: "2026-06-29", type: "subscription" },
+    { stockName: "스트라드비젼", subscriptionStartDate: "2026-06-18", subscriptionEndDate: "2026-06-19", listingDate: "2026-06-30", type: "subscription" },
+    { stockName: "한국스팩16호", subscriptionStartDate: "2026-06-22", subscriptionEndDate: "2026-06-23", listingDate: "2026-06-30", type: "subscription" },
+    { stockName: "매드업",      subscriptionStartDate: "2026-06-23", subscriptionEndDate: "2026-06-24", listingDate: "2026-07-01", type: "subscription" },
+    { stockName: "레몬헬스케어", subscriptionStartDate: "2026-06-24", subscriptionEndDate: "2026-06-25", listingDate: "2026-07-06", type: "subscription" },
+    // ipo38에 없는 누락 상장 종목
+    { stockName: "에프엠더불유",   subscriptionStartDate: "", subscriptionEndDate: "", listingDate: "2026-06-30", type: "listing" },
+    { stockName: "엠디에스코리아", subscriptionStartDate: "", subscriptionEndDate: "", listingDate: "2026-07-02", type: "listing" },
+    { stockName: "(주)진코스텍",   subscriptionStartDate: "", subscriptionEndDate: "", listingDate: "2026-07-06", type: "listing" },
+    { stockName: "스카이펌스",    subscriptionStartDate: "", subscriptionEndDate: "", listingDate: "2026-07-07", type: "listing" },
+    { stockName: "네오사파이언스", subscriptionStartDate: "", subscriptionEndDate: "", listingDate: "2026-07-09", type: "listing" },
+    { stockName: "엔키화이토햇",  subscriptionStartDate: "", subscriptionEndDate: "", listingDate: "2026-07-09", type: "listing" },
+  ];
+
+  // supplement + 서버 ipo38 병합: 서버 데이터 우선, listingDate는 서버에 없으면 supplement 사용
+  const ipo38 = useMemo(() => {
+    const suppMap = new Map<string, Ipo38Item>(STATIC_IPO_SUPPLEMENTS.map(i => [i.stockName, { ...i }]));
+    const merged: Ipo38Item[] = [];
+    for (const item of ipo38Raw) {
+      const supp = suppMap.get(item.stockName);
+      if (supp) {
+        merged.push({ ...supp, ...item, listingDate: item.listingDate || supp.listingDate });
+        suppMap.delete(item.stockName);
+      } else {
+        merged.push(item);
+      }
+    }
+    for (const item of suppMap.values()) merged.push(item);
+    return merged;
+  }, [ipo38Raw]);
 
   const events = useMemo(() => {
     const norm = (s: string) => s.replace(/\s/g, "").replace(/져/g, "저").replace(/쟤/g, "재").toLowerCase();
