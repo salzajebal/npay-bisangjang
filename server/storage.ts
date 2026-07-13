@@ -119,7 +119,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTransactionsByUserId(userId: string): Promise<StockTransaction[]> {
-    return db.select().from(stockTransactions).where(eq(stockTransactions.userId, userId)).orderBy(desc(stockTransactions.createdAt));
+    return db.select().from(stockTransactions).where(eq(stockTransactions.userId, userId)).orderBy(asc(stockTransactions.createdAt));
   }
 
   async getAllTransactions(): Promise<StockTransaction[]> {
