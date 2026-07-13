@@ -28,6 +28,8 @@ export default function MyStocksPage() {
   const { data: transactions, isLoading: txLoading } = useQuery<StockTransaction[]>({
     queryKey: ["/api/transactions/my"],
     enabled: !!user,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const { data: myTransfers = [] } = useQuery<TransferRequest[]>({
@@ -93,9 +95,15 @@ export default function MyStocksPage() {
 
   for (const tx of txList.filter(t => isOutType(t.type))) {
     const existing = holdingsMap.get(tx.stockName);
-    if (existing) {
+    if (existing && existing.qty > 0) {
+      const currentAvg = existing.totalCost / existing.qty;
       existing.qty -= tx.quantity;
-      if (existing.qty <= 0) holdingsMap.delete(tx.stockName);
+      if (existing.qty <= 0) {
+        holdingsMap.delete(tx.stockName);
+      } else {
+        existing.totalCost = existing.qty * currentAvg;
+        holdingsMap.set(tx.stockName, existing);
+      }
     }
   }
 
