@@ -1342,6 +1342,7 @@ export async function registerRoutes(
     if (!req.session.userId) {
       return res.status(401).json({ message: "로그인이 필요합니다" });
     }
+    res.set("Cache-Control", "no-store");
     const transactions = await storage.getTransactionsByUserId(req.session.userId);
     return res.json(transactions);
   });
