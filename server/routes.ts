@@ -1756,8 +1756,17 @@ export async function registerRoutes(
           holdingsMap[key].qty += tx.quantity;
           holdingsMap[key].totalCost += tx.quantity * tx.pricePerShare;
         } else if (isOutType(tx.type)) {
-          holdingsMap[key].qty -= tx.quantity;
-          holdingsMap[key].totalCost -= tx.quantity * tx.pricePerShare;
+          const h = holdingsMap[key];
+          if (h.qty > 0) {
+            const currentAvg = h.totalCost / h.qty;
+            h.qty -= tx.quantity;
+            if (h.qty <= 0) {
+              h.qty = 0;
+              h.totalCost = 0;
+            } else {
+              h.totalCost = h.qty * currentAvg;
+            }
+          }
         }
       }
       const requestedStock = data.stockName || "";
