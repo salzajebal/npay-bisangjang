@@ -63,10 +63,11 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const { seedDatabase, repairApprovedTransfers } = await import("./seed");
+  const { seedDatabase, repairApprovedTransfers, repairWrongPurchasePrices } = await import("./seed");
   await registerRoutes(httpServer, app);
   await seedDatabase();
   await repairApprovedTransfers();
+  await repairWrongPurchasePrices();
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

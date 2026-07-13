@@ -4,6 +4,49 @@ import { eq, and, inArray } from "drizzle-orm";
 import { log } from "./index";
 import bcrypt from "bcrypt";
 
+export async function repairWrongPurchasePrices() {
+  try {
+    // 출고 거래 가격(매도가)으로 totalCost를 차감하던 버그로 인해 잘못 저장된 매입단가를
+    // 모든 유저에 대해 올바른 비례차감 알고리즘으로 재계산하여 수정합니다.
+    const allRequests = await db.select().from(transferRequests);
+    const isInType = (t: string) => t === "in" || t === "입고";
+    const isOutType = (t: string) => t === "out" || t === "출고" || t === "내 계좌로 옮기기";
+    let fixed = 0;
+    for (const tr of allRequests) {
+      const txs = await db.select().from(stockTransactions)
+        .where(eq(stockTransactions.userId, tr.userId));
+      // 해당 출고신청 시점까지의 거래만 사용
+      const relevant = txs
+        .filter(tx => new Date(tx.createdAt) <= new Date(tr.createdAt) && tx.stockName === tr.stockName)
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      const h = { qty: 0, totalCost: 0 };
+      for (const tx of relevant) {
+        if (isInType(tx.type)) {
+          h.qty += tx.quantity;
+          h.totalCost += tx.quantity * tx.pricePerShare;
+        } else if (isOutType(tx.type)) {
+          if (h.qty > 0) {
+            const avg = h.totalCost / h.qty;
+            h.qty -= tx.quantity;
+            h.totalCost = h.qty <= 0 ? 0 : h.qty * avg;
+            if (h.qty < 0) h.qty = 0;
+          }
+        }
+      }
+      const correctAvg = h.qty > 0 ? Math.round(h.totalCost / h.qty) : tr.purchasePrice;
+      if (correctAvg !== tr.purchasePrice && correctAvg > 0) {
+        await db.update(transferRequests)
+          .set({ purchasePrice: correctAvg })
+          .where(eq(transferRequests.id, tr.id));
+        fixed++;
+      }
+    }
+    if (fixed > 0) log(`repairWrongPurchasePrices: ${fixed}건 매입단가 수정 완료`);
+  } catch (error) {
+    log("repairWrongPurchasePrices error: " + String(error));
+  }
+}
+
 export async function repairApprovedTransfers() {
   try {
     const approved = await db.select().from(transferRequests).where(eq(transferRequests.status, "approved"));
