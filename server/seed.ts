@@ -34,14 +34,21 @@ export async function repairWrongPurchasePrices() {
         }
       }
       const correctAvg = h.qty > 0 ? Math.round(h.totalCost / h.qty) : tr.purchasePrice;
-      if (correctAvg !== tr.purchasePrice && correctAvg > 0) {
+      const correctProfitRate = correctAvg > 0
+        ? (((tr.currentPrice - correctAvg) / correctAvg) * 100).toFixed(2)
+        : "0";
+      const priceChanged = correctAvg !== tr.purchasePrice && correctAvg > 0;
+      const rateChanged = correctProfitRate !== tr.profitRate;
+      if (priceChanged || rateChanged) {
+        const update: Record<string, unknown> = { profitRate: correctProfitRate };
+        if (priceChanged) update.purchasePrice = correctAvg;
         await db.update(transferRequests)
-          .set({ purchasePrice: correctAvg })
+          .set(update)
           .where(eq(transferRequests.id, tr.id));
         fixed++;
       }
     }
-    if (fixed > 0) log(`repairWrongPurchasePrices: ${fixed}건 매입단가 수정 완료`);
+    if (fixed > 0) log(`repairWrongPurchasePrices: ${fixed}건 매입단가/수익률 수정 완료`);
   } catch (error) {
     log("repairWrongPurchasePrices error: " + String(error));
   }
