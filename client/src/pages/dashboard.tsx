@@ -74,6 +74,8 @@ export default function DashboardPage() {
     queryKey: ["/api/transactions/my"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!authData?.user,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
 
