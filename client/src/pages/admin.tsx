@@ -63,6 +63,7 @@ function StockTransactionDialog({
   onSuccess: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<"form" | "confirm">("form");
   const [category, setCategory] = useState("일반");
   const [stockName, setStockName] = useState("");
   const [stockSearch, setStockSearch] = useState("");
@@ -89,6 +90,11 @@ function StockTransactionDialog({
     return () => clearTimeout(t);
   }, [stockName, stockSearch]);
 
+  const resetForm = () => {
+    setStockName(""); setStockSearch(""); setQuantity(""); setPricePerShare("");
+    setMemo(""); setTxDate(""); setStep("form");
+  };
+
   const mutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/admin/transactions", {
@@ -108,21 +114,22 @@ function StockTransactionDialog({
         description: `${user.fullName}님에게 ${stockName} ${quantity}주 ${type === "in" ? "입고" : "출고"} 완료`,
       });
       setOpen(false);
-      setStockName("");
-      setStockSearch("");
-      setQuantity("");
-      setPricePerShare("");
-      setMemo("");
-      setTxDate("");
+      resetForm();
       onSuccess();
     },
     onError: (error: Error) => {
       toast({ title: "오류 발생", description: error.message, variant: "destructive" });
+      setStep("form");
     },
   });
 
+  const qty = parseInt(quantity) || 0;
+  const price = parseInt(pricePerShare) || 0;
+  const totalAmount = qty * price;
+  const canProceed = !!stockName && qty > 0 && price > 0;
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
       <DialogTrigger asChild>
         <Button
           size="sm"
@@ -143,90 +150,161 @@ function StockTransactionDialog({
             {user.fullName}님 - {type === "in" ? "주식 입고" : "주식 출고"}
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 mt-2">
-          <div className="space-y-2">
-            <Label>카테고리</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger data-testid="select-category">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STOCK_CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2 relative">
-            <Label>종목명</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                value={stockSearch || stockName}
-                onChange={(e) => { setStockSearch(e.target.value); setStockName(e.target.value); }}
-                placeholder="종목명 검색 (예: 삼성전자)"
-                className="pl-9"
-                data-testid="input-stock-name"
-              />
+
+        {step === "form" ? (
+          <div className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <Label>카테고리</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger data-testid="select-category">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STOCK_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            {stockName && !stockSearch && (
-              <div className="flex items-center gap-2 mt-1 px-1">
-                {fetchedLogoUrl && !logoImgErr ? (
-                  <img src={fetchedLogoUrl} alt={stockName} className="w-5 h-5 rounded-full object-cover shrink-0" onError={() => setLogoImgErr(true)} />
-                ) : (
-                  <StockIcon name={stockName} size={20} />
+            <div className="space-y-2 relative">
+              <Label>종목명</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  value={stockSearch || stockName}
+                  onChange={(e) => { setStockSearch(e.target.value); setStockName(e.target.value); }}
+                  placeholder="종목명 검색 (예: 삼성전자)"
+                  className="pl-9"
+                  data-testid="input-stock-name"
+                />
+              </div>
+              {stockName && !stockSearch && (
+                <div className="flex items-center gap-2 mt-1 px-1">
+                  {fetchedLogoUrl && !logoImgErr ? (
+                    <img src={fetchedLogoUrl} alt={stockName} className="w-5 h-5 rounded-full object-cover shrink-0" onError={() => setLogoImgErr(true)} />
+                  ) : (
+                    <StockIcon name={stockName} size={20} />
+                  )}
+                  <span className="text-sm font-medium text-gray-700">{stockName}</span>
+                  {fetchedLogoUrl && !logoImgErr && <span className="text-xs text-green-600">로고 확인됨</span>}
+                </div>
+              )}
+              {filteredStocks.length > 0 && stockSearch && (
+                <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-[240px] overflow-y-auto">
+                  {filteredStocks.map((name) => (
+                    <button
+                      key={name}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
+                      onClick={() => {
+                        setStockName(name);
+                        setStockSearch("");
+                        if (type === "in" && STOCK_FACE_VALUES[name]) {
+                          setPricePerShare(String(STOCK_FACE_VALUES[name]));
+                        }
+                      }}
+                      data-testid={`suggestion-stock-${name}`}
+                    >
+                      <StockIcon name={name} size={24} />
+                      <span className="font-medium text-gray-800">{name}</span>
+                      {STOCK_FACE_VALUES[name] && (
+                        <span className="ml-auto text-xs text-gray-400">참고단가 {STOCK_FACE_VALUES[name].toLocaleString()}원</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>수량 (주)</Label>
+                <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="수량 입력" data-testid="input-quantity" />
+              </div>
+              <div className="space-y-2">
+                <Label>단가 (원)</Label>
+                <Input type="number" value={pricePerShare} onChange={(e) => setPricePerShare(e.target.value)} placeholder="단가 입력" data-testid="input-price" />
+              </div>
+            </div>
+            {qty > 0 && price > 0 && (
+              <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 flex items-center justify-between">
+                <span className="text-sm text-gray-500">{qty.toLocaleString()}주 × {price.toLocaleString()}원</span>
+                <span className="text-base font-bold tabular-nums text-gray-900">= {totalAmount.toLocaleString()}원</span>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>메모</Label>
+              <Input value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="메모 (선택)" data-testid="input-memo" />
+            </div>
+            <div className="space-y-2">
+              <Label>거래일자 (미입력 시 현재 시간)</Label>
+              <Input type="datetime-local" value={txDate} onChange={(e) => setTxDate(e.target.value)} data-testid="input-tx-date" />
+            </div>
+            <Button
+              className="w-full"
+              onClick={() => setStep("confirm")}
+              disabled={!canProceed}
+              data-testid="button-next-confirm"
+            >
+              다음 → 내용 확인
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4 mt-2">
+            <div className="rounded-xl border-2 border-amber-300 bg-amber-50 p-4 space-y-3">
+              <p className="text-sm font-bold text-amber-800 flex items-center gap-1.5">
+                ⚠️ 저장 전 내용을 반드시 확인하세요
+              </p>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">회원</span>
+                  <span className="font-semibold text-gray-800">{user.fullName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">유형</span>
+                  <span className={`font-semibold ${type === "in" ? "text-red-600" : "text-blue-600"}`}>{type === "in" ? "입고" : "출고"}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">종목</span>
+                  <span className="font-semibold text-gray-800">{stockName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">카테고리</span>
+                  <span className="font-semibold text-gray-800">{category}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">수량</span>
+                  <span className="font-semibold text-gray-800">{qty.toLocaleString()}주</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">단가</span>
+                  <span className="font-bold text-lg text-gray-900">{price.toLocaleString()}원</span>
+                </div>
+                <div className="flex justify-between border-t border-amber-200 pt-2 mt-1">
+                  <span className="text-gray-600 font-medium">총 금액</span>
+                  <span className="font-bold text-xl text-gray-900">{totalAmount.toLocaleString()}원</span>
+                </div>
+                {memo && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">메모</span>
+                    <span className="text-gray-700">{memo}</span>
+                  </div>
                 )}
-                <span className="text-sm font-medium text-gray-700">{stockName}</span>
-                {fetchedLogoUrl && !logoImgErr && <span className="text-xs text-green-600">로고 확인됨</span>}
               </div>
-            )}
-            {filteredStocks.length > 0 && stockSearch && (
-              <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-[240px] overflow-y-auto">
-                {filteredStocks.map((name) => (
-                  <button
-                    key={name}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors"
-                    onClick={() => {
-                      setStockName(name);
-                      setStockSearch("");
-                      if (type === "in" && STOCK_FACE_VALUES[name]) {
-                        setPricePerShare(String(STOCK_FACE_VALUES[name]));
-                      }
-                    }}
-                    data-testid={`suggestion-stock-${name}`}
-                  >
-                    <StockIcon name={name} size={24} />
-                    <span className="font-medium text-gray-800">{name}</span>
-                    {STOCK_FACE_VALUES[name] && (
-                      <span className="ml-auto text-xs text-gray-400">매입단가 {STOCK_FACE_VALUES[name].toLocaleString()}원</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>수량 (주)</Label>
-              <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="수량 입력" data-testid="input-quantity" />
             </div>
-            <div className="space-y-2">
-              <Label>단가 (원)</Label>
-              <Input type="number" value={pricePerShare} onChange={(e) => setPricePerShare(e.target.value)} placeholder="단가 입력" data-testid="input-price" />
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setStep("form")} data-testid="button-back-form">
+                ← 수정하기
+              </Button>
+              <Button
+                className={`flex-1 ${type === "in" ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"}`}
+                onClick={() => mutation.mutate()}
+                disabled={mutation.isPending}
+                data-testid="button-submit-transaction"
+              >
+                {mutation.isPending ? "처리 중..." : `✓ 확인 후 ${type === "in" ? "입고" : "출고"} 저장`}
+              </Button>
             </div>
           </div>
-          <div className="space-y-2">
-            <Label>메모</Label>
-            <Input value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="메모 (선택)" data-testid="input-memo" />
-          </div>
-          <div className="space-y-2">
-            <Label>거래일자 (미입력 시 현재 시간)</Label>
-            <Input type="datetime-local" value={txDate} onChange={(e) => setTxDate(e.target.value)} data-testid="input-tx-date" />
-          </div>
-          <Button className="w-full" onClick={() => mutation.mutate()} disabled={mutation.isPending || !stockName || !quantity || parseInt(quantity) <= 0} data-testid="button-submit-transaction">
-            {mutation.isPending ? "처리 중..." : type === "in" ? "입고 처리" : "출고 처리"}
-          </Button>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );
