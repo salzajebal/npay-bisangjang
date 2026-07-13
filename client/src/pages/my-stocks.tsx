@@ -75,8 +75,16 @@ export default function MyStocksPage() {
       setTransferQuantity("");
       queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
     },
-    onError: () => {
-      toast({ title: "신청 실패", description: "출고 신청에 실패했습니다. 다시 시도해주세요.", variant: "destructive" });
+    onError: (error: Error) => {
+      let description = "출고 신청에 실패했습니다. 다시 시도해주세요.";
+      try {
+        const match = error.message.match(/\d+: ([\s\S]*)/);
+        if (match) {
+          const parsed = JSON.parse(match[1]);
+          if (parsed.message) description = parsed.message;
+        }
+      } catch {}
+      toast({ title: "신청 실패", description, variant: "destructive" });
     },
   });
 
