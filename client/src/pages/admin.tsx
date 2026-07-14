@@ -1556,9 +1556,8 @@ export default function AdminPage() {
   });
 
   const sortedActiveFallbacks = [...fallbackUrls].filter(f => f.isActive).sort((a, b) => a.priority - b.priority);
-  const shareLink = sortedActiveFallbacks.length > 0
-    ? sortedActiveFallbacks[0].url.replace(/\/$/, "") + "/go"
-    : (typeof window !== "undefined" ? window.location.origin + "/go" : "/go");
+  // 공유 링크는 항상 현재 접속 도메인 + /go (대체 도메인 목록과 무관)
+  const shareLink = typeof window !== "undefined" ? window.location.origin + "/go" : "/go";
 
   const [newFbUrl, setNewFbUrl] = useState("");
   const [newFbLabel, setNewFbLabel] = useState("");
@@ -3952,11 +3951,11 @@ export default function AdminPage() {
                     <ShieldAlert className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-blue-800">자동 대피 (Service Worker)</p>
-                      <p className="text-sm text-blue-700">한 번이라도 방문한 사용자는 현재 도메인이 완전히 차단되어도 브라우저가 자동으로 살아있는 도메인으로 이동합니다.</p>
+                      <p className="text-sm text-blue-700">한 번이라도 방문한 사용자는 현재 도메인이 차단되면 브라우저가 자동으로 살아있는 대체 도메인으로 이동합니다.</p>
                       <ul className="text-xs text-blue-600 list-disc list-inside mt-1 space-y-0.5">
                         <li>사이트 방문 시 브라우저에 자동 설치</li>
-                        <li>도메인 목록 변경 시 다음 방문에 자동 갱신</li>
-                        <li>DNS 오류 포함 모든 네트워크 실패에 대응</li>
+                        <li>30분마다 도메인 목록 자동 갱신</li>
+                        <li>⚠️ 한 번도 방문한 적 없는 신규 유저는 보호 불가</li>
                       </ul>
                     </div>
                   </div>
@@ -3965,12 +3964,12 @@ export default function AdminPage() {
                   <div className="flex items-start gap-3">
                     <Activity className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
                     <div className="space-y-1">
-                      <p className="text-sm font-semibold text-green-800">공유 링크 (/go)</p>
-                      <p className="text-sm text-green-700">아래 공유 링크는 항상 살아있는 도메인 중 첫 번째로 자동 이동합니다. 신규 사용자에게 이 링크를 배포하세요.</p>
+                      <p className="text-sm font-semibold text-green-800">공유 링크 (/go) 사용 방법</p>
+                      <p className="text-sm text-green-700">1번 도메인이 살아있을 때 → 등록된 2번 대체 도메인으로 이동합니다. 1번이 차단되었을 때 → SW가 자동으로 2번으로 우회합니다.</p>
                       <ul className="text-xs text-green-600 list-disc list-inside mt-1 space-y-0.5">
-                        <li>서버가 살아있는 도메인을 실시간 확인</li>
-                        <li>우선순위 순서대로 자동 선택</li>
-                        <li>도메인 변경 시 링크 주소 변경 불필요</li>
+                        <li>반드시 아래 목록에 2번(대체) 도메인을 추가해야 작동</li>
+                        <li>현재 도메인(1번)은 목록에 넣어도 무시됨</li>
+                        <li>도메인 차단 전에 유저가 미리 한 번 방문해야 함</li>
                       </ul>
                     </div>
                   </div>

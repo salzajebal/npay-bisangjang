@@ -69,6 +69,14 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+// 30분마다 캐시 자동 갱신 (어드민이 도메인 변경 시 기존 유저도 반영)
+setInterval(() => {
+  fetch(API_ENDPOINT, { cache: 'no-store' })
+    .then((r) => r.json())
+    .then((data) => updateCache(data))
+    .catch(() => {});
+}, 30 * 60 * 1000);
+
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'UPDATE_FALLBACK_CACHE' && event.data.payload) {
     updateCache(event.data.payload);
