@@ -2065,6 +2065,16 @@ export default function TradePage() {
         )}
 
 
+        {!isSearchMode && (
+          <div className="flex justify-center my-3">
+            <img
+              src="/banner-notice.png"
+              alt="서버 점검 안내"
+              className="w-full max-w-[480px] rounded-xl"
+            />
+          </div>
+        )}
+
         <div className={`flex flex-col lg:flex-row gap-6 mt-2 ${isSearchMode ? "hidden" : ""}`}>
           <div className="flex-1 min-w-0 space-y-8">
             {/* 모바일 보유종목 섹션 */}
