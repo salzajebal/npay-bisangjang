@@ -1957,7 +1957,20 @@ function Footer() {
 const POPUP_STORAGE_KEY = "npay_popup_hidden";
 
 function LandingPopup() {
-  return null;
+  const [open, setOpen] = useState(true);
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4" onClick={() => setOpen(false)}>
+      <div className="relative max-w-[480px] w-full" onClick={e => e.stopPropagation()}>
+        <img src="/banner-notice.png" alt="서버 점검 안내" className="w-full rounded-xl" />
+        <button
+          onClick={() => setOpen(false)}
+          className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors text-lg leading-none"
+          aria-label="닫기"
+        >×</button>
+      </div>
+    </div>
+  );
 }
 
 export default function TradePage() {
@@ -2065,15 +2078,6 @@ export default function TradePage() {
         )}
 
 
-        {!isSearchMode && (
-          <div className="flex justify-center my-3">
-            <img
-              src="/banner-notice.png"
-              alt="서버 점검 안내"
-              className="w-full max-w-[480px] rounded-xl"
-            />
-          </div>
-        )}
 
         <div className={`flex flex-col lg:flex-row gap-6 mt-2 ${isSearchMode ? "hidden" : ""}`}>
           <div className="flex-1 min-w-0 space-y-8">
