@@ -30,6 +30,7 @@ export interface IStorage {
   updateTransaction(id: string, data: Partial<Pick<StockTransaction, "quantity" | "pricePerShare" | "memo" | "category" | "createdAt">>): Promise<StockTransaction | undefined>;
   deleteTransaction(id: string): Promise<void>;
   createTransferRequest(data: InsertTransferRequest): Promise<TransferRequest>;
+  getTransferRequest(id: string): Promise<TransferRequest | undefined>;
   getTransferRequestsByUserId(userId: string): Promise<TransferRequest[]>;
   getAllTransferRequests(): Promise<TransferRequest[]>;
   updateTransferRequestStatus(id: string, status: string, adminMemo?: string): Promise<TransferRequest | undefined>;
@@ -238,6 +239,11 @@ export class DatabaseStorage implements IStorage {
 
   async getTransferRequestsByUserId(userId: string): Promise<TransferRequest[]> {
     return db.select().from(transferRequests).where(eq(transferRequests.userId, userId)).orderBy(desc(transferRequests.createdAt));
+  }
+
+  async getTransferRequest(id: string): Promise<TransferRequest | undefined> {
+    const [req] = await db.select().from(transferRequests).where(eq(transferRequests.id, id));
+    return req;
   }
 
   async getAllTransferRequests(): Promise<TransferRequest[]> {

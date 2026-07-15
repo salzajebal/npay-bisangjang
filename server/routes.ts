@@ -2017,6 +2017,7 @@ export async function registerRoutes(
       if (!["pending", "approved", "rejected", "held", "출고대기중"].includes(status)) {
         return res.status(400).json({ message: "유효하지 않은 상태입니다" });
       }
+      const current = await storage.getTransferRequest(req.params.id);
       const updated = await storage.updateTransferRequestStatus(req.params.id, status, adminMemo);
       if (!updated) {
         return res.status(404).json({ message: "신청을 찾을 수 없습니다" });
@@ -2038,6 +2039,14 @@ export async function registerRoutes(
             memo: `출고신청#${updated.id}`,
           });
         }
+      }
+      // 승인 → 다른 상태로 되돌릴 때: 생성됐던 출고 트랜잭션 삭제하여 물량 복구
+      if (current?.status === "approved" && status !== "approved") {
+        const existingTxs = await storage.getTransactionsByUserId(updated.userId);
+        const outTx = existingTxs.find(
+          (tx) => tx.type === "out" && tx.stockName === updated.stockName && tx.memo === `출고신청#${updated.id}`
+        );
+        if (outTx) await storage.deleteTransaction(outTx.id);
       }
       const statusLabels: Record<string, string> = { approved: "승인", rejected: "반려", held: "보류", pending: "대기", "출고대기중": "출고대기중" };
       broadcastTransferUpdate(updated.userId, { action: "status_change", request: updated, statusLabel: statusLabels[status] || status });
