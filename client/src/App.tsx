@@ -51,31 +51,6 @@ function MaintenancePage() {
   );
 }
 
-function ServiceWorkerProvider() {
-  useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
-
-    navigator.serviceWorker
-      .register("/sw.js", { scope: "/" })
-      .then((registration) => {
-        fetch("/api/domain-redirect", { credentials: "include" })
-          .then((r) => r.json())
-          .then((data) => {
-            const target =
-              registration.active ||
-              registration.installing ||
-              registration.waiting;
-            if (target) {
-              target.postMessage({ type: "UPDATE_FALLBACK_CACHE", payload: data });
-            }
-          })
-          .catch(() => {});
-      })
-      .catch(() => {});
-  }, []);
-
-  return null;
-}
 
 function Router() {
   const [location] = useLocation();
@@ -119,7 +94,6 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <ServiceWorkerProvider />
         <Router />
       </TooltipProvider>
     </QueryClientProvider>

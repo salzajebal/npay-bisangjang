@@ -2499,21 +2499,8 @@ export async function registerRoutes(
 
   registerDemoRoutes(app);
 
-  app.get("/go", async (req, res) => {
-    try {
-      const urls = await storage.getActiveFallbackUrls();
-      const sorted = [...urls].sort((a, b) => a.priority - b.priority);
-      const currentHost = req.headers.host || "";
-      // 현재 도메인과 다른 첫 번째 활성 대체 도메인으로 이동 (자기 자신 제외)
-      const backup = sorted.find(u => {
-        try { return new URL(u.url).host !== currentHost; } catch { return false; }
-      });
-      if (backup) return res.redirect(302, backup.url);
-      // 백업 도메인이 없으면 홈으로
-      return res.redirect(302, "/");
-    } catch {
-      return res.redirect(302, "/");
-    }
+  app.get("/go", (_req, res) => {
+    return res.status(404).send("Not found");
   });
 
   return httpServer;
