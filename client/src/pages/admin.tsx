@@ -837,6 +837,9 @@ function UnionCodeDialog({ user, onSuccess }: { user: User; onSuccess: () => voi
     onSuccess: () => {
       toast({ title: "조합코드 변경", description: `${user.fullName}님의 조합코드가 변경되었습니다` });
       setOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.refetchQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
       onSuccess();
     },
     onError: (error: Error) => {
