@@ -1488,6 +1488,18 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/admin/users/:id/union-code", requireAdmin, async (req, res) => {
+    try {
+      const { unionCode } = req.body;
+      const code = typeof unionCode === "string" && unionCode.trim() !== "" ? unionCode.trim() : null;
+      const user = await storage.updateUserUnionCode(req.params.id, code);
+      if (!user) return res.status(404).json({ message: "사용자를 찾을 수 없습니다" });
+      return res.json({ ...user, password: undefined });
+    } catch (error) {
+      return res.status(500).json({ message: "조합코드 변경에 실패했습니다" });
+    }
+  });
+
   app.patch("/api/admin/users/:id/site-group", requireAdmin, async (req, res) => {
     try {
       const { siteGroup } = req.body;

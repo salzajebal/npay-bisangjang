@@ -825,6 +825,59 @@ function MemberDeleteDialog({ user, onSuccess }: { user: User; onSuccess: () => 
   );
 }
 
+function UnionCodeDialog({ user, onSuccess }: { user: User; onSuccess: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [code, setCode] = useState(user.unionCode || "");
+  const { toast } = useToast();
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("PATCH", `/api/admin/users/${user.id}/union-code`, { unionCode: code });
+    },
+    onSuccess: () => {
+      toast({ title: "조합코드 변경", description: `${user.fullName}님의 조합코드가 변경되었습니다` });
+      setOpen(false);
+      onSuccess();
+    },
+    onError: (error: Error) => {
+      toast({ title: "오류", description: error.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) setCode(user.unionCode || ""); }}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" className="h-7 text-xs px-2 border-purple-200 text-purple-700 bg-purple-50" data-testid={`button-union-code-${user.id}`} title="조합코드 변경">
+          조합: {user.unionCode || <span className="text-gray-400">없음</span>}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>조합코드 변경</DialogTitle>
+          <DialogDescription>
+            {user.fullName}(@{user.username})님의 조합코드를 입력하세요. 비워두면 코드 없음으로 처리됩니다.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2 mt-2">
+          <Label>조합코드</Label>
+          <Input
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="조합코드 (없으면 비워두세요)"
+            data-testid="input-union-code-dialog"
+          />
+        </div>
+        <DialogFooter className="mt-4">
+          <Button variant="outline" onClick={() => setOpen(false)}>취소</Button>
+          <Button onClick={() => mutation.mutate()} disabled={mutation.isPending} data-testid="button-confirm-union-code">
+            {mutation.isPending ? "저장 중..." : "저장"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function ManagerCodeDialog({ user, onSuccess }: { user: User; onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState(user.managerCode || "");
@@ -2670,10 +2723,8 @@ export default function AdminPage() {
                         <p>{u.phone || "-"} · {u.email || "-"}</p>
                         <p>{u.bank} · {u.accountHolder}</p>
                         <p className="font-mono text-gray-400">{u.accountNumber}</p>
-                        {u.unionCode && (
-                          <p>조합코드: <span className="font-mono font-bold text-purple-700 bg-purple-50 px-1 rounded">{u.unionCode}</span></p>
-                        )}
-                        <div className="pt-0.5">
+                        <div className="pt-0.5 flex flex-wrap gap-1">
+                          <UnionCodeDialog user={u} onSuccess={refreshData} />
                           <ManagerCodeDialog user={u} onSuccess={refreshData} />
                         </div>
                       </div>
@@ -2742,7 +2793,10 @@ export default function AdminPage() {
                               )}
                             </TableCell>
                             <TableCell>
-                              <ManagerCodeDialog user={u} onSuccess={refreshData} />
+                              <div className="flex flex-col gap-1">
+                                <UnionCodeDialog user={u} onSuccess={refreshData} />
+                                <ManagerCodeDialog user={u} onSuccess={refreshData} />
+                              </div>
                             </TableCell>
                             <TableCell className="text-xs">
                               {u.siteGroup ? (
