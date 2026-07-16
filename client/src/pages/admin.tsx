@@ -835,12 +835,9 @@ function UnionCodeDialog({ user, onSuccess }: { user: User; onSuccess: () => voi
       await apiRequest("PATCH", `/api/admin/users/${user.id}/union-code`, { unionCode: code });
     },
     onSuccess: () => {
-      toast({ title: "조합코드 변경", description: `${user.fullName}님의 조합코드가 변경되었습니다` });
+      toast({ title: "조합코드 변경", description: `${user.fullName}님의 조합코드가 변경되었습니다. 새로고침합니다...` });
       setOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      queryClient.refetchQueries({ queryKey: ["/api/admin/users"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
-      onSuccess();
+      setTimeout(() => window.location.reload(), 800);
     },
     onError: (error: Error) => {
       toast({ title: "오류", description: error.message, variant: "destructive" });
