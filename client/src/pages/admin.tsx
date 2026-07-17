@@ -3021,7 +3021,7 @@ export default function AdminPage() {
                               </div>
                             )}
                             {group.map((tx) => (
-                              <div key={tx.id} className="rounded-md border border-gray-200 bg-white p-4 space-y-3" data-testid={`row-tx-${tx.id}`}>
+                              <div key={tx.id} className={`rounded-md border p-4 space-y-3 ${tx.hidden ? "border-orange-200 bg-orange-50 opacity-60" : "border-gray-200 bg-white"}`} data-testid={`row-tx-${tx.id}`}>
                                 <div className="flex items-center justify-between gap-2">
                                   <Badge
                                     variant={tx.type === "in" ? "default" : "secondary"}
@@ -3138,7 +3138,7 @@ export default function AdminPage() {
                                 )}
                                 <TableBody>
                                   {group.map((tx) => (
-                                    <TableRow key={tx.id} className="border-gray-100" data-testid={`row-tx-${tx.id}`}>
+                                    <TableRow key={tx.id} className={`border-gray-100 ${tx.hidden ? "bg-orange-50 opacity-60" : ""}`} data-testid={`row-tx-${tx.id}`}>
                                       <TableCell>
                                         <Badge
                                           variant={tx.type === "in" ? "default" : "secondary"}
