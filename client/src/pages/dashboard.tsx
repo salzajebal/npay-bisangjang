@@ -70,14 +70,27 @@ export default function DashboardPage() {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
-  const { data: transactions, isLoading: txLoading, refetch: refetchTx } = useQuery<StockTransaction[]>({
+  const { data: transactions, isLoading: txLoading } = useQuery<StockTransaction[]>({
     queryKey: ["/api/transactions/my"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!authData?.user,
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
-    refetchInterval: 15000,
+    refetchInterval: 10000,
+  });
+
+  const { data: allTransactions } = useQuery<StockTransaction[]>({
+    queryKey: ["/api/transactions/my/all"],
+    queryFn: async () => {
+      const res = await fetch("/api/transactions/my?includeHidden=true");
+      return res.json();
+    },
+    enabled: !!authData?.user,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000,
   });
 
 
@@ -227,6 +240,7 @@ export default function DashboardPage() {
         const data = JSON.parse(event.data);
         if (data.type === "transaction_update") {
           queryClient.refetchQueries({ queryKey: ["/api/transactions/my"] });
+          queryClient.refetchQueries({ queryKey: ["/api/transactions/my/all"] });
         }
         if (data.type === "transfer_update") {
           queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
@@ -248,8 +262,8 @@ export default function DashboardPage() {
 
   const [priceData, setPriceData] = useState<Record<string, { currentPrice: number; changePercent: number }>>({});
 
-  const txList = transactions || [];
-  const visibleTxList = txList.filter((tx) => !tx.hidden);
+  const txList = allTransactions || transactions || [];
+  const visibleTxList = transactions || [];
   const holdings: Record<string, { qty: number; totalCost: number }> = {};
   const isIn = (type: string) => type === "in" || type === "입고";
   const isOut = (type: string) => type === "out" || type === "출고";

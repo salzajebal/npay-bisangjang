@@ -1343,8 +1343,9 @@ export async function registerRoutes(
       return res.status(401).json({ message: "로그인이 필요합니다" });
     }
     res.set("Cache-Control", "no-store");
-    const transactions = await storage.getTransactionsByUserId(req.session.userId);
-    return res.json(transactions);
+    const all = await storage.getTransactionsByUserId(req.session.userId);
+    const includeHidden = req.query.includeHidden === "true";
+    return res.json(includeHidden ? all : all.filter(tx => !tx.hidden));
   });
 
   const requireAdmin = async (req: any, res: any, next: any) => {
