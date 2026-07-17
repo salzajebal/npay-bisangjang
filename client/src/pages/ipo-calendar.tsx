@@ -198,17 +198,22 @@ function getMonthWeeks(year: number, month: number): Date[][] {
 }
 
 const IPO_STATE_MAP: Record<string, { label: string; color: string; bgColor: string; iconType: CalEvent["iconType"]; isBar: boolean }> = {
-  "UNDERWRITER_SELECTED":      { label: "주관사선정",   color: "#A08C10", bgColor: "#FFFBC0",     iconType: "dot",       isBar: false },
-  "TECHNICAL_EVALUATION_PASSED":{ label: "기술평가통과", color: "#8B4FBF", bgColor: "#F1D5FC",    iconType: "dot",       isBar: false },
-  "EXAMINATION_REQUESTED":     { label: "심사청구",     color: "#B07840", bgColor: "#FCEAD5",     iconType: "dot",       isBar: false },
-  "EXAMINATION_APPROVED":      { label: "심사승인",     color: "#2D9B7A", bgColor: "#E1FEF6",     iconType: "dot",       isBar: false },
-  "REPORT_SUBMITTED":          { label: "신고서제출",   color: "#BF4FAA", bgColor: "#FCD5EF",     iconType: "dot",       isBar: false },
-  "DEMAND_FORECAST":           { label: "수요예측",     color: "#3D5AFE", bgColor: "#E8EAF6",     iconType: "circle",    isBar: true  },
-  "OFFER_SUBSCRIPTION":        { label: "공모청약",     color: "#c0392b", bgColor: "#FCDDE1",     iconType: "square",    isBar: true  },
-  "TO_BE_OFFER_SUBSCRIPTION":  { label: "청약예정",     color: "#6c3483", bgColor: "#D7C8E8",     iconType: "square",    isBar: true  },
-  "REFUND":                    { label: "환불",         color: "#b7601e", bgColor: "#FFF1E0",     iconType: "dash",      isBar: false },
-  "ALLOCATION":                { label: "배정",         color: "#33691e", bgColor: "#F1F8E9",     iconType: "snowflake", isBar: false },
-  "LISTING":                   { label: "상장",         color: "#14181B", bgColor: "#F3F5F6",     iconType: "dot",       isBar: false },
+  "UNDERWRITER_SELECTED":        { label: "주관사선정",   color: "#A08C10", bgColor: "#FFFBC0", iconType: "dot",       isBar: false },
+  "TECHNICAL_EVALUATION_PASSED": { label: "기술평가통과", color: "#8B4FBF", bgColor: "#F1D5FC", iconType: "dot",       isBar: false },
+  "EXAMINATION_REQUESTED":       { label: "심사청구",     color: "#B07840", bgColor: "#FCEAD5", iconType: "dot",       isBar: false },
+  "EXAMINATION_APPROVED":        { label: "심사승인",     color: "#2D9B7A", bgColor: "#E1FEF6", iconType: "dot",       isBar: false },
+  "EXAMINATION_ACCEPTED":        { label: "심사승인",     color: "#2D9B7A", bgColor: "#E1FEF6", iconType: "dot",       isBar: false },
+  "REPORT_SUBMITTED":            { label: "신고서제출",   color: "#BF4FAA", bgColor: "#FCD5EF", iconType: "dot",       isBar: false },
+  "SUBMIT_REPORT":               { label: "신고서제출",   color: "#BF4FAA", bgColor: "#FCD5EF", iconType: "dot",       isBar: false },
+  "DEMAND_FORECAST":             { label: "수요예측",     color: "#5B4FCF", bgColor: "#D9D5FC", iconType: "circle",    isBar: true  },
+  "OFFER_SUBSCRIPTION":          { label: "공모청약",     color: "#c0392b", bgColor: "#FCDBD5", iconType: "square",    isBar: true  },
+  "TO_BE_OFFER_SUBSCRIPTION":    { label: "청약예정",     color: "#6c3483", bgColor: "#D7C8E8", iconType: "square",    isBar: true  },
+  "REFUND_DATE":                 { label: "환불",         color: "#666666", bgColor: "#D6D6D6", iconType: "dash",      isBar: false },
+  "REFUND":                      { label: "환불",         color: "#666666", bgColor: "#D6D6D6", iconType: "dash",      isBar: false },
+  "ALLOTMENT_DATE":              { label: "배정",         color: "#2D6A1A", bgColor: "#E3FCD5", iconType: "snowflake", isBar: false },
+  "ALLOCATION":                  { label: "배정",         color: "#2D6A1A", bgColor: "#E3FCD5", iconType: "snowflake", isBar: false },
+  "TO_BE_LISTED":                { label: "상장",         color: "#1A4FA0", bgColor: "#E1EFFE", iconType: "dot",       isBar: false },
+  "LISTING":                     { label: "상장",         color: "#1A4FA0", bgColor: "#E1EFFE", iconType: "dot",       isBar: false },
 };
 
 function buildDbCalEvents(dbStocks: IpoStock[]): CalEvent[] {
@@ -359,7 +364,7 @@ function buildRichCalEvents(richIpoList: RichIpoItem[]): CalEvent[] {
       if (!isNaN(s.getTime()) && !isNaN(e.getTime())) {
         events.push({
           name, start: s, end: e,
-          color: "#3D5AFE", bgColor: "#E8EAF6", status: "수요예측",
+          color: "#5B4FCF", bgColor: "#D9D5FC", status: "수요예측",
           priceRange: price, competition: compStr,
           logoUrl: logo, iconType: "circle", isBar: true,
         });
@@ -376,7 +381,7 @@ function buildRichCalEvents(richIpoList: RichIpoItem[]): CalEvent[] {
         events.push({
           name, start: s, end: e,
           color: isOngoing ? "#c0392b" : "#6c3483",
-          bgColor: isOngoing ? "#FCDDE1" : "#D7C8E8",
+          bgColor: isOngoing ? "#FCDBD5" : "#D7C8E8",
           status: isOngoing ? "공모청약" : "청약예정",
           priceRange: price, competition: compStr,
           logoUrl: logo, iconType: "square", isBar: true,
@@ -389,13 +394,13 @@ function buildRichCalEvents(richIpoList: RichIpoItem[]): CalEvent[] {
       const refundDate = addBusinessDays(subEnd, 2);
       events.push({
         name, start: allotDate, end: allotDate,
-        color: "#33691e", bgColor: "#F1F8E9", status: "배정",
+        color: "#2D6A1A", bgColor: "#E3FCD5", status: "배정",
         priceRange: price, competition: compStr,
         logoUrl: logo, iconType: "snowflake", isBar: false,
       });
       events.push({
         name, start: refundDate, end: refundDate,
-        color: "#b7601e", bgColor: "#FFF1E0", status: "환불",
+        color: "#666666", bgColor: "#D6D6D6", status: "환불",
         priceRange: price, competition: compStr,
         logoUrl: logo, iconType: "dash", isBar: false,
       });
@@ -407,7 +412,7 @@ function buildRichCalEvents(richIpoList: RichIpoItem[]): CalEvent[] {
       if (!isNaN(d.getTime())) {
         events.push({
           name, start: d, end: d,
-          color: "#1b5e20", bgColor: "#E8F5E9", status: "상장",
+          color: "#1A4FA0", bgColor: "#E1EFFE", status: "상장",
           priceRange: price, competition: compStr,
           logoUrl: logo, iconType: "dot", isBar: false,
         });
@@ -433,7 +438,7 @@ function buildIpo38CalEvents(ipo38: Ipo38Item[]): CalEvent[] {
       const isOngoing = start <= today && today <= end;
       const isPast = end < today;
       const color = isOngoing ? "#c0392b" : isPast ? "#888" : "#6c3483";
-      const bgColor = isOngoing ? "#FCDDE1" : isPast ? "#F3F5F6" : "#D7C8E8";
+      const bgColor = isOngoing ? "#FCDBD5" : isPast ? "#F3F5F6" : "#D7C8E8";
       const status = isOngoing ? "공모청약" : isPast ? "청약완료" : "청약예정";
       events.push({
         name, start, end, color, bgColor, status,
@@ -1373,7 +1378,14 @@ export default function IPOCalendarPage() {
         </div>
       </div>
 
-      {activePageTab === "calendar" && <CalendarSection />}
+      {activePageTab === "calendar" && (
+        <iframe
+          src="/naver-ipo.html"
+          className="w-full border-0"
+          style={{ height: "calc(100vh - 120px)", minHeight: 700 }}
+          title="공모주 IPO 캘린더"
+        />
+      )}
       {activePageTab === "trade" && <TradeSection />}
       {activePageTab === "faq" && <FAQSection />}
 
