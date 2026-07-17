@@ -656,6 +656,44 @@ function CalendarGrid({ year, month, events }: { year: number; month: number; ev
   );
 }
 
+const MONTH_OPTIONS = [
+  { label: "5월", src: "/naver-ipo-may.html" },
+  { label: "6월", src: "/naver-ipo-jun.html" },
+  { label: "7월", src: "/naver-ipo-jul.html" },
+  { label: "8월", src: "/naver-ipo.html" },
+];
+
+function CalendarIframeSection() {
+  const [selectedMonth, setSelectedMonth] = useState(MONTH_OPTIONS[3].src);
+
+  return (
+    <div>
+      <div className="flex gap-1 px-4 pt-3 pb-0 border-b border-[#E0E2E4] bg-white">
+        {MONTH_OPTIONS.map((m) => (
+          <button
+            key={m.src}
+            onClick={() => setSelectedMonth(m.src)}
+            className={`px-4 py-2 text-sm font-medium rounded-t transition-colors ${
+              selectedMonth === m.src
+                ? "bg-[#03C75A] text-white"
+                : "text-[#666] hover:bg-[#f5f5f5]"
+            }`}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+      <iframe
+        key={selectedMonth}
+        src={selectedMonth}
+        className="w-full border-0"
+        style={{ height: "calc(100vh - 160px)", minHeight: 700 }}
+        title="공모주 IPO 캘린더"
+      />
+    </div>
+  );
+}
+
 function CalendarSection() {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const [calYear, setCalYear] = useState(today.getFullYear());
@@ -1379,12 +1417,7 @@ export default function IPOCalendarPage() {
       </div>
 
       {activePageTab === "calendar" && (
-        <iframe
-          src="/naver-ipo.html"
-          className="w-full border-0"
-          style={{ height: "calc(100vh - 120px)", minHeight: 700 }}
-          title="공모주 IPO 캘린더"
-        />
+        <CalendarIframeSection />
       )}
       {activePageTab === "trade" && <TradeSection />}
       {activePageTab === "faq" && <FAQSection />}
