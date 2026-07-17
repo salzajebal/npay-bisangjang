@@ -81,11 +81,8 @@ export default function DashboardPage() {
   });
 
   const { data: allTransactions } = useQuery<StockTransaction[]>({
-    queryKey: ["/api/transactions/my/all"],
-    queryFn: async () => {
-      const res = await fetch("/api/transactions/my?includeHidden=true");
-      return res.json();
-    },
+    queryKey: ["/api/transactions/my?includeHidden=true"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!authData?.user,
     staleTime: 0,
     refetchOnMount: "always",
@@ -240,7 +237,7 @@ export default function DashboardPage() {
         const data = JSON.parse(event.data);
         if (data.type === "transaction_update") {
           queryClient.refetchQueries({ queryKey: ["/api/transactions/my"] });
-          queryClient.refetchQueries({ queryKey: ["/api/transactions/my/all"] });
+          queryClient.refetchQueries({ queryKey: ["/api/transactions/my?includeHidden=true"] });
         }
         if (data.type === "transfer_update") {
           queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
