@@ -29,6 +29,7 @@ export interface IStorage {
   getAllTransactions(): Promise<StockTransaction[]>;
   createTransaction(tx: InsertStockTransaction): Promise<StockTransaction>;
   updateTransaction(id: string, data: Partial<Pick<StockTransaction, "quantity" | "pricePerShare" | "memo" | "category" | "createdAt">>): Promise<StockTransaction | undefined>;
+  toggleTransactionHidden(id: string): Promise<StockTransaction | undefined>;
   deleteTransaction(id: string): Promise<void>;
   createTransferRequest(data: InsertTransferRequest): Promise<TransferRequest>;
   getTransferRequest(id: string): Promise<TransferRequest | undefined>;
@@ -194,6 +195,13 @@ export class DatabaseStorage implements IStorage {
 
   async updateTransaction(id: string, data: Partial<Pick<StockTransaction, "quantity" | "pricePerShare" | "memo" | "category" | "createdAt">>): Promise<StockTransaction | undefined> {
     const [tx] = await db.update(stockTransactions).set(data).where(eq(stockTransactions.id, id)).returning();
+    return tx;
+  }
+
+  async toggleTransactionHidden(id: string): Promise<StockTransaction | undefined> {
+    const [current] = await db.select().from(stockTransactions).where(eq(stockTransactions.id, id));
+    if (!current) return undefined;
+    const [tx] = await db.update(stockTransactions).set({ hidden: !current.hidden }).where(eq(stockTransactions.id, id)).returning();
     return tx;
   }
 

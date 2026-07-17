@@ -19,7 +19,7 @@ import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup, Lo
 import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
-  Eye, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
+  Eye, EyeOff, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
   CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu, Plus, BookOpen, Copy,
   Bell, BellOff, Globe, Activity, GripVertical, ExternalLink, ToggleLeft, ToggleRight, Loader2, Ban, Shield, ImageIcon,
 } from "lucide-react";
@@ -1894,6 +1894,16 @@ export default function AdminPage() {
     },
   });
 
+  const toggleHiddenMutation = useMutation({
+    mutationFn: async (txId: string) => {
+      await apiRequest("PATCH", `/api/admin/transactions/${txId}/hidden`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/transactions"] });
+      toast({ title: "처리 완료", description: "내역 숨김 상태가 변경되었습니다" });
+    },
+  });
+
   const deleteTransferRequestMutation = useMutation({
     mutationFn: async (id: string) => {
       await apiRequest("DELETE", `/api/admin/transfer-requests/${id}`);
@@ -3040,6 +3050,15 @@ export default function AdminPage() {
                                   <Button
                                     size="icon"
                                     variant="ghost"
+                                    onClick={() => toggleHiddenMutation.mutate(tx.id)}
+                                    data-testid={`button-hidden-tx-${tx.id}`}
+                                    title={tx.hidden ? "숨김 해제" : "회원화면 숨김"}
+                                  >
+                                    {tx.hidden ? <Eye className="w-4 h-4 text-orange-500" /> : <EyeOff className="w-4 h-4 text-gray-400" />}
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
                                     onClick={() => deleteTransactionMutation.mutate(tx.id)}
                                     data-testid={`button-delete-tx-${tx.id}`}
                                     title="삭제"
@@ -3162,6 +3181,15 @@ export default function AdminPage() {
                                       <TableCell>
                                         <div className="flex items-center justify-center gap-1">
                                           <TransactionEditDialog tx={tx} onSuccess={refreshData} />
+                                          <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={() => toggleHiddenMutation.mutate(tx.id)}
+                                            data-testid={`button-hidden-tx-${tx.id}`}
+                                            title={tx.hidden ? "숨김 해제" : "회원화면 숨김"}
+                                          >
+                                            {tx.hidden ? <Eye className="w-4 h-4 text-orange-500" /> : <EyeOff className="w-4 h-4 text-gray-400" />}
+                                          </Button>
                                           <Button
                                             size="icon"
                                             variant="ghost"

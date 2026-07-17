@@ -247,6 +247,7 @@ export default function DashboardPage() {
   const [priceData, setPriceData] = useState<Record<string, { currentPrice: number; changePercent: number }>>({});
 
   const txList = transactions || [];
+  const visibleTxList = txList.filter((tx) => !tx.hidden);
   const holdings: Record<string, { qty: number; totalCost: number }> = {};
   const isIn = (type: string) => type === "in" || type === "입고";
   const isOut = (type: string) => type === "out" || type === "출고";
@@ -663,7 +664,7 @@ export default function DashboardPage() {
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
                 </div>
-              ) : txList.length === 0 ? (
+              ) : visibleTxList.length === 0 ? (
                 <Card className="p-12 text-center">
                   <Package className="w-10 h-10 mx-auto mb-3 opacity-30 text-muted-foreground" />
                   <p className="font-medium text-muted-foreground">거래 내역이 없습니다</p>
@@ -687,7 +688,7 @@ export default function DashboardPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {txList.map((tx) => (
+                        {visibleTxList.map((tx) => (
                           <TableRow key={tx.id} data-testid={`row-transaction-${tx.id}`}>
                             <TableCell>
                               <Badge
@@ -716,7 +717,7 @@ export default function DashboardPage() {
                   </div>
                 </Card>
                 <div className="sm:hidden space-y-2">
-                  {txList.map((tx) => (
+                  {visibleTxList.map((tx) => (
                     <Card key={tx.id} className="p-3" data-testid={`card-transaction-mobile-${tx.id}`}>
                       <div className="flex items-center justify-between gap-2 mb-1.5">
                         <div className="flex items-center gap-2 min-w-0">

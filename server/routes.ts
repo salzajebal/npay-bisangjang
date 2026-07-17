@@ -1747,6 +1747,17 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/admin/transactions/:id/hidden", requireAdmin, async (req, res) => {
+    try {
+      const tx = await storage.toggleTransactionHidden(req.params.id);
+      if (!tx) return res.status(404).json({ message: "내역을 찾을 수 없습니다" });
+      broadcastTransactionUpdate(tx.userId);
+      return res.json(tx);
+    } catch (error) {
+      return res.status(500).json({ message: "처리 실패" });
+    }
+  });
+
   app.post("/api/transfer-requests", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ message: "로그인이 필요합니다" });

@@ -33,6 +33,7 @@ export const stockTransactions = pgTable("stock_transactions", {
   quantity: integer("quantity").notNull(),
   pricePerShare: integer("price_per_share").notNull(),
   memo: text("memo"),
+  hidden: boolean("hidden").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
