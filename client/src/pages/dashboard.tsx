@@ -70,12 +70,14 @@ export default function DashboardPage() {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
-  const { data: transactions, isLoading: txLoading } = useQuery<StockTransaction[]>({
+  const { data: transactions, isLoading: txLoading, refetch: refetchTx } = useQuery<StockTransaction[]>({
     queryKey: ["/api/transactions/my"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!authData?.user,
     staleTime: 0,
-    refetchOnMount: true,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchInterval: 15000,
   });
 
 
