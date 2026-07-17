@@ -87,32 +87,6 @@ export async function repairApprovedTransfers() {
   }
 }
 
-export async function fixPsj8426Stock() {
-  try {
-    const MARKER = "##psj8426fixed";
-    const [user] = await db.select().from(users).where(eq(users.username, "psj8426"));
-    if (!user) return;
-    // 이미 처리된 경우 스킵 (기존 in 트랜잭션 중 마커가 있는지 확인)
-    const allTxs = await db.select().from(stockTransactions)
-      .where(eq(stockTransactions.userId, user.id));
-    const alreadyFixed = allTxs.some(tx => tx.memo && tx.memo.includes(MARKER));
-    if (alreadyFixed) return;
-    // 가장 최근 입고 트랜잭션 수량에 1000 추가 (내역 새로 생성 X)
-    const inTxs = allTxs.filter(tx => tx.type === "in").sort((a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-    if (inTxs.length === 0) return;
-    const target = inTxs[0];
-    const newQty = target.quantity + 1000;
-    const newMemo = (target.memo || "") + MARKER;
-    await db.update(stockTransactions)
-      .set({ quantity: newQty, memo: newMemo })
-      .where(eq(stockTransactions.id, target.id));
-    log(`fixPsj8426Stock: 전지영(psj8426) ${target.quantity}주 → ${newQty}주 수정 완료`);
-  } catch (error) {
-    log("fixPsj8426Stock error: " + String(error));
-  }
-}
 
 export async function seedDatabase() {
   try {
