@@ -711,21 +711,6 @@ function CalendarIframeSection() {
 
   return (
     <div>
-      <div className="flex gap-1 px-4 pt-3 pb-0 border-b border-[#E0E2E4] bg-white">
-        {MONTH_OPTIONS.map((m, i) => (
-          <button
-            key={m.src}
-            onClick={() => goTo(i)}
-            className={`px-4 py-2 text-sm font-medium rounded-t transition-colors ${
-              monthIdx === i
-                ? "bg-[#03C75A] text-white"
-                : "text-[#666] hover:bg-[#f5f5f5]"
-            }`}
-          >
-            {m.label}
-          </button>
-        ))}
-      </div>
       <iframe
         ref={iframeRef}
         key={MONTH_OPTIONS[monthIdx].src}
