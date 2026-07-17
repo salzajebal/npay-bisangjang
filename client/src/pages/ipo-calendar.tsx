@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, ChevronLeft, ChevronRight as ChevRight, Info, HelpCircle, ExternalLink } from "lucide-react";
@@ -664,17 +664,60 @@ const MONTH_OPTIONS = [
 ];
 
 function CalendarIframeSection() {
-  const [selectedMonth, setSelectedMonth] = useState(MONTH_OPTIONS[3].src);
+  const today = new Date();
+  const todayMonth = today.getMonth() + 1;
+  const defaultIdx = MONTH_OPTIONS.findIndex((m) =>
+    m.label === `${todayMonth}월`
+  );
+  const [monthIdx, setMonthIdx] = useState(defaultIdx >= 0 ? defaultIdx : MONTH_OPTIONS.length - 1);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const goTo = (idx: number) => {
+    const clamped = Math.max(0, Math.min(MONTH_OPTIONS.length - 1, idx));
+    setMonthIdx(clamped);
+  };
+
+  const handleIframeLoad = () => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) return;
+
+    const prev = doc.querySelector(".fc-customPrev-button");
+    const next = doc.querySelector(".fc-customNext-button");
+    const todayBtn = doc.querySelector(".fc-customToday-button");
+
+    if (prev) {
+      prev.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setMonthIdx((cur) => Math.max(0, cur - 1));
+      });
+    }
+    if (next) {
+      next.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setMonthIdx((cur) => Math.min(MONTH_OPTIONS.length - 1, cur + 1));
+      });
+    }
+    if (todayBtn) {
+      todayBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const ti = MONTH_OPTIONS.findIndex((m) => m.label === `${todayMonth}월`);
+        setMonthIdx(ti >= 0 ? ti : MONTH_OPTIONS.length - 1);
+      });
+    }
+  };
 
   return (
     <div>
       <div className="flex gap-1 px-4 pt-3 pb-0 border-b border-[#E0E2E4] bg-white">
-        {MONTH_OPTIONS.map((m) => (
+        {MONTH_OPTIONS.map((m, i) => (
           <button
             key={m.src}
-            onClick={() => setSelectedMonth(m.src)}
+            onClick={() => goTo(i)}
             className={`px-4 py-2 text-sm font-medium rounded-t transition-colors ${
-              selectedMonth === m.src
+              monthIdx === i
                 ? "bg-[#03C75A] text-white"
                 : "text-[#666] hover:bg-[#f5f5f5]"
             }`}
@@ -684,11 +727,13 @@ function CalendarIframeSection() {
         ))}
       </div>
       <iframe
-        key={selectedMonth}
-        src={selectedMonth}
+        ref={iframeRef}
+        key={MONTH_OPTIONS[monthIdx].src}
+        src={MONTH_OPTIONS[monthIdx].src}
         className="w-full border-0"
         style={{ height: "calc(100vh - 160px)", minHeight: 700 }}
         title="공모주 IPO 캘린더"
+        onLoad={handleIframeLoad}
       />
     </div>
   );
