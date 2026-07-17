@@ -226,7 +226,7 @@ export default function DashboardPage() {
       try {
         const data = JSON.parse(event.data);
         if (data.type === "transaction_update") {
-          queryClient.invalidateQueries({ queryKey: ["/api/transactions/my"] });
+          queryClient.refetchQueries({ queryKey: ["/api/transactions/my"] });
         }
         if (data.type === "transfer_update") {
           queryClient.invalidateQueries({ queryKey: ["/api/transfer-requests/my"] });
