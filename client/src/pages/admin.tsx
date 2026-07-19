@@ -1480,6 +1480,7 @@ export default function AdminPage() {
   const [transferTab, setTransferTab] = useState<"all" | "pending" | "출고대기중" | "approved" | "rejected" | "held">("all");
   const [transferSearch, setTransferSearch] = useState("");
   const [filterTransferManager, setFilterTransferManager] = useState<string>("all");
+  const [filterTransferUnionCode, setFilterTransferUnionCode] = useState<string>("all");
   const [selectedTransferIds, setSelectedTransferIds] = useState<Set<string>>(new Set());
   const [alertActive, setAlertActive] = useState(false);
   const prevPendingCount = useRef<number | null>(null);
@@ -2188,6 +2189,10 @@ export default function AdminPage() {
     (allUsers || []).map((u) => u.managerCode).filter((c): c is string => !!c && c.trim() !== "")
   )).sort();
 
+  const allTransferUnionCodes = Array.from(new Set(
+    (allUsers || []).map((u) => u.unionCode).filter((c): c is string => !!c && c.trim() !== "")
+  )).sort();
+
   const filteredTransfers = (allTransferRequests || []).filter((tr) => {
     const matchTab = transferTab === "all" || tr.status === transferTab;
     const term = transferSearch.trim().toLowerCase();
@@ -2199,7 +2204,12 @@ export default function AdminPage() {
       filterTransferManager === "all" ||
       (filterTransferManager === "none" && !code) ||
       (filterTransferManager !== "none" && code === filterTransferManager);
-    return matchTab && matchSearch && matchManager;
+    const uc = getUserUnionCode(tr.userId);
+    const matchUnion =
+      filterTransferUnionCode === "all" ||
+      (filterTransferUnionCode === "none" && !uc) ||
+      (filterTransferUnionCode !== "none" && uc === filterTransferUnionCode);
+    return matchTab && matchSearch && matchManager && matchUnion;
   });
 
   const getUserHoldings = (userId: string) => {
@@ -3283,6 +3293,18 @@ export default function AdminPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <Select value={filterTransferUnionCode} onValueChange={(v) => { setFilterTransferUnionCode(v); setSelectedTransferIds(new Set()); }}>
+                    <SelectTrigger className="w-[150px] bg-white border-purple-200 text-purple-700 text-sm" data-testid="select-filter-transfer-union">
+                      <SelectValue placeholder="조합코드" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">조합코드 전체</SelectItem>
+                      <SelectItem value="none">코드 없음</SelectItem>
+                      {allTransferUnionCodes.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {/* 코드별 전체선택 버튼 */}
                   {filterTransferManager !== "all" && filteredTransfers.length > 0 && (
                     <Button
@@ -3399,6 +3421,9 @@ export default function AdminPage() {
                           <p className="text-sm font-medium text-gray-700">{getUserName(tr.userId)}</p>
                           {getUserManagerCode(tr.userId) && (
                             <Badge variant="outline" className="border-[#03C75A]/40 text-[#03C75A] bg-[#03C75A]/5 font-mono text-xs">{getUserManagerCode(tr.userId)}</Badge>
+                          )}
+                          {getUserUnionCode(tr.userId) && (
+                            <Badge variant="outline" className="border-purple-300 text-purple-700 bg-purple-50 font-mono text-xs">조합: {getUserUnionCode(tr.userId)}</Badge>
                           )}
                         </div>
                         <p className="text-sm text-gray-700 font-mono font-medium">{getUserPhone(tr.userId)} · <span className="text-gray-500">ID: {getUserUsername(tr.userId)}</span></p>
@@ -3519,6 +3544,7 @@ export default function AdminPage() {
                           </TableHead>
                           <TableHead className="text-gray-500">상태</TableHead>
                           <TableHead className="text-gray-500">담당자</TableHead>
+                          <TableHead className="text-gray-500">조합코드</TableHead>
                           <TableHead className="text-gray-500">신청 회원</TableHead>
                           <TableHead className="text-gray-500">연락처</TableHead>
                           <TableHead className="text-gray-500">아이디</TableHead>
@@ -3569,6 +3595,11 @@ export default function AdminPage() {
                             <TableCell>
                               {getUserManagerCode(tr.userId)
                                 ? <Badge variant="outline" className="border-[#03C75A]/40 text-[#03C75A] bg-[#03C75A]/5 font-mono text-xs">{getUserManagerCode(tr.userId)}</Badge>
+                                : <span className="text-gray-300 text-xs">-</span>}
+                            </TableCell>
+                            <TableCell>
+                              {getUserUnionCode(tr.userId)
+                                ? <Badge variant="outline" className="border-purple-300 text-purple-700 bg-purple-50 font-mono text-xs">{getUserUnionCode(tr.userId)}</Badge>
                                 : <span className="text-gray-300 text-xs">-</span>}
                             </TableCell>
                             <TableCell className="font-medium text-gray-700">{getUserName(tr.userId)}</TableCell>
