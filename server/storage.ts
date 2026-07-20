@@ -387,7 +387,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllLoginLogs(): Promise<LoginLog[]> {
-    return db.select().from(loginLogs).orderBy(desc(loginLogs.createdAt)).limit(200);
+    return db.select().from(loginLogs).orderBy(desc(loginLogs.createdAt));
   }
 
   async getAllFallbackUrls(): Promise<DomainFallbackUrl[]> {

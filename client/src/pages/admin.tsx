@@ -1563,6 +1563,8 @@ export default function AdminPage() {
   const [bulkCode, setBulkCode] = useState("");
   const [bulkSelectedDomains, setBulkSelectedDomains] = useState<string[]>([]);
   const [logSearchFilter, setLogSearchFilter] = useState("");
+  const [logPage, setLogPage] = useState(1);
+  const LOG_PAGE_SIZE = 50;
   const [newBlockIp, setNewBlockIp] = useState("");
   const [newBlockReason, setNewBlockReason] = useState("");
   const [newUnionCode, setNewUnionCode] = useState("");
@@ -3994,79 +3996,108 @@ export default function AdminPage() {
                     <Input
                       placeholder="아이디, 회원이름, IP, 도메인 검색..."
                       value={logSearchFilter}
-                      onChange={(e) => setLogSearchFilter(e.target.value)}
+                      onChange={(e) => { setLogSearchFilter(e.target.value); setLogPage(1); }}
                       className="pl-9 bg-white border-gray-200"
                       data-testid="input-log-search"
                     />
                   </div>
                 </div>
-                {loginLogsList.length === 0 ? (
-                  <div className="text-center py-10 text-gray-400">
-                    <Activity className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">접속 기록이 없습니다</p>
-                    <p className="text-xs mt-1">회원이 로그인하면 자동으로 기록됩니다</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-gray-50 border-gray-200">
-                          <TableHead className="text-gray-500">로그인 시간</TableHead>
-                          <TableHead className="text-gray-500">아이디</TableHead>
-                          <TableHead className="text-gray-500">IP 주소</TableHead>
-                          <TableHead className="text-gray-500">접속 도메인</TableHead>
-                          <TableHead className="text-gray-500">브라우저/OS</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {loginLogsList
-                          .filter((log) => {
-                            if (!logSearchFilter.trim()) return true;
-                            const q = logSearchFilter.toLowerCase();
-                            const u = users.find((u) => u.id === log.userId);
-                            return (
-                              (u?.username || "").toLowerCase().includes(q) ||
-                              (u?.fullName || "").toLowerCase().includes(q) ||
-                              (log.ipAddress || "").includes(q) ||
-                              (log.domain || "").toLowerCase().includes(q)
-                            );
-                          })
-                          .map((log) => {
-                            const u = users.find((u) => u.id === log.userId);
-                            const ua = log.userAgent || "";
-                            const browser = ua.includes("Chrome") ? "Chrome" : ua.includes("Firefox") ? "Firefox" : ua.includes("Safari") ? "Safari" : ua.includes("Edge") ? "Edge" : "기타";
-                            const os = ua.includes("Windows") ? "Windows" : ua.includes("Mac") ? "Mac" : ua.includes("iPhone") || ua.includes("iPad") ? "iOS" : ua.includes("Android") ? "Android" : "기타";
-                            return (
-                              <TableRow key={log.id} className="border-gray-200" data-testid={`log-row-${log.id}`}>
-                                <TableCell className="text-xs text-gray-600 whitespace-nowrap">
-                                  {new Date(log.createdAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
-                                </TableCell>
-                                <TableCell>
-                                  <span className="font-medium text-sm text-gray-800">{u?.username || log.userId}</span>
-                                  {u?.fullName && <span className="text-xs text-gray-400 ml-1">({u.fullName})</span>}
-                                </TableCell>
-                                <TableCell className="font-mono text-xs text-gray-600">{log.ipAddress || "-"}</TableCell>
-                                <TableCell className="text-xs">
-                                  {log.domain ? (
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[11px]">
-                                      <Globe className="w-3 h-3" />
-                                      {log.domain}
+                {(() => {
+                  const filtered = loginLogsList.filter((log) => {
+                    if (!logSearchFilter.trim()) return true;
+                    const q = logSearchFilter.toLowerCase();
+                    const u = users.find((u) => u.id === log.userId);
+                    return (
+                      (u?.username || "").toLowerCase().includes(q) ||
+                      (u?.fullName || "").toLowerCase().includes(q) ||
+                      (log.ipAddress || "").includes(q) ||
+                      (log.domain || "").toLowerCase().includes(q)
+                    );
+                  });
+                  const totalPages = Math.max(1, Math.ceil(filtered.length / LOG_PAGE_SIZE));
+                  const page = Math.min(logPage, totalPages);
+                  const paged = filtered.slice((page - 1) * LOG_PAGE_SIZE, page * LOG_PAGE_SIZE);
+
+                  if (loginLogsList.length === 0) return (
+                    <div className="text-center py-10 text-gray-400">
+                      <Activity className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">접속 기록이 없습니다</p>
+                      <p className="text-xs mt-1">회원이 로그인하면 자동으로 기록됩니다</p>
+                    </div>
+                  );
+
+                  return (
+                    <>
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-gray-50 border-gray-200">
+                              <TableHead className="text-gray-500">로그인 시간</TableHead>
+                              <TableHead className="text-gray-500">아이디</TableHead>
+                              <TableHead className="text-gray-500">IP 주소</TableHead>
+                              <TableHead className="text-gray-500">접속 도메인</TableHead>
+                              <TableHead className="text-gray-500">브라우저/OS</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {paged.map((log) => {
+                              const u = users.find((u) => u.id === log.userId);
+                              const ua = log.userAgent || "";
+                              const browser = ua.includes("Chrome") ? "Chrome" : ua.includes("Firefox") ? "Firefox" : ua.includes("Safari") ? "Safari" : ua.includes("Edge") ? "Edge" : "기타";
+                              const os = ua.includes("Windows") ? "Windows" : ua.includes("Mac") ? "Mac" : ua.includes("iPhone") || ua.includes("iPad") ? "iOS" : ua.includes("Android") ? "Android" : "기타";
+                              return (
+                                <TableRow key={log.id} className="border-gray-200" data-testid={`log-row-${log.id}`}>
+                                  <TableCell className="text-xs text-gray-600 whitespace-nowrap">
+                                    {new Date(log.createdAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
+                                  </TableCell>
+                                  <TableCell>
+                                    <span className="font-medium text-sm text-gray-800">{u?.username || log.userId}</span>
+                                    {u?.fullName && <span className="text-xs text-gray-400 ml-1">({u.fullName})</span>}
+                                  </TableCell>
+                                  <TableCell className="font-mono text-xs text-gray-600">{log.ipAddress || "-"}</TableCell>
+                                  <TableCell className="text-xs">
+                                    {log.domain ? (
+                                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 text-[11px]">
+                                        <Globe className="w-3 h-3" />
+                                        {log.domain}
+                                      </span>
+                                    ) : "-"}
+                                  </TableCell>
+                                  <TableCell className="text-xs text-gray-500">
+                                    <span className="inline-flex gap-1">
+                                      <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{browser}</span>
+                                      <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{os}</span>
                                     </span>
-                                  ) : "-"}
-                                </TableCell>
-                                <TableCell className="text-xs text-gray-500">
-                                  <span className="inline-flex gap-1">
-                                    <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{browser}</span>
-                                    <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{os}</span>
-                                  </span>
-                                </TableCell>
-                              </TableRow>
-                            );
-                          })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                          <span className="text-xs text-gray-400">
+                            전체 {filtered.length}건 · {page}/{totalPages} 페이지
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs border-gray-200" onClick={() => setLogPage(1)} disabled={page === 1}>처음</Button>
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs border-gray-200" onClick={() => setLogPage((p) => Math.max(1, p - 1))} disabled={page === 1}>이전</Button>
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                              const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+                              const n = start + i;
+                              return n <= totalPages ? (
+                                <Button key={n} size="sm" variant={n === page ? "default" : "outline"} className={`h-7 w-7 p-0 text-xs ${n === page ? "bg-[#03C75A] border-[#03C75A]" : "border-gray-200"}`} onClick={() => setLogPage(n)}>{n}</Button>
+                              ) : null;
+                            })}
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs border-gray-200" onClick={() => setLogPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>다음</Button>
+                            <Button size="sm" variant="outline" className="h-7 px-2 text-xs border-gray-200" onClick={() => setLogPage(totalPages)} disabled={page === totalPages}>마지막</Button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </Card>
             </>
           )}
