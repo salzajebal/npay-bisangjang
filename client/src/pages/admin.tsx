@@ -3503,6 +3503,16 @@ export default function AdminPage() {
                         <Button
                           size="sm"
                           variant="outline"
+                          className="text-xs text-gray-600 border-gray-300 hover:bg-gray-50"
+                          onClick={() => updateTransferStatusMutation.mutate({ id: tr.id, status: "pending" })}
+                          disabled={tr.status === "pending" || updateTransferStatusMutation.isPending}
+                          data-testid={`button-pending-${tr.id}`}
+                        >
+                          대기로
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           className="text-xs text-blue-500 border-blue-200 hover:bg-blue-50"
                           onClick={() => { setEditDateTransferId(tr.id); setEditDateValue(new Date(tr.createdAt).toISOString().slice(0, 16)); }}
                           data-testid={`button-edit-date-transfer-${tr.id}`}
@@ -3684,6 +3694,16 @@ export default function AdminPage() {
                                   data-testid={`button-hold-${tr.id}`}
                                 >
                                   보류
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs sm:text-sm px-2 sm:px-3 text-gray-600 border-gray-300 hover:bg-gray-50"
+                                  onClick={() => updateTransferStatusMutation.mutate({ id: tr.id, status: "pending" })}
+                                  disabled={tr.status === "pending" || updateTransferStatusMutation.isPending}
+                                  data-testid={`button-pending-${tr.id}`}
+                                >
+                                  대기로
                                 </Button>
                                 <Button
                                   size="sm"
