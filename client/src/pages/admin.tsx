@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { STOCK_CATEGORIES, KOREAN_BANKS } from "@shared/schema";
 import { StockIcon } from "@/components/stock-icon";
-import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup, LoginLog, BlockedIp, StockMemberTransfer, UnionCode } from "@shared/schema";
+import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup, LoginLog, BlockedIp, StockMemberTransfer, UnionCode, DomainFallbackUrl } from "@shared/schema";
 import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
@@ -1444,7 +1444,7 @@ function MaintenanceToggleCard() {
   );
 }
 
-type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "member-transfers" | "stocks" | "chat" | "groups" | "logs" | "ipblock" | "unioncodes";
+type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "member-transfers" | "stocks" | "chat" | "groups" | "logs" | "ipblock" | "unioncodes" | "domainlinks";
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "대시보드", icon: LayoutDashboard },
@@ -1458,13 +1458,14 @@ const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashbo
   { id: "logs", label: "접속 로그", icon: Activity },
   { id: "ipblock", label: "IP 차단", icon: Ban },
   { id: "unioncodes", label: "조합코드 관리", icon: Shield },
+  { id: "domainlinks", label: "도메인 안내", icon: ExternalLink },
 ];
 
 export default function AdminPage() {
   const [, setLocation] = useLocation();
   const getHashSection = (): AdminSection => {
     const hash = window.location.hash.replace("#", "");
-    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "member-transfers", "stocks", "chat", "groups", "logs", "ipblock", "unioncodes"];
+    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "member-transfers", "stocks", "chat", "groups", "logs", "ipblock", "unioncodes", "domainlinks"];
     return valid.includes(hash as AdminSection) ? (hash as AdminSection) : "dashboard";
   };
 
@@ -1567,6 +1568,11 @@ export default function AdminPage() {
   const LOG_PAGE_SIZE = 50;
   const [newBlockIp, setNewBlockIp] = useState("");
   const [newBlockReason, setNewBlockReason] = useState("");
+  const [newDomainUrl, setNewDomainUrl] = useState("");
+  const [newDomainLabel, setNewDomainLabel] = useState("");
+  const [editingDomainLink, setEditingDomainLink] = useState<DomainFallbackUrl | null>(null);
+  const [editDomainUrl, setEditDomainUrl] = useState("");
+  const [editDomainLabel, setEditDomainLabel] = useState("");
   const [newUnionCode, setNewUnionCode] = useState("");
   const [newUnionLabel, setNewUnionLabel] = useState("");
   const [editingUnionCode, setEditingUnionCode] = useState<UnionCode | null>(null);
@@ -1622,6 +1628,54 @@ export default function AdminPage() {
     queryKey: ["/api/admin/union-codes"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     enabled: !!authData?.user?.isAdmin,
+  });
+
+  const { data: domainLinksList = [], refetch: refetchDomainLinks } = useQuery<DomainFallbackUrl[]>({
+    queryKey: ["/api/admin/domain-fallbacks"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!authData?.user?.isAdmin,
+  });
+
+  const addDomainLinkMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/admin/domain-fallbacks", { url: newDomainUrl.trim(), label: newDomainLabel.trim(), isActive: true }),
+    onSuccess: () => {
+      setNewDomainUrl("");
+      setNewDomainLabel("");
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/domain-fallbacks"] });
+      toast({ title: "추가 완료", description: "도메인이 추가되었습니다" });
+    },
+    onError: (e: any) => {
+      toast({ title: "오류", description: e.message || "추가 실패", variant: "destructive" });
+    },
+  });
+
+  const updateDomainLinkMutation = useMutation({
+    mutationFn: (vars: { id: string; url: string; label: string }) =>
+      apiRequest("PATCH", `/api/admin/domain-fallbacks/${vars.id}`, { url: vars.url, label: vars.label }),
+    onSuccess: () => {
+      setEditingDomainLink(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/domain-fallbacks"] });
+      toast({ title: "수정 완료" });
+    },
+    onError: (e: any) => {
+      toast({ title: "오류", description: e.message || "수정 실패", variant: "destructive" });
+    },
+  });
+
+  const toggleDomainLinkMutation = useMutation({
+    mutationFn: (vars: { id: string; isActive: boolean }) =>
+      apiRequest("PATCH", `/api/admin/domain-fallbacks/${vars.id}`, { isActive: vars.isActive }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/domain-fallbacks"] });
+    },
+  });
+
+  const deleteDomainLinkMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/domain-fallbacks/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/domain-fallbacks"] });
+      toast({ title: "삭제 완료" });
+    },
   });
 
   const addUnionCodeMutation = useMutation({
@@ -4733,6 +4787,133 @@ export default function AdminPage() {
                     </Table>
                   </Card>
                 </>
+              )}
+            </>
+          )}
+
+          {activeSection === "domainlinks" && (
+            <>
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h2 className="text-lg font-bold text-gray-800">도메인 안내 관리</h2>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="border-gray-200 text-gray-500">{domainLinksList.length}개 등록</Badge>
+                  <a href="/link" target="_blank" rel="noopener noreferrer">
+                    <Button size="sm" variant="outline" className="gap-1.5 text-[#03C75A] border-[#03C75A] hover:bg-[#03C75A]/5">
+                      <ExternalLink className="w-3.5 h-3.5" />안내 페이지 열기
+                    </Button>
+                  </a>
+                </div>
+              </div>
+
+              <Card className="p-5 bg-white border-gray-200">
+                <div className="flex items-start gap-2 mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <Globe className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
+                  <p className="text-sm text-blue-700">
+                    등록된 도메인은 <strong>/link</strong> 페이지에 공개됩니다. 회원들에게 이 주소를 즐겨찾기로 안내하세요.
+                    도메인이 차단되면 여기서 새 주소를 추가하면 바로 반영됩니다.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <Input
+                    placeholder="도메인 주소 (예: https://example.com)"
+                    value={newDomainUrl}
+                    onChange={(e) => setNewDomainUrl(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && newDomainUrl.trim() && addDomainLinkMutation.mutate()}
+                    className="bg-white border-gray-200 md:col-span-1"
+                    data-testid="input-new-domain-url"
+                  />
+                  <Input
+                    placeholder="표시 이름 (예: 메인 사이트)"
+                    value={newDomainLabel}
+                    onChange={(e) => setNewDomainLabel(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && newDomainUrl.trim() && addDomainLinkMutation.mutate()}
+                    className="bg-white border-gray-200"
+                    data-testid="input-new-domain-label"
+                  />
+                  <Button
+                    onClick={() => addDomainLinkMutation.mutate()}
+                    disabled={!newDomainUrl.trim() || addDomainLinkMutation.isPending}
+                    className="bg-[#03C75A] hover:bg-[#02a84a] text-white"
+                    data-testid="button-add-domain-link"
+                  >
+                    {addDomainLinkMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4 mr-1" />도메인 추가</>}
+                  </Button>
+                </div>
+              </Card>
+
+              {domainLinksList.length === 0 ? (
+                <Card className="p-12 text-center bg-white border-gray-200">
+                  <Globe className="w-10 h-10 mx-auto mb-3 opacity-20 text-gray-400" />
+                  <p className="font-medium text-gray-500">등록된 도메인이 없습니다</p>
+                  <p className="text-xs text-gray-400 mt-1">위 폼에서 도메인을 추가하면 /link 페이지에 즉시 표시됩니다</p>
+                </Card>
+              ) : (
+                <div className="space-y-2">
+                  {[...domainLinksList].sort((a, b) => a.priority - b.priority).map((item) => (
+                    <Card key={item.id} className={`p-4 bg-white border-gray-200 ${!item.isActive ? "opacity-50" : ""}`} data-testid={`row-domain-link-${item.id}`}>
+                      {editingDomainLink?.id === item.id ? (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Input
+                            value={editDomainUrl}
+                            onChange={(e) => setEditDomainUrl(e.target.value)}
+                            className="flex-1 min-w-[200px] bg-white border-gray-200 text-sm"
+                            placeholder="도메인 주소"
+                            data-testid={`input-edit-domain-url-${item.id}`}
+                          />
+                          <Input
+                            value={editDomainLabel}
+                            onChange={(e) => setEditDomainLabel(e.target.value)}
+                            className="w-40 bg-white border-gray-200 text-sm"
+                            placeholder="표시 이름"
+                            data-testid={`input-edit-domain-label-${item.id}`}
+                          />
+                          <Button size="sm" className="bg-[#03C75A] hover:bg-[#02a84a] text-white"
+                            onClick={() => updateDomainLinkMutation.mutate({ id: item.id, url: editDomainUrl, label: editDomainLabel })}
+                            disabled={!editDomainUrl.trim() || updateDomainLinkMutation.isPending}
+                            data-testid={`button-save-domain-${item.id}`}
+                          >
+                            {updateDomainLinkMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingDomainLink(null)} data-testid={`button-cancel-domain-${item.id}`}>
+                            <X className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 min-w-0">
+                            {item.label && <p className="text-xs text-gray-400 mb-0.5">{item.label}</p>}
+                            <p className="text-sm font-semibold text-gray-800 break-all">{item.url}</p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Badge variant={item.isActive ? "default" : "outline"} className={item.isActive ? "bg-green-100 text-green-700 border-green-200" : "border-gray-200 text-gray-400"}>
+                              {item.isActive ? "표시중" : "숨김"}
+                            </Badge>
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0"
+                              onClick={() => toggleDomainLinkMutation.mutate({ id: item.id, isActive: !item.isActive })}
+                              title={item.isActive ? "숨기기" : "표시하기"}
+                              data-testid={`button-toggle-domain-${item.id}`}
+                            >
+                              {item.isActive ? <EyeOff className="w-3.5 h-3.5 text-gray-500" /> : <Eye className="w-3.5 h-3.5 text-gray-500" />}
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0"
+                              onClick={() => { setEditingDomainLink(item); setEditDomainUrl(item.url); setEditDomainLabel(item.label); }}
+                              data-testid={`button-edit-domain-${item.id}`}
+                            >
+                              <Pencil className="w-3.5 h-3.5 text-gray-500" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0"
+                              onClick={() => { if (confirm("이 도메인을 삭제하시겠습니까?")) deleteDomainLinkMutation.mutate(item.id); }}
+                              disabled={deleteDomainLinkMutation.isPending}
+                              data-testid={`button-delete-domain-${item.id}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </Card>
+                  ))}
+                </div>
               )}
             </>
           )}

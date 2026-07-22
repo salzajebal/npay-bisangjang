@@ -22,6 +22,7 @@ import StockDetailPage from "@/pages/stock-detail";
 import EventsPage from "@/pages/events";
 import ServiceIntroPage from "@/pages/service-intro";
 import NoticesPage from "@/pages/notices";
+import LinkPage from "@/pages/link";
 import { useEffect } from "react";
 
 function MaintenancePage() {
@@ -83,6 +84,7 @@ function Router() {
       <Route path="/events" component={EventsPage} />
       <Route path="/service" component={ServiceIntroPage} />
       <Route path="/notices" component={NoticesPage} />
+      <Route path="/link" component={LinkPage} />
       <Route path="/chat" component={ChatPage} />
       <Route component={NotFound} />
     </Switch>
