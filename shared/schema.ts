@@ -71,7 +71,7 @@ export const registerSchema = insertUserSchema.extend({
 });
 
 export const loginSchema = z.object({
-  username: z.string().min(1, "아이디를 입력해주세요"),
+  username: z.string().min(1, "아이디를 입력해주세요").transform(v => v.trim()),
   password: z.string().min(1, "비밀번호를 입력해주세요"),
 });
 
