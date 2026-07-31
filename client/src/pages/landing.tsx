@@ -1093,8 +1093,108 @@ function ThemeStocks() {
   );
 }
 
+function DiscussionPostModal({ postId, onClose }: { postId: number; onClose: () => void }) {
+  const { data, isLoading } = useQuery<{ post: any; comments: any[] }>({
+    queryKey: [`/api/market/discuss/post/${postId}`],
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const post = data?.post;
+  const comments = data?.comments || [];
+
+  const formatDate = (iso: string) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const diff = Math.floor((Date.now() - d.getTime()) / 3600000);
+    if (diff < 1) return "방금 전";
+    if (diff < 24) return `${diff}시간 전`;
+    return `${Math.floor(diff / 24)}일 전`;
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-lg w-full max-h-[80vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-[#F3F5F6] shrink-0">
+          <DialogTitle className="text-base font-bold text-[#14181B] leading-snug pr-6">
+            {isLoading ? <div className="h-5 bg-[#F3F5F6] rounded animate-pulse w-3/4" /> : (post?.subject || "")}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="overflow-y-auto flex-1 px-5 py-4">
+          {isLoading ? (
+            <div className="space-y-3">
+              <div className="h-3 bg-[#F3F5F6] rounded animate-pulse w-1/4" />
+              <div className="space-y-2">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-3 bg-[#F3F5F6] rounded animate-pulse" style={{ width: `${70 + Math.random() * 30}%` }} />
+                ))}
+              </div>
+            </div>
+          ) : post ? (
+            <>
+              {/* 작성자 */}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-7 h-7 rounded-full bg-[#E0E2E4] flex items-center justify-center shrink-0">
+                  <span className="text-[11px] font-semibold text-[#585B5E]">{(post.nickName || "익명").charAt(0)}</span>
+                </div>
+                <span className="text-xs font-medium text-[#585B5E]">{post.nickName || "익명"}</span>
+                <span className="text-xs text-[#BFC0C1] ml-auto">{formatDate(post.createdAt)}</span>
+              </div>
+
+              {/* 본문 */}
+              <p className="text-sm text-[#14181B] leading-relaxed whitespace-pre-wrap mb-4">{post.body || ""}</p>
+
+              {/* 좋아요 / 댓글 수 */}
+              <div className="flex items-center gap-4 py-3 border-t border-b border-[#F3F5F6] mb-4">
+                <span className="flex items-center gap-1 text-xs text-[#585B5E]">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                  {post.countLike ?? 0}
+                </span>
+                <span className="flex items-center gap-1 text-xs text-[#585B5E]">
+                  <MessageCircle size={14} />
+                  {post.countComment ?? 0}
+                </span>
+                {post.stockName && (
+                  <span className="ml-auto text-xs px-2 py-0.5 bg-[#F3F5F6] rounded text-[#585B5E]">{post.stockName}</span>
+                )}
+              </div>
+
+              {/* 댓글 */}
+              {comments.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-[#14181B] mb-3">댓글 {comments.length}</p>
+                  <div className="space-y-4">
+                    {comments.map((c: any) => (
+                      <div key={c.id} className="flex gap-2">
+                        <div className="w-6 h-6 rounded-full bg-[#E0E2E4] flex items-center justify-center shrink-0 mt-0.5">
+                          <span className="text-[10px] font-semibold text-[#585B5E]">{(c.nickName || "익명").charAt(0)}</span>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-medium text-[#585B5E]">{c.nickName || "익명"}</span>
+                            <span className="text-xs text-[#BFC0C1]">{formatDate(c.createdAt)}</span>
+                          </div>
+                          <p className="text-xs text-[#14181B] leading-relaxed">{c.body}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-[#9D9FA0] text-center py-8">내용을 불러올 수 없습니다.</p>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function PopularDiscussions() {
   const [showAll, setShowAll] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
+
   const { data: discussionsData, isLoading } = useQuery<{ data: { discussStocks: any[]; discussPosts: any[] } }>({
     queryKey: ["/api/market/discussions"],
     refetchInterval: 5 * 60 * 1000,
@@ -1137,6 +1237,7 @@ function PopularDiscussions() {
               key={post.id || idx}
               className="px-4 py-4 border-b border-[#F3F5F6] last:border-b-0 hover:bg-[#F9FAFB] transition-colors cursor-pointer"
               data-testid={`card-discussion-${post.id || idx}`}
+              onClick={() => post.id && typeof post.id === "number" && setSelectedPostId(post.id)}
             >
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-7 h-7 rounded-full bg-[#E0E2E4] flex items-center justify-center shrink-0">
@@ -1148,7 +1249,7 @@ function PopularDiscussions() {
               <p className="text-sm font-semibold text-[#14181B] leading-snug mb-1">{post.subject || post.title || (post.body || "").slice(0, 40)}</p>
               <p className="text-xs text-[#9D9FA0] leading-relaxed line-clamp-2 mb-2">{post.body || post.subject || ""}</p>
               <div className="flex items-center gap-2">
-                <button className="text-xs text-[#9D9FA0] hover:text-[#585B5E]">더보기</button>
+                <span className="text-xs text-[#03C75A]">더보기</span>
                 {post.stockName && (
                   <span className="text-xs px-2 py-0.5 bg-[#F3F5F6] rounded text-[#585B5E] ml-auto">{post.stockName}</span>
                 )}
@@ -1156,6 +1257,10 @@ function PopularDiscussions() {
             </div>
           ))}
         </div>
+      )}
+
+      {selectedPostId !== null && (
+        <DiscussionPostModal postId={selectedPostId} onClose={() => setSelectedPostId(null)} />
       )}
     </section>
   );

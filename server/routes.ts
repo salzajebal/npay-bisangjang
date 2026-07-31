@@ -1082,6 +1082,29 @@ export async function registerRoutes(
     res.json({ data: discussionCache, lastUpdated: marketCacheTime ? new Date(marketCacheTime).toISOString() : null });
   });
 
+  app.get("/api/market/discuss/post/:id", async (req, res) => {
+    const { id } = req.params;
+    if (!id || !/^\d+$/.test(id)) return res.status(400).json({ error: "invalid id" });
+    try {
+      const naverHeaders = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Referer": "https://ustock.naver.com/",
+        "Accept": "application/json",
+      };
+      const BASE = "https://api.ustockplus.com";
+      const [postRes, commentRes] = await Promise.all([
+        fetch(`${BASE}/v2/discuss/web/post/${id}`, { headers: naverHeaders, signal: AbortSignal.timeout(8000) }),
+        fetch(`${BASE}/v2/discuss/web/post/${id}/comment/list?count=20`, { headers: naverHeaders, signal: AbortSignal.timeout(8000) }),
+      ]);
+      if (!postRes.ok) return res.status(postRes.status).json({ error: "post not found" });
+      const post = await postRes.json();
+      const commentData = commentRes.ok ? await commentRes.json() : { rows: [] };
+      res.json({ post, comments: commentData.rows || [] });
+    } catch (e) {
+      res.status(500).json({ error: "fetch failed" });
+    }
+  });
+
   app.get("/api/market/expert-reports", (_req, res) => {
     res.json({ data: expertReportCache, lastUpdated: marketCacheTime ? new Date(marketCacheTime).toISOString() : null });
   });
