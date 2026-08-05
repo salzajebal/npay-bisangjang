@@ -23,6 +23,7 @@ import EventsPage from "@/pages/events";
 import ServiceIntroPage from "@/pages/service-intro";
 import NoticesPage from "@/pages/notices";
 import LinkPage from "@/pages/link";
+import ExpertReportPage from "@/pages/expert-report";
 import { useEffect } from "react";
 
 function MaintenancePage() {
@@ -86,6 +87,7 @@ function Router() {
       <Route path="/notices" component={NoticesPage} />
       <Route path="/link" component={LinkPage} />
       <Route path="/chat" component={ChatPage} />
+      <Route path="/expert-report/:id" component={ExpertReportPage} />
       <Route component={NotFound} />
     </Switch>
   );

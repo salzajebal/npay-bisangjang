@@ -957,7 +957,7 @@ function MajorNews() {
 
 function ExpertReports() {
   const [showAll, setShowAll] = useState(false);
-  const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
+  const [, navigate] = useLocation();
   const { data: reportsData, isLoading } = useQuery<{ data: { expertReportId: number; sourceProvider: string; reportCreator: string; title: string; preview?: string; createdAt?: string }[] }>({
     queryKey: ["/api/market/expert-reports"],
     refetchInterval: 5 * 60 * 1000,
@@ -1002,7 +1002,7 @@ function ExpertReports() {
               key={report.expertReportId || i}
               className="flex items-start gap-3 px-4 py-3.5 border-b border-[#F3F5F6] last:border-b-0 hover:bg-[#F9FAFB] transition-colors cursor-pointer"
               data-testid={`row-report-${i}`}
-              onClick={() => report.expertReportId && setSelectedReportId(report.expertReportId)}
+              onClick={() => report.expertReportId && navigate(`/expert-report/${report.expertReportId}`)}
             >
               <div className="min-w-0">
                 <p className="text-sm font-medium text-[#14181B] leading-snug line-clamp-2">{report.title}</p>
@@ -1016,9 +1016,6 @@ function ExpertReports() {
         </div>
       )}
 
-      {selectedReportId !== null && (
-        <ExpertReportModal reportId={selectedReportId} onClose={() => setSelectedReportId(null)} />
-      )}
     </section>
   );
 }
