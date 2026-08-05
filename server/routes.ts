@@ -1105,6 +1105,33 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/market/expert-report/:id", async (req, res) => {
+    const { id } = req.params;
+    if (!id || !/^\d+$/.test(id)) return res.status(400).json({ error: "invalid id" });
+    try {
+      const naverHeaders = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "ko-KR,ko;q=0.9",
+        "Referer": "https://ustock.naver.com/",
+      };
+      const html = await fetch(`https://ustock.naver.com/service/report/${id}`, { headers: naverHeaders, signal: AbortSignal.timeout(10000) });
+      if (!html.ok) return res.status(html.status).json({ error: "report not found" });
+      const text = await html.text();
+      // Extract __NEXT_DATA__
+      const startTag = text.indexOf("__NEXT_DATA__");
+      if (startTag === -1) return res.status(404).json({ error: "data not found" });
+      const cs = text.indexOf(">", startTag) + 1;
+      const ce = text.indexOf("</script>", cs);
+      const nextData = JSON.parse(text.slice(cs, ce));
+      const report = nextData?.props?.pageProps?.report;
+      if (!report) return res.status(404).json({ error: "report not found" });
+      res.json({ report });
+    } catch (e) {
+      res.status(500).json({ error: "fetch failed" });
+    }
+  });
+
   app.get("/api/market/expert-reports", (_req, res) => {
     res.json({ data: expertReportCache, lastUpdated: marketCacheTime ? new Date(marketCacheTime).toISOString() : null });
   });

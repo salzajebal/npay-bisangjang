@@ -957,6 +957,7 @@ function MajorNews() {
 
 function ExpertReports() {
   const [showAll, setShowAll] = useState(false);
+  const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const { data: reportsData, isLoading } = useQuery<{ data: { expertReportId: number; sourceProvider: string; reportCreator: string; title: string; preview?: string; createdAt?: string }[] }>({
     queryKey: ["/api/market/expert-reports"],
     refetchInterval: 5 * 60 * 1000,
@@ -1001,6 +1002,7 @@ function ExpertReports() {
               key={report.expertReportId || i}
               className="flex items-start gap-3 px-4 py-3.5 border-b border-[#F3F5F6] last:border-b-0 hover:bg-[#F9FAFB] transition-colors cursor-pointer"
               data-testid={`row-report-${i}`}
+              onClick={() => report.expertReportId && setSelectedReportId(report.expertReportId)}
             >
               <div className="min-w-0">
                 <p className="text-sm font-medium text-[#14181B] leading-snug line-clamp-2">{report.title}</p>
@@ -1012,6 +1014,10 @@ function ExpertReports() {
             </div>
           ))}
         </div>
+      )}
+
+      {selectedReportId !== null && (
+        <ExpertReportModal reportId={selectedReportId} onClose={() => setSelectedReportId(null)} />
       )}
     </section>
   );
@@ -1090,6 +1096,93 @@ function ThemeStocks() {
         </div>
       )}
     </section>
+  );
+}
+
+function ExpertReportModal({ reportId, onClose }: { reportId: number; onClose: () => void }) {
+  const { data, isLoading } = useQuery<{ report: any }>({
+    queryKey: [`/api/market/expert-report/${reportId}`],
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const report = data?.report;
+
+  const fmtDate = (iso?: string) => {
+    if (!iso) return "";
+    try {
+      const d = new Date(iso);
+      return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+    } catch { return ""; }
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-2xl w-full max-h-[85vh] flex flex-col p-0 gap-0">
+        {/* 헤더 */}
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-[#F3F5F6] shrink-0">
+          <DialogTitle className="text-[17px] font-bold text-[#14181B] leading-snug pr-6">
+            {isLoading
+              ? <div className="h-5 bg-[#F3F5F6] rounded animate-pulse w-3/4" />
+              : (report?.title || "")}
+          </DialogTitle>
+          {!isLoading && report && (
+            <p className="text-xs text-[#9D9FA0] mt-1.5">
+              {report.reportCreator || report.sourceProvider}
+              {report.publishedAt ? ` ${fmtDate(report.publishedAt)}` : (report.createdAt ? ` ${fmtDate(report.createdAt)}` : "")}
+            </p>
+          )}
+        </DialogHeader>
+
+        {/* 본문 */}
+        <div className="overflow-y-auto flex-1 px-6 py-5">
+          {isLoading ? (
+            <div className="space-y-3">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-3 bg-[#F3F5F6] rounded animate-pulse" style={{ width: `${60 + (i % 3) * 15}%` }} />
+              ))}
+            </div>
+          ) : report ? (
+            <>
+              {/* 버튼 영역 */}
+              {report.urlPdf && (
+                <div className="flex gap-2 mb-5">
+                  <a
+                    href={report.urlPdf}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-[#E0E2E4] rounded text-xs text-[#14181B] hover:bg-[#F3F5F6] transition-colors"
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    리포트 원문보기
+                  </a>
+                </div>
+              )}
+
+              {/* 리포트 본문 HTML */}
+              {report.previewContent ? (
+                <div
+                  className="text-sm text-[#14181B] leading-relaxed report-body"
+                  dangerouslySetInnerHTML={{ __html: report.previewContent }}
+                />
+              ) : (
+                <p className="text-sm text-[#9D9FA0]">본문 내용이 없습니다.</p>
+              )}
+
+              {/* 면책 고지 */}
+              {report.sourceProviderComment && (
+                <div className="mt-6 pt-4 border-t border-[#F3F5F6]">
+                  <p className="text-[11px] text-[#9D9FA0] leading-relaxed whitespace-pre-wrap">
+                    {report.sourceProviderComment}
+                  </p>
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-[#9D9FA0] text-center py-8">내용을 불러올 수 없습니다.</p>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
