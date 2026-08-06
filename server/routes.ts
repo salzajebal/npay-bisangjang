@@ -2007,6 +2007,13 @@ export async function registerRoutes(
         return res.status(400).json({ message: "매도가격이 필요합니다" });
       }
 
+      // 확정매도 허용 여부 서버 검증
+      const sellingUser = await storage.getUser(req.session.userId);
+      if (!sellingUser) return res.status(401).json({ message: "사용자 정보를 찾을 수 없습니다" });
+      if (sellingUser.canSell === false) {
+        return res.status(403).json({ message: "확정매도 권한이 없습니다. 관리자에게 문의하세요." });
+      }
+
       const transactions = await storage.getTransactionsByUserId(req.session.userId);
       const isInType = (t: string) => t === "in" || t === "입고";
       const isOutType = (t: string) => t === "out" || t === "출고" || t === "주식이전" || t === "내 계좌로 옮기기" || t === "확정매도";
