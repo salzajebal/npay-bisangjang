@@ -16,17 +16,18 @@ import {
   LayoutDashboard, ClipboardList, Wallet, Home,
   ChevronLeft, ChevronRight, MessageSquare, Menu, X, ArrowRightLeft,
   Send, Clock, CheckCircle2, XCircle, PauseCircle, Settings,
+  Banknote, TrendingDown,
 } from "lucide-react";
 import { SiteLogoBadge } from "@/components/site-logo";
 import { StockIcon } from "@/components/stock-icon";
-import type { User, StockTransaction, TransferRequest, StockMemberTransfer } from "@shared/schema";
+import type { User, StockTransaction, TransferRequest, StockMemberTransfer, WithdrawRequest } from "@shared/schema";
 import { KOREAN_BANKS } from "@shared/schema";
 import { useState, useEffect, useRef } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { fetchStockPrices } from "@/lib/market-prices";
 
-type DashSection = "overview" | "holdings" | "transactions" | "transfer" | "member-transfer" | "profile";
+type DashSection = "overview" | "holdings" | "transactions" | "transfer" | "member-transfer" | "withdraw" | "profile";
 
 const formatPct = (n: number) =>
   n.toLocaleString("ko-KR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -54,6 +55,7 @@ const sidebarItems: { id: DashSection; label: string; icon: typeof LayoutDashboa
   { id: "transactions", label: "거래 내역", icon: ClipboardList },
   { id: "transfer", label: "내 계좌로 옮기기", icon: ArrowRightLeft },
   { id: "member-transfer", label: "주식 이전 신청", icon: Send },
+  { id: "withdraw", label: "출금하기", icon: Banknote },
   { id: "profile", label: "내 정보 수정", icon: Settings },
 ];
 
@@ -106,6 +108,17 @@ export default function DashboardPage() {
   const [memberTransferQuantity, setMemberTransferQuantity] = useState("");
   const [memberTransferToUsername, setMemberTransferToUsername] = useState("");
 
+  // 확정매도
+  const [sellConfirmOpen, setSellConfirmOpen] = useState(false);
+  const [sellStock, setSellStock] = useState("");
+  const [sellQuantity, setSellQuantity] = useState("");
+
+  // 출금신청
+  const [withdrawAccountName, setWithdrawAccountName] = useState(() => authData?.user?.accountHolder || authData?.user?.fullName || "");
+  const [withdrawBank, setWithdrawBank] = useState(() => authData?.user?.bank || "");
+  const [withdrawAccountNumber, setWithdrawAccountNumber] = useState(() => authData?.user?.accountNumber || "");
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+
   const { data: availableStocks = [] } = useQuery<{ name: string; faceValue: number | null }[]>({
     queryKey: ["/api/available-stocks"],
     enabled: !!authData?.user,
@@ -114,6 +127,78 @@ export default function DashboardPage() {
   const { data: myMemberTransfers = [] } = useQuery<StockMemberTransfer[]>({
     queryKey: ["/api/stock-member-transfers/my"],
     enabled: !!authData?.user,
+  });
+
+  const { data: myWithdrawRequests = [] } = useQuery<WithdrawRequest[]>({
+    queryKey: ["/api/withdraw-requests/my"],
+    enabled: !!authData?.user,
+    refetchOnMount: "always",
+  });
+
+  // 확정매도 뮤테이션
+  const sellMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/transactions/sell", {
+        stockName: sellStock,
+        quantity: parseInt(sellQuantity),
+      });
+      return res.json();
+    },
+    onSuccess: (data) => {
+      const added = data.depositAdded ?? 0;
+      toast({ title: "확정매도 완료", description: `${sellStock} ${parseInt(sellQuantity).toLocaleString()}주가 매도되었습니다. 예수금 ${added.toLocaleString()}원이 적립되었습니다.` });
+      setSellStock("");
+      setSellQuantity("");
+      setSellConfirmOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions/my?includeHidden=true"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    },
+    onError: (err: Error) => {
+      let msg = "매도에 실패했습니다";
+      try { const p = JSON.parse(err.message.replace(/^[0-9]+:\s*/, "")); if (p.message) msg = p.message; } catch {}
+      toast({ title: "매도 실패", description: msg, variant: "destructive" });
+    },
+  });
+
+  // 출금신청 뮤테이션
+  const withdrawMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/withdraw-requests", {
+        accountName: withdrawAccountName,
+        bank: withdrawBank,
+        accountNumber: withdrawAccountNumber,
+        amount: parseInt(withdrawAmount.replace(/,/g, "")),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "출금신청 완료", description: "출금신청이 접수되었습니다. 관리자 승인 후 처리됩니다." });
+      setWithdrawAmount("");
+      queryClient.invalidateQueries({ queryKey: ["/api/withdraw-requests/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    },
+    onError: (err: Error) => {
+      let msg = "출금신청에 실패했습니다";
+      try { const p = JSON.parse(err.message.replace(/^[0-9]+:\s*/, "")); if (p.message) msg = p.message; } catch {}
+      toast({ title: "신청 실패", description: msg, variant: "destructive" });
+    },
+  });
+
+  // 출금신청 취소 뮤테이션
+  const cancelWithdrawMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/withdraw-requests/${id}`);
+    },
+    onSuccess: () => {
+      toast({ title: "출금신청 취소", description: "출금신청이 취소되었습니다." });
+      queryClient.invalidateQueries({ queryKey: ["/api/withdraw-requests/my"] });
+    },
+    onError: (err: Error) => {
+      let msg = "취소에 실패했습니다";
+      try { const p = JSON.parse(err.message.replace(/^[0-9]+:\s*/, "")); if (p.message) msg = p.message; } catch {}
+      toast({ title: "취소 실패", description: msg, variant: "destructive" });
+    },
   });
 
   const memberTransferMutation = useMutation({
@@ -465,7 +550,7 @@ export default function DashboardPage() {
 
               <Card className="p-5">
                 <h3 className="text-sm text-muted-foreground mb-4">총 자산 평가</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
                   <div>
                     <p className="text-sm text-muted-foreground mb-1">평가금액</p>
                     <p className="text-2xl font-bold tabular-nums" data-testid="text-total-eval">{totalEval.toLocaleString()}원</p>
@@ -482,6 +567,16 @@ export default function DashboardPage() {
                     <p className={`text-sm font-medium tabular-nums ${totalProfitPct >= 0 ? "text-[#F73631]" : "text-[#007EFF]"}`} data-testid="text-total-profit-pct">
                       수익률 {totalProfitPct >= 0 ? "+" : ""}{formatPct(totalProfitPct)}%
                     </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1 flex items-center gap-1">
+                      <Banknote className="w-3.5 h-3.5" />예수금
+                    </p>
+                    <p className="text-2xl font-bold tabular-nums text-[#03C75A]" data-testid="text-deposit-balance">{(user.depositBalance ?? 0).toLocaleString()}원</p>
+                    <button
+                      onClick={() => setActiveSection("withdraw")}
+                      className="text-xs text-[#03C75A] hover:underline mt-1"
+                    >출금하기 →</button>
                   </div>
                 </div>
               </Card>
@@ -655,7 +750,7 @@ export default function DashboardPage() {
                     </Card>
                   ))}
                 </div>
-                <div className="mt-4 flex justify-center">
+                <div className="mt-4 flex justify-center gap-3 flex-wrap">
                   <Button
                     variant="outline"
                     className="gap-2 border-[#03C75A] text-[#03C75A]"
@@ -665,6 +760,17 @@ export default function DashboardPage() {
                     <ArrowRightLeft className="w-4 h-4" />
                     내 계좌로 옮기기
                   </Button>
+                  {(user.canSell !== false) && (
+                    <Button
+                      variant="outline"
+                      className="gap-2 border-[#F73631] text-[#F73631] hover:bg-[#F73631]/10"
+                      onClick={() => setSellConfirmOpen(true)}
+                      data-testid="button-sell-from-holdings"
+                    >
+                      <TrendingDown className="w-4 h-4" />
+                      확정매도
+                    </Button>
+                  )}
                 </div>
                 </>
               )}
@@ -1044,11 +1150,219 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {activeSection === "withdraw" && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <Card className="p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Banknote className="w-5 h-5 text-[#03C75A]" />
+                  <h2 className="text-lg font-semibold">출금하기</h2>
+                </div>
+                <div className="bg-muted/50 rounded-md p-3 mb-4 text-sm">
+                  <p className="text-muted-foreground mb-1">출금 가능 예수금</p>
+                  <p className="text-2xl font-bold text-[#03C75A] tabular-nums">{(user.depositBalance ?? 0).toLocaleString()}원</p>
+                  <p className="text-xs text-muted-foreground mt-1">확정매도 후 적립된 금액만 출금 가능합니다</p>
+                </div>
+                <form
+                  className="space-y-4"
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const amt = parseInt(withdrawAmount.replace(/,/g, ""));
+                    if (!withdrawAccountName || !withdrawBank || !withdrawAccountNumber || !amt || amt <= 0) {
+                      return;
+                    }
+                    withdrawMutation.mutate();
+                  }}
+                >
+                  <div className="space-y-2">
+                    <Label>예금주명</Label>
+                    <Input
+                      value={withdrawAccountName}
+                      onChange={(e) => setWithdrawAccountName(e.target.value)}
+                      placeholder="예금주명 입력"
+                      required
+                      data-testid="input-withdraw-account-name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>은행</Label>
+                    <Select value={withdrawBank} onValueChange={setWithdrawBank}>
+                      <SelectTrigger data-testid="select-withdraw-bank">
+                        <SelectValue placeholder="은행 선택" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {KOREAN_BANKS.map((b) => (
+                          <SelectItem key={b} value={b}>{b}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>계좌번호</Label>
+                    <Input
+                      value={withdrawAccountNumber}
+                      onChange={(e) => setWithdrawAccountNumber(e.target.value)}
+                      placeholder="계좌번호 입력 (- 없이)"
+                      required
+                      data-testid="input-withdraw-account-number"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>출금금액 (원)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max={user.depositBalance ?? 0}
+                      value={withdrawAmount}
+                      onChange={(e) => setWithdrawAmount(e.target.value)}
+                      placeholder={`최대 ${(user.depositBalance ?? 0).toLocaleString()}원`}
+                      required
+                      data-testid="input-withdraw-amount"
+                    />
+                    {withdrawAmount && parseInt(withdrawAmount) > (user.depositBalance ?? 0) && (
+                      <p className="text-xs text-destructive">예수금을 초과합니다</p>
+                    )}
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full bg-[#03C75A] border-[#03C75A] hover:bg-[#02b350]"
+                    disabled={
+                      withdrawMutation.isPending ||
+                      !withdrawAccountName ||
+                      !withdrawBank ||
+                      !withdrawAccountNumber ||
+                      !withdrawAmount ||
+                      parseInt(withdrawAmount) <= 0 ||
+                      parseInt(withdrawAmount) > (user.depositBalance ?? 0)
+                    }
+                    data-testid="button-submit-withdraw"
+                  >
+                    {withdrawMutation.isPending ? "신청 중..." : "출금 신청"}
+                  </Button>
+                </form>
+              </Card>
+
+              <Card className="p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock className="w-5 h-5 text-[#03C75A]" />
+                  <h2 className="text-lg font-semibold">출금신청 내역</h2>
+                </div>
+                {myWithdrawRequests.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">출금신청 내역이 없습니다</div>
+                ) : (
+                  <div className="space-y-3 max-h-[480px] overflow-y-auto">
+                    {myWithdrawRequests.map((wr) => (
+                      <div key={wr.id} className="border rounded-md p-3 space-y-2" data-testid={`withdraw-item-${wr.id}`}>
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="font-bold tabular-nums text-sm">{wr.amount.toLocaleString()}원</span>
+                          {wr.status === "pending" && <Badge variant="outline" className="gap-1"><Clock className="w-3 h-3" />진행중</Badge>}
+                          {wr.status === "approved" && <Badge className="gap-1 bg-green-600 border-green-600"><CheckCircle2 className="w-3 h-3" />승인</Badge>}
+                          {wr.status === "rejected" && <Badge variant="destructive" className="gap-1"><XCircle className="w-3 h-3" />거부</Badge>}
+                        </div>
+                        <div className="text-xs text-muted-foreground space-y-0.5">
+                          <p>{wr.bank} {wr.accountNumber} ({wr.accountName})</p>
+                          <p>{new Date(wr.createdAt).toLocaleString("ko-KR")}</p>
+                        </div>
+                        {wr.adminMemo && (
+                          <div className="text-xs text-muted-foreground bg-muted/50 rounded p-1.5">관리자 메모: {wr.adminMemo}</div>
+                        )}
+                        {wr.status === "pending" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs text-red-500 border-red-200 hover:bg-red-50 w-full"
+                            onClick={() => cancelWithdrawMutation.mutate(wr.id)}
+                            disabled={cancelWithdrawMutation.isPending}
+                            data-testid={`button-cancel-withdraw-${wr.id}`}
+                          >신청 취소</Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </div>
+          )}
+
           {activeSection === "profile" && (
             <ProfileEditSection user={user} />
           )}
         </main>
       </div>
+
+      {/* 확정매도 다이얼로그 */}
+      <Dialog open={sellConfirmOpen} onOpenChange={(v) => { if (!v) { setSellStock(""); setSellQuantity(""); } setSellConfirmOpen(v); }}>
+        <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-hidden border-0 shadow-2xl max-h-[90vh] flex flex-col">
+          <div className="bg-gradient-to-b from-[#FFF5F5] to-white px-6 pt-8 pb-2 rounded-t-xl shrink-0">
+            <div className="flex justify-center mb-4">
+              <div className="w-14 h-14 rounded-full bg-[#F73631]/10 flex items-center justify-center">
+                <TrendingDown className="w-6 h-6 text-[#F73631]" />
+              </div>
+            </div>
+            <h3 className="text-base font-bold text-[#14181B] text-center mb-1">확정매도</h3>
+            <p className="text-xs text-[#9D9FA0] text-center mb-4">매도금액이 예수금으로 즉시 적립됩니다</p>
+          </div>
+          <div className="px-6 pb-6 pt-2 space-y-3 overflow-y-auto">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-[#585B5E]">종목 선택</Label>
+              <Select value={sellStock} onValueChange={(v) => { setSellStock(v); setSellQuantity(""); }}>
+                <SelectTrigger data-testid="select-dialog-sell-stock">
+                  <SelectValue placeholder="매도할 종목을 선택하세요" />
+                </SelectTrigger>
+                <SelectContent>
+                  {holdingsList.map((h) => (
+                    <SelectItem key={h.name} value={h.name}>
+                      {h.name} ({h.qty.toLocaleString()}주 · 현재가 {h.currentPrice.toLocaleString()}원)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-[#585B5E]">매도 수량</Label>
+              <Input
+                type="number"
+                placeholder="수량을 입력하세요"
+                value={sellQuantity}
+                onChange={(e) => setSellQuantity(e.target.value)}
+                min={1}
+                max={holdingsList.find(h => h.name === sellStock)?.qty ?? undefined}
+                data-testid="input-dialog-sell-quantity"
+              />
+              {sellStock && (
+                <p className="text-xs font-bold text-[#14181B]">최대 {(holdingsList.find(h => h.name === sellStock)?.qty ?? 0).toLocaleString()}주</p>
+              )}
+            </div>
+            {sellStock && sellQuantity && parseInt(sellQuantity) > 0 && (() => {
+              const h = holdingsList.find(h => h.name === sellStock);
+              if (!h) return null;
+              const est = Math.round(h.currentPrice) * parseInt(sellQuantity);
+              return (
+                <div className="bg-muted/50 rounded-md p-3 text-sm space-y-1">
+                  <div className="flex justify-between"><span className="text-muted-foreground">현재가</span><span className="tabular-nums font-medium">{h.currentPrice.toLocaleString()}원</span></div>
+                  <div className="flex justify-between font-bold"><span>예상 적립 예수금</span><span className="text-[#03C75A] tabular-nums">{est.toLocaleString()}원</span></div>
+                </div>
+              );
+            })()}
+            <div className="flex gap-2 pt-1">
+              <Button variant="outline" className="flex-1" onClick={() => setSellConfirmOpen(false)}>취소</Button>
+              <Button
+                className="flex-1 bg-[#F73631] hover:bg-[#d42f2a] text-white font-medium rounded-lg"
+                onClick={() => sellMutation.mutate()}
+                disabled={
+                  !sellStock ||
+                  !sellQuantity ||
+                  parseInt(sellQuantity) <= 0 ||
+                  parseInt(sellQuantity) > (holdingsList.find(h => h.name === sellStock)?.qty ?? 0) ||
+                  sellMutation.isPending
+                }
+                data-testid="button-sell-confirm"
+              >
+                {sellMutation.isPending ? "처리 중..." : "확정매도"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={transferConfirmOpen} onOpenChange={(v) => { if (!v) { setTransferStock(""); setTransferQuantity(""); } setTransferConfirmOpen(v); }}>
         <DialogContent className="max-w-[360px] p-0 rounded-xl overflow-hidden border-0 shadow-2xl max-h-[90vh] flex flex-col">

@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, type LoginLog, type DomainFallbackUrl, type InsertDomainFallbackUrl, type BlockedIp, type StockMemberTransfer, type InsertStockMemberTransfer, type UnionCode, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups, loginLogs, domainFallbackUrls, blockedIps, stockMemberTransfers, unionCodes } from "@shared/schema";
+import { type User, type InsertUser, type StockTransaction, type InsertStockTransaction, type TransferRequest, type InsertTransferRequest, type ChatRoom, type ChatMessage, type InsertChatMessage, type IpoStock, type InsertIpoStock, type Watchlist, type DomainGroup, type LoginLog, type DomainFallbackUrl, type InsertDomainFallbackUrl, type BlockedIp, type StockMemberTransfer, type InsertStockMemberTransfer, type UnionCode, type WithdrawRequest, type InsertWithdrawRequest, users, stockTransactions, transferRequests, chatRooms, chatMessages, ipoStocks, watchlist, domainGroups, loginLogs, domainFallbackUrls, blockedIps, stockMemberTransfers, unionCodes, withdrawRequests } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, asc, inArray } from "drizzle-orm";
 
@@ -75,6 +75,16 @@ export interface IStorage {
   createUnionCode(code: string, label: string): Promise<UnionCode>;
   updateUnionCode(id: string, data: Partial<Pick<UnionCode, "code" | "label" | "isActive">>): Promise<UnionCode | undefined>;
   deleteUnionCode(id: string): Promise<void>;
+  // 예수금
+  addDepositBalance(userId: string, amount: number): Promise<User | undefined>;
+  setDepositBalance(userId: string, amount: number): Promise<User | undefined>;
+  updateUserCanSell(userId: string, canSell: boolean): Promise<User | undefined>;
+  // 출금신청
+  createWithdrawRequest(data: InsertWithdrawRequest): Promise<WithdrawRequest>;
+  getWithdrawRequestsByUserId(userId: string): Promise<WithdrawRequest[]>;
+  getAllWithdrawRequests(): Promise<WithdrawRequest[]>;
+  updateWithdrawRequestStatus(id: string, status: string, adminMemo?: string): Promise<WithdrawRequest | undefined>;
+  deleteWithdrawRequest(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -468,6 +478,57 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUnionCode(id: string): Promise<void> {
     await db.delete(unionCodes).where(eq(unionCodes.id, id));
+  }
+
+  async addDepositBalance(userId: string, amount: number): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set({ depositBalance: sql`deposit_balance + ${amount}` })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async setDepositBalance(userId: string, amount: number): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set({ depositBalance: amount })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async updateUserCanSell(userId: string, canSell: boolean): Promise<User | undefined> {
+    const [user] = await db.update(users)
+      .set({ canSell })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async createWithdrawRequest(data: InsertWithdrawRequest): Promise<WithdrawRequest> {
+    const [req] = await db.insert(withdrawRequests).values(data).returning();
+    return req;
+  }
+
+  async getWithdrawRequestsByUserId(userId: string): Promise<WithdrawRequest[]> {
+    return db.select().from(withdrawRequests)
+      .where(eq(withdrawRequests.userId, userId))
+      .orderBy(desc(withdrawRequests.createdAt));
+  }
+
+  async getAllWithdrawRequests(): Promise<WithdrawRequest[]> {
+    return db.select().from(withdrawRequests).orderBy(desc(withdrawRequests.createdAt));
+  }
+
+  async updateWithdrawRequestStatus(id: string, status: string, adminMemo?: string): Promise<WithdrawRequest | undefined> {
+    const updateData: any = { status };
+    if (adminMemo !== undefined) updateData.adminMemo = adminMemo;
+    if (status === "approved" || status === "rejected") updateData.processedAt = new Date();
+    const [req] = await db.update(withdrawRequests).set(updateData).where(eq(withdrawRequests.id, id)).returning();
+    return req;
+  }
+
+  async deleteWithdrawRequest(id: string): Promise<void> {
+    await db.delete(withdrawRequests).where(eq(withdrawRequests.id, id));
   }
 }
 

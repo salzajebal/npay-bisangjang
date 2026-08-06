@@ -15,13 +15,14 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { STOCK_CATEGORIES, KOREAN_BANKS } from "@shared/schema";
 import { StockIcon } from "@/components/stock-icon";
-import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup, LoginLog, BlockedIp, StockMemberTransfer, UnionCode, DomainFallbackUrl } from "@shared/schema";
+import type { User, StockTransaction, TransferRequest, IpoStock, DomainGroup, LoginLog, BlockedIp, StockMemberTransfer, UnionCode, DomainFallbackUrl, WithdrawRequest } from "@shared/schema";
 import {
   LogOut, Users, Package, ArrowDownRight, ArrowUpRight,
   Search, Trash2, LayoutDashboard, ClipboardList, Home, ChevronLeft, ChevronRight,
   Eye, EyeOff, Pencil, Snowflake, UserX, AlertTriangle, Save, X, ArrowRightLeft,
   CheckCircle2, XCircle, PauseCircle, Clock, MessageSquare, Send, Menu, Plus, BookOpen, Copy,
   Bell, BellOff, Globe, Activity, GripVertical, ExternalLink, ToggleLeft, ToggleRight, Loader2, Ban, Shield, ImageIcon,
+  Banknote, TrendingDown,
 } from "lucide-react";
 
 const formatPct = (n: number) =>
@@ -1444,7 +1445,7 @@ function MaintenanceToggleCard() {
   );
 }
 
-type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "member-transfers" | "stocks" | "chat" | "groups" | "logs" | "ipblock" | "unioncodes" | "domainlinks";
+type AdminSection = "dashboard" | "members" | "transactions" | "transfers" | "member-transfers" | "withdraw-requests" | "stocks" | "chat" | "groups" | "logs" | "ipblock" | "unioncodes" | "domainlinks";
 
 const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "대시보드", icon: LayoutDashboard },
@@ -1452,6 +1453,7 @@ const sidebarItems: { id: AdminSection; label: string; icon: typeof LayoutDashbo
   { id: "transactions", label: "거래 내역", icon: ClipboardList },
   { id: "transfers", label: "대체출고 관리", icon: ArrowRightLeft },
   { id: "member-transfers", label: "주식 이전 관리", icon: Send },
+  { id: "withdraw-requests", label: "출금신청 관리", icon: Banknote },
   { id: "stocks", label: "종목 관리", icon: Package },
   { id: "chat", label: "1:1 상담", icon: MessageSquare },
   { id: "groups", label: "도메인 그룹", icon: Globe },
@@ -1465,7 +1467,7 @@ export default function AdminPage() {
   const [, setLocation] = useLocation();
   const getHashSection = (): AdminSection => {
     const hash = window.location.hash.replace("#", "");
-    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "member-transfers", "stocks", "chat", "groups", "logs", "ipblock", "unioncodes", "domainlinks"];
+    const valid: AdminSection[] = ["dashboard", "members", "transactions", "transfers", "member-transfers", "withdraw-requests", "stocks", "chat", "groups", "logs", "ipblock", "unioncodes", "domainlinks"];
     return valid.includes(hash as AdminSection) ? (hash as AdminSection) : "dashboard";
   };
 
@@ -1835,6 +1837,14 @@ export default function AdminPage() {
     staleTime: 0,
   });
 
+  const { data: allWithdrawRequests = [], isLoading: withdrawRequestsLoading } = useQuery<WithdrawRequest[]>({
+    queryKey: ["/api/admin/withdraw-requests"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: !!authData?.user?.isAdmin,
+    refetchInterval: 5000,
+    staleTime: 0,
+  });
+
   const { data: chatRooms, isLoading: chatRoomsLoading } = useQuery<any[]>({
     queryKey: ["/api/chat/rooms"],
     queryFn: getQueryFn({ on401: "returnNull" }),
@@ -1856,6 +1866,65 @@ export default function AdminPage() {
   const [memberTransferTab, setMemberTransferTab] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [memberTransferSearch, setMemberTransferSearch] = useState("");
   const [chatSearch, setChatSearch] = useState("");
+  const [withdrawTab, setWithdrawTab] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [withdrawSearch, setWithdrawSearch] = useState("");
+  const [withdrawAdminMemo, setWithdrawAdminMemo] = useState<Record<string, string>>({});
+  const [depositEditId, setDepositEditId] = useState<string | null>(null);
+  const [depositEditAmount, setDepositEditAmount] = useState("");
+
+  // 출금신청 승인/거부
+  const approveWithdrawMutation = useMutation({
+    mutationFn: async ({ id, status, adminMemo }: { id: string; status: string; adminMemo?: string }) => {
+      const res = await apiRequest("PATCH", `/api/admin/withdraw-requests/${id}`, { status, adminMemo });
+      return res.json();
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/withdraw-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/members"] });
+      toast({ title: vars.status === "approved" ? "출금 승인 완료" : "출금 거부 완료", description: vars.status === "approved" ? "출금이 승인되어 예수금에서 차감되었습니다." : "출금신청이 거부되었습니다." });
+    },
+    onError: (err: Error) => {
+      let msg = "처리에 실패했습니다";
+      try { const p = JSON.parse(err.message.replace(/^[0-9]+:\s*/, "")); if (p.message) msg = p.message; } catch {}
+      toast({ title: "오류", description: msg, variant: "destructive" });
+    },
+  });
+
+  // 회원 예수금 수동 설정
+  const setDepositBalanceMutation = useMutation({
+    mutationFn: async ({ userId, amount }: { userId: string; amount: number }) => {
+      const res = await apiRequest("PATCH", `/api/admin/users/${userId}/deposit-balance`, { amount });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/members"] });
+      setDepositEditId(null);
+      setDepositEditAmount("");
+      toast({ title: "예수금 수정 완료" });
+    },
+    onError: (err: Error) => {
+      let msg = "처리에 실패했습니다";
+      try { const p = JSON.parse(err.message.replace(/^[0-9]+:\s*/, "")); if (p.message) msg = p.message; } catch {}
+      toast({ title: "오류", description: msg, variant: "destructive" });
+    },
+  });
+
+  // 회원별 확정매도 허용 토글
+  const setCanSellMutation = useMutation({
+    mutationFn: async ({ userId, canSell }: { userId: string; canSell: boolean }) => {
+      const res = await apiRequest("PATCH", `/api/admin/users/${userId}/can-sell`, { canSell });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/members"] });
+      toast({ title: "설정 완료" });
+    },
+    onError: (err: Error) => {
+      let msg = "처리에 실패했습니다";
+      try { const p = JSON.parse(err.message.replace(/^[0-9]+:\s*/, "")); if (p.message) msg = p.message; } catch {}
+      toast({ title: "오류", description: msg, variant: "destructive" });
+    },
+  });
 
   const approveMemberTransferMutation = useMutation({
     mutationFn: async ({ id, status, adminMemo }: { id: string; status: string; adminMemo?: string }) => {
@@ -2850,6 +2919,8 @@ export default function AdminPage() {
                           <TableHead className="text-gray-500 whitespace-nowrap">계좌번호</TableHead>
                           <TableHead className="text-gray-500 whitespace-nowrap">예금주</TableHead>
                           <TableHead className="text-gray-500 whitespace-nowrap">조합코드</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">예수금</TableHead>
+                          <TableHead className="text-gray-500 whitespace-nowrap">확정매도</TableHead>
                           <TableHead className="text-gray-500 whitespace-nowrap">가입일</TableHead>
                           <TableHead className="text-gray-500 whitespace-nowrap">보유 종목</TableHead>
                           <TableHead className="text-center text-gray-500 whitespace-nowrap">관리</TableHead>
@@ -2898,6 +2969,43 @@ export default function AdminPage() {
                               ) : (
                                 <span className="text-gray-400 text-[11px]">-</span>
                               )}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              {depositEditId === u.id ? (
+                                <div className="flex items-center gap-1">
+                                  <Input
+                                    type="number"
+                                    value={depositEditAmount}
+                                    onChange={(e) => setDepositEditAmount(e.target.value)}
+                                    className="w-24 h-7 text-xs"
+                                    placeholder="금액"
+                                    data-testid={`input-deposit-balance-${u.id}`}
+                                  />
+                                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setDepositBalanceMutation.mutate({ userId: u.id, amount: Number(depositEditAmount) })} disabled={setDepositBalanceMutation.isPending}>
+                                    <Save className="w-3 h-3 text-green-600" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setDepositEditId(null)}>
+                                    <X className="w-3 h-3 text-gray-400" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <button
+                                  className="text-xs tabular-nums text-[#03C75A] font-bold hover:underline"
+                                  onClick={() => { setDepositEditId(u.id); setDepositEditAmount(String(u.depositBalance ?? 0)); }}
+                                  data-testid={`button-edit-deposit-${u.id}`}
+                                >
+                                  {(u.depositBalance ?? 0).toLocaleString()}원
+                                </button>
+                              )}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">
+                              <button
+                                onClick={() => setCanSellMutation.mutate({ userId: u.id, canSell: !u.canSell })}
+                                className={`flex items-center gap-1 text-xs font-medium rounded-full px-2 py-0.5 transition-colors ${u.canSell !== false ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+                                data-testid={`button-toggle-can-sell-${u.id}`}
+                              >
+                                {u.canSell !== false ? <><TrendingDown className="w-3 h-3" />허용</> : <><XCircle className="w-3 h-3" />비허용</>}
+                              </button>
                             </TableCell>
                             <TableCell className="text-sm text-gray-400 whitespace-nowrap">
                               {new Date(u.createdAt).toLocaleDateString("ko-KR")}
@@ -4560,6 +4668,137 @@ export default function AdminPage() {
                                   </Button>
                                 </div>
                               </div>
+                            )}
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </>
+          )}
+
+          {activeSection === "withdraw-requests" && (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-bold text-gray-800">출금신청 관리</h2>
+                <Badge variant="outline" className="border-gray-200 text-gray-500">
+                  {allWithdrawRequests.length}건 · 대기 {allWithdrawRequests.filter(r => r.status === "pending").length}건
+                </Badge>
+              </div>
+
+              {/* 탭 */}
+              <div className="flex gap-2 flex-wrap">
+                {(["all", "pending", "approved", "rejected"] as const).map((tab) => {
+                  const counts: Record<string, number> = {
+                    all: allWithdrawRequests.length,
+                    pending: allWithdrawRequests.filter(r => r.status === "pending").length,
+                    approved: allWithdrawRequests.filter(r => r.status === "approved").length,
+                    rejected: allWithdrawRequests.filter(r => r.status === "rejected").length,
+                  };
+                  const labels: Record<string, string> = { all: "전체", pending: "진행중", approved: "승인", rejected: "거부" };
+                  return (
+                    <Button
+                      key={tab}
+                      variant={withdrawTab === tab ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setWithdrawTab(tab)}
+                      className={withdrawTab === tab ? "bg-[#03C75A] border-[#03C75A]" : "border-gray-200 text-gray-600"}
+                    >
+                      {labels[tab]} ({counts[tab]})
+                    </Button>
+                  );
+                })}
+              </div>
+
+              {/* 검색 */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="아이디 또는 예금주 검색..."
+                  value={withdrawSearch}
+                  onChange={(e) => setWithdrawSearch(e.target.value)}
+                  className="pl-9 bg-white border-gray-200"
+                />
+              </div>
+
+              {withdrawRequestsLoading ? (
+                <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-20 w-full" />)}</div>
+              ) : (() => {
+                const users = allWithdrawRequests;
+                const filtered = users.filter(r => {
+                  if (withdrawTab !== "all" && r.status !== withdrawTab) return false;
+                  if (withdrawSearch.trim()) {
+                    const s = withdrawSearch.trim().toLowerCase();
+                    const u = allUsers?.find(u => u.id === r.userId);
+                    if (!(u?.username.toLowerCase().includes(s) || r.accountName.toLowerCase().includes(s) || r.accountNumber.includes(s))) return false;
+                  }
+                  return true;
+                });
+                if (filtered.length === 0) {
+                  return (
+                    <Card className="p-12 text-center bg-white border-gray-200">
+                      <Banknote className="w-10 h-10 mx-auto mb-3 opacity-20 text-gray-400" />
+                      <p className="font-medium text-gray-500">출금신청 내역이 없습니다</p>
+                    </Card>
+                  );
+                }
+                return (
+                  <div className="space-y-3">
+                    {filtered.map((r) => {
+                      const u = allUsers?.find(u => u.id === r.userId);
+                      const memo = withdrawAdminMemo[r.id] ?? r.adminMemo ?? "";
+                      return (
+                        <Card key={r.id} className="p-4 bg-white border-gray-200" data-testid={`withdraw-item-${r.id}`}>
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold tabular-nums text-lg">{r.amount.toLocaleString()}원</span>
+                                {r.status === "pending" && <Badge variant="outline" className="gap-1 text-xs"><Clock className="w-3 h-3" />진행중</Badge>}
+                                {r.status === "approved" && <Badge className="gap-1 text-xs bg-green-600 border-green-600"><CheckCircle2 className="w-3 h-3" />승인</Badge>}
+                                {r.status === "rejected" && <Badge variant="destructive" className="gap-1 text-xs"><XCircle className="w-3 h-3" />거부</Badge>}
+                              </div>
+                              <p className="text-sm text-gray-600">{r.bank} {r.accountNumber} ({r.accountName})</p>
+                              <p className="text-xs text-gray-400">
+                                {u ? `@${u.username} · ${u.fullName}` : r.userId}
+                                {" · "}{new Date(r.createdAt).toLocaleString("ko-KR")}
+                              </p>
+                            </div>
+                            {r.status === "pending" && (
+                              <div className="flex flex-col gap-2 w-full sm:w-auto">
+                                <Input
+                                  placeholder="관리자 메모 (선택)"
+                                  value={memo}
+                                  onChange={(e) => setWithdrawAdminMemo(prev => ({ ...prev, [r.id]: e.target.value }))}
+                                  className="text-xs h-8 bg-white border-gray-200"
+                                  data-testid={`input-withdraw-memo-${r.id}`}
+                                />
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    className="flex-1 bg-[#03C75A] border-[#03C75A] hover:bg-[#02b350] text-white text-xs"
+                                    onClick={() => approveWithdrawMutation.mutate({ id: r.id, status: "approved", adminMemo: memo || undefined })}
+                                    disabled={approveWithdrawMutation.isPending}
+                                    data-testid={`button-approve-withdraw-${r.id}`}
+                                  >
+                                    <CheckCircle2 className="w-3 h-3 mr-1" />승인
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="flex-1 border-red-200 text-red-600 hover:bg-red-50 text-xs"
+                                    onClick={() => approveWithdrawMutation.mutate({ id: r.id, status: "rejected", adminMemo: memo || undefined })}
+                                    disabled={approveWithdrawMutation.isPending}
+                                    data-testid={`button-reject-withdraw-${r.id}`}
+                                  >
+                                    <XCircle className="w-3 h-3 mr-1" />거부
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                            {r.status !== "pending" && r.adminMemo && (
+                              <p className="text-xs text-gray-400 bg-gray-50 rounded p-2 w-full">메모: {r.adminMemo}</p>
                             )}
                           </div>
                         </Card>

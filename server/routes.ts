@@ -2040,9 +2040,114 @@ export async function registerRoutes(
         memo: "확정매도",
       });
 
-      return res.json(tx);
+      // 매도금액을 예수금으로 적립
+      const sellAmount = qty * Math.round(price);
+      await storage.addDepositBalance(req.session.userId, sellAmount);
+
+      return res.json({ ...tx, depositAdded: sellAmount });
     } catch (error) {
       return res.status(500).json({ message: "매도 처리에 실패했습니다" });
+    }
+  });
+
+  // 출금신청 목록 (회원)
+  app.get("/api/withdraw-requests/my", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ message: "로그인이 필요합니다" });
+    const list = await storage.getWithdrawRequestsByUserId(req.session.userId);
+    res.json(list);
+  });
+
+  // 출금신청 제출 (회원)
+  app.post("/api/withdraw-requests", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ message: "로그인이 필요합니다" });
+    try {
+      const { accountName, bank, accountNumber, amount } = req.body;
+      const amt = Number(amount);
+      if (!accountName || !bank || !accountNumber || !amt || amt <= 0) {
+        return res.status(400).json({ message: "모든 항목을 올바르게 입력해주세요" });
+      }
+      const user = await storage.getUser(req.session.userId);
+      if (!user) return res.status(401).json({ message: "사용자 정보를 찾을 수 없습니다" });
+      if (amt > user.depositBalance) {
+        return res.status(400).json({ message: `출금 가능한 예수금(${user.depositBalance.toLocaleString()}원)을 초과합니다` });
+      }
+      const req2 = await storage.createWithdrawRequest({
+        userId: req.session.userId,
+        accountName,
+        bank,
+        accountNumber,
+        amount: amt,
+      });
+      res.json(req2);
+    } catch (e) {
+      res.status(500).json({ message: "출금신청에 실패했습니다" });
+    }
+  });
+
+  // 출금신청 취소 (회원, pending 상태만)
+  app.delete("/api/withdraw-requests/:id", async (req, res) => {
+    if (!req.session.userId) return res.status(401).json({ message: "로그인이 필요합니다" });
+    try {
+      const list = await storage.getWithdrawRequestsByUserId(req.session.userId);
+      const wr = list.find(r => r.id === req.params.id);
+      if (!wr) return res.status(404).json({ message: "신청을 찾을 수 없습니다" });
+      if (wr.status !== "pending") return res.status(400).json({ message: "취소할 수 없는 상태입니다" });
+      await storage.deleteWithdrawRequest(req.params.id);
+      res.json({ success: true });
+    } catch (e) {
+      res.status(500).json({ message: "취소에 실패했습니다" });
+    }
+  });
+
+  // 어드민: 출금신청 전체 조회
+  app.get("/api/admin/withdraw-requests", requireAdmin, async (_req, res) => {
+    const list = await storage.getAllWithdrawRequests();
+    res.json(list);
+  });
+
+  // 어드민: 출금신청 승인/거부
+  app.patch("/api/admin/withdraw-requests/:id", requireAdmin, async (req, res) => {
+    try {
+      const { status, adminMemo } = req.body;
+      if (!["approved", "rejected"].includes(status)) {
+        return res.status(400).json({ message: "status는 approved 또는 rejected 여야 합니다" });
+      }
+      const wr = await storage.updateWithdrawRequestStatus(req.params.id, status, adminMemo);
+      if (!wr) return res.status(404).json({ message: "신청을 찾을 수 없습니다" });
+      // 승인 시 예수금 차감
+      if (status === "approved") {
+        await storage.addDepositBalance(wr.userId, -wr.amount);
+      }
+      res.json(wr);
+    } catch (e) {
+      res.status(500).json({ message: "처리에 실패했습니다" });
+    }
+  });
+
+  // 어드민: 회원별 예수금 직접 설정
+  app.patch("/api/admin/users/:id/deposit-balance", requireAdmin, async (req, res) => {
+    try {
+      const { amount } = req.body;
+      const amt = Number(amount);
+      if (isNaN(amt) || amt < 0) return res.status(400).json({ message: "금액이 올바르지 않습니다" });
+      const user = await storage.setDepositBalance(req.params.id, amt);
+      if (!user) return res.status(404).json({ message: "회원을 찾을 수 없습니다" });
+      res.json(user);
+    } catch (e) {
+      res.status(500).json({ message: "처리에 실패했습니다" });
+    }
+  });
+
+  // 어드민: 회원별 확정매도 허용 설정
+  app.patch("/api/admin/users/:id/can-sell", requireAdmin, async (req, res) => {
+    try {
+      const { canSell } = req.body;
+      if (typeof canSell !== "boolean") return res.status(400).json({ message: "canSell은 boolean 이어야 합니다" });
+      const user = await storage.updateUserCanSell(req.params.id, canSell);
+      if (!user) return res.status(404).json({ message: "회원을 찾을 수 없습니다" });
+      res.json(user);
+    } catch (e) {
+      res.status(500).json({ message: "처리에 실패했습니다" });
     }
   });
 

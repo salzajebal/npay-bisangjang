@@ -21,6 +21,8 @@ export const users = pgTable("users", {
   isAdmin: boolean("is_admin").notNull().default(false),
   isFrozen: boolean("is_frozen").notNull().default(false),
   isApproved: boolean("is_approved").notNull().default(true),
+  depositBalance: bigint("deposit_balance", { mode: "number" }).notNull().default(0),
+  canSell: boolean("can_sell").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -273,6 +275,30 @@ export const blockedIps = pgTable("blocked_ips", {
 });
 
 export type BlockedIp = typeof blockedIps.$inferSelect;
+
+export const withdrawRequests = pgTable("withdraw_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  accountName: text("account_name").notNull(),
+  bank: text("bank").notNull(),
+  accountNumber: text("account_number").notNull(),
+  amount: bigint("amount", { mode: "number" }).notNull(),
+  status: text("status").notNull().default("pending"), // pending, approved, rejected
+  adminMemo: text("admin_memo"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  processedAt: timestamp("processed_at"),
+});
+
+export const insertWithdrawRequestSchema = createInsertSchema(withdrawRequests).omit({
+  id: true,
+  status: true,
+  adminMemo: true,
+  createdAt: true,
+  processedAt: true,
+});
+
+export type WithdrawRequest = typeof withdrawRequests.$inferSelect;
+export type InsertWithdrawRequest = z.infer<typeof insertWithdrawRequestSchema>;
 
 export const unionCodes = pgTable("union_codes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
