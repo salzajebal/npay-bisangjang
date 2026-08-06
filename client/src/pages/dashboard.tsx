@@ -810,12 +810,13 @@ export default function DashboardPage() {
                         {visibleTxList.map((tx) => (
                           <TableRow key={tx.id} data-testid={`row-transaction-${tx.id}`}>
                             <TableCell>
-                              <Badge
-                                variant={isIn(tx.type) ? "default" : "secondary"}
-                                className={isIn(tx.type) ? "bg-[#03C75A] border-[#03C75A]" : "bg-[#007EFF] border-[#007EFF] text-white"}
-                              >
-                                {isIn(tx.type) ? "입고" : "출고"}
-                              </Badge>
+                              {isIn(tx.type) ? (
+                                <Badge className="bg-[#03C75A] border-[#03C75A]">입고</Badge>
+                              ) : tx.memo === "확정매도" ? (
+                                <Badge className="bg-[#F73631] border-[#F73631] text-white">매도</Badge>
+                              ) : (
+                                <Badge className="bg-[#007EFF] border-[#007EFF] text-white">출고</Badge>
+                              )}
                             </TableCell>
                             <TableCell className="text-sm">{tx.category}</TableCell>
                             <TableCell>
@@ -840,12 +841,13 @@ export default function DashboardPage() {
                     <Card key={tx.id} className="p-3" data-testid={`card-transaction-mobile-${tx.id}`}>
                       <div className="flex items-center justify-between gap-2 mb-1.5">
                         <div className="flex items-center gap-2 min-w-0">
-                          <Badge
-                            variant={isIn(tx.type) ? "default" : "secondary"}
-                            className={isIn(tx.type) ? "bg-[#03C75A] border-[#03C75A] text-xs shrink-0" : "bg-[#007EFF] border-[#007EFF] text-white text-xs shrink-0"}
-                          >
-                            {isIn(tx.type) ? "입고" : "출고"}
-                          </Badge>
+                          {isIn(tx.type) ? (
+                            <Badge className="bg-[#03C75A] border-[#03C75A] text-xs shrink-0">입고</Badge>
+                          ) : tx.memo === "확정매도" ? (
+                            <Badge className="bg-[#F73631] border-[#F73631] text-white text-xs shrink-0">매도</Badge>
+                          ) : (
+                            <Badge className="bg-[#007EFF] border-[#007EFF] text-white text-xs shrink-0">출고</Badge>
+                          )}
                           <StockIcon name={tx.stockName} size={22} />
                           <span className="font-medium text-sm truncate">{tx.stockName}</span>
                         </div>
