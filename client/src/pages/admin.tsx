@@ -1880,7 +1880,7 @@ export default function AdminPage() {
     },
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/withdraw-requests"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/members"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({ title: vars.status === "approved" ? "출금 승인 완료" : "출금 거부 완료", description: vars.status === "approved" ? "출금이 승인되어 예수금에서 차감되었습니다." : "출금신청이 거부되었습니다." });
     },
     onError: (err: Error) => {
@@ -1897,7 +1897,7 @@ export default function AdminPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/members"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       setDepositEditId(null);
       setDepositEditAmount("");
       toast({ title: "예수금 수정 완료" });
@@ -1916,7 +1916,7 @@ export default function AdminPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/members"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({ title: "설정 완료" });
     },
     onError: (err: Error) => {
