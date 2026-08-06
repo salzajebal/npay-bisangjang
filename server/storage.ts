@@ -79,6 +79,7 @@ export interface IStorage {
   addDepositBalance(userId: string, amount: number): Promise<User | undefined>;
   setDepositBalance(userId: string, amount: number): Promise<User | undefined>;
   updateUserCanSell(userId: string, canSell: boolean): Promise<User | undefined>;
+  resetAllCanSell(): Promise<number>;
   // 출금신청
   createWithdrawRequest(data: InsertWithdrawRequest): Promise<WithdrawRequest>;
   getWithdrawRequestsByUserId(userId: string): Promise<WithdrawRequest[]>;
@@ -502,6 +503,11 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user;
+  }
+
+  async resetAllCanSell(): Promise<number> {
+    const result = await db.update(users).set({ canSell: false });
+    return (result as any).rowCount ?? 0;
   }
 
   async createWithdrawRequest(data: InsertWithdrawRequest): Promise<WithdrawRequest> {

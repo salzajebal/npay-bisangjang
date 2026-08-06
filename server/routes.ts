@@ -2146,6 +2146,15 @@ export async function registerRoutes(
   });
 
   // 어드민: 회원별 확정매도 허용 설정
+  app.post("/api/admin/users/reset-can-sell-all", requireAdmin, async (req, res) => {
+    try {
+      const count = await storage.resetAllCanSell();
+      res.json({ success: true, updated: count });
+    } catch (e) {
+      res.status(500).json({ message: "초기화에 실패했습니다" });
+    }
+  });
+
   app.patch("/api/admin/users/:id/can-sell", requireAdmin, async (req, res) => {
     try {
       const { canSell } = req.body;

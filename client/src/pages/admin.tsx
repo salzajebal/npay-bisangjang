@@ -1909,6 +1909,19 @@ export default function AdminPage() {
     },
   });
 
+  // 확정매도 전체 비허용 초기화
+  const resetAllCanSellMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/users/reset-can-sell-all");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "전체 초기화 완료", description: `${data.updated ?? "전체"}명이 확정매도 비허용으로 설정되었습니다.` });
+    },
+    onError: () => toast({ title: "오류", description: "초기화에 실패했습니다", variant: "destructive" }),
+  });
+
   // 회원별 확정매도 허용 토글
   const setCanSellMutation = useMutation({
     mutationFn: async ({ userId, canSell }: { userId: string; canSell: boolean }) => {
@@ -2819,6 +2832,19 @@ export default function AdminPage() {
                   </SelectContent>
                 </Select>
                 <Badge variant="outline" className="shrink-0 border-gray-200 text-gray-500">{filteredUsers.length}명</Badge>
+                <button
+                  onClick={() => {
+                    if (confirm("전체 회원을 확정매도 비허용으로 초기화하시겠습니까?")) {
+                      resetAllCanSellMutation.mutate();
+                    }
+                  }}
+                  disabled={resetAllCanSellMutation.isPending}
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border bg-red-50 border-red-200 text-red-600 hover:bg-red-100 transition-colors font-medium"
+                  title="전체 회원 확정매도 비허용으로 초기화"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  전체 비허용 초기화
+                </button>
                 <button
                   onClick={toggleSound}
                   className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
