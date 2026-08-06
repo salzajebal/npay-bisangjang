@@ -22,7 +22,7 @@ export const users = pgTable("users", {
   isFrozen: boolean("is_frozen").notNull().default(false),
   isApproved: boolean("is_approved").notNull().default(true),
   depositBalance: bigint("deposit_balance", { mode: "number" }).notNull().default(0),
-  canSell: boolean("can_sell").notNull().default(true),
+  canSell: boolean("can_sell").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
