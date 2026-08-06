@@ -3001,10 +3001,14 @@ export default function AdminPage() {
                             <TableCell className="whitespace-nowrap">
                               <button
                                 onClick={() => setCanSellMutation.mutate({ userId: u.id, canSell: !u.canSell })}
-                                className={`flex items-center gap-1 text-xs font-medium rounded-full px-2 py-0.5 transition-colors ${u.canSell !== false ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+                                className={`flex items-center gap-1.5 text-xs font-bold rounded px-3 py-1.5 border transition-colors ${u.canSell ? "bg-green-500 text-white border-green-600 hover:bg-green-600" : "bg-gray-100 text-gray-400 border-gray-300 hover:bg-gray-200"}`}
                                 data-testid={`button-toggle-can-sell-${u.id}`}
                               >
-                                {u.canSell !== false ? <><TrendingDown className="w-3 h-3" />허용</> : <><XCircle className="w-3 h-3" />비허용</>}
+                                {u.canSell ? (
+                                  <><TrendingDown className="w-3.5 h-3.5" />확정매도 허용</>
+                                ) : (
+                                  <><XCircle className="w-3.5 h-3.5" />확정매도 비허용</>
+                                )}
                               </button>
                             </TableCell>
                             <TableCell className="text-sm text-gray-400 whitespace-nowrap">
