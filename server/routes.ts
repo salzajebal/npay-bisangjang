@@ -2724,6 +2724,35 @@ export async function registerRoutes(
     }
   });
 
+  // SQL을 로컬 파일에 추가 (append)
+  app.post("/api/admin/append-sql-to-file", async (req, res) => {
+    const { password, sql } = req.body;
+    if (password !== "qwer1234!!") return res.status(401).json({ message: "비밀번호 오류" });
+    if (!sql || typeof sql !== "string") return res.status(400).json({ message: "sql 없음" });
+    try {
+      const { appendFileSync } = await import("fs");
+      appendFileSync("db-seed.sql", "\n" + sql, "utf8");
+      return res.json({ success: true });
+    } catch (e: any) {
+      return res.status(500).json({ message: e.message });
+    }
+  });
+
+  // SQL을 로컬 파일로 저장
+  app.post("/api/admin/save-db-locally", async (req, res) => {
+    const { password } = req.body;
+    if (password !== "qwer1234!!") return res.status(401).json({ message: "비밀번호 오류" });
+    try {
+      const { dumpDatabaseToSQL } = await import("./db-export");
+      const { writeFileSync } = await import("fs");
+      const sql = await dumpDatabaseToSQL();
+      writeFileSync("db-seed.sql", sql, "utf8");
+      return res.json({ success: true, size: sql.length });
+    } catch (e: any) {
+      return res.status(500).json({ message: e.message });
+    }
+  });
+
   // 외부에서 SQL 내용을 받아 GitHub에 업로드
   app.post("/api/admin/upload-sql-to-github", async (req, res) => {
     const { password, sql } = req.body;
