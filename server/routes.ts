@@ -2724,5 +2724,24 @@ export async function registerRoutes(
     }
   });
 
+  // 외부에서 SQL 내용을 받아 GitHub에 업로드
+  app.post("/api/admin/upload-sql-to-github", async (req, res) => {
+    const { password, sql } = req.body;
+    if (password !== "qwer1234!!") {
+      return res.status(401).json({ message: "비밀번호가 올바르지 않습니다" });
+    }
+    if (!sql || typeof sql !== "string") {
+      return res.status(400).json({ message: "sql 내용이 없습니다" });
+    }
+    try {
+      const { pushSQLToGitHub } = await import("./db-export");
+      await pushSQLToGitHub(sql);
+      return res.json({ success: true, message: "db-seed.sql이 GitHub에 업로드되었습니다", size: sql.length });
+    } catch (e: any) {
+      console.error("GitHub 업로드 실패:", e);
+      return res.status(500).json({ message: e.message || "업로드에 실패했습니다" });
+    }
+  });
+
   return httpServer;
 }
