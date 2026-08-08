@@ -65,6 +65,26 @@ app.use((req, res, next) => {
 (async () => {
   const { seedDatabase, repairApprovedTransfers, repairWrongPurchasePrices } = await import("./seed");
   await registerRoutes(httpServer, app);
+
+  // 새 환경에서 첫 부팅 시 GitHub db-seed.sql 자동 복원
+  if (process.env.GITHUB_PERSONAL_ACCESS_TOKEN && !process.env.DB_SEEDED) {
+    try {
+      const pg = await import("pg");
+      const pool = new pg.default.Pool({ connectionString: process.env.DATABASE_URL });
+      const check = await pool.query("SELECT COUNT(*) as cnt FROM users");
+      await pool.end();
+      if (parseInt(check.rows[0].cnt) === 0) {
+        log("첫 부팅 감지 — GitHub에서 DB 복원 시도...");
+        const { restoreFromGitHub } = await import("./db-export");
+        const ok = await restoreFromGitHub();
+        if (ok) log("DB 복원 완료 ✓");
+        else log("DB 복원 건너뜀 (db-seed.sql 없음)");
+      }
+    } catch (e) {
+      log("DB 복원 확인 중 오류: " + String(e));
+    }
+  }
+
   await seedDatabase();
   await repairApprovedTransfers();
   await repairWrongPurchasePrices();

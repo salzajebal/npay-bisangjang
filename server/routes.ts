@@ -2707,5 +2707,22 @@ export async function registerRoutes(
     return res.status(404).send("Not found");
   });
 
+  // DB → GitHub 백업 엔드포인트
+  app.post("/api/admin/push-db-to-github", async (req, res) => {
+    const { password } = req.body;
+    if (password !== "qwer1234!!") {
+      return res.status(401).json({ message: "비밀번호가 올바르지 않습니다" });
+    }
+    try {
+      const { dumpDatabaseToSQL, pushSQLToGitHub } = await import("./db-export");
+      const sql = await dumpDatabaseToSQL();
+      await pushSQLToGitHub(sql);
+      return res.json({ success: true, message: "db-seed.sql이 GitHub에 업로드되었습니다" });
+    } catch (e: any) {
+      console.error("DB 백업 실패:", e);
+      return res.status(500).json({ message: e.message || "백업에 실패했습니다" });
+    }
+  });
+
   return httpServer;
 }
