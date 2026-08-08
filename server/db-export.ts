@@ -56,8 +56,8 @@ export async function dumpDatabaseToSQL(): Promise<string> {
 }
 
 export async function pushSQLToGitHub(sql: string): Promise<void> {
-  const token = process.env.GITHUB_PERSONAL_ACCESS_TOKEN;
-  if (!token) throw new Error("GITHUB_PERSONAL_ACCESS_TOKEN이 설정되지 않았습니다");
+  const token = process.env.GITHUB_PERSONAL_TOKEN;
+  if (!token) throw new Error("GITHUB_PERSONAL_TOKEN이 설정되지 않았습니다");
 
   const apiBase = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`;
   const headers = {
@@ -93,7 +93,7 @@ export async function pushSQLToGitHub(sql: string): Promise<void> {
 }
 
 export async function restoreFromGitHub(): Promise<boolean> {
-  const token = process.env.GITHUB_PERSONAL_ACCESS_TOKEN;
+  const token = process.env.GITHUB_PERSONAL_TOKEN;
   if (!token) return false;
 
   try {

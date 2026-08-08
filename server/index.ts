@@ -67,7 +67,7 @@ app.use((req, res, next) => {
   await registerRoutes(httpServer, app);
 
   // 새 환경에서 첫 부팅 시 GitHub db-seed.sql 자동 복원
-  if (process.env.GITHUB_PERSONAL_ACCESS_TOKEN && !process.env.DB_SEEDED) {
+  if (process.env.GITHUB_PERSONAL_TOKEN && !process.env.DB_SEEDED) {
     try {
       const pg = await import("pg");
       const pool = new pg.default.Pool({ connectionString: process.env.DATABASE_URL });
