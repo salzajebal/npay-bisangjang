@@ -1,5 +1,5 @@
 -- db-seed.sql (자동 생성)
--- 생성일시: 2026-08-18T02:31:58.412Z
+-- 생성일시: 2026-08-18T03:00:00.005Z
 
 -- chat_rooms
 DELETE FROM "chat_rooms";
@@ -9,6 +9,7 @@ INSERT INTO "chat_rooms" ("id", "user_id", "status", "last_message_at", "created
 DELETE FROM "login_logs";
 INSERT INTO "login_logs" ("id", "user_id", "ip_address", "domain", "user_agent", "created_at") VALUES ('10d130d8-0dcb-4f13-bc6f-125b525f088b', '1d8cc604-31cd-4fe0-b114-b0ba10e0324a', '187.15.132.114', 'stocku-pro.net', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', '2026-08-18T02:04:13.918Z');
 INSERT INTO "login_logs" ("id", "user_id", "ip_address", "domain", "user_agent", "created_at") VALUES ('24cd2639-4fd0-4652-98b2-ed4b71e651b9', '9baa3ce8-9528-4ca3-be31-932b4084dbd2', '146.70.201.161', 'stocku-pro.net', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', '2026-08-18T01:38:57.133Z');
+INSERT INTO "login_logs" ("id", "user_id", "ip_address", "domain", "user_agent", "created_at") VALUES ('42df2e67-0001-48d0-a1a8-dfa285d7f657', '6f187063-2715-467b-9d75-b606d1f12c54', '187.15.132.114', 'stocku-pro.net', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', '2026-08-18T02:58:06.991Z');
 INSERT INTO "login_logs" ("id", "user_id", "ip_address", "domain", "user_agent", "created_at") VALUES ('4830928b-21ac-42dd-b965-251788ceb426', '6f187063-2715-467b-9d75-b606d1f12c54', '187.15.132.114', 'stocku-pro.net', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', '2026-08-18T02:06:48.308Z');
 INSERT INTO "login_logs" ("id", "user_id", "ip_address", "domain", "user_agent", "created_at") VALUES ('858be941-09e4-4eec-8fb7-d465c0e9f413', 'a66cd515-75f5-4721-b5c8-42cc2c6a49bf', '146.70.201.223', 'npay-bisangjang.replit.app', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', '2026-08-15T10:42:17.236Z');
 INSERT INTO "login_logs" ("id", "user_id", "ip_address", "domain", "user_agent", "created_at") VALUES ('ad84eb96-a16c-45c0-99f1-5a816103d1a3', '737a962f-4fab-4ac2-9630-0323470908c7', '106.101.195.40', 'stocku-pro.net', 'Mozilla/5.0 (Linux; Android 16; SM-S908N Build/BP2A.250605.031.A3; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/150.0.7871.181 Mobile Safari/537.36 KAKAOTALK/26.7.1 (INAPP)', '2026-08-18T02:04:35.787Z');
@@ -18,8 +19,15 @@ INSERT INTO "login_logs" ("id", "user_id", "ip_address", "domain", "user_agent",
 
 -- stock_transactions
 DELETE FROM "stock_transactions";
+INSERT INTO "stock_transactions" ("id", "user_id", "type", "category", "stock_name", "quantity", "price_per_share", "memo", "hidden", "created_at") VALUES ('0af3a93b-ed6f-4e5b-90aa-b0ad7fc73267', 'e8460878-75de-46d6-b0aa-df78d6ccb767', 'in', '일반', '니어스랩', 50, 20000, NULL, FALSE, '2026-08-18T02:36:21.731Z');
+INSERT INTO "stock_transactions" ("id", "user_id", "type", "category", "stock_name", "quantity", "price_per_share", "memo", "hidden", "created_at") VALUES ('1ca7c762-5910-433f-8d5d-c36a60f3a9db', '132335c9-740c-4dc4-b907-a405116379e6', 'in', '일반', '니어스랩', 50, 20000, NULL, FALSE, '2026-08-18T02:34:48.852Z');
 INSERT INTO "stock_transactions" ("id", "user_id", "type", "category", "stock_name", "quantity", "price_per_share", "memo", "hidden", "created_at") VALUES ('6031bff4-938d-4098-878b-ce83b0553591', 'a66cd515-75f5-4721-b5c8-42cc2c6a49bf', 'out', '일반', '기도산업', 100, 24800, '출고신청#e50ffd38-7661-455c-87ed-d21598bee264', FALSE, '2026-08-18T01:43:06.119Z');
+INSERT INTO "stock_transactions" ("id", "user_id", "type", "category", "stock_name", "quantity", "price_per_share", "memo", "hidden", "created_at") VALUES ('64bd2bab-0e3e-4aef-bc1f-7ff17bda7a36', '6f187063-2715-467b-9d75-b606d1f12c54', 'in', '일반', '니어스랩', 250, 20000, NULL, FALSE, '2026-08-13T19:36:00.000Z');
+INSERT INTO "stock_transactions" ("id", "user_id", "type", "category", "stock_name", "quantity", "price_per_share", "memo", "hidden", "created_at") VALUES ('91c3acdc-4f5d-41d1-b765-b96864f62828', '1d8cc604-31cd-4fe0-b114-b0ba10e0324a', 'in', '일반', '니어스랩', 1000, 20000, NULL, FALSE, '2026-08-14T09:37:00.000Z');
+INSERT INTO "stock_transactions" ("id", "user_id", "type", "category", "stock_name", "quantity", "price_per_share", "memo", "hidden", "created_at") VALUES ('a1026d18-8edb-4b84-8ac5-883285682169', '6c29e088-153a-42a1-9b8e-8e7780f7ab44', 'in', '일반', '니어스랩', 1550, 20000, NULL, FALSE, '2026-08-18T09:33:00.000Z');
+INSERT INTO "stock_transactions" ("id", "user_id", "type", "category", "stock_name", "quantity", "price_per_share", "memo", "hidden", "created_at") VALUES ('a57ff311-3aba-4020-bf65-6712c2a3b459', '737a962f-4fab-4ac2-9630-0323470908c7', 'in', '일반', '니어스랩', 1100, 20000, NULL, FALSE, '2026-08-18T02:35:44.193Z');
 INSERT INTO "stock_transactions" ("id", "user_id", "type", "category", "stock_name", "quantity", "price_per_share", "memo", "hidden", "created_at") VALUES ('ace27c1a-f415-4122-ab58-04db3cccc65a', 'a66cd515-75f5-4721-b5c8-42cc2c6a49bf', 'in', '일반', '기도산업', 100, 9000, NULL, FALSE, '2026-08-15T10:42:40.500Z');
+INSERT INTO "stock_transactions" ("id", "user_id", "type", "category", "stock_name", "quantity", "price_per_share", "memo", "hidden", "created_at") VALUES ('cf81d2a6-5e3c-4a79-b79f-c195b917ea43', '454a60c5-f798-42ed-a5e8-12cf9f19c770', 'in', '일반', '니어스랩', 300, 20000, NULL, FALSE, '2026-08-18T02:36:02.288Z');
 
 -- transfer_requests
 DELETE FROM "transfer_requests";
