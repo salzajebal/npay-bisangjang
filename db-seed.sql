@@ -1,5 +1,5 @@
 -- db-seed.sql (자동 생성)
--- 생성일시: 2026-08-18T18:58:23.106Z
+-- 생성일시: 2026-08-19T03:00:00.015Z
 
 -- chat_rooms
 DELETE FROM "chat_rooms";
@@ -7,7 +7,9 @@ INSERT INTO "chat_rooms" ("id", "user_id", "status", "last_message_at", "created
 
 -- login_logs
 DELETE FROM "login_logs";
+INSERT INTO "login_logs" ("id", "user_id", "ip_address", "domain", "user_agent", "created_at") VALUES ('0434e166-df58-41c8-9cf1-a95a836ded60', '6c29e088-153a-42a1-9b8e-8e7780f7ab44', '118.235.83.116', 'stocku-pro.net', 'Mozilla/5.0 (Linux; Android 13; SM-F707N Build/TP1A.220624.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/150.0.7871.181 Mobile Safari/537.36 KAKAOTALK/26.7.1 (INAPP)', '2026-08-19T02:08:58.326Z');
 INSERT INTO "login_logs" ("id", "user_id", "ip_address", "domain", "user_agent", "created_at") VALUES ('10d130d8-0dcb-4f13-bc6f-125b525f088b', '1d8cc604-31cd-4fe0-b114-b0ba10e0324a', '187.15.132.114', 'stocku-pro.net', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', '2026-08-18T02:04:13.918Z');
+INSERT INTO "login_logs" ("id", "user_id", "ip_address", "domain", "user_agent", "created_at") VALUES ('24c68a8c-55d7-49e2-9141-ecc9cbc91055', '6f187063-2715-467b-9d75-b606d1f12c54', '125.129.214.71', 'stocku-pro.net', 'Mozilla/5.0 (Linux; Android 16; SM-A155N Build/BP4A.251205.006; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/150.0.7871.183 Mobile Safari/537.36 KAKAOTALK/26.7.1 (INAPP)', '2026-08-18T22:01:24.852Z');
 INSERT INTO "login_logs" ("id", "user_id", "ip_address", "domain", "user_agent", "created_at") VALUES ('24cd2639-4fd0-4652-98b2-ed4b71e651b9', '9baa3ce8-9528-4ca3-be31-932b4084dbd2', '146.70.201.161', 'stocku-pro.net', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', '2026-08-18T01:38:57.133Z');
 INSERT INTO "login_logs" ("id", "user_id", "ip_address", "domain", "user_agent", "created_at") VALUES ('2564fc84-5626-45a7-a2ab-9976216af16a', '799d93c4-9cdb-4a0a-883a-fa1afb92b070', '106.101.196.219', 'stocku-pro.net', 'Mozilla/5.0 (Linux; Android 12; SM-N971N Build/SP1A.210812.016; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/150.0.7871.183 Mobile Safari/537.36 KAKAOTALK/26.6.1 (INAPP)', '2026-08-18T03:58:50.318Z');
 INSERT INTO "login_logs" ("id", "user_id", "ip_address", "domain", "user_agent", "created_at") VALUES ('42df2e67-0001-48d0-a1a8-dfa285d7f657', '6f187063-2715-467b-9d75-b606d1f12c54', '187.15.132.114', 'stocku-pro.net', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', '2026-08-18T02:58:06.991Z');
@@ -37,6 +39,7 @@ INSERT INTO "stock_transactions" ("id", "user_id", "type", "category", "stock_na
 
 -- transfer_requests
 DELETE FROM "transfer_requests";
+INSERT INTO "transfer_requests" ("id", "user_id", "account_name", "account_number", "broker_name", "stock_name", "quantity", "purchase_price", "current_price", "total_amount", "profit_rate", "status", "admin_memo", "request_type", "created_at", "approved_at") VALUES ('09f6aa1f-1221-4b40-8c58-8fc77d8be716', '6f187063-2715-467b-9d75-b606d1f12c54', '안명균', '59964937', '키움증권', '니어스랩', 100, 20000, 41200, '4120000', '106.00', 'pending', NULL, '출고신청', '2026-08-18T22:15:27.801Z', NULL);
 INSERT INTO "transfer_requests" ("id", "user_id", "account_name", "account_number", "broker_name", "stock_name", "quantity", "purchase_price", "current_price", "total_amount", "profit_rate", "status", "admin_memo", "request_type", "created_at", "approved_at") VALUES ('a4d97a93-d660-456c-91f2-382179e6852f', '799d93c4-9cdb-4a0a-883a-fa1afb92b070', '이수한', '토스증권 18401062201', '토스증권', '니어스랩', 100, 20000, 41200, '4120000', '106.00', 'pending', NULL, '출고신청', '2026-08-18T04:00:19.411Z', NULL);
 INSERT INTO "transfer_requests" ("id", "user_id", "account_name", "account_number", "broker_name", "stock_name", "quantity", "purchase_price", "current_price", "total_amount", "profit_rate", "status", "admin_memo", "request_type", "created_at", "approved_at") VALUES ('e50ffd38-7661-455c-87ed-d21598bee264', 'a66cd515-75f5-4721-b5c8-42cc2c6a49bf', 'test1234', '1111', '교보증권', '기도산업', 100, 9000, 24800, '2480000', '175.56', 'approved', NULL, '출고신청', '2026-08-15T10:42:51.358Z', '2026-08-18T01:43:06.106Z');
 
